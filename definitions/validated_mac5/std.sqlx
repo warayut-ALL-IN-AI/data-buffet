@@ -1,0 +1,36 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["std"],
+    bigquery: {
+        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["std"],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["std"]
+
+}
+
+SELECT
+    CAST(stdcode AS STRING) as stdcode,
+    CAST(stdtype AS INT64) as stdtype,
+    CAST(stddebtor AS STRING) as stddebtor,
+    CAST(stdstkcode AS STRING) as stdstkcode,
+    CAST(stddesct1 AS STRING) as stddesct1,
+    CAST(stddesce1 AS STRING) as stddesce1,
+    CAST(stdautono AS INT64) as stdautono,
+    CAST(rowguid AS STRING) as rowguid
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY stddesct1 desc, stddesce1 desc) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

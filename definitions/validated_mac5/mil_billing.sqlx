@@ -1,0 +1,86 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mil_billing"],
+    bigquery: {
+        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mil_billing"],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mil_billing"]
+
+}
+
+SELECT
+    CAST(milday AS INT64) as milday,
+    CAST(milmonth AS INT64) as milmonth,
+    CAST(milyear AS INT64) as milyear,
+    CAST(miltype AS STRING) as miltype,
+    CAST(milvnos AS STRING) as milvnos,
+    CAST(milcus AS STRING) as milcus,
+    CAST(milstk AS STRING) as milstk,
+    CAST(miljob AS STRING) as miljob,
+    CAST(mildep AS STRING) as mildep,
+    CAST(milper AS STRING) as milper,
+    CAST(mildoc AS STRING) as mildoc,
+    CAST(milmec AS STRING) as milmec,
+    CAST(milsto AS STRING) as milsto,
+    CAST(milstomt AS STRING) as milstomt,
+    CAST(millistno AS INT64) as millistno,
+    CAST(milquan AS FLOAT64) as milquan,
+    CAST(milquanp2 AS FLOAT64) as milquanp2,
+    CAST(miladisc AS FLOAT64) as miladisc,
+    CAST(milcog AS FLOAT64) as milcog,
+    CAST(milconv AS FLOAT64) as milconv,
+    CAST(mildisca AS FLOAT64) as mildisca,
+    CAST(mildisct AS STRING) as mildisct,
+    CAST(milvat AS FLOAT64) as milvat,
+    CAST(milsum AS FLOAT64) as milsum,
+    CAST(milcut AS INT64) as milcut,
+    CAST(milstype AS INT64) as milstype,
+    CAST(miluname AS STRING) as miluname,
+    CAST(mildesc AS STRING) as mildesc,
+    CAST(milvcol1 AS STRING) as milvcol1,
+    CAST(milvcol2 AS STRING) as milvcol2,
+    CAST(milvcol3 AS STRING) as milvcol3,
+    CAST(milvcol4 AS STRING) as milvcol4,
+    CAST(milcurc AS INT64) as milcurc,
+    CAST(milexchg AS FLOAT64) as milexchg,
+    CAST(milacost AS FLOAT64) as milacost,
+    CAST(milpqm AS INT64) as milpqm,
+    CAST(milpmfrom AS INT64) as milpmfrom,
+    CAST(milpmto AS INT64) as milpmto,
+    CAST(miltag AS INT64) as miltag,
+    CAST(millinkvcno AS STRING) as millinkvcno,
+    CAST(millinkvcdate AS DATETIME) as millinkvcdate,
+    CAST(millinkvctype AS STRING) as millinkvctype,
+    CAST(millinkvcdeposit AS STRING) as millinkvcdeposit,
+    CAST(millinkvcid AS INT64) as millinkvcid,
+    CAST(milclearum AS INT64) as milclearum,
+    CAST(milexpdate AS DATETIME) as milexpdate,
+    CAST(milnotes AS STRING) as milnotes,
+    CAST(milnotkl AS INT64) as milnotkl,
+    CAST(mildelvdt AS DATETIME) as mildelvdt,
+    CAST(mildatesp AS DATETIME) as mildatesp,
+    CAST(milnumcsp AS FLOAT64) as milnumcsp,
+    CAST(milnumisp AS INT64) as milnumisp,
+    CAST(milcost AS FLOAT64) as milcost,
+    CAST(milucost AS FLOAT64) as milucost,
+    CAST(miluprice AS FLOAT64) as miluprice,
+    CAST(milusequanp AS INT64) as milusequanp,
+    CAST(milvcol5 AS STRING) as milvcol5,
+    CAST(milfitem AS INT64) as milfitem
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY miluname desc, mildesc desc) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

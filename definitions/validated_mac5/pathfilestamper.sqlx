@@ -1,0 +1,44 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["pathfilestamper"],
+    bigquery: {
+        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["pathfilestamper"],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["pathfilestamper"]
+
+}
+
+SELECT
+    CAST(id AS INT64) as id,
+    CAST(mainqtid AS INT64) as mainqtid,
+    CAST(preorderno AS STRING) as preorderno,
+    CAST(orderno AS STRING) as orderno,
+    CAST(type AS STRING) as type,
+    CAST(path212 AS STRING) as path212,
+    CAST(path10acc AS STRING) as path10acc,
+    CAST(path10fac AS STRING) as path10fac,
+    CAST(filename AS STRING) as filename,
+    CAST(uinsert AS STRING) as uinsert,
+    CAST(date AS STRING) as date,
+    CAST(status AS INT64) as status,
+    CAST(pathqtid AS STRING) as pathqtid,
+    CAST(note AS STRING) as note,
+    CAST(datepayinadmin AS DATE) as datepayinadmin,
+    CAST(refpo AS STRING) as refpo
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY filename desc) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

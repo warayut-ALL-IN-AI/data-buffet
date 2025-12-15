@@ -1,0 +1,80 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["main_qtspread"],
+    bigquery: {
+        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["main_qtspread"],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["main_qtspread"]
+
+}
+
+SELECT
+    CAST(id AS INT64) as id,
+    CAST(ref_id AS INT64) as ref_id,
+    CAST(qtid AS STRING) as qtid,
+    CAST(uinsert AS STRING) as uinsert,
+    CAST(uupdate AS STRING) as uupdate,
+    CAST(dinsert AS STRING) as dinsert,
+    CAST(dupdate AS STRING) as dupdate,
+    CAST(atten AS STRING) as atten,
+    CAST(lat AS STRING) as lat,
+    CAST(long AS STRING) as long,
+    CAST(mapnote AS STRING) as mapnote,
+    CAST(city AS STRING) as city,
+    CAST(ctel AS STRING) as ctel,
+    CAST(ctel2 AS STRING) as ctel2,
+    CAST(road AS STRING) as road,
+    CAST(area AS STRING) as area,
+    CAST(district AS STRING) as district,
+    CAST(postcode AS STRING) as postcode,
+    CAST(caddress AS STRING) as caddress,
+    CAST(podocno AS STRING) as podocno,
+    CAST(rdosend AS STRING) as rdosend,
+    CAST(checknote AS STRING) as checknote,
+    CAST(checknote2 AS STRING) as checknote2,
+    CAST(checknote3 AS STRING) as checknote3,
+    CAST(checknote4 AS STRING) as checknote4,
+    CAST(checknotemoney AS STRING) as checknotemoney,
+    CAST(textnote AS STRING) as textnote,
+    CAST(status AS STRING) as status,
+    CAST(editnote AS STRING) as editnote,
+    CAST(editnotedate AS DATETIME) as editnotedate,
+    CAST(delvdate AS STRING) as delvdate,
+    CAST(transferfg AS STRING) as transferfg,
+    CAST(meccode AS STRING) as meccode,
+    CAST(subcontract AS STRING) as subcontract,
+    CAST(blueprint AS STRING) as blueprint,
+    CAST(projectname AS STRING) as projectname,
+    CAST(mihjob AS STRING) as mihjob,
+    CAST(repeatblueprint AS INT64) as repeatblueprint,
+    CAST(noteblueprint AS STRING) as noteblueprint,
+    CAST(discountthreepercent AS INT64) as discountthreepercent,
+    CAST(paybycash AS INT64) as paybycash,
+    CAST(creditterm AS INT64) as creditterm,
+    CAST(moneydeposit AS FLOAT64) as moneydeposit,
+    CAST(extrasum AS INT64) as extrasum,
+    CAST(agent AS STRING) as agent,
+    CAST(termpayment AS STRING) as termpayment,
+    CAST(discountcash AS INT64) as discountcash,
+    CAST(paytype AS STRING) as paytype,
+    CAST(amount AS FLOAT64) as amount,
+    CAST(refer_order_allkons_m AS STRING) as refer_order_allkons_m,
+    CAST(etax AS INT64) as etax,
+    CAST(etax_email AS STRING) as etax_email
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY projectname desc) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

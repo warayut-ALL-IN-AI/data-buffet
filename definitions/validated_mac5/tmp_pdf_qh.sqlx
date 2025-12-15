@@ -1,0 +1,75 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tmp_pdf_qh"],
+    bigquery: {
+        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tmp_pdf_qh"],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tmp_pdf_qh"]
+
+}
+
+SELECT
+    CAST(crdate AS STRING) as crdate,
+    CAST(vendorno AS STRING) as vendorno,
+    CAST(vendorname AS STRING) as vendorname,
+    CAST(newpo AS STRING) as newpo,
+    CAST(pono AS STRING) as pono,
+    CAST(podate AS STRING) as podate,
+    CAST(potype AS STRING) as potype,
+    CAST(deliverydate AS STRING) as deliverydate,
+    CAST(siteno AS STRING) as siteno,
+    CAST(sitename AS STRING) as sitename,
+    CAST(siteaddress AS STRING) as siteaddress,
+    CAST(contact AS STRING) as contact,
+    CAST(totalqty AS STRING) as totalqty,
+    CAST(totalamount AS STRING) as totalamount,
+    CAST(totalitem AS STRING) as totalitem,
+    CAST(cancelpo AS STRING) as cancelpo,
+    CAST(termcode AS STRING) as termcode,
+    CAST(poremark AS STRING) as poremark,
+    CAST(quotationno AS STRING) as quotationno,
+    CAST(quotationdate AS STRING) as quotationdate,
+    CAST(poitemno AS STRING) as poitemno,
+    CAST(artno AS STRING) as artno,
+    CAST(artdesc AS STRING) as artdesc,
+    CAST(hpeancode AS STRING) as hpeancode,
+    CAST(vdeancode AS STRING) as vdeancode,
+    CAST(vdproductname AS STRING) as vdproductname,
+    CAST(qty AS STRING) as qty,
+    CAST(purchunit AS STRING) as purchunit,
+    CAST(price AS STRING) as price,
+    CAST(qtyperunit AS STRING) as qtyperunit,
+    CAST(priceperunit AS STRING) as priceperunit,
+    CAST(priceunit AS STRING) as priceunit,
+    CAST(packsize AS STRING) as packsize,
+    CAST(articleremark AS STRING) as articleremark,
+    CAST(freegoodsflag AS STRING) as freegoodsflag,
+    CAST(stk AS STRING) as stk,
+    CAST(novat AS STRING) as novat,
+    CAST(status AS STRING) as status,
+    CAST(statusticket AS STRING) as statusticket,
+    CAST(duedate AS STRING) as duedate,
+    CAST(reciver AS STRING) as reciver,
+    CAST(deladd AS STRING) as deladd,
+    CAST(que AS STRING) as que,
+    CAST(delvname AS STRING) as delvname,
+    CAST(delvtel AS STRING) as delvtel,
+    CAST(credit AS STRING) as credit,
+    CAST(dinsert AS STRING) as dinsert
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY vendorname desc, sitename desc) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

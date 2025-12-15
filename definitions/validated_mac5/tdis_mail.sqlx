@@ -1,0 +1,91 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tdis_mail"],
+    bigquery: {
+        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tdis_mail"],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tdis_mail"]
+
+}
+
+SELECT
+    CAST(saleid AS STRING) as saleid,
+    CAST(spass AS STRING) as spass,
+    CAST(salename AS STRING) as salename,
+    CAST(salemail AS STRING) as salemail,
+    CAST(mail1 AS STRING) as mail1,
+    CAST(mail2 AS STRING) as mail2,
+    CAST(mail3 AS STRING) as mail3,
+    CAST(mail4 AS STRING) as mail4,
+    CAST(lv AS STRING) as lv,
+    CAST(cc1 AS STRING) as cc1,
+    CAST(cc2 AS STRING) as cc2,
+    CAST(cc3 AS STRING) as cc3,
+    CAST(cc4 AS STRING) as cc4,
+    CAST(cc5 AS STRING) as cc5,
+    CAST(cc6 AS STRING) as cc6,
+    CAST(cc7 AS STRING) as cc7,
+    CAST(cc8 AS STRING) as cc8,
+    CAST(cc9 AS STRING) as cc9,
+    CAST(passlv1 AS STRING) as passlv1,
+    CAST(passlv2 AS STRING) as passlv2,
+    CAST(passlv3 AS STRING) as passlv3,
+    CAST(passlv4 AS STRING) as passlv4,
+    CAST(f1 AS STRING) as f1,
+    CAST(f2 AS STRING) as f2,
+    CAST(f3 AS STRING) as f3,
+    CAST(f4 AS STRING) as f4,
+    CAST(f5 AS STRING) as f5,
+    CAST(f6 AS STRING) as f6,
+    CAST(f7 AS STRING) as f7,
+    CAST(f8 AS STRING) as f8,
+    CAST(f9 AS STRING) as f9,
+    CAST(f10 AS STRING) as f10,
+    CAST(pum1 AS STRING) as pum1,
+    CAST(pum2 AS STRING) as pum2,
+    CAST(pum3 AS STRING) as pum3,
+    CAST(ppass1 AS STRING) as ppass1,
+    CAST(ppass2 AS STRING) as ppass2,
+    CAST(ppass3 AS STRING) as ppass3,
+    CAST(ma AS STRING) as ma,
+    CAST(ta AS STRING) as ta,
+    CAST(ceo AS STRING) as ceo,
+    CAST(app AS STRING) as app,
+    CAST(lv_pum AS STRING) as lv_pum,
+    CAST(lv_rp AS STRING) as lv_rp,
+    CAST(rp1 AS STRING) as rp1,
+    CAST(rp2 AS STRING) as rp2,
+    CAST(rp3 AS STRING) as rp3,
+    CAST(rpass1 AS STRING) as rpass1,
+    CAST(rpass2 AS STRING) as rpass2,
+    CAST(rpass3 AS STRING) as rpass3,
+    CAST(lv_ele AS STRING) as lv_ele,
+    CAST(ele1 AS STRING) as ele1,
+    CAST(ele2 AS STRING) as ele2,
+    CAST(ele3 AS STRING) as ele3,
+    CAST(epass1 AS STRING) as epass1,
+    CAST(epass2 AS STRING) as epass2,
+    CAST(epass3 AS STRING) as epass3,
+    CAST(type AS STRING) as type,
+    CAST(menu1 AS STRING) as menu1,
+    CAST(download AS STRING) as download,
+    CAST(pic AS STRING) as pic,
+    CAST(lv_boq_lyn AS STRING) as lv_boq_lyn,
+    CAST(active AS INT64) as active
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY salename desc) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

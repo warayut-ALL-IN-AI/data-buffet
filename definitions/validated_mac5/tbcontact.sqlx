@@ -1,0 +1,90 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tbcontact"],
+    bigquery: {
+        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tbcontact"],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tbcontact"]
+
+}
+
+SELECT
+    CAST(id AS STRING) as id,
+    CAST(contactpersonal AS STRING) as contactpersonal,
+    CAST(contactcompany AS STRING) as contactcompany,
+    CAST(contactcop AS STRING) as contactcop,
+    CAST(contactsegment AS STRING) as contactsegment,
+    CAST(contactchannel AS STRING) as contactchannel,
+    CAST(contactstatus AS STRING) as contactstatus,
+    CAST(contacttitle AS STRING) as contacttitle,
+    CAST(contactname AS STRING) as contactname,
+    CAST(contactnick AS STRING) as contactnick,
+    CAST(contactaddress AS STRING) as contactaddress,
+    CAST(contactaddress1 AS STRING) as contactaddress1,
+    CAST(contactaddress2 AS STRING) as contactaddress2,
+    CAST(contactaddress3 AS STRING) as contactaddress3,
+    CAST(contactaddress4 AS STRING) as contactaddress4,
+    CAST(contactaddress5 AS STRING) as contactaddress5,
+    CAST(contactaddress6 AS STRING) as contactaddress6,
+    CAST(contacttel AS STRING) as contacttel,
+    CAST(contactmail AS STRING) as contactmail,
+    CAST(contacttype AS STRING) as contacttype,
+    CAST(contactbday AS DATE) as contactbday,
+    CAST(contactage AS STRING) as contactage,
+    CAST(contactbyear AS STRING) as contactbyear,
+    CAST(contacthob AS STRING) as contacthob,
+    CAST(contactstudy AS STRING) as contactstudy,
+    CAST(contactmag AS STRING) as contactmag,
+    CAST(contactme AS STRING) as contactme,
+    CAST(contactcolor AS STRING) as contactcolor,
+    CAST(contactfood AS STRING) as contactfood,
+    CAST(contactlife AS STRING) as contactlife,
+    CAST(contactact AS STRING) as contactact,
+    CAST(contactsday AS STRING) as contactsday,
+    CAST(contactdesc AS STRING) as contactdesc,
+    CAST(contactlove AS STRING) as contactlove,
+    CAST(contactson AS STRING) as contactson,
+    CAST(contactcntson AS STRING) as contactcntson,
+    CAST(contactcntgirl AS STRING) as contactcntgirl,
+    CAST(contactsonname1 AS STRING) as contactsonname1,
+    CAST(contactsonage1 AS STRING) as contactsonage1,
+    CAST(contactsonstudy1 AS STRING) as contactsonstudy1,
+    CAST(contactsonname2 AS STRING) as contactsonname2,
+    CAST(contactsonage2 AS STRING) as contactsonage2,
+    CAST(contactsonstudy2 AS STRING) as contactsonstudy2,
+    CAST(contactsonname3 AS STRING) as contactsonname3,
+    CAST(contactsonage3 AS STRING) as contactsonage3,
+    CAST(contactsonstudy3 AS STRING) as contactsonstudy3,
+    CAST(contactposition AS STRING) as contactposition,
+    CAST(contactpower AS STRING) as contactpower,
+    CAST(projectcode AS STRING) as projectcode,
+    CAST(contactpp1 AS STRING) as contactpp1,
+    CAST(contactpp2 AS STRING) as contactpp2,
+    CAST(contactpp3 AS STRING) as contactpp3,
+    CAST(contactpp4 AS STRING) as contactpp4,
+    CAST(contactpp5 AS STRING) as contactpp5,
+    CAST(contactpp6 AS STRING) as contactpp6,
+    CAST(insertby AS STRING) as insertby,
+    CAST(insertwhen AS STRING) as insertwhen,
+    CAST(lastupdate AS STRING) as lastupdate,
+    CAST(contactpath20 AS STRING) as contactpath20,
+    CAST(contactdebcode AS STRING) as contactdebcode,
+    CAST(activestatus AS INT64) as activestatus,
+    CAST(lineidcorp AS STRING) as lineidcorp
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY contactname desc, contactdesc desc) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

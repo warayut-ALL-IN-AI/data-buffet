@@ -1,0 +1,45 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["cpx"],
+    bigquery: {
+        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["cpx"],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["cpx"]
+
+}
+
+SELECT
+    CAST(cpxstkid AS STRING) as cpxstkid,
+    CAST(cpxlinkid AS INT64) as cpxlinkid,
+    CAST(cpxvnosid AS STRING) as cpxvnosid,
+    CAST(cpxdateid AS DATETIME) as cpxdateid,
+    CAST(cpxjob AS STRING) as cpxjob,
+    CAST(cpxdep AS STRING) as cpxdep,
+    CAST(cpxper AS STRING) as cpxper,
+    CAST(cpxdoc AS STRING) as cpxdoc,
+    CAST(cpxmec AS STRING) as cpxmec,
+    CAST(cpxsto AS STRING) as cpxsto,
+    CAST(cpxstkreq AS FLOAT64) as cpxstkreq,
+    CAST(cpxstkcut AS FLOAT64) as cpxstkcut,
+    CAST(cpxclearstk AS INT64) as cpxclearstk,
+    CAST(cpxclearuser AS INT64) as cpxclearuser,
+    CAST(cpxclearall AS INT64) as cpxclearall,
+    CAST(cpxstatus AS INT64) as cpxstatus,
+    CAST(rowguid AS STRING) as rowguid
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY cpxjob desc, cpxdep desc) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

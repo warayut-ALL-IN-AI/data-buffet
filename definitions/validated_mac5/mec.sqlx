@@ -1,0 +1,71 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mec"],
+    bigquery: {
+        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mec"],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mec"]
+
+}
+
+SELECT
+    CAST(meccode AS STRING) as meccode,
+    CAST(meccode AS STRING) as meccode,
+    CAST(mectpl AS INT64) as mectpl,
+    CAST(mectoctype AS INT64) as mectoctype,
+    CAST(mectocode AS STRING) as mectocode,
+    CAST(mect1 AS STRING) as mect1,
+    CAST(mect2 AS STRING) as mect2,
+    CAST(mect3 AS STRING) as mect3,
+    CAST(mect4 AS STRING) as mect4,
+    CAST(mect5 AS STRING) as mect5,
+    CAST(mecd1 AS DATETIME) as mecd1,
+    CAST(mecd2 AS DATETIME) as mecd2,
+    CAST(mecd3 AS DATETIME) as mecd3,
+    CAST(meci1 AS INT64) as meci1,
+    CAST(meci2 AS INT64) as meci2,
+    CAST(mecc1 AS FLOAT64) as mecc1,
+    CAST(mecc2 AS FLOAT64) as mecc2,
+    CAST(mecc3 AS FLOAT64) as mecc3,
+    CAST(mecc4 AS FLOAT64) as mecc4,
+    CAST(mecc5 AS FLOAT64) as mecc5,
+    CAST(mecm1 AS STRING) as mecm1,
+    CAST(mecm2 AS STRING) as mecm2,
+    CAST(mecm3 AS STRING) as mecm3,
+    CAST(mecm4 AS STRING) as mecm4,
+    CAST(mecm5 AS STRING) as mecm5,
+    CAST(mecm6 AS STRING) as mecm6,
+    CAST(mecm7 AS STRING) as mecm7,
+    CAST(mecm8 AS STRING) as mecm8,
+    CAST(mecm9 AS STRING) as mecm9,
+    CAST(mecdesc AS STRING) as mecdesc,
+    CAST(mechide AS INT64) as mechide,
+    CAST(meclock AS INT64) as meclock,
+    CAST(meceditlk AS DATETIME) as meceditlk,
+    CAST(mecrefwe AS STRING) as mecrefwe,
+    CAST(mecsortn AS STRING) as mecsortn,
+    CAST(mect6 AS STRING) as mect6,
+    CAST(mect7 AS STRING) as mect7,
+    CAST(mect8 AS STRING) as mect8,
+    CAST(mect9 AS STRING) as mect9,
+    CAST(mect10 AS STRING) as mect10,
+    CAST(meceditdt AS DATETIME) as meceditdt,
+    CAST(meceditmf AS STRING) as meceditmf,
+    CAST(rowguid AS STRING) as rowguid
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY mecdesc desc) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

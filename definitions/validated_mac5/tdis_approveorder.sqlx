@@ -1,0 +1,34 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tdis_approveorder"],
+    bigquery: {
+        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tdis_approveorder"],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tdis_approveorder"]
+
+}
+
+SELECT
+    CAST(id AS INT64) as id,
+    CAST(preorder AS STRING) as preorder,
+    CAST(orderno AS STRING) as orderno,
+    CAST(userkey AS STRING) as userkey,
+    CAST(userapprove AS STRING) as userapprove,
+    CAST(datetime AS DATETIME) as datetime
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY preorder desc, orderno desc) = 1
+
+  -- pre_operations {}
+  -- post_operations {}
