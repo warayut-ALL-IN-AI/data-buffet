@@ -1,7 +1,7 @@
 config {
     type: "incremental",
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU,
-    dependencies: [],
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU]],
     tags: [databuffet.TAG_VALIDATED],
     uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MASTERSKU]["product_category"],
     bigquery: {

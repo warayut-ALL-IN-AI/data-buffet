@@ -1,0 +1,6 @@
+config {
+    type: "operations",
+    tags: [databuffet.TAG_VALIDATED],
+}
+
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MAC5}` OPTIONS(location="${databuffet.REGION}") ;
