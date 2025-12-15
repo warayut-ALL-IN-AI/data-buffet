@@ -1,0 +1,54 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_MASTERSKU_SCHEMA,
+    // dependencies: [],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys["MASTERSKU"]["vendor"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: [...databuffet.primaryKeys["MASTERSKU"]["vendor"]],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_MASTERSKU_SCHEMA
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys["MASTERSKU"]["vendor"]
+
+}
+
+SELECT
+  CAST(vd_id AS STRING) AS vd_id,
+  CAST(vd_api_id AS STRING) AS vd_api_id,
+  CAST(vd_code AS STRING) AS vd_code,
+  CAST(vd_name AS STRING) AS vd_name,
+  CAST(vd_coporate_no AS STRING) AS vd_coporate_no,
+  CAST(vd_tel AS STRING) AS vd_tel,
+  CAST(vd_country_name AS STRING) AS vd_country_name,
+  CAST(vd_province_name AS STRING) AS vd_province_name,
+  CAST(vd_district_name AS STRING) AS vd_district_name,
+  CAST(vd_sub_district_name AS STRING) AS vd_sub_district_name,
+  CAST(vd_zipcode AS STRING) AS vd_zipcode,
+  CAST(vd_email AS STRING) AS vd_email,
+  CAST(vd_address AS STRING) AS vd_address,
+  CAST(vd_organize_name AS STRING) AS vd_organize_name,
+  CAST(vd_business_type_name AS STRING) AS vd_business_type_name,
+  CAST(vd_document_id AS STRING) AS vd_document_id,
+  CAST(vd_document_path AS STRING) AS vd_document_path,
+  CAST(vd_is_dbd AS BOOL) AS vd_is_dbd,
+  CAST(vd_account_type AS STRING) AS vd_account_type,
+  CAST(vd_kyc_status AS STRING) AS vd_kyc_status,
+  CAST(vd_is_active AS BOOL) AS vd_is_active,
+  CAST(vd_is_use AS BOOL) AS vd_is_use,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(vd_created_date, 1, 19)) AS vd_created_date,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(vd_updated_date, 1, 19)) AS vd_updated_date,
+  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

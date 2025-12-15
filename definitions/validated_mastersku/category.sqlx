@@ -1,0 +1,48 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_MASTERSKU_SCHEMA,
+    // dependencies: [],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys["MASTERSKU"]["category"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: [...databuffet.primaryKeys["MASTERSKU"]["category"]],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_MASTERSKU_SCHEMA
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys["MASTERSKU"]["category"]
+
+}
+
+SELECT
+  CAST(cat_id AS STRING) AS cat_id,
+  CAST(cat_code AS STRING) AS cat_code,
+  CAST(cat_name AS STRING) AS cat_name,
+  CAST(cat_d365_code AS STRING) AS cat_d365_code,
+  CAST(cat_description AS STRING) AS cat_description,
+  CAST(cat_tag AS STRING) AS cat_tag,
+  CAST(cat_parent_id AS STRING) AS cat_parent_id,
+  CAST(cat_level AS INT64) AS cat_level,
+  CAST(cat_img_name AS STRING) AS cat_img_name,
+  CAST(cat_img_path AS STRING) AS cat_img_path,
+  CAST(cat_vendor_id AS STRING) AS cat_vendor_id,
+  CAST(cat_is_active AS BOOL) AS cat_is_active,
+  CAST(cat_is_use AS BOOL) AS cat_is_use,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cat_created_date, 1, 19)) AS cat_created_date,
+  CAST(cat_created_by AS STRING) AS cat_created_by,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cat_updated_date, 1, 19)) AS cat_updated_date,
+  CAST(cat_updated_by AS STRING) AS cat_updated_by,
+  CAST(cat_specific_field AS STRING) AS cat_specific_field,
+  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

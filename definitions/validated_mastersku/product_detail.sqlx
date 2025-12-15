@@ -1,0 +1,80 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_MASTERSKU_SCHEMA,
+    // dependencies: [],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys["MASTERSKU"]["product_detail"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: [...databuffet.primaryKeys["MASTERSKU"]["product_detail"]],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_MASTERSKU_SCHEMA
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys["MASTERSKU"]["product_detail"]
+
+}
+
+SELECT
+  CAST(pd_id AS STRING) AS pd_id,
+  CAST(pd_prd_id AS STRING) AS pd_prd_id,
+  CAST(pd_url_video AS STRING) AS pd_url_video,
+  CAST(pd_detail AS STRING) AS pd_detail,
+  CAST(pd_series AS STRING) AS pd_series,
+  CAST(pd_model AS STRING) AS pd_model,
+  CAST(pd_material AS STRING) AS pd_material,
+  CAST(pd_certificate AS STRING) AS pd_certificate,
+  CAST(pd_garantee AS STRING) AS pd_garantee,
+  CAST(pd_garantee_detail AS STRING) AS pd_garantee_detail,
+  CAST(pd_shape AS STRING) AS pd_shape,
+  CAST(pd_supplier_country AS STRING) AS pd_supplier_country,
+  CAST(pd_package_wide AS FLOAT64) AS pd_package_wide,
+  CAST(pd_package_long AS FLOAT64) AS pd_package_long,
+  CAST(pd_package_hight AS FLOAT64) AS pd_package_hight,
+  CAST(pd_size_wide AS FLOAT64) AS pd_size_wide,
+  CAST(pd_size_long AS FLOAT64) AS pd_size_long,
+  CAST(pd_sl_id AS STRING) AS pd_sl_id,
+  CAST(pd_size_hight AS FLOAT64) AS pd_size_hight,
+  CAST(pd_sh_id AS STRING) AS pd_sh_id,
+  CAST(pd_net_weight AS FLOAT64) AS pd_net_weight,
+  CAST(pd_gross_weight AS FLOAT64) AS pd_gross_weight,
+  CAST(pd_uw_id AS STRING) AS pd_uw_id,
+  CAST(pd_ul_id AS STRING) AS pd_ul_id,
+  CAST(pd_uh_id AS STRING) AS pd_uh_id,
+  CAST(pd_sw_id AS STRING) AS pd_sw_id,
+  CAST(pd_net_unit_id AS STRING) AS pd_net_unit_id,
+  CAST(pd_gross_unit_id AS STRING) AS pd_gross_unit_id,
+  CAST(pd_how_to AS STRING) AS pd_how_to,
+  CAST(pd_how_to_url AS STRING) AS pd_how_to_url,
+  CAST(pd_how_to_path AS STRING) AS pd_how_to_path,
+  CAST(pd_suggest AS STRING) AS pd_suggest,
+  CAST(pd_suggest_url AS STRING) AS pd_suggest_url,
+  CAST(pd_suggest_path AS STRING) AS pd_suggest_path,
+  CAST(pd_caution AS STRING) AS pd_caution,
+  CAST(pd_caution_url AS STRING) AS pd_caution_url,
+  CAST(pd_caution_path AS STRING) AS pd_caution_path,
+  CAST(pd_file_name AS STRING) AS pd_file_name,
+  CAST(pd_file_path AS STRING) AS pd_file_path,
+  CAST(pd_is_system AS BOOL) AS pd_is_system,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pd_created_date, 1, 19)) AS pd_created_date,
+  CAST(pd_created_by AS STRING) AS pd_created_by,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pd_updated_date, 1, 19)) AS pd_updated_date,
+  CAST(pd_updated_by AS STRING) AS pd_updated_by,
+  CAST(pd_product_name AS STRING) AS pd_product_name,
+  CAST(pd_vendor_code AS STRING) AS pd_vendor_code,
+  CAST(pd_barcode AS STRING) AS pd_barcode,
+  CAST(pd_sale_unit AS STRING) AS pd_sale_unit,
+  CAST(pd_spacific_fields AS STRING) AS pd_spacific_fields,
+  CAST(pd_remark_inactive AS STRING) AS pd_remark_inactive,
+  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

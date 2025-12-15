@@ -1,0 +1,57 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_MASTERSKU_SCHEMA,
+    // dependencies: [],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys["MASTERSKU"]["product_group"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: [...databuffet.primaryKeys["MASTERSKU"]["product_group"]],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_MASTERSKU_SCHEMA
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys["MASTERSKU"]["product_group"]
+
+}
+
+SELECT
+  CAST(pg_id AS STRING) AS pg_id,
+  CAST(pg_description AS STRING) AS pg_description,
+  CAST(pg_dimension1 AS STRING) AS pg_dimension1,
+  CAST(pg_dimension2 AS STRING) AS pg_dimension2,
+  CAST(pg_dimension3 AS STRING) AS pg_dimension3,
+  CAST(pg_dimension4 AS STRING) AS pg_dimension4,
+  CAST(pg_dimension_d365_1 AS STRING) AS pg_dimension_d365_1,
+  CAST(pg_dimension_d365_2 AS STRING) AS pg_dimension_d365_2,
+  CAST(pg_dimension_d365_3 AS STRING) AS pg_dimension_d365_3,
+  CAST(pg_dimension_d365_4 AS STRING) AS pg_dimension_d365_4,
+  CAST(pg_vendor_id AS STRING) AS pg_vendor_id,
+  CAST(pg_is_system AS BOOL) AS pg_is_system,
+  CAST(pg_is_active AS BOOL) AS pg_is_active,
+  CAST(pg_is_use AS BOOL) AS pg_is_use,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pg_created_date, 1, 19)) AS pg_created_date,
+  CAST(pg_created_by AS STRING) AS pg_created_by,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pg_updated_date, 1, 19)) AS pg_updated_date,
+  CAST(pg_updated_by AS STRING) AS pg_updated_by,
+  CAST(pg_brand_id AS STRING) AS pg_brand_id,
+  CAST(pg_code AS STRING) AS pg_code,
+  CAST(pg_name AS STRING) AS pg_name,
+  CAST(pg_sku AS STRING) AS pg_sku,
+  CAST(pg_barcode AS STRING) AS pg_barcode,
+  CAST(pg_er_source AS STRING) AS pg_er_source,
+  CAST(pg_tag AS STRING) AS pg_tag,
+  CAST(pg_file_name AS STRING) AS pg_file_name,
+  CAST(pg_cg_id AS STRING) AS pg_cg_id,
+  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1
+
+  -- pre_operations {}
+  -- post_operations {}

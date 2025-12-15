@@ -1,0 +1,4 @@
+workflow_settings.yaml
+node_modules/
+AI/
+.claude/
