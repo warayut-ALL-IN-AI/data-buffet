@@ -1,20 +1,20 @@
 config {
     type: "incremental",
-    schema: databuffet.VALIDATED_MASTERSKU_SCHEMA,
-    // dependencies: [],
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU,
+    dependencies: [],
     tags: [databuffet.TAG_VALIDATED],
-    uniqueKey: databuffet.primaryKeys["MASTERSKU"]["vendor"],
+    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MASTERSKU]["vendor"],
     bigquery: {
         partitionBy: "asatdate",
-        clusterBy: [...databuffet.primaryKeys["MASTERSKU"]["vendor"]],
+        clusterBy: [...databuffet.primaryKeys[databuffet.SOURCE_MASTERSKU]["vendor"]],
     },
 }
 
 js {
     const project_id = databuffet.DATABASE
-    const dataset_id = databuffet.RAW_MASTERSKU_SCHEMA
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU
     const table_id = name()
-    const pk_key = databuffet.primaryKeys["MASTERSKU"]["vendor"]
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MASTERSKU]["vendor"]
 
 }
 
@@ -47,6 +47,8 @@ SELECT
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`
+WHERE
+  ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)
 QUALIFY
   ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1
 

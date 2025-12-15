@@ -1,5 +1,5 @@
 {
-    "MASTERSKU": {
+    "mastersku": {
         "product": ["prd_id"],
         "product_detail": ["pd_id"],
         "category": ["cat_id"],
@@ -9,7 +9,7 @@
         "vendor": ["vd_id"],
         "product_category": ["pc_id"]
     },
-    "MAC5": {
+    "mac5": {
         "ap_s": ["ap_scode"]
     }
 }   

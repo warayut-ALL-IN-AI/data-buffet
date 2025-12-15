@@ -3,7 +3,7 @@ config {
   tags: [databuffet.TAG_INITIAL],
 }
 
-CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU_SCHEMA}` OPTIONS(location="${databuffet.REGION}")
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}` OPTIONS(location="${databuffet.REGION}")
 ;
 
 -- [18/87] Folder: brand
@@ -14,7 +14,7 @@ CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU_S
 -- Sample file: brand/ASATDATE=20251203/brand_20251203_000.avro
 
 -- External Table with ASATDATE Partition for: brand
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU_SCHEMA}.brand`
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.brand`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -36,7 +36,7 @@ OPTIONS (
 -- Sample file: category/ASATDATE=20251203/category_20251203_000.avro
 
 -- External Table with ASATDATE Partition for: category
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU_SCHEMA}.category`
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.category`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -58,7 +58,7 @@ OPTIONS (
 -- Sample file: product/ASATDATE=20251201/product_20251201_000.avro
 
 -- External Table with ASATDATE Partition for: product
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU_SCHEMA}.product`
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -80,7 +80,7 @@ OPTIONS (
 -- Sample file: product_category/ASATDATE=20251203/product_category_20251203_000.avro
 
 -- External Table with ASATDATE Partition for: product_category
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU_SCHEMA}.product_category`
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_category`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -102,7 +102,7 @@ OPTIONS (
 -- Sample file: product_detail/ASATDATE=20251202/product_detail_20251202_000.avro
 
 -- External Table with ASATDATE Partition for: product_detail
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU_SCHEMA}.product_detail`
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_detail`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -124,7 +124,7 @@ OPTIONS (
 -- Sample file: product_group/ASATDATE=20251203/product_group_20251203_000.avro
 
 -- External Table with ASATDATE Partition for: product_group
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU_SCHEMA}.product_group`
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -146,7 +146,7 @@ OPTIONS (
 -- Sample file: product_group_cost_group/ASATDATE=20251203/product_group_cost_group_20251203_000.avro
 
 -- External Table with ASATDATE Partition for: product_group_cost_group
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU_SCHEMA}.product_group_cost_group`
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group_cost_group`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -168,7 +168,7 @@ OPTIONS (
 -- Sample file: vendor/ASATDATE=20251203/vendor_20251203_000.avro
 
 -- External Table with ASATDATE Partition for: vendor
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU_SCHEMA}.vendor`
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.vendor`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
