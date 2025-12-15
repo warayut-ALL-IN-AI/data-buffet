@@ -1,6 +1,12 @@
 {
     "MASTERSKU": {
+        "product": ["prd_id"],
+        "product_detail": ["pd_id"],
+        "category": ["cat_id"],
+        "product_group": ["pg_id"],
+        "product_group_cost_group": ["pgcg_id"],
         "brand": ["bra_id"],
-        "product": ["prd_id"]
+        "vendor": ["vd_id"],
+        "product_category": ["pc_id"]
     }
 }
