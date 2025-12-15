@@ -8,5 +8,8 @@
         "brand": ["bra_id"],
         "vendor": ["vd_id"],
         "product_category": ["pc_id"]
+    },
+    "MAC5": {
+        "ap_s": ["ap_scode"]
     }
-}
+}   
