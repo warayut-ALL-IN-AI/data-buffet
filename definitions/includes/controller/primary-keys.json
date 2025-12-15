@@ -1,15 +1,209 @@
 {
     "mastersku": {
-        "product": ["prd_id"],
-        "product_detail": ["pd_id"],
-        "category": ["cat_id"],
-        "product_group": ["pg_id"],
-        "product_group_cost_group": ["pgcg_id"],
-        "brand": ["bra_id"],
-        "vendor": ["vd_id"],
-        "product_category": ["pc_id"]
+        "product": [
+            "prd_id"
+        ],
+        "product_detail": [
+            "pd_id"
+        ],
+        "category": [
+            "cat_id"
+        ],
+        "product_group": [
+            "pg_id"
+        ],
+        "product_group_cost_group": [
+            "pgcg_id"
+        ],
+        "brand": [
+            "bra_id"
+        ],
+        "vendor": [
+            "vd_id"
+        ],
+        "product_category": [
+            "pc_id"
+        ]
     },
     "mac5": {
-        "ap_s": ["ap_scode"]
+        "ap_s": [
+            "ap_scode"
+        ],
+        "apilog": [
+            "logid"
+        ],
+        "ar_s": [
+            "ar_scode"
+        ],
+        "cfs": [
+            "cfsvnosid",
+            "cfsdateid",
+            "cfscusid",
+            "cfstypeid"
+        ],
+        "check_po": [
+            "id"
+        ],
+        "chq": [
+            "chqno",
+            "chqbank",
+            "chqdatec",
+            "chqtag"
+        ],
+        "comboset": [
+            "id"
+        ],
+        "combostk": [
+            "id"
+        ],
+        "cpx": [
+            "cpxstkid",
+            "cpxlinkid",
+            "cpxvnosid",
+            "cpxdateid"
+        ],
+        "cre": [
+            "crecode"
+        ],
+        "deb": [
+            "debcode"
+        ],
+        "dep": [
+            "depcode"
+        ],
+        "detail_qtspread": [
+            "id"
+        ],
+        "doc": [
+            "doccode"
+        ],
+        "log_print_billing": [
+            "id"
+        ],
+        "main_qtspread": [
+            "id"
+        ],
+        "maincontract": [
+            "mcontractid"
+        ],
+        "match_customer": [
+            "id"
+        ],
+        "match_deb_bot_re": [
+            "id"
+        ],
+        "match_product": [
+            "id"
+        ],
+        "mec": [
+            "meccode"
+        ],
+        "mir": [
+            "mirday",
+            "mirmonth",
+            "miryear",
+            "mirtype",
+            "mirvnos",
+            "mircus",
+            "mirlistno"
+        ],
+        "order_from_allkon_m": [
+            "id"
+        ],
+        "pathfilestamper": [
+            "id"
+        ],
+        "per": [
+            "percode"
+        ],
+        "price_product_bot": [
+            "id"
+        ],
+        "pro_ag": [
+            "proagid",
+            "proagstkcode"
+        ],
+        "pro_crc": [
+            "id",
+            "procrcstkcode"
+        ],
+        "pro_re": [
+            "proreid",
+            "prorestkcode"
+        ],
+        "product_bot_re": [
+            "id"
+        ],
+        "product_detail_bot_re": [
+            "id"
+        ],
+        "product_promotion": [
+            "id"
+        ],
+        "qt_spread_to_mih": [
+            "id"
+        ],
+        "sbl": [
+            "sblstk",
+            "sblsto"
+        ],
+        "std": [
+            "stdautono"
+        ],
+        "stf": [
+            "stfcode",
+            "stflist"
+        ],
+        "stg": [
+            "stgcode"
+        ],
+        "stk": [
+            "stkcode"
+        ],
+        "sto": [
+            "stocode"
+        ],
+        "supcontract": [
+            "id"
+        ],
+        "tab": [
+            "tabvnosid",
+            "tabdateid",
+            "tabcusid",
+            "tabtypeid",
+            "tablistno"
+        ],
+        "tbcontact": [
+            "id"
+        ],
+        "tbook_apptype": [
+            "id"
+        ],
+        "tbook_givestk": [
+            "id"
+        ],
+        "tbook_quodetail": [
+            "id"
+        ],
+        "tbook_quotation": [
+            "id"
+        ],
+        "tbpjaddacc": [
+            "id"
+        ],
+        "tdis_approveorder": [
+            "id"
+        ],
+        "tdis_approveqt": [
+            "docno",
+            "stktype"
+        ],
+        "userloginanyprogram": [
+            "id"
+        ],
+        "vmp": [
+            "vmmonth",
+            "vmyear"
+        ]
     }
-}   
+}
