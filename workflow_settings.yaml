@@ -1,0 +1,7 @@
+defaultProject: databuffet-nonprd
+defaultLocation: us-central1
+defaultDataset: dataform
+defaultAssertionDataset: dataform_assertions
+dataformCoreVersion: 3.0.0
+vars:
+    RAW_BUCKET: "gs://file-raw-data"

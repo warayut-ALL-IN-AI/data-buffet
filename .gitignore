@@ -1,4 +1,7 @@
 workflow_settings.yaml
 node_modules/
+<<<<<<< HEAD
 AI/
+=======
+>>>>>>> 8e7a950a5dfc6c180afc9b832276ed49c12ae9e9
 .claude/
