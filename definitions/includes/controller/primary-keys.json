@@ -1,0 +1,6 @@
+{
+    "MASTERSKU": {
+        "brand": ["bra_id"],
+        "product": ["prd_id"]
+    }
+}

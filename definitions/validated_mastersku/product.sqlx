@@ -1,0 +1,77 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_MASTERSKU_SCHEMA,
+    // dependencies: [],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: databuffet.primaryKeys["MASTERSKU"]["product"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: [...databuffet.primaryKeys["MASTERSKU"]["product"]],
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_MASTERSKU_SCHEMA
+    const table_id = "product"
+    const pk_key = databuffet.primaryKeys["MASTERSKU"]["product"]
+
+}
+
+SELECT
+  CAST(prd_id AS STRING) AS prd_id,
+  CAST(prd_sku AS STRING) AS prd_sku,
+  CAST(prd_description AS STRING) AS prd_description,
+  CAST(prd_d365_sku AS STRING) AS prd_d365_sku,
+  CAST(prd_item_text AS STRING) AS prd_item_text,
+  CAST(prd_item_code AS STRING) AS prd_item_code,
+  CAST(prd_stopped_sate AS STRING) AS prd_stopped_sate,
+  CAST(prd_made_to_order AS STRING) AS prd_made_to_order,
+  CAST(prd_sale_unite AS STRING) AS prd_sale_unite,
+  CAST(prd_tag AS STRING) AS prd_tag,
+  CAST(prd_universal_barcode AS STRING) AS prd_universal_barcode,
+  CAST(prd_internal_barcode AS STRING) AS prd_internal_barcode,
+  CAST(prd_cat_id AS STRING) AS prd_cat_id,
+  CAST(prd_filter1 AS STRING) AS prd_filter1,
+  CAST(prd_filter2 AS STRING) AS prd_filter2,
+  CAST(prd_brand_id AS STRING) AS prd_brand_id,
+  CAST(prd_size AS STRING) AS prd_size,
+  CAST(prd_line AS STRING) AS prd_line,
+  CAST(prd_color AS STRING) AS prd_color,
+  CAST(prd_model AS STRING) AS prd_model,
+  CAST(prd_dimension1 AS STRING) AS prd_dimension1,
+  CAST(prd_dimension2 AS STRING) AS prd_dimension2,
+  CAST(prd_dimension3 AS STRING) AS prd_dimension3,
+  CAST(prd_dimension4 AS STRING) AS prd_dimension4,
+  CAST(prd_vendor_id AS STRING) AS prd_vendor_id,
+  CAST(prd_is_active AS BOOL) AS prd_is_active,
+  CAST(prd_is_use AS BOOL) AS prd_is_use,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(prd_created_date, 1, 19)) AS prd_created_date,
+  CAST(prd_created_by AS STRING) AS prd_created_by,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(prd_updated_date, 1, 19)) AS prd_updated_date,
+  CAST(prd_updated_by AS STRING) AS prd_updated_by,
+  CAST(prd_pg_id AS STRING) AS prd_pg_id,
+  CAST(prd_ps_id AS STRING) AS prd_ps_id,
+  CAST(prd_id_source AS STRING) AS prd_id_source,
+  CAST(prd_mc_id AS STRING) AS prd_mc_id,
+  CAST(prd_diminsion_data AS STRING) AS prd_diminsion_data,
+  CAST(prd_pas_id AS STRING) AS prd_pas_id,
+  CAST(prd_barcode AS STRING) AS prd_barcode,
+  CAST(prd_reject_remark AS STRING) AS prd_reject_remark,
+  CAST(prd_ref_mp_id AS STRING) AS prd_ref_mp_id,
+  CAST(prd_is_combo AS BOOL) AS prd_is_combo,
+  CAST(prd_combo_price AS FLOAT64) AS prd_combo_price,
+  CAST(prd_is_time AS BOOL) AS prd_is_time,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(prd_combo_start, 1, 19)) AS prd_combo_start,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(prd_combo_end, 1, 19)) AS prd_combo_end,
+  CAST(prd_total_combo_price AS FLOAT64) AS prd_total_combo_price,
+  CAST(prd_total_cost_combo_price AS FLOAT64) AS prd_total_cost_combo_price,
+  CAST(prd_barcode_format AS STRING) AS prd_barcode_format,
+  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+QUALIFY
+  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1
+  
+  -- pre_operations {}
+  -- post_operations {}

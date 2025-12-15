@@ -1,0 +1,8 @@
+{
+    "TAG_INITIAL": "initial",
+    "TAG_VALIDATED": "validated",
+    "RAW_MAC5__SCHEMA": "raw_mac5",
+    "RAW_MASTERSKU_SCHEMA": "raw_mastersku",
+    "VALIDATED_MAC5_SCHEMA": "validated_mac5",
+    "VALIDATED_MASTERSKU_SCHEMA": "validated_mastersku"
+}
