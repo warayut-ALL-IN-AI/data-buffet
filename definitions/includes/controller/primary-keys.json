@@ -56,6 +56,7 @@
         "combostk": [
             "id"
         ],
+        "cpp": [],
         "cpx": [
             "cpxstkid",
             "cpxlinkid",
@@ -77,6 +78,7 @@
         "doc": [
             "doccode"
         ],
+        "grp": [],
         "log_print_billing": [
             "id"
         ],
@@ -98,6 +100,8 @@
         "mec": [
             "meccode"
         ],
+        "mih_billing": [],
+        "mil_billing": [],
         "mir": [
             "mirday",
             "mirmonth",
@@ -143,6 +147,7 @@
         "qt_spread_to_mih": [
             "id"
         ],
+        "rno": [],
         "sbl": [
             "sblstk",
             "sblsto"
@@ -182,6 +187,8 @@
         "tbook_givestk": [
             "id"
         ],
+        "tbook_payin": [],
+        "tbook_profilecomp": [],
         "tbook_quodetail": [
             "id"
         ],
@@ -198,6 +205,14 @@
             "docno",
             "stktype"
         ],
+        "tdis_mail": [],
+        "tmp_mihstatus": [],
+        "tmp_pdf_ap": [],
+        "tmp_pdf_frasers": [],
+        "tmp_pdf_pruksa": [],
+        "tmp_pdf_qh": [],
+        "tmp_pdf_sansiri": [],
+        "tmp_pdf_supalai": [],
         "userloginanyprogram": [
             "id"
         ],
