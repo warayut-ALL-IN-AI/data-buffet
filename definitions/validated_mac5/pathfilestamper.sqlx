@@ -44,7 +44,7 @@ SELECT
     CAST(pathqtid AS STRING) as pathqtid,
     CAST(note AS STRING) as note,
     PARSE_DATE('%Y-%m-%d', SUBSTR(datepayinadmin, 1, 19)) as datepayinadmin,
-    -- CAST(refpo AS STRING) as refpo
+    CAST(refpo AS STRING) as refpo
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`
