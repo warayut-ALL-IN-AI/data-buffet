@@ -3,11 +3,6 @@ config {
   tags: [databuffet.TAG_INITIAL],
 }
 
--- DROP ALL TABLES IN VALIDATED_MAC5
--- Total tables: 66
--- Generated automatically
-
-
 -- [1/66] Dropping table: ap_s
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MAC5}.ap_s`;
 
@@ -122,10 +117,6 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${da
 
 -- [29/66] Dropping table: per
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MAC5}.per`;
-
-
--- [30/66] Dropping table: price_product_bot
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MAC5}.price_product_bot`;
 
 
 -- [31/66] Dropping table: pro_ag
@@ -270,6 +261,3 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${da
 
 -- [66/66] Dropping table: vmp
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MAC5}.vmp`;
-
-
--- All 66 tables have been dropped from VALIDATED_MAC5

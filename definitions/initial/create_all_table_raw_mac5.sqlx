@@ -1337,20 +1337,3 @@ OPTIONS (
 );
 
 --------------------------------------------------------------------------------
-
--- [87/87] Folder: price_product_bot
--- Table: price_product_bot
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: price_product_bot/price_product_bot.avro
-
--- External Table for: price_product_bot
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.price_product_bot`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/price_product_bot/*.avro']
-);
-
---------------------------------------------------------------------------------
-

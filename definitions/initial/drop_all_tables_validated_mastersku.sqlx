@@ -3,11 +3,6 @@ config {
   tags: [databuffet.TAG_INITIAL],
 }
 
--- DROP ALL TABLES IN VALIDATED_MASTERSKU
--- Total tables: 8
--- Generated automatically
-
-
 -- [1/8] Dropping table: brand
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.brand`;
 
@@ -38,6 +33,3 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${da
 
 -- [8/8] Dropping table: vendor
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.vendor`;
-
-
--- All 8 tables have been dropped from VALIDATED_MASTERSKU
