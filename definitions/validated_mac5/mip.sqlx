@@ -1,0 +1,48 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: [...databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mip"]],
+    bigquery: {
+        clusterBy: []
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mip"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1`;
+        post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+    ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+  CAST(MIPvnos AS STRING) AS mipvnos,
+  CAST(MIPfileno AS INT64) AS mipfileno,
+  CAST(MIPrev AS INT64) AS miprev,
+  CAST(MIPpath AS STRING) AS mippath,
+  CAST(MIPtype AS STRING) AS miptype,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIPcrdate, 1, 19)) AS mipcrdate,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIPupdatedate, 1, 19)) AS mipupdatedate,
+  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
+${partition_statement}
+
+  -- pre_operations {}
+post_operations {
+    ${post_operations_statement}
+}
