@@ -11,16 +11,6 @@ CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${d
 
 
 ------------------------------------ INCREMENT ------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mec`
-WITH PARTITION COLUMNS (
-    ASATDATE STRING 
-)
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/MEC/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/MEC/'
-);
-
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mih`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
@@ -530,5 +520,17 @@ CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/userloginanyprogram/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stk_mkt`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/stk_mkt/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mec`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/MEC/*.avro']
 );
 -------------------------------------- FULL ---------------------------------------
