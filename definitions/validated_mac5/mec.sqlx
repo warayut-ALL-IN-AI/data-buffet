@@ -30,7 +30,6 @@ js {
 
 SELECT
     CAST(meccode AS STRING) as meccode,
-    CAST(meccode AS STRING) as meccode,
     CAST(mectpl AS INT64) as mectpl,
     CAST(mectoctype AS INT64) as mectoctype,
     CAST(mectocode AS STRING) as mectocode,
