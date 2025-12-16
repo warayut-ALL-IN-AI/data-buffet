@@ -4,181 +4,90 @@ config {
   tags: [databuffet.TAG_INITIAL],
 }
 
+------------------------------------- SCHEMA --------------------------------------
 CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}` OPTIONS(location="${databuffet.REGION}")
 ;
+------------------------------------- SCHEMA --------------------------------------
 
--- [18/87] Folder: brand
--- Table: brand
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 1
--- Sample file: brand/ASATDATE=20251203/brand_20251203_000.avro
 
--- External Table with ASATDATE Partition for: brand
+----------------------------------- INCREMENTAL ------------------------------------
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.brand`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/brand/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/brand/'
 );
 
---------------------------------------------------------------------------------
-
--- [19/87] Folder: category
--- Table: category
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 1
--- Sample file: category/ASATDATE=20251203/category_20251203_000.avro
-
--- External Table with ASATDATE Partition for: category
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.category`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/category/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/category/'
 );
 
---------------------------------------------------------------------------------
-
--- [57/87] Folder: product
--- Table: product
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 2
--- Sample file: product/ASATDATE=20251201/product_20251201_000.avro
-
--- External Table with ASATDATE Partition for: product
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/product/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product/'
 );
 
---------------------------------------------------------------------------------
-
--- [59/87] Folder: product_category
--- Table: product_category
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 1
--- Sample file: product_category/ASATDATE=20251203/product_category_20251203_000.avro
-
--- External Table with ASATDATE Partition for: product_category
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_category`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/product_category/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_category/'
 );
 
---------------------------------------------------------------------------------
-
--- [60/87] Folder: product_detail
--- Table: product_detail
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 1
--- Sample file: product_detail/ASATDATE=20251202/product_detail_20251202_000.avro
-
--- External Table with ASATDATE Partition for: product_detail
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_detail`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/product_detail/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_detail/'
 );
 
---------------------------------------------------------------------------------
-
--- [62/87] Folder: product_group
--- Table: product_group
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 1
--- Sample file: product_group/ASATDATE=20251203/product_group_20251203_000.avro
-
--- External Table with ASATDATE Partition for: product_group
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/product_group/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_group/'
 );
 
---------------------------------------------------------------------------------
-
--- [63/87] Folder: product_group_cost_group
--- Table: product_group_cost_group
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 1
--- Sample file: product_group_cost_group/ASATDATE=20251203/product_group_cost_group_20251203_000.avro
-
--- External Table with ASATDATE Partition for: product_group_cost_group
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group_cost_group`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/product_group_cost_group/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_group_cost_group/'
 );
 
---------------------------------------------------------------------------------
-
--- [87/87] Folder: vendor
--- Table: vendor
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 1
--- Sample file: vendor/ASATDATE=20251203/vendor_20251203_000.avro
-
--- External Table with ASATDATE Partition for: vendor
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.vendor`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/vendor/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/vendor/'
 );
-
---------------------------------------------------------------------------------
+----------------------------------- INCREMENTAL ------------------------------------
