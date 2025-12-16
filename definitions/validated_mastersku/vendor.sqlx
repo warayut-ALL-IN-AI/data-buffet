@@ -57,8 +57,7 @@ SELECT
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`
-WHERE
-  ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)
+${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
 ${partition_statement}
 
   -- pre_operations {}
