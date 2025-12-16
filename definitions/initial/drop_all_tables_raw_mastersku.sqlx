@@ -1,0 +1,43 @@
+config {
+  type: "operations",
+  tags: [databuffet.TAG_INITIAL],
+}
+
+-- DROP ALL TABLES IN MASTERSKU
+-- Total tables: 8
+-- Generated automatically
+
+
+-- [1/8] Dropping table: brand
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.brand`;
+
+
+-- [2/8] Dropping table: category
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.category`;
+
+
+-- [3/8] Dropping table: product
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product`;
+
+
+-- [4/8] Dropping table: product_category
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_category`;
+
+
+-- [5/8] Dropping table: product_detail
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_detail`;
+
+
+-- [6/8] Dropping table: product_group
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group`;
+
+
+-- [7/8] Dropping table: product_group_cost_group
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group_cost_group`;
+
+
+-- [8/8] Dropping table: vendor
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.vendor`;
+
+
+-- All 8 tables have been dropped from MASTERSKU

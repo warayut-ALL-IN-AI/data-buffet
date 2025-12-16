@@ -18,7 +18,7 @@ CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${d
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ap_s`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/AP_S/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/AP_S/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ar_s`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/AR_S/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/AR_S/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.doc`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/DOC/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/DOC/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -70,9 +70,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/MEC/*'],
+  uris = ['${databuffet.RAW_BUCKET}/MEC/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/MEC/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/MEC/'
 );
 
 --------------------------------------------------------------------------------
@@ -92,9 +92,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/MIH/*'],
+  uris = ['${databuffet.RAW_BUCKET}/MIH/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/MIH/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/MIH/'
 );
 
 --------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.per`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/PER/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/PER/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -126,7 +126,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.rcv`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/RCV/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/RCV/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.rno`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/RNO/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/RNO/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -158,7 +158,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.sbl`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/SBL/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/SBL/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -174,7 +174,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.std`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/STD/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/STD/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -190,7 +190,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stf`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/STF/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/STF/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -206,7 +206,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stg`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/STG/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/STG/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -222,7 +222,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stk`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/STK/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/STK/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -238,7 +238,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.sto`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/STO/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/STO/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -254,7 +254,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.vmp`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/VMP/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/VMP/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.apilog`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/apilog/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/apilog/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -286,7 +286,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ar_s`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/ar_s/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/ar_s/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -302,7 +302,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cfs`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/cfs/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/cfs/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -318,7 +318,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.check_po`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/check_po/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/check_po/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -334,7 +334,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.chq`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/chq/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/chq/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -350,7 +350,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.comboset`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/comboset/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/comboset/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -366,7 +366,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.combostk`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/combostk/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/combostk/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -382,7 +382,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cpp`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/cpp/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/cpp/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -402,9 +402,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/cps/*'],
+  uris = ['${databuffet.RAW_BUCKET}/cps/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/cps/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/cps/'
 );
 
 --------------------------------------------------------------------------------
@@ -424,9 +424,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/cps_dummy/*'],
+  uris = ['${databuffet.RAW_BUCKET}/cps_dummy/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/cps_dummy/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/cps_dummy/'
 );
 
 --------------------------------------------------------------------------------
@@ -442,7 +442,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cpx`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/cpx/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/cpx/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -458,7 +458,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cre`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/cre/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/cre/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -474,7 +474,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cst`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/cst/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/cst/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -490,7 +490,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.deb`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/deb/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/deb/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -506,7 +506,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.dep`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/dep/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/dep/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -522,7 +522,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.detail_qtspread`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/detail_qtspread/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/detail_qtspread/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -538,7 +538,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.grp`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/grp/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/grp/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -554,7 +554,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.log_print_billing`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/log_print_billing/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/log_print_billing/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -570,7 +570,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.main_qtspread`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/main_qtspread/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/main_qtspread/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -586,7 +586,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.maincontract`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/maincontract/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/maincontract/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -602,7 +602,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.match_customer`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/match_customer/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/match_customer/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -618,7 +618,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.match_deb_bot_re`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/match_deb_bot_re/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/match_deb_bot_re/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -634,7 +634,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.match_product`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/match_product/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/match_product/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -654,9 +654,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/mie/*'],
+  uris = ['${databuffet.RAW_BUCKET}/mie/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/mie/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mie/'
 );
 
 --------------------------------------------------------------------------------
@@ -676,9 +676,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/mie_dummy/*'],
+  uris = ['${databuffet.RAW_BUCKET}/mie_dummy/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/mie_dummy/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mie_dummy/'
 );
 
 --------------------------------------------------------------------------------
@@ -698,9 +698,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/mih2/*'],
+  uris = ['${databuffet.RAW_BUCKET}/mih2/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/mih2/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mih2/'
 );
 
 --------------------------------------------------------------------------------
@@ -716,7 +716,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mih_billing`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/mih_billing/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/mih_billing/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -736,9 +736,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/mih_dummy/*'],
+  uris = ['${databuffet.RAW_BUCKET}/mih_dummy/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/mih_dummy/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mih_dummy/'
 );
 
 --------------------------------------------------------------------------------
@@ -758,9 +758,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/mil/*'],
+  uris = ['${databuffet.RAW_BUCKET}/mil/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/mil/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mil/'
 );
 
 --------------------------------------------------------------------------------
@@ -776,7 +776,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mil_billing`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/mil_billing/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/mil_billing/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -796,9 +796,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/mil_dummy/*'],
+  uris = ['${databuffet.RAW_BUCKET}/mil_dummy/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/mil_dummy/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mil_dummy/'
 );
 
 --------------------------------------------------------------------------------
@@ -814,7 +814,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mip`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/mip/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/mip/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -834,9 +834,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/mir/*'],
+  uris = ['${databuffet.RAW_BUCKET}/mir/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/mir/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mir/'
 );
 
 --------------------------------------------------------------------------------
@@ -852,7 +852,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mkt_per`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/mkt_per/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/mkt_per/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -868,7 +868,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.order_from_allkon_m`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/order_from_allkon_m/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/order_from_allkon_m/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -884,7 +884,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.pathfilestamper`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/pathfilestamper/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/pathfilestamper/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -900,7 +900,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.pro_ag`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/pro_ag/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/pro_ag/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -916,7 +916,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.pro_crc`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/pro_crc/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/pro_crc/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -932,7 +932,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.pro_re`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/pro_re/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/pro_re/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -948,7 +948,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.product_bot_re`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/product_bot_re/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/product_bot_re/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -964,7 +964,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.product_detail_bot_re`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/product_detail_bot_re/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/product_detail_bot_re/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -980,7 +980,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.product_promotion`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/product_promotion/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/product_promotion/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -996,7 +996,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.qt_spread_to_mih`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/qt_spread_to_mih/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/qt_spread_to_mih/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1012,7 +1012,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.supcontract`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/supcontract/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/supcontract/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1028,7 +1028,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tab`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tab/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tab/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1044,7 +1044,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbcontact`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tbcontact/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tbcontact/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1060,7 +1060,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_apptype`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tbook_apptype/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tbook_apptype/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1076,7 +1076,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_givestk`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tbook_givestk/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tbook_givestk/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1092,7 +1092,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_payin`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tbook_payin/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tbook_payin/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1108,7 +1108,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_profilecomp`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tbook_profilecomp/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tbook_profilecomp/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1124,7 +1124,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_quodetail`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tbook_quodetail/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tbook_quodetail/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1140,7 +1140,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_quotation`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tbook_quotation/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tbook_quotation/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1156,7 +1156,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbpjaddacc`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tbpjaddacc/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tbpjaddacc/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1172,7 +1172,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tdis_approveorder`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tdis_approveorder/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tdis_approveorder/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1188,7 +1188,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tdis_approveqt`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tdis_approveqt/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tdis_approveqt/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1204,7 +1204,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tdis_mail`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tdis_mail/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tdis_mail/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1220,7 +1220,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_mihstatus`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tmp_mihstatus/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tmp_mihstatus/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1236,7 +1236,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_ap`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tmp_pdf_ap/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_ap/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1252,7 +1252,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_frasers`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tmp_pdf_frasers/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_frasers/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1268,7 +1268,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_pruksa`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tmp_pdf_pruksa/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_pruksa/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1284,7 +1284,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_qh`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tmp_pdf_qh/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_qh/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1300,7 +1300,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_sansiri`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tmp_pdf_sansiri/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_sansiri/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1316,7 +1316,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_supalai`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/tmp_pdf_supalai/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_supalai/*.avro']
 );
 
 --------------------------------------------------------------------------------
@@ -1332,7 +1332,7 @@ OPTIONS (
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.userloginanyprogram`
 OPTIONS (
   format = 'AVRO',
-  uris = ['gs://${databuffet.RAW_BUCKET}/userloginanyprogram/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/userloginanyprogram/*.avro']
 );
 
 --------------------------------------------------------------------------------
