@@ -15,6 +15,11 @@ js {
     const table_id = name()
     const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["detail_qtspread"]
 
+    // สร้าง partition clause เฉพาะเมื่อมี pk_key
+    const partition_statement = pk_key && pk_key.length > 0
+        ? `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ref_id desc, qtid desc) = 1`
+        : ""
+
 }
 
 SELECT
@@ -38,8 +43,7 @@ SELECT
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`
-QUALIFY
-  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ref_id desc, qtid desc) = 1
+${partition_statement}
 
   -- pre_operations {}
   -- post_operations {}

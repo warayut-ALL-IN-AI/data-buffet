@@ -16,6 +16,11 @@ js {
     const table_id = "product"
     const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MASTERSKU]["product"]
 
+    // สร้าง partition clause เฉพาะเมื่อมี pk_key
+    const partition_statement = pk_key && pk_key.length > 0
+        ? `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1`
+        : ""
+
 }
 
 SELECT
@@ -72,8 +77,7 @@ FROM
   `${project_id}.${dataset_id}.${table_id}`
 WHERE
   ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)
-QUALIFY
-  ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1
+${partition_statement}
   
   -- pre_operations {}
   -- post_operations {}
