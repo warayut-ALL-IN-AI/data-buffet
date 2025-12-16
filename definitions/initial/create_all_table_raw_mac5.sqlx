@@ -4,1336 +4,533 @@ config {
   tags: [databuffet.TAG_INITIAL],
 }
 
+------------------------------------- SCHEMA --------------------------------------
 CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}` OPTIONS(location="${databuffet.REGION}")
 ;
+------------------------------------- SCHEMA --------------------------------------
 
 
--- [1/87] Folder: AP_S
--- Table: ap_s
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: AP_S/AP_S.avro
-
--- External Table for: AP_S
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ap_s`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/AP_S/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [2/87] Folder: AR_S
--- Table: ar_s
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: AR_S/AR_S.avro
-
--- External Table for: AR_S
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ar_s`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/AR_S/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [3/87] Folder: DOC
--- Table: doc
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: DOC/DOC.avro
-
--- External Table for: DOC
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.doc`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/DOC/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [4/87] Folder: MEC
--- Table: mec
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 1
--- Sample file: MEC/ASATDATE=20251119/MEC_MEC.avro
-
--- External Table with ASATDATE Partition for: MEC
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mec`
-WITH PARTITION COLUMNS (
-    ASATDATE STRING 
-)
-OPTIONS (
-  format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['${databuffet.RAW_BUCKET}/MEC/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/MEC/'
-);
-
---------------------------------------------------------------------------------
-
--- [5/87] Folder: MIH
--- Table: mih
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 20
--- Sample file: MIH/ASATDATE=20251119/MIH_20251119_000.avro
-
--- External Table with ASATDATE Partition for: MIH
+------------------------------------ INCREMENT ------------------------------------
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mih`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/MIH/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/MIH/'
 );
 
---------------------------------------------------------------------------------
-
--- [6/87] Folder: PER
--- Table: per
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: PER/PER.avro
-
--- External Table for: PER
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.per`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/PER/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [7/87] Folder: RCV
--- Table: rcv
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: RCV/RCV.avro
-
--- External Table for: RCV
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.rcv`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/RCV/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [8/87] Folder: RNO
--- Table: rno
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: RNO/RNO.avro
-
--- External Table for: RNO
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.rno`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/RNO/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [9/87] Folder: SBL
--- Table: sbl
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: SBL/SBL.avro
-
--- External Table for: SBL
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.sbl`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/SBL/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [10/87] Folder: STD
--- Table: std
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: STD/STD.avro
-
--- External Table for: STD
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.std`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/STD/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [11/87] Folder: STF
--- Table: stf
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: STF/STF.avro
-
--- External Table for: STF
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stf`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/STF/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [12/87] Folder: STG
--- Table: stg
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: STG/STG.avro
-
--- External Table for: STG
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stg`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/STG/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [13/87] Folder: STK
--- Table: stk
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: STK/STK.avro
-
--- External Table for: STK
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stk`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/STK/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [14/87] Folder: STO
--- Table: sto
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: STO/STO.avro
-
--- External Table for: STO
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.sto`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/STO/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [15/87] Folder: VMP
--- Table: vmp
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: VMP/VMP.avro
-
--- External Table for: VMP
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.vmp`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/VMP/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [16/87] Folder: apilog
--- Table: apilog
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: apilog/apilog.avro
-
--- External Table for: apilog
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.apilog`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/apilog/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [17/87] Folder: ar_s
--- Table: ar_s
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: ar_s/ar_s.avro
-
--- External Table for: ar_s
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ar_s`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/ar_s/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [20/87] Folder: cfs
--- Table: cfs
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: cfs/cfs.avro
-
--- External Table for: cfs
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cfs`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/cfs/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [21/87] Folder: check_po
--- Table: check_po
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: check_po/check_po.avro
-
--- External Table for: check_po
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.check_po`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/check_po/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [22/87] Folder: chq
--- Table: chq
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: chq/chq.avro
-
--- External Table for: chq
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.chq`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/chq/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [23/87] Folder: comboset
--- Table: comboset
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: comboset/comboset.avro
-
--- External Table for: comboset
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.comboset`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/comboset/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [24/87] Folder: combostk
--- Table: combostk
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: combostk/combostk.avro
-
--- External Table for: combostk
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.combostk`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/combostk/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [25/87] Folder: cpp
--- Table: cpp
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: cpp/cpp.avro
-
--- External Table for: cpp
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cpp`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/cpp/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [26/87] Folder: cps
--- Table: cps
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 20
--- Sample file: cps/ASATDATE=20251119/cps_20251119_000.avro
-
--- External Table with ASATDATE Partition for: cps
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cps`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/cps/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/cps/'
 );
 
---------------------------------------------------------------------------------
-
--- [27/87] Folder: cps_dummy
--- Table: cps_dummy
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 20
--- Sample file: cps_dummy/ASATDATE=20251119/cps_dummy_20251119_000.avro
-
--- External Table with ASATDATE Partition for: cps_dummy
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cps_dummy`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/cps_dummy/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/cps_dummy/'
 );
 
---------------------------------------------------------------------------------
-
--- [28/87] Folder: cpx
--- Table: cpx
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: cpx/cpx.avro
-
--- External Table for: cpx
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cpx`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/cpx/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [29/87] Folder: cre
--- Table: cre
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: cre/cre.avro
-
--- External Table for: cre
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cre`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/cre/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [30/87] Folder: cst
--- Table: cst
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: cst/cst.avro
-
--- External Table for: cst
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cst`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/cst/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [31/87] Folder: deb
--- Table: deb
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: deb/deb.avro
-
--- External Table for: deb
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.deb`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/deb/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [32/87] Folder: dep
--- Table: dep
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: dep/dep.avro
-
--- External Table for: dep
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.dep`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/dep/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [33/87] Folder: detail_qtspread
--- Table: detail_qtspread
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: detail_qtspread/detail_qtspread.avro
-
--- External Table for: detail_qtspread
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.detail_qtspread`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/detail_qtspread/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [34/87] Folder: grp
--- Table: grp
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: grp/grp.avro
-
--- External Table for: grp
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.grp`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/grp/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [35/87] Folder: log_print_billing
--- Table: log_print_billing
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: log_print_billing/log_print_billing.avro
-
--- External Table for: log_print_billing
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.log_print_billing`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/log_print_billing/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [36/87] Folder: main_qtspread
--- Table: main_qtspread
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: main_qtspread/main_qtspread.avro
-
--- External Table for: main_qtspread
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.main_qtspread`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/main_qtspread/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [37/87] Folder: maincontract
--- Table: maincontract
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: maincontract/maincontract.avro
-
--- External Table for: maincontract
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.maincontract`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/maincontract/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [38/87] Folder: match_customer
--- Table: match_customer
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: match_customer/match_customer.avro
-
--- External Table for: match_customer
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.match_customer`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/match_customer/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [39/87] Folder: match_deb_bot_re
--- Table: match_deb_bot_re
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: match_deb_bot_re/match_deb_bot_re.avro
-
--- External Table for: match_deb_bot_re
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.match_deb_bot_re`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/match_deb_bot_re/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [40/87] Folder: match_product
--- Table: match_product
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: match_product/match_product.avro
-
--- External Table for: match_product
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.match_product`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/match_product/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [41/87] Folder: mie
--- Table: mie
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 20
--- Sample file: mie/ASATDATE=20251119/mie_20251119_000.avro
-
--- External Table with ASATDATE Partition for: mie
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mie`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/mie/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mie/'
 );
 
---------------------------------------------------------------------------------
-
--- [42/87] Folder: mie_dummy
--- Table: mie_dummy
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 20
--- Sample file: mie_dummy/ASATDATE=20251119/mie_dummy_20251119_000.avro
-
--- External Table with ASATDATE Partition for: mie_dummy
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mie_dummy`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/mie_dummy/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mie_dummy/'
 );
 
---------------------------------------------------------------------------------
-
--- [43/87] Folder: mih2
--- Table: mih2
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 20
--- Sample file: mih2/ASATDATE=20251112/mih2_mih2.avro
-
--- External Table with ASATDATE Partition for: mih2
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mih2`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/mih2/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mih2/'
 );
 
---------------------------------------------------------------------------------
-
--- [44/87] Folder: mih_billing
--- Table: mih_billing
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: mih_billing/mih_billing.avro
-
--- External Table for: mih_billing
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mih_billing`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mih_billing/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [45/87] Folder: mih_dummy
--- Table: mih_dummy
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 20
--- Sample file: mih_dummy/ASATDATE=20251119/mih_dummy_20251119_000.avro
-
--- External Table with ASATDATE Partition for: mih_dummy
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mih_dummy`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/mih_dummy/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mih_dummy/'
 );
 
---------------------------------------------------------------------------------
-
--- [46/87] Folder: mil
--- Table: mil
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 21
--- Sample file: mil/ASATDATE=20251118/mil_20251118_000.avro
-
--- External Table with ASATDATE Partition for: mil
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mil`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/mil/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mil/'
 );
 
---------------------------------------------------------------------------------
-
--- [47/87] Folder: mil_billing
--- Table: mil_billing
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: mil_billing/mil_billing.avro
-
--- External Table for: mil_billing
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mil_billing`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mil_billing/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [48/87] Folder: mil_dummy
--- Table: mil_dummy
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 20
--- Sample file: mil_dummy/ASATDATE=20251119/mil_dummy_20251119_000.avro
-
--- External Table with ASATDATE Partition for: mil_dummy
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mil_dummy`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/mil_dummy/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mil_dummy/'
 );
 
---------------------------------------------------------------------------------
-
--- [49/87] Folder: mip
--- Table: mip
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: mip/mip.avro
-
--- External Table for: mip
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mip`
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mip/*.avro']
-);
-
---------------------------------------------------------------------------------
-
--- [50/87] Folder: mir
--- Table: mir
--- Type: WITH ASATDATE PARTITION
--- Format: AVRO
--- Subfolders: 5
--- Sample file: mir/ASATDATE=20251204/mir_20251204_000.avro
-
--- External Table with ASATDATE Partition for: mir
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mir`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
 OPTIONS (
   format = 'AVRO',
-  -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
   uris = ['${databuffet.RAW_BUCKET}/mir/*'],
-  -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mir/'
 );
+------------------------------------ INCREMENT ------------------------------------
 
---------------------------------------------------------------------------------
 
--- [51/87] Folder: mkt_per
--- Table: mkt_per
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: mkt_per/mkt_per.avro
+-------------------------------------- FULL ---------------------------------------
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ap_s`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/AP_S/*.avro']
+);
 
--- External Table for: mkt_per
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ar_s`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/AR_S/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.doc`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/DOC/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.per`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/PER/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.rcv`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/RCV/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.rno`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/RNO/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.sbl`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/SBL/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.std`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/STD/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stf`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/STF/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stg`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/STG/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stk`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/STK/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.sto`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/STO/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.vmp`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/VMP/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.apilog`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/apilog/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ar_s`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/ar_s/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cfs`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/cfs/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.check_po`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/check_po/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.chq`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/chq/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.comboset`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/comboset/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.combostk`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/combostk/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cpp`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/cpp/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cpx`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/cpx/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cre`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/cre/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cst`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/cst/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.deb`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/deb/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.dep`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/dep/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.detail_qtspread`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/detail_qtspread/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.grp`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/grp/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.log_print_billing`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/log_print_billing/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.main_qtspread`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/main_qtspread/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.maincontract`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/maincontract/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.match_customer`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/match_customer/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.match_deb_bot_re`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/match_deb_bot_re/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.match_product`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/match_product/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mih_billing`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/mih_billing/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mil_billing`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/mil_billing/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mip`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/mip/*.avro']
+);
+
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mkt_per`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/mkt_per/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [52/87] Folder: order_from_allkon_m
--- Table: order_from_allkon_m
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: order_from_allkon_m/order_from_allkon_m.avro
-
--- External Table for: order_from_allkon_m
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.order_from_allkon_m`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/order_from_allkon_m/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [53/87] Folder: pathfilestamper
--- Table: pathfilestamper
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: pathfilestamper/pathfilestamper.avro
-
--- External Table for: pathfilestamper
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.pathfilestamper`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/pathfilestamper/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [54/87] Folder: pro_ag
--- Table: pro_ag
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: pro_ag/pro_ag.avro
-
--- External Table for: pro_ag
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.pro_ag`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/pro_ag/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [55/87] Folder: pro_crc
--- Table: pro_crc
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: pro_crc/pro_crc.avro
-
--- External Table for: pro_crc
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.pro_crc`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/pro_crc/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [56/87] Folder: pro_re
--- Table: pro_re
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: pro_re/pro_re.avro
-
--- External Table for: pro_re
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.pro_re`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/pro_re/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [58/87] Folder: product_bot_re
--- Table: product_bot_re
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: product_bot_re/product_bot_re.avro
-
--- External Table for: product_bot_re
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.product_bot_re`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/product_bot_re/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [61/87] Folder: product_detail_bot_re
--- Table: product_detail_bot_re
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: product_detail_bot_re/product_detail_bot_re.avro
-
--- External Table for: product_detail_bot_re
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.product_detail_bot_re`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/product_detail_bot_re/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [64/87] Folder: product_promotion
--- Table: product_promotion
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: product_promotion/product_promotion.avro
-
--- External Table for: product_promotion
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.product_promotion`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/product_promotion/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [65/87] Folder: qt_spread_to_mih
--- Table: qt_spread_to_mih
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: qt_spread_to_mih/qt_spread_to_mih.avro
-
--- External Table for: qt_spread_to_mih
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.qt_spread_to_mih`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/qt_spread_to_mih/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [66/87] Folder: supcontract
--- Table: supcontract
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: supcontract/supcontract.avro
-
--- External Table for: supcontract
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.supcontract`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/supcontract/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [67/87] Folder: tab
--- Table: tab
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tab/tab.avro
-
--- External Table for: tab
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tab`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tab/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [68/87] Folder: tbcontact
--- Table: tbcontact
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tbcontact/tbcontact.avro
-
--- External Table for: tbcontact
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbcontact`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tbcontact/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [69/87] Folder: tbook_apptype
--- Table: tbook_apptype
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tbook_apptype/tbook_apptype.avro
-
--- External Table for: tbook_apptype
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_apptype`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tbook_apptype/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [70/87] Folder: tbook_givestk
--- Table: tbook_givestk
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tbook_givestk/tbook_givestk.avro
-
--- External Table for: tbook_givestk
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_givestk`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tbook_givestk/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [71/87] Folder: tbook_payin
--- Table: tbook_payin
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tbook_payin/tbook_payin.avro
-
--- External Table for: tbook_payin
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_payin`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tbook_payin/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [72/87] Folder: tbook_profilecomp
--- Table: tbook_profilecomp
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tbook_profilecomp/tbook_profilecomp.avro
-
--- External Table for: tbook_profilecomp
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_profilecomp`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tbook_profilecomp/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [73/87] Folder: tbook_quodetail
--- Table: tbook_quodetail
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tbook_quodetail/tbook_quodetail.avro
-
--- External Table for: tbook_quodetail
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_quodetail`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tbook_quodetail/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [74/87] Folder: tbook_quotation
--- Table: tbook_quotation
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tbook_quotation/tbook_quotation.avro
-
--- External Table for: tbook_quotation
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_quotation`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tbook_quotation/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [75/87] Folder: tbpjaddacc
--- Table: tbpjaddacc
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tbpjaddacc/tbpjaddacc.avro
-
--- External Table for: tbpjaddacc
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbpjaddacc`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tbpjaddacc/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [76/87] Folder: tdis_approveorder
--- Table: tdis_approveorder
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tdis_approveorder/tdis_approveorder.avro
-
--- External Table for: tdis_approveorder
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tdis_approveorder`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tdis_approveorder/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [77/87] Folder: tdis_approveqt
--- Table: tdis_approveqt
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tdis_approveqt/tdis_approveqt.avro
-
--- External Table for: tdis_approveqt
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tdis_approveqt`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tdis_approveqt/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [78/87] Folder: tdis_mail
--- Table: tdis_mail
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tdis_mail/tdis_mail.avro
-
--- External Table for: tdis_mail
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tdis_mail`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tdis_mail/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [79/87] Folder: tmp_mihstatus
--- Table: tmp_mihstatus
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tmp_mihstatus/tmp_mihstatus.avro
-
--- External Table for: tmp_mihstatus
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_mihstatus`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tmp_mihstatus/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [80/87] Folder: tmp_pdf_ap
--- Table: tmp_pdf_ap
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tmp_pdf_ap/tmp_pdf_ap.avro
-
--- External Table for: tmp_pdf_ap
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_ap`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_ap/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [81/87] Folder: tmp_pdf_frasers
--- Table: tmp_pdf_frasers
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tmp_pdf_frasers/tmp_pdf_frasers.avro
-
--- External Table for: tmp_pdf_frasers
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_frasers`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_frasers/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [82/87] Folder: tmp_pdf_pruksa
--- Table: tmp_pdf_pruksa
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tmp_pdf_pruksa/tmp_pdf_pruksa.avro
-
--- External Table for: tmp_pdf_pruksa
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_pruksa`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_pruksa/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [83/87] Folder: tmp_pdf_qh
--- Table: tmp_pdf_qh
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tmp_pdf_qh/tmp_pdf_qh.avro
-
--- External Table for: tmp_pdf_qh
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_qh`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_qh/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [84/87] Folder: tmp_pdf_sansiri
--- Table: tmp_pdf_sansiri
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tmp_pdf_sansiri/tmp_pdf_sansiri.avro
-
--- External Table for: tmp_pdf_sansiri
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_sansiri`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_sansiri/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [85/87] Folder: tmp_pdf_supalai
--- Table: tmp_pdf_supalai
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: tmp_pdf_supalai/tmp_pdf_supalai.avro
-
--- External Table for: tmp_pdf_supalai
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_supalai`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_supalai/*.avro']
 );
 
---------------------------------------------------------------------------------
-
--- [86/87] Folder: userloginanyprogram
--- Table: userloginanyprogram
--- Type: NO PARTITION
--- Format: AVRO
--- Subfolders: 0
--- Sample file: userloginanyprogram/userloginanyprogram.avro
-
--- External Table for: userloginanyprogram
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.userloginanyprogram`
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/userloginanyprogram/*.avro']
 );
 
---------------------------------------------------------------------------------
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stk_mkt`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/stk_mkt/*.avro']
+);
+
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mec`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/MEC/*.avro']
+);
+-------------------------------------- FULL ---------------------------------------

@@ -26,6 +26,9 @@
         ]
     },
     "mac5": {
+        "stk_mkt": [
+            "stkcode"
+        ],
         "ap_s": [
             "ap_scode"
         ],
