@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
     dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
     tags: [databuffet.TAG_VALIDATED],
-    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tbcontact"],
+    uniqueKey: [...databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tbcontact"]],
     bigquery: {
-        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tbcontact"],
+        clusterBy: []
     },
 }
 
@@ -15,11 +15,17 @@ js {
     const table_id = name()
     const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tbcontact"]
 
-    // สร้าง partition clause เฉพาะเมื่อมี pk_key
-    const partition_statement = pk_key && pk_key.length > 0
-        ? `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY contactname desc, contactdesc desc) = 1`
-        : ""
+    let partition_statement, post_operations_statement;
 
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY contactname desc, contactdesc desc) = 1`;
+        post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+    ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
 }
 
 SELECT
@@ -43,7 +49,7 @@ SELECT
     CAST(contacttel AS STRING) as contacttel,
     CAST(contactmail AS STRING) as contactmail,
     CAST(contacttype AS STRING) as contacttype,
-    CAST(contactbday AS DATE) as contactbday,
+    PARSE_DATE('%Y-%m-%d', SUBSTR(contactbday, 1, 10)) AS contactbday,
     CAST(contactage AS STRING) as contactage,
     CAST(contactbyear AS STRING) as contactbyear,
     CAST(contacthob AS STRING) as contacthob,
@@ -91,4 +97,6 @@ FROM
 ${partition_statement}
 
   -- pre_operations {}
-  -- post_operations {}
+post_operations {
+    ${post_operations_statement}
+}

@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
     dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
     tags: [databuffet.TAG_VALIDATED],
-    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tab"],
+    uniqueKey: [...databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tab"]],
     bigquery: {
-        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tab"],
+        clusterBy: []
     },
 }
 
@@ -15,21 +15,27 @@ js {
     const table_id = name()
     const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["tab"]
 
-    // สร้าง partition clause เฉพาะเมื่อมี pk_key
-    const partition_statement = pk_key && pk_key.length > 0
-        ? `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY tablinktype desc, tablinkvno desc) = 1`
-        : ""
+    let partition_statement, post_operations_statement;
 
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY tablinktype desc, tablinkvno desc) = 1`;
+        post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+    ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
 }
 
 SELECT
     CAST(tabvnosid AS STRING) as tabvnosid,
-    CAST(tabdateid AS DATETIME) as tabdateid,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tabdateid, 1, 19)) AS tabdateid,
     CAST(tabcusid AS STRING) as tabcusid,
     CAST(tabtypeid AS STRING) as tabtypeid,
     CAST(tablinktype AS STRING) as tablinktype,
     CAST(tablinkvno AS STRING) as tablinkvno,
-    CAST(tablinkvdate AS DATETIME) as tablinkvdate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tablinkvdate, 1, 19)) AS tablinkvdate,
     CAST(tablinkvcus AS STRING) as tablinkvcus,
     CAST(tablinkvtype AS STRING) as tablinkvtype,
     CAST(tablinkvid AS INT64) as tablinkvid,
@@ -47,4 +53,6 @@ FROM
 ${partition_statement}
 
   -- pre_operations {}
-  -- post_operations {}
+post_operations {
+    ${post_operations_statement}
+}

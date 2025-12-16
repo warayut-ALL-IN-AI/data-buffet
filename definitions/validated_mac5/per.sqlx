@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
     dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
     tags: [databuffet.TAG_VALIDATED],
-    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["per"],
+    uniqueKey: [...databuffet.primaryKeys[databuffet.SOURCE_MAC5]["per"]],
     bigquery: {
-        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["per"],
+        clusterBy: []
     },
 }
 
@@ -15,11 +15,17 @@ js {
     const table_id = name()
     const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["per"]
 
-    // สร้าง partition clause เฉพาะเมื่อมี pk_key
-    const partition_statement = pk_key && pk_key.length > 0
-        ? `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY pernamet desc, pernamee desc) = 1`
-        : ""
+    let partition_statement, post_operations_statement;
 
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY pernamet desc, pernamee desc) = 1`;
+        post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+    ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
 }
 
 SELECT
@@ -28,9 +34,9 @@ SELECT
     CAST(pertaxnos AS STRING) as pertaxnos,
     CAST(pernamet AS STRING) as pernamet,
     CAST(pernamee AS STRING) as pernamee,
-    CAST(perbdate AS DATETIME) as perbdate,
-    CAST(perworks AS DATETIME) as perworks,
-    CAST(perworkf AS DATETIME) as perworkf,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19)) AS perbdate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19)) AS perworks,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19)) AS perworkf,
     CAST(peradd1 AS STRING) as peradd1,
     CAST(peradd2 AS STRING) as peradd2,
     CAST(peradd3 AS STRING) as peradd3,
@@ -44,9 +50,9 @@ SELECT
     CAST(perhide AS INT64) as perhide,
     CAST(perlock AS INT64) as perlock,
     CAST(permemo AS STRING) as permemo,
-    CAST(pereditlk AS DATETIME) as pereditlk,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19)) AS pereditlk,
     CAST(perrefwe AS STRING) as perrefwe,
-    CAST(pereditdt AS DATETIME) as pereditdt,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
     CAST(pereditmf AS STRING) as pereditmf,
     CAST(rowguid AS STRING) as rowguid,
     CAST(perzone AS STRING) as perzone
@@ -56,4 +62,6 @@ FROM
 ${partition_statement}
 
   -- pre_operations {}
-  -- post_operations {}
+post_operations {
+    ${post_operations_statement}
+}

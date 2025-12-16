@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
     dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
     tags: [databuffet.TAG_VALIDATED],
-    uniqueKey: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mih_billing"],
+    uniqueKey: [...databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mih_billing"]],
     bigquery: {
-        clusterBy: databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mih_billing"],
+        clusterBy: []
     },
 }
 
@@ -15,11 +15,17 @@ js {
     const table_id = name()
     const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mih_billing"]
 
-    // สร้าง partition clause เฉพาะเมื่อมี pk_key
-    const partition_statement = pk_key && pk_key.length > 0
-        ? `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY mihdesc desc) = 1`
-        : ""
+    let partition_statement, post_operations_statement;
 
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY mihdesc desc) = 1`;
+        post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+    ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
 }
 
 SELECT
@@ -44,7 +50,7 @@ SELECT
     CAST(mihdischt1 AS STRING) as mihdischt1,
     CAST(mihdischt2 AS STRING) as mihdischt2,
     CAST(mihdelvsite AS STRING) as mihdelvsite,
-    CAST(mihdelvdate AS DATETIME) as mihdelvdate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihdelvdate, 1, 19)) AS mihdelvdate,
     CAST(mihstanding AS INT64) as mihstanding,
     CAST(mihlinkgl AS INT64) as mihlinkgl,
     CAST(mihnouplink AS INT64) as mihnouplink,
@@ -70,29 +76,29 @@ SELECT
     CAST(mihextracut AS INT64) as mihextracut,
     CAST(mihextramem AS STRING) as mihextramem,
     CAST(mihrecno AS STRING) as mihrecno,
-    CAST(mihrecdate AS DATETIME) as mihrecdate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihrecdate, 1, 19)) AS mihrecdate,
     CAST(mihsavetag AS STRING) as mihsavetag,
     CAST(mihkeyuser AS STRING) as mihkeyuser,
-    CAST(mihkeydate AS DATETIME) as mihkeydate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihkeydate, 1, 19)) AS mihkeydate,
     CAST(mihdocrunno AS STRING) as mihdocrunno,
-    CAST(mihdategl AS DATETIME) as mihdategl,
-    CAST(mihduepo AS DATETIME) as mihduepo,
-    CAST(miheditlk AS DATETIME) as miheditlk,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihdategl, 1, 19)) AS mihdategl,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihduepo, 1, 19)) AS mihduepo,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(miheditlk, 1, 19)) AS miheditlk,
     CAST(mihiscf AS INT64) as mihiscf,
     CAST(mihissp AS INT64) as mihissp,
-    CAST(mihdates1 AS DATETIME) as mihdates1,
-    CAST(mihdates2 AS DATETIME) as mihdates2,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihdates1, 1, 19)) AS mihdates1,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihdates2, 1, 19)) AS mihdates2,
     CAST(mihnumsi AS INT64) as mihnumsi,
     CAST(mihnumsc AS FLOAT64) as mihnumsc,
     CAST(mihvatpc AS FLOAT64) as mihvatpc,
     CAST(mihincluded AS INT64) as mihincluded,
     CAST(mihtaxvnos AS STRING) as mihtaxvnos,
-    CAST(mihtaxdate AS DATETIME) as mihtaxdate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihtaxdate, 1, 19)) AS mihtaxdate,
     CAST(mihtaxsum AS FLOAT64) as mihtaxsum,
     CAST(mihload AS INT64) as mihload,
-    CAST(mihpaiddate AS DATETIME) as mihpaiddate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihpaiddate, 1, 19)) AS mihpaiddate,
     CAST(mihbookordernum AS STRING) as mihbookordernum,
-    CAST(mihsenddate AS DATETIME) as mihsenddate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihsenddate, 1, 19)) AS mihsenddate,
     CAST(mihbl AS INT64) as mihbl,
     CAST(mihrpv AS INT64) as mihrpv,
     CAST(mihclearcut AS INT64) as mihclearcut,
@@ -106,4 +112,6 @@ FROM
 ${partition_statement}
 
   -- pre_operations {}
-  -- post_operations {}
+post_operations {
+    ${post_operations_statement}
+}
