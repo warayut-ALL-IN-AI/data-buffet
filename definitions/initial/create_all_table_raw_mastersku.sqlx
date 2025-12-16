@@ -21,9 +21,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/brand/*'],
+  uris = ['${databuffet.RAW_BUCKET}/brand/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/brand/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/brand/'
 );
 
 --------------------------------------------------------------------------------
@@ -43,9 +43,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/category/*'],
+  uris = ['${databuffet.RAW_BUCKET}/category/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/category/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/category/'
 );
 
 --------------------------------------------------------------------------------
@@ -65,9 +65,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/product/*'],
+  uris = ['${databuffet.RAW_BUCKET}/product/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/product/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product/'
 );
 
 --------------------------------------------------------------------------------
@@ -87,9 +87,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/product_category/*'],
+  uris = ['${databuffet.RAW_BUCKET}/product_category/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/product_category/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_category/'
 );
 
 --------------------------------------------------------------------------------
@@ -109,9 +109,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/product_detail/*'],
+  uris = ['${databuffet.RAW_BUCKET}/product_detail/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/product_detail/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_detail/'
 );
 
 --------------------------------------------------------------------------------
@@ -131,9 +131,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/product_group/*'],
+  uris = ['${databuffet.RAW_BUCKET}/product_group/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/product_group/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_group/'
 );
 
 --------------------------------------------------------------------------------
@@ -153,9 +153,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/product_group_cost_group/*'],
+  uris = ['${databuffet.RAW_BUCKET}/product_group_cost_group/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/product_group_cost_group/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_group_cost_group/'
 );
 
 --------------------------------------------------------------------------------
@@ -175,9 +175,9 @@ WITH PARTITION COLUMNS (
 OPTIONS (
   format = 'AVRO',
   -- ใส่ * เพื่อให้อ่านทุกโฟลเดอร์ย่อย (BigQuery จะอ่านไฟล์ทั้งหมดใน partition folders อัตโนมัติ)
-  uris = ['gs://${databuffet.RAW_BUCKET}/vendor/*'],
+  uris = ['${databuffet.RAW_BUCKET}/vendor/*'],
   -- ระบุ prefix เพื่อให้ BigQuery รู้ว่า Partition เริ่มต้นตรงไหน
-  hive_partition_uri_prefix = 'gs://${databuffet.RAW_BUCKET}/vendor/'
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/vendor/'
 );
 
 --------------------------------------------------------------------------------
