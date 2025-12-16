@@ -1,5 +1,6 @@
 config {
   type: "operations",
+  dependencies: ["drop_all_tables_raw_mastersku"],
   tags: [databuffet.TAG_INITIAL],
 }
 
