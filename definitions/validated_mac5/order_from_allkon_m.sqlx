@@ -49,7 +49,9 @@ FROM
   `${project_id}.${dataset_id}.${table_id}`
 ${partition_statement}
 
-  -- pre_operations {}
+pre_operations {
+}
+
 post_operations {
-    ${post_operations_statement}
+    ${ when(!incremental(), post_operations_statement) }
 }

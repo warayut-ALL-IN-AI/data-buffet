@@ -93,7 +93,9 @@ FROM
 ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
 ${partition_statement}
 
-  -- pre_operations {}
+pre_operations {
+}
+
 post_operations {
-    ${post_operations_statement}
+    ${ when(!incremental(), post_operations_statement) }
 }
