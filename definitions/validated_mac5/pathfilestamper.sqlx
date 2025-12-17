@@ -2,7 +2,7 @@ config {
     type: "table",
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
     dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
-    tags: [databuffet.TAG_VALIDATED],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_FULL],
     uniqueKey: [...databuffet.primaryKeys[databuffet.SOURCE_MAC5]["pathfilestamper"]],
     bigquery: {
         clusterBy: []
