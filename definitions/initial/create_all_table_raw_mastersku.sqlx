@@ -5,12 +5,13 @@ config {
 }
 
 ------------------------------------- SCHEMA --------------------------------------
-CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}` OPTIONS(location="${databuffet.REGION}")
-;
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}` OPTIONS(location="${databuffet.REGION}");
 ------------------------------------- SCHEMA --------------------------------------
 
 
 ----------------------------------- INCREMENTAL ------------------------------------
+-- Table: brand
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.brand`;
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.brand`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
@@ -21,6 +22,8 @@ OPTIONS (
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/brand/'
 );
 
+-- Table: category
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.category`;
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.category`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
@@ -31,6 +34,8 @@ OPTIONS (
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/category/'
 );
 
+-- Table: product
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product`;
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
@@ -41,6 +46,8 @@ OPTIONS (
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product/'
 );
 
+-- Table: product_category
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_category`;
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_category`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
@@ -51,6 +58,8 @@ OPTIONS (
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_category/'
 );
 
+-- Table: product_detail
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_detail`;
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_detail`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
@@ -61,6 +70,8 @@ OPTIONS (
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_detail/'
 );
 
+-- Table: product_group
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group`;
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
@@ -71,6 +82,8 @@ OPTIONS (
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_group/'
 );
 
+-- Table: product_group_cost_group
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group_cost_group`;
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group_cost_group`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
@@ -81,6 +94,8 @@ OPTIONS (
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_group_cost_group/'
 );
 
+-- Table: vendor
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.vendor`;
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.vendor`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 

@@ -2,7 +2,7 @@ config {
     type: "incremental",
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU,
     dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU]],
-    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_INCREMENTAL],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
     uniqueKey: [...databuffet.primaryKeys[databuffet.SOURCE_MASTERSKU]["vendor"]],
     bigquery: {
         clusterBy: []
