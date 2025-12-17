@@ -18,8 +18,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/RCV/*.avro'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/RCV/'
+  uris = ['${databuffet.RAW_BUCKET}/rcv/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/rcv/'
 );
 
 -- Table: cst
