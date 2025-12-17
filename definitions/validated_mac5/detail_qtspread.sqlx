@@ -18,7 +18,7 @@ js {
     let partition_statement, post_operations_statement;
 
     if (pk_key && pk_key.length > 0) {
-        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ref_id desc, qtid desc) = 1`;
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY dupdate desc) = 1`;
         post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
     ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
 
@@ -39,8 +39,8 @@ SELECT
     CAST(total AS STRING) as total,
     CAST(uinsert AS STRING) as uinsert,
     CAST(uupdate AS STRING) as uupdate,
-    CAST(dinsert AS STRING) as dinsert,
-    CAST(dupdate AS STRING) as dupdate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19)) as dinsert,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19)) as dupdate,
     CAST(status AS STRING) as status,
     CAST(link AS STRING) as link,
     CAST(type AS STRING) as type,

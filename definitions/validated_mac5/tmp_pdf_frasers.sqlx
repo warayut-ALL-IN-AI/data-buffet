@@ -74,7 +74,7 @@ SELECT
     CAST(delvname AS STRING) as delvname,
     CAST(delvtel AS STRING) as delvtel,
     CAST(credit AS STRING) as credit,
-    CAST(dinsert AS STRING) as dinsert
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19)) as dinsert
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

@@ -18,7 +18,7 @@ js {
     let partition_statement, post_operations_statement;
 
     if (pk_key && pk_key.length > 0) {
-        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY dateinsert desc, status desc) = 1`;
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY dateinsert desc) = 1`;
         post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
     ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
 
