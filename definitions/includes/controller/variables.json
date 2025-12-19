@@ -8,5 +8,8 @@
     "VALIDATED_SCHEMA": "validated",
 
     "SOURCE_MAC5": "mac5",
-    "SOURCE_MASTERSKU": "mastersku"
+    "SOURCE_MASTERSKU": "mastersku",
+
+    "GCS_MAC5": "mac5_ag01",
+    "GCS_MASTERSKU": "mastersku"
 }

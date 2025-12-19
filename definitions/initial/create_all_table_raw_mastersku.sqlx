@@ -18,8 +18,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/brand/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/brand/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/brand/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/brand/'
 );
 
 -- Table: category
@@ -30,8 +30,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/category/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/category/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/category/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/category/'
 );
 
 -- Table: product
@@ -42,8 +42,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/product/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product/'
 );
 
 -- Table: product_category
@@ -54,8 +54,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/product_category/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_category/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product_category/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product_category/'
 );
 
 -- Table: product_detail
@@ -66,8 +66,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/product_detail/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_detail/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product_detail/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product_detail/'
 );
 
 -- Table: product_group
@@ -78,8 +78,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/product_group/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_group/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product_group/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product_group/'
 );
 
 -- Table: product_group_cost_group
@@ -90,8 +90,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/product_group_cost_group/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/product_group_cost_group/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product_group_cost_group/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product_group_cost_group/'
 );
 
 -- Table: vendor
@@ -102,7 +102,7 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/vendor/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/vendor/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/vendor/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/vendor/'
 );
 ----------------------------------- INCREMENTAL ------------------------------------

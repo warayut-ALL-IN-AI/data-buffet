@@ -18,8 +18,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/rcv/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/rcv/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/rcv/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/rcv/'
 );
 
 -- Table: cst
@@ -30,8 +30,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/cst/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/cst/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/cst/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/cst/'
 );
 
 -- Table: mih
@@ -42,8 +42,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/MIH/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/MIH/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/MIH/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/MIH/'
 );
 
 -- Table: cps
@@ -54,8 +54,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/cps/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/cps/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/cps/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/cps/'
 );
 
 -- Table: cps_dummy
@@ -66,8 +66,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/cps_dummy/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/cps_dummy/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/cps_dummy/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/cps_dummy/'
 );
 
 -- Table: mie
@@ -78,8 +78,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mie/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mie/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mie/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mie/'
 );
 
 -- Table: mie_dummy
@@ -90,8 +90,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mie_dummy/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mie_dummy/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mie_dummy/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mie_dummy/'
 );
 
 -- Table: mih2
@@ -102,8 +102,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mih2/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mih2/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mih2/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mih2/'
 );
 
 -- Table: mih_dummy
@@ -114,8 +114,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mih_dummy/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mih_dummy/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mih_dummy/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mih_dummy/'
 );
 
 -- Table: mil
@@ -126,8 +126,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mil/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mil/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mil/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mil/'
 );
 
 -- Table: mil_dummy
@@ -138,8 +138,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mil_dummy/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mil_dummy/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mil_dummy/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mil_dummy/'
 );
 
 -- Table: mir
@@ -150,8 +150,8 @@ WITH PARTITION COLUMNS (
 )
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mir/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/mir/'
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mir/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mir/'
 );
 ------------------------------------ INCREMENT ------------------------------------
 
@@ -162,7 +162,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ap_s`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/AP_S/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/AP_S/*.avro']
 );
 
 -- Table: ar_s
@@ -170,7 +170,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ar_s`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/AR_S/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/AR_S/*.avro']
 );
 
 -- Table: doc
@@ -178,7 +178,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.doc`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/DOC/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/DOC/*.avro']
 );
 
 -- Table: per
@@ -186,7 +186,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.per`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/PER/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/PER/*.avro']
 );
 
 -- Table: rno
@@ -194,7 +194,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.rno`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/RNO/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/RNO/*.avro']
 );
 
 -- Table: sbl
@@ -202,7 +202,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.sbl`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/SBL/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/SBL/*.avro']
 );
 
 -- Table: std
@@ -210,7 +210,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.std`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/STD/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/STD/*.avro']
 );
 
 -- Table: stf
@@ -218,7 +218,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stf`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/STF/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/STF/*.avro']
 );
 
 -- Table: stg
@@ -226,7 +226,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stg`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/STG/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/STG/*.avro']
 );
 
 -- Table: stk
@@ -234,7 +234,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stk`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/STK/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/STK/*.avro']
 );
 
 -- Table: sto
@@ -242,7 +242,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.sto`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/STO/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/STO/*.avro']
 );
 
 -- Table: vmp
@@ -250,7 +250,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.vmp`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/VMP/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/VMP/*.avro']
 );
 
 -- Table: apilog
@@ -258,7 +258,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.apilog`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/apilog/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/apilog/*.avro']
 );
 
 -- Table: ar_s
@@ -266,7 +266,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ar_s`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/ar_s/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/ar_s/*.avro']
 );
 
 -- Table: cfs
@@ -274,7 +274,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cfs`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/cfs/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/cfs/*.avro']
 );
 
 -- Table: check_po
@@ -282,7 +282,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.check_po`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/check_po/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/check_po/*.avro']
 );
 
 -- Table: chq
@@ -290,7 +290,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.chq`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/chq/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/chq/*.avro']
 );
 
 -- Table: comboset
@@ -298,7 +298,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.comboset`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/comboset/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/comboset/*.avro']
 );
 
 -- Table: combostk
@@ -306,7 +306,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.combostk`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/combostk/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/combostk/*.avro']
 );
 
 -- Table: cpp
@@ -314,7 +314,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cpp`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/cpp/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/cpp/*.avro']
 );
 
 -- Table: cpx
@@ -322,7 +322,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cpx`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/cpx/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/cpx/*.avro']
 );
 
 -- Table: cre
@@ -330,7 +330,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.cre`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/cre/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/cre/*.avro']
 );
 
 -- Table: deb
@@ -338,7 +338,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.deb`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/deb/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/deb/*.avro']
 );
 
 -- Table: dep
@@ -346,7 +346,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.dep`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/dep/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/dep/*.avro']
 );
 
 -- Table: detail_qtspread
@@ -354,7 +354,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.detail_qtspread`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/detail_qtspread/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/detail_qtspread/*.avro']
 );
 
 -- Table: grp
@@ -362,7 +362,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.grp`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/grp/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/grp/*.avro']
 );
 
 -- Table: log_print_billing
@@ -370,7 +370,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.log_print_billing`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/log_print_billing/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/log_print_billing/*.avro']
 );
 
 -- Table: main_qtspread
@@ -378,7 +378,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.main_qtspread`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/main_qtspread/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/main_qtspread/*.avro']
 );
 
 -- Table: maincontract
@@ -386,7 +386,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.maincontract`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/maincontract/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/maincontract/*.avro']
 );
 
 -- Table: match_customer
@@ -394,7 +394,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.match_customer`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/match_customer/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/match_customer/*.avro']
 );
 
 -- Table: match_deb_bot_re
@@ -402,7 +402,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.match_deb_bot_re`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/match_deb_bot_re/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/match_deb_bot_re/*.avro']
 );
 
 -- Table: match_product
@@ -410,7 +410,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.match_product`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/match_product/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/match_product/*.avro']
 );
 
 -- Table: mih_billing
@@ -418,7 +418,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mih_billing`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mih_billing/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mih_billing/*.avro']
 );
 
 -- Table: mil_billing
@@ -426,7 +426,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mil_billing`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mil_billing/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mil_billing/*.avro']
 );
 
 -- Table: mip
@@ -434,7 +434,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mip`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mip/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mip/*.avro']
 );
 
 -- Table: mkt_per
@@ -442,7 +442,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mkt_per`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/mkt_per/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/mkt_per/*.avro']
 );
 
 -- Table: order_from_allkon_m
@@ -450,7 +450,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.order_from_allkon_m`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/order_from_allkon_m/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/order_from_allkon_m/*.avro']
 );
 
 -- Table: pathfilestamper
@@ -458,7 +458,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.pathfilestamper`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/pathfilestamper/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/pathfilestamper/*.avro']
 );
 
 -- Table: pro_ag
@@ -466,7 +466,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.pro_ag`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/pro_ag/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/pro_ag/*.avro']
 );
 
 -- Table: pro_crc
@@ -474,7 +474,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.pro_crc`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/pro_crc/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/pro_crc/*.avro']
 );
 
 -- Table: pro_re
@@ -482,7 +482,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.pro_re`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/pro_re/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/pro_re/*.avro']
 );
 
 -- Table: product_bot_re
@@ -490,7 +490,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.product_bot_re`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/product_bot_re/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/product_bot_re/*.avro']
 );
 
 -- Table: product_detail_bot_re
@@ -498,7 +498,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.product_detail_bot_re`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/product_detail_bot_re/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/product_detail_bot_re/*.avro']
 );
 
 -- Table: product_promotion
@@ -506,7 +506,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.product_promotion`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/product_promotion/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/product_promotion/*.avro']
 );
 
 -- Table: qt_spread_to_mih
@@ -514,7 +514,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.qt_spread_to_mih`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/qt_spread_to_mih/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/qt_spread_to_mih/*.avro']
 );
 
 -- Table: supcontract
@@ -522,7 +522,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.supcontract`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/supcontract/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/supcontract/*.avro']
 );
 
 -- Table: tab
@@ -530,7 +530,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tab`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tab/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tab/*.avro']
 );
 
 -- Table: tbcontact
@@ -538,7 +538,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbcontact`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tbcontact/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tbcontact/*.avro']
 );
 
 -- Table: tbook_apptype
@@ -546,7 +546,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_apptype`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tbook_apptype/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tbook_apptype/*.avro']
 );
 
 -- Table: tbook_givestk
@@ -554,7 +554,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_givestk`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tbook_givestk/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tbook_givestk/*.avro']
 );
 
 -- Table: tbook_payin
@@ -562,7 +562,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_payin`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tbook_payin/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tbook_payin/*.avro']
 );
 
 -- Table: tbook_profilecomp
@@ -570,7 +570,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_profilecomp`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tbook_profilecomp/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tbook_profilecomp/*.avro']
 );
 
 -- Table: tbook_quodetail
@@ -578,7 +578,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_quodetail`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tbook_quodetail/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tbook_quodetail/*.avro']
 );
 
 -- Table: tbook_quotation
@@ -586,7 +586,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbook_quotation`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tbook_quotation/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tbook_quotation/*.avro']
 );
 
 -- Table: tbpjaddacc
@@ -594,7 +594,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tbpjaddacc`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tbpjaddacc/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tbpjaddacc/*.avro']
 );
 
 -- Table: tdis_approveorder
@@ -602,7 +602,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tdis_approveorder`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tdis_approveorder/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tdis_approveorder/*.avro']
 );
 
 -- Table: tdis_approveqt
@@ -610,7 +610,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tdis_approveqt`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tdis_approveqt/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tdis_approveqt/*.avro']
 );
 
 -- Table: tdis_mail
@@ -618,7 +618,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tdis_mail`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tdis_mail/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tdis_mail/*.avro']
 );
 
 -- Table: tmp_mihstatus
@@ -626,7 +626,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_mihstatus`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tmp_mihstatus/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tmp_mihstatus/*.avro']
 );
 
 -- Table: tmp_pdf_ap
@@ -634,7 +634,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_ap`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_ap/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tmp_pdf_ap/*.avro']
 );
 
 -- Table: tmp_pdf_frasers
@@ -642,7 +642,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_frasers`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_frasers/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tmp_pdf_frasers/*.avro']
 );
 
 -- Table: tmp_pdf_pruksa
@@ -650,7 +650,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_pruksa`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_pruksa/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tmp_pdf_pruksa/*.avro']
 );
 
 -- Table: tmp_pdf_qh
@@ -658,7 +658,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_qh`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_qh/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tmp_pdf_qh/*.avro']
 );
 
 -- Table: tmp_pdf_sansiri
@@ -666,7 +666,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_sansiri`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_sansiri/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tmp_pdf_sansiri/*.avro']
 );
 
 -- Table: tmp_pdf_supalai
@@ -674,7 +674,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_supalai`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/tmp_pdf_supalai/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tmp_pdf_supalai/*.avro']
 );
 
 -- Table: userloginanyprogram
@@ -682,7 +682,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.userloginanyprogram`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/userloginanyprogram/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/userloginanyprogram/*.avro']
 );
 
 -- Table: stk_mkt
@@ -690,7 +690,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.stk_mkt`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/stk_mkt/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/stk_mkt/*.avro']
 );
 
 -- Table: mec
@@ -698,6 +698,6 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.mec`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/MEC/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/MEC/*.avro']
 );
 -------------------------------------- FULL ---------------------------------------
