@@ -2,7 +2,7 @@ const variables = require("./controller/variables.json")
 const primaryKeys = require("./controller/primary-keys.json")
 const dependencies = require("./controller/dependencies.json")
 
-// Export เป็น module
+
 module.exports = {
     DATABASE: dataform.projectConfig.defaultDatabase,
     RAW_BUCKET: dataform.projectConfig.vars.RAW_BUCKET,

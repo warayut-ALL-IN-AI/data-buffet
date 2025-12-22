@@ -1,0 +1,7 @@
+config {
+    type: "operations",
+    // dependencies: ["drop_all_tables_validated_cis360", "create_all_table_raw_cis360"],
+    tags: [databuffet.TAG_VALIDATED],
+}
+
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_CIS360}` OPTIONS(location="${databuffet.REGION}") ;
