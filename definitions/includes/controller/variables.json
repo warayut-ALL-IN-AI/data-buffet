@@ -1,6 +1,7 @@
 {
     "TAG_INITIAL": "initial",
     "TAG_VALIDATED": "validated",
+    "TAG_CURATE": "curated",
     "TAG_VALIDATED_INCREMENTAL": "validated_incremental",
     "TAG_VALIDATED_FULL": "validated_full",
 

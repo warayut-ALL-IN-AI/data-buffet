@@ -1,0 +1,53 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
+    uniqueKey: [...databuffet.primaryKeys[databuffet.SOURCE_MAC5]["stk_mkt"]],
+    bigquery: {
+        clusterBy: []
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["stk_mkt"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY stkdesct1 DESC) = 1`;
+        post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+    ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+    CAST(TRIM(stkcode) as STRING) as stkcode,
+    CAST(stkgroup as STRING) as stkgroup,
+    CAST(stkdesct1 as STRING) as stkdesct1,
+    CAST(zgroup1 as STRING) as zgroup1,
+    CAST(zgroup2 as STRING) as zgroup2,
+    CAST(zsize as STRING) as zsize,
+    CAST(zcolor as STRING) as zcolor,
+    CAST(zgroup3 as STRING) as zgroup3,
+    CAST(zgroup4 as STRING) as zgroup4,
+    CAST(zgroup5 as STRING) as zgroup5,
+    CAST(zgroup6 as STRING) as zgroup6,
+    CAST(zgroup7 as STRING) as zgroup7
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

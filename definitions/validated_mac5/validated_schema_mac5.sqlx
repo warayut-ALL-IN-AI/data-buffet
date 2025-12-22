@@ -1,7 +1,0 @@
-config {
-    type: "operations",
-  dependencies: ["drop_all_tables_validated_mac5", "create_all_table_raw_mac5"],
-    tags: [databuffet.TAG_VALIDATED],
-}
-
-CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MAC5}` OPTIONS(location="${databuffet.REGION}") ;
