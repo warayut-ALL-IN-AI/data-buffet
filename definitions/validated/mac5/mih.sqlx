@@ -33,7 +33,7 @@ SELECT
   CAST(MIHmonth AS INT64) AS mihmonth,
   CAST(MIHyear AS INT64) AS mihyear,
   CAST(MIHtype AS STRING) AS mihtype,
-  CAST(MIHvnos AS STRING) AS mihvnos,
+  CAST(TRIM(MIHvnos) AS STRING) AS mihvnos,
   CAST(MIHcus AS STRING) AS mihcus,
   CAST(MIHjob AS STRING) AS mihjob,
   CAST(MIHdep AS STRING) AS mihdep,
@@ -64,12 +64,43 @@ SELECT
   CAST(MIHstatus AS INT64) AS mihstatus,
   CAST(MIHclearUM AS INT64) AS mihclearum,
   CAST(MIHctermNO AS INT64) AS mihctermno,
-  CAST(MIHcog AS FLOAT64) AS mihcog,
-  CAST(MIHvatSUM AS FLOAT64) AS mihvatsum,
-  CAST(MIHnetSUM AS FLOAT64) AS mihnetsum,
-  CAST(MIHdiscLST AS FLOAT64) AS mihdisclst,
-  CAST(MIHdiscHF1 AS FLOAT64) AS mihdischf1,
-  CAST(MIHdiscHF2 AS FLOAT64) AS mihdischf2,
+
+  (CASE 
+    WHEN LEFT(CAST(TRIM(MIHvnos) AS STRING), 2) = 'CN' THEN CAST(MIHcog AS FLOAT64) * -1
+    ELSE CAST(MIHcog AS FLOAT64)
+  END) AS mihcog,
+  CAST(MIHcog AS FLOAT64) AS mihcog_raw,
+  
+  (CASE 
+    WHEN LEFT(CAST(TRIM(MIHvnos) AS STRING), 2) = 'CN' THEN CAST(MIHvatSUM AS FLOAT64) * -1
+    ELSE CAST(MIHvatSUM AS FLOAT64)
+  END) AS mihvatsum,
+  CAST(MIHvatSUM AS FLOAT64) AS mihvatsum_raw,
+  
+  (CASE 
+    WHEN LEFT(CAST(TRIM(MIHvnos) AS STRING), 2) = 'CN' THEN CAST(MIHnetSUM AS FLOAT64) * -1
+    ELSE CAST(MIHnetSUM AS FLOAT64)
+  END) AS mihnetsum,
+  CAST(MIHnetSUM AS FLOAT64) AS mihnetsum_raw,
+
+  (CASE 
+    WHEN LEFT(CAST(TRIM(MIHvnos) AS STRING), 2) = 'CN' THEN CAST(MIHdiscLST AS FLOAT64) * -1
+    ELSE CAST(MIHdiscLST AS FLOAT64)
+  END) AS mihdisclst,
+  CAST(MIHdiscLST AS FLOAT64) AS mihdisclst_raw,
+  
+  (CASE 
+    WHEN LEFT(CAST(TRIM(MIHvnos) AS STRING), 2) = 'CN' THEN CAST(MIHdiscHF1 AS FLOAT64) * -1
+    ELSE CAST(MIHdiscHF1 AS FLOAT64)
+  END)AS mihdischf1,
+  CAST(MIHdiscHF1 AS FLOAT64) AS mihdischf1_raw,
+  
+  (CASE 
+    WHEN LEFT(CAST(TRIM(MIHvnos) AS STRING), 2) = 'CN' THEN CAST(MIHdiscHF2 AS FLOAT64) * -1
+    ELSE CAST(MIHdiscHF2 AS FLOAT64)
+  END) AS mihdischf2,
+  CAST(MIHdiscHF2 AS FLOAT64) AS mihdischf2_raw,
+
   CAST(MIHexchg AS FLOAT64) AS mihexchg,
   CAST(MIHextraSUM AS FLOAT64) AS mihextrasum,
   CAST(MIHextraVAT AS FLOAT64) AS mihextravat,

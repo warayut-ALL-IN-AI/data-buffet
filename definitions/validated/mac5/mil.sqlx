@@ -33,7 +33,7 @@ SELECT
   CAST(MILmonth AS INT64) AS milmonth,
   CAST(MILyear AS INT64) AS milyear,
   CAST(MILtype AS STRING) AS miltype,
-  CAST(MILvnos AS STRING) AS milvnos,
+  CAST(TRIM(MILvnos) AS STRING) AS milvnos,
   CAST(MILcus AS STRING) AS milcus,
   CAST(MILstk AS STRING) AS milstk,
   CAST(MILjob AS STRING) AS miljob,
@@ -44,15 +44,48 @@ SELECT
   CAST(MILsto AS STRING) AS milsto,
   CAST(MILstoMT AS STRING) AS milstomt,
   CAST(MILlistNo AS INT64) AS millistno,
-  CAST(MILquan AS FLOAT64) AS milquan,
+
+  (CASE 
+    WHEN LEFT(CAST(TRIM(MILvnos) AS STRING), 2) = 'CN' THEN CAST(MILquan AS FLOAT64) * -1
+    ELSE CAST(MILquan AS FLOAT64) 
+  END) AS milquan,
+  CAST(MILquan AS FLOAT64) AS milquan_raw,
+
   CAST(MILquanP2 AS FLOAT64) AS milquanp2,
-  CAST(MILadisc AS FLOAT64) AS miladisc,
-  CAST(MILcog AS FLOAT64) AS milcog,
+
+  (CASE 
+    WHEN LEFT(CAST(TRIM(MILvnos) AS STRING), 2) = 'CN' THEN CAST(MILadisc AS FLOAT64) * -1
+    ELSE CAST(MILadisc AS FLOAT64)
+  END) AS miladisc,
+  CAST(MILadisc AS FLOAT64) AS miladisc_raw,
+
+  (CASE 
+    WHEN LEFT(CAST(TRIM(MILvnos) AS STRING), 2) = 'CN' THEN CAST(MILcog AS FLOAT64) * -1
+    ELSE CAST(MILcog AS FLOAT64)
+  END) AS milcog,
+  CAST(MILcog AS FLOAT64) AS milcog_raw,
+  
   CAST(MILconv AS FLOAT64) AS milconv,
-  CAST(MILdiscA AS FLOAT64) AS mildisca,
+
+  (CASE 
+    WHEN LEFT(CAST(TRIM(MILvnos) AS STRING), 2) = 'CN' THEN CAST(MILdiscA AS FLOAT64) * -1
+    ELSE CAST(MILdiscA AS FLOAT64)
+  END) AS mildisca,
+  CAST(MILdiscA AS FLOAT64) AS mildisca_raw,
+
   CAST(MILdiscT AS STRING) AS mildisct,
-  CAST(MILvat AS FLOAT64) AS milvat,
-  CAST(MILsum AS FLOAT64) AS milsum,
+  (CASE 
+    WHEN LEFT(CAST(TRIM(MILvnos) AS STRING), 2) = 'CN' THEN CAST(MILvat AS FLOAT64) * -1
+    ELSE CAST(MILvat AS FLOAT64)
+  END) AS milvat,
+  CAST(MILvat AS FLOAT64) AS milvat_raw,
+
+  (CASE 
+    WHEN LEFT(CAST(TRIM(MILvnos) AS STRING), 2) = 'CN' THEN CAST(MILsum AS FLOAT64) * -1
+    ELSE CAST(MILsum AS FLOAT64)
+  END) AS milsum,
+  CAST(MILsum AS FLOAT64) AS milsum_raw,
+
   CAST(MILcut AS INT64) AS milcut,
   CAST(MILstype AS INT64) AS milstype,
   CAST(MILuname AS STRING) AS miluname,
