@@ -32,24 +32,24 @@ SELECT
   CAST(MIHday AS INT64) AS mihday,
   CAST(MIHmonth AS INT64) AS mihmonth,
   CAST(MIHyear AS INT64) AS mihyear,
-  CAST(TRIM(MIHtype) AS STRING) AS mihtype,
-  CAST(TRIM(MIHvnos) AS STRING) AS mihvnos,
-  CAST(TRIM(MIHcus) AS STRING) AS mihcus,
-  CAST(TRIM(MIHjob) AS STRING) AS mihjob,
-  CAST(TRIM(MIHdep) AS STRING) AS mihdep,
-  CAST(TRIM(MIHper) AS STRING) AS mihper,
-  CAST(TRIM(MIHdoc) AS STRING) AS mihdoc,
-  CAST(TRIM(MIHmec) AS STRING) AS mihmec,
-  CAST(TRIM(MIHvatNO) AS STRING) AS mihvatno,
-  CAST(TRIM(MIHdesc) AS STRING) AS mihdesc,
-  CAST(TRIM(MIHmemo) AS STRING) AS mihmemo,
-  CAST(TRIM(MIHnotes) AS STRING) AS mihnotes,
-  CAST(TRIM(MIHref1) AS STRING) AS mihref1,
-  CAST(TRIM(MIHref2) AS STRING) AS mihref2,
-  CAST(TRIM(MIHref3) AS STRING) AS mihref3,
-  CAST(TRIM(MIHdiscHT1) AS STRING) AS mihdischt1,
-  CAST(TRIM(MIHdiscHT2) AS STRING) AS mihdischt2,
-  CAST(TRIM(MIHdelvSite) AS STRING) AS mihdelvsite,
+  NULLIF(CAST(TRIM(MIHtype) AS STRING), '') AS mihtype,
+  NULLIF(CAST(TRIM(MIHvnos) AS STRING), '') AS mihvnos,
+  NULLIF(CAST(TRIM(MIHcus) AS STRING), '') AS mihcus,
+  NULLIF(CAST(TRIM(MIHjob) AS STRING), '') AS mihjob,
+  NULLIF(CAST(TRIM(MIHdep) AS STRING), '') AS mihdep,
+  NULLIF(CAST(TRIM(MIHper) AS STRING), '') AS mihper,
+  NULLIF(CAST(TRIM(MIHdoc) AS STRING), '') AS mihdoc,
+  NULLIF(CAST(TRIM(MIHmec) AS STRING), '') AS mihmec,
+  NULLIF(CAST(TRIM(MIHvatNO) AS STRING), '') AS mihvatno,
+  NULLIF(CAST(TRIM(MIHdesc) AS STRING), '') AS mihdesc,
+  NULLIF(CAST(TRIM(MIHmemo) AS STRING), '') AS mihmemo,
+  NULLIF(CAST(TRIM(MIHnotes) AS STRING), '') AS mihnotes,
+  NULLIF(CAST(TRIM(MIHref1) AS STRING), '') AS mihref1,
+  NULLIF(CAST(TRIM(MIHref2) AS STRING), '') AS mihref2,
+  NULLIF(CAST(TRIM(MIHref3) AS STRING), '') AS mihref3,
+  NULLIF(CAST(TRIM(MIHdiscHT1) AS STRING), '') AS mihdischt1,
+  NULLIF(CAST(TRIM(MIHdiscHT2) AS STRING), '') AS mihdischt2,
+  NULLIF(CAST(TRIM(MIHdelvSite) AS STRING), '') AS mihdelvsite,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdelvDate, 1, 19)) AS mihdelvdate,
   CAST(MIHstanding AS INT64) AS mihstanding,
   CAST(MIHlinkGL AS INT64) AS mihlinkgl,
@@ -66,37 +66,37 @@ SELECT
   CAST(MIHctermNO AS INT64) AS mihctermno,
 
   (CASE 
-    WHEN LEFT(CAST(TRIM(MIHvnos) AS STRING), 2) = 'CN' THEN CAST(MIHcog AS FLOAT64) * -1
+    WHEN LEFT(NULLIF(CAST(TRIM(MIHvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MIHcog AS FLOAT64) * -1
     ELSE CAST(MIHcog AS FLOAT64)
   END) AS mihcog,
   CAST(MIHcog AS FLOAT64) AS mihcog_raw,
   
   (CASE 
-    WHEN LEFT(CAST(TRIM(MIHvnos) AS STRING), 2) = 'CN' THEN CAST(MIHvatSUM AS FLOAT64) * -1
+    WHEN LEFT(NULLIF(CAST(TRIM(MIHvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MIHvatSUM AS FLOAT64) * -1
     ELSE CAST(MIHvatSUM AS FLOAT64)
   END) AS mihvatsum,
   CAST(MIHvatSUM AS FLOAT64) AS mihvatsum_raw,
   
   (CASE 
-    WHEN LEFT(CAST(TRIM(MIHvnos) AS STRING), 2) = 'CN' THEN CAST(MIHnetSUM AS FLOAT64) * -1
+    WHEN LEFT(NULLIF(CAST(TRIM(MIHvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MIHnetSUM AS FLOAT64) * -1
     ELSE CAST(MIHnetSUM AS FLOAT64)
   END) AS mihnetsum,
   CAST(MIHnetSUM AS FLOAT64) AS mihnetsum_raw,
 
   (CASE 
-    WHEN LEFT(CAST(TRIM(MIHvnos) AS STRING), 2) = 'CN' THEN CAST(MIHdiscLST AS FLOAT64) * -1
+    WHEN LEFT(NULLIF(CAST(TRIM(MIHvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MIHdiscLST AS FLOAT64) * -1
     ELSE CAST(MIHdiscLST AS FLOAT64)
   END) AS mihdisclst,
   CAST(MIHdiscLST AS FLOAT64) AS mihdisclst_raw,
   
   (CASE 
-    WHEN LEFT(CAST(TRIM(MIHvnos) AS STRING), 2) = 'CN' THEN CAST(MIHdiscHF1 AS FLOAT64) * -1
+    WHEN LEFT(NULLIF(CAST(TRIM(MIHvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MIHdiscHF1 AS FLOAT64) * -1
     ELSE CAST(MIHdiscHF1 AS FLOAT64)
   END)AS mihdischf1,
   CAST(MIHdiscHF1 AS FLOAT64) AS mihdischf1_raw,
   
   (CASE 
-    WHEN LEFT(CAST(TRIM(MIHvnos) AS STRING), 2) = 'CN' THEN CAST(MIHdiscHF2 AS FLOAT64) * -1
+    WHEN LEFT(NULLIF(CAST(TRIM(MIHvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MIHdiscHF2 AS FLOAT64) * -1
     ELSE CAST(MIHdiscHF2 AS FLOAT64)
   END) AS mihdischf2,
   CAST(MIHdiscHF2 AS FLOAT64) AS mihdischf2_raw,
@@ -105,13 +105,13 @@ SELECT
   CAST(MIHextraSUM AS FLOAT64) AS mihextrasum,
   CAST(MIHextraVAT AS FLOAT64) AS mihextravat,
   CAST(MIHextraCUT AS INT64) AS mihextracut,
-  CAST(TRIM(MIHextraMEM) AS STRING) AS mihextramem,
-  CAST(TRIM(MIHrecNO) AS STRING) AS mihrecno,
+  NULLIF(CAST(TRIM(MIHextraMEM) AS STRING), '') AS mihextramem,
+  NULLIF(CAST(TRIM(MIHrecNO) AS STRING), '') AS mihrecno,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHrecDATE, 1, 19)) AS mihrecdate,
-  CAST(TRIM(MIHsaveTAG) AS STRING) AS mihsavetag,
-  CAST(TRIM(MIHkeyUser) AS STRING) AS mihkeyuser,
+  NULLIF(CAST(TRIM(MIHsaveTAG) AS STRING), '') AS mihsavetag,
+  NULLIF(CAST(TRIM(MIHkeyUser) AS STRING), '') AS mihkeyuser,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHkeyDate, 1, 19)) AS mihkeydate,
-  CAST(TRIM(MIHdocRunNo) AS STRING) AS mihdocrunno,
+  NULLIF(CAST(TRIM(MIHdocRunNo) AS STRING), '') AS mihdocrunno,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateGL, 1, 19)) AS mihdategl,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHduePO, 1, 19)) AS mihduepo,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHeditLK, 1, 19)) AS miheditlk,
@@ -123,18 +123,18 @@ SELECT
   CAST(MIHnumSC AS FLOAT64) AS mihnumsc,
   CAST(MIHvatPC AS FLOAT64) AS mihvatpc,
   CAST(MIHincluded AS INT64) AS mihincluded,
-  CAST(TRIM(MIHtaxvnos) AS STRING) AS mihtaxvnos,
+  NULLIF(CAST(TRIM(MIHtaxvnos) AS STRING), '') AS mihtaxvnos,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHtaxdate, 1, 19)) AS mihtaxdate,
   CAST(MIHtaxsum AS FLOAT64) AS mihtaxsum,
   CAST(MIHload AS INT64) AS mihload,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHpaidDate, 1, 19)) AS mihpaiddate,
-  CAST(TRIM(MIHbookOrderNum) AS STRING) AS mihbookordernum,
+  NULLIF(CAST(TRIM(MIHbookOrderNum) AS STRING), '') AS mihbookordernum,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHsendDate, 1, 19)) AS mihsenddate,
   CAST(MIHbl AS INT64) AS mihbl,
   CAST(MIHrpv AS INT64) AS mihrpv,
   CAST(MIHclearCUT AS INT64) AS mihclearcut,
   CAST(MIHsettleCUT AS INT64) AS mihsettlecut,
-  CAST(TRIM(rowguid) AS STRING) AS rowguid,
+  NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(ModDate, 1, 19)) AS moddate,
   NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'฿[^฿]*฿', '')), '') AS mihmemo_new,
   IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(฿[^฿]*฿)')), '฿00฿') AS memo_extract,

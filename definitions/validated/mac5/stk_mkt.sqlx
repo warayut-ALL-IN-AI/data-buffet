@@ -29,18 +29,18 @@ js {
 }
 
 SELECT
-    CAST(TRIM(stkcode) as STRING) as stkcode,
-    CAST(TRIM(stkgroup) as STRING) as stkgroup,
-    CAST(TRIM(stkdesct1) as STRING) as stkdesct1,
-    CAST(TRIM(zgroup1) as STRING) as zgroup1,
-    CAST(TRIM(zgroup2) as STRING) as zgroup2,
-    CAST(TRIM(zsize) as STRING) as zsize,
-    CAST(TRIM(zcolor) as STRING) as zcolor,
-    CAST(TRIM(zgroup3) as STRING) as zgroup3,
-    CAST(TRIM(zgroup4) as STRING) as zgroup4,
-    CAST(TRIM(zgroup5) as STRING) as zgroup5,
-    CAST(TRIM(zgroup6) as STRING) as zgroup6,
-    CAST(TRIM(zgroup7) as STRING) as zgroup7
+    NULLIF(CAST(TRIM(stkcode) AS STRING), '') as stkcode,
+    NULLIF(CAST(TRIM(stkgroup) AS STRING), '') as stkgroup,
+    NULLIF(CAST(TRIM(stkdesct1) AS STRING), '') as stkdesct1,
+    NULLIF(CAST(TRIM(zgroup1) AS STRING), '') as zgroup1,
+    NULLIF(CAST(TRIM(zgroup2) AS STRING), '') as zgroup2,
+    NULLIF(CAST(TRIM(zsize) AS STRING), '') as zsize,
+    NULLIF(CAST(TRIM(zcolor) AS STRING), '') as zcolor,
+    NULLIF(CAST(TRIM(zgroup3) AS STRING), '') as zgroup3,
+    NULLIF(CAST(TRIM(zgroup4) AS STRING), '') as zgroup4,
+    NULLIF(CAST(TRIM(zgroup5) AS STRING), '') as zgroup5,
+    NULLIF(CAST(TRIM(zgroup6) AS STRING), '') as zgroup6,
+    NULLIF(CAST(TRIM(zgroup7) AS STRING), '') as zgroup7
 FROM
   `${project_id}.${dataset_id}.${table_id}`
 ${partition_statement}

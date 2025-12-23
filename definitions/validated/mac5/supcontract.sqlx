@@ -31,10 +31,10 @@ js {
 SELECT
     CAST(id AS INT64) as id,
     CAST(mcontractid AS INT64) as mcontractid,
-    CAST(TRIM(scontractid) AS STRING) as scontractid,
+    NULLIF(CAST(TRIM(scontractid) AS STRING), '') as scontractid,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dateinsert, 1, 19)) AS dateinsert,
     CAST(status AS INT64) as status,
-    CAST(TRIM(uinsert) AS STRING) as uinsert
+    NULLIF(CAST(TRIM(uinsert) AS STRING), '') as uinsert
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

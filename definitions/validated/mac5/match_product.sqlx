@@ -30,8 +30,8 @@ js {
 
 SELECT
     CAST(id AS INT64) as id,
-    CAST(TRIM(barcode) AS STRING) as barcode,
-    CAST(TRIM(product_id) AS STRING) as product_id,
+    NULLIF(CAST(TRIM(barcode) AS STRING), '') as barcode,
+    NULLIF(CAST(TRIM(product_id) AS STRING), '') as product_id,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) AS create_date
 
 FROM

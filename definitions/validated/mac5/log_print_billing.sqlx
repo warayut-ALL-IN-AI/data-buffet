@@ -30,9 +30,9 @@ js {
 
 SELECT
     CAST(id AS INT64) as id,
-    CAST(TRIM(ref1) AS STRING) as ref1,
-    CAST(TRIM(ref2) AS STRING) as ref2,
-    CAST(TRIM(order_no) AS STRING) as order_no,
+    NULLIF(CAST(TRIM(ref1) AS STRING), '') as ref1,
+    NULLIF(CAST(TRIM(ref2) AS STRING), '') as ref2,
+    NULLIF(CAST(TRIM(order_no) AS STRING), '') as order_no,
     CAST(amount AS FLOAT64) as amount,
     CAST(status AS INT64) as status,
     PARSE_DATE('%Y-%m-%d', SUBSTR(dinsert, 1, 10)) AS dinsert

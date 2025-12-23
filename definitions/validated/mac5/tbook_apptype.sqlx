@@ -30,11 +30,11 @@ js {
 
 SELECT
     CAST(id AS INT64) as id,
-    CAST(TRIM(iddesc) AS STRING) as iddesc,
-    CAST(TRIM(idcode) AS STRING) as idcode,
-    CAST(TRIM(name) AS STRING) as name,
-    CAST(TRIM(dep) AS STRING) as dep,
-    CAST(TRIM(pic) AS STRING) as pic
+    NULLIF(CAST(TRIM(iddesc) AS STRING), '') as iddesc,
+    NULLIF(CAST(TRIM(idcode) AS STRING), '') as idcode,
+    NULLIF(CAST(TRIM(name) AS STRING), '') as name,
+    NULLIF(CAST(TRIM(dep) AS STRING), '') as dep,
+    NULLIF(CAST(TRIM(pic) AS STRING), '') as pic
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

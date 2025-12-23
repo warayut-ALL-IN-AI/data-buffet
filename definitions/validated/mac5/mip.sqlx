@@ -29,11 +29,11 @@ js {
 }
 
 SELECT
-  CAST(TRIM(MIPvnos) AS STRING) AS mipvnos,
+  NULLIF(CAST(TRIM(MIPvnos) AS STRING), '') AS mipvnos,
   CAST(MIPfileno AS INT64) AS mipfileno,
   CAST(MIPrev AS INT64) AS miprev,
-  CAST(TRIM(MIPpath) AS STRING) AS mippath,
-  CAST(TRIM(MIPtype) AS STRING) AS miptype,
+  NULLIF(CAST(TRIM(MIPpath) AS STRING), '') AS mippath,
+  NULLIF(CAST(TRIM(MIPtype) AS STRING), '') AS miptype,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIPcrdate, 1, 19)) AS mipcrdate,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIPupdatedate, 1, 19)) AS mipupdatedate
 FROM

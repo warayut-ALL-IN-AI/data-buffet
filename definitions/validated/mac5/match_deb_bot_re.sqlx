@@ -30,9 +30,9 @@ js {
 
 SELECT
     CAST(id AS INT64) as id,
-    CAST(TRIM(deb_code) AS STRING) as deb_code,
-    CAST(TRIM(vendor_name) AS STRING) as vendor_name,
-    CAST(TRIM(channel) AS STRING) as channel
+    NULLIF(CAST(TRIM(deb_code) AS STRING), '') as deb_code,
+    NULLIF(CAST(TRIM(vendor_name) AS STRING), '') as vendor_name,
+    NULLIF(CAST(TRIM(channel) AS STRING), '') as channel
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

@@ -29,15 +29,15 @@ js {
 }
 
 SELECT
-    CAST(TRIM(depcode) AS STRING) as depcode,
-    CAST(TRIM(depgroup) AS STRING) as depgroup,
-    CAST(TRIM(depdesct) AS STRING) as depdesct,
-    CAST(TRIM(depdesce) AS STRING) as depdesce,
+    NULLIF(CAST(TRIM(depcode) AS STRING), '') as depcode,
+    NULLIF(CAST(TRIM(depgroup) AS STRING), '') as depgroup,
+    NULLIF(CAST(TRIM(depdesct) AS STRING), '') as depdesct,
+    NULLIF(CAST(TRIM(depdesce) AS STRING), '') as depdesce,
     CAST(dephide AS INT64) as dephide,
     CAST(deplock AS INT64) as deplock,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(depeditdt, 1, 19)) AS depeditdt,
-    CAST(TRIM(depeditmf) AS STRING) as depeditmf,
-    CAST(TRIM(rowguid) AS STRING) as rowguid
+    NULLIF(CAST(TRIM(depeditmf) AS STRING), '') as depeditmf,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

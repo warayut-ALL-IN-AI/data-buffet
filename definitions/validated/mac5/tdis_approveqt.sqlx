@@ -29,23 +29,23 @@ js {
 }
 
 SELECT
-    CAST(TRIM(docno) AS STRING) as docno,
-    CAST(TRIM(lv1) AS STRING) as lv1,
-    CAST(TRIM(lv2) AS STRING) as lv2,
-    CAST(TRIM(lv3) AS STRING) as lv3,
-    CAST(TRIM(note1) AS STRING) as note1,
-    CAST(TRIM(note2) AS STRING) as note2,
-    CAST(TRIM(note3) AS STRING) as note3,
-    CAST(TRIM(u1) AS STRING) as u1,
-    CAST(TRIM(u2) AS STRING) as u2,
-    CAST(TRIM(u3) AS STRING) as u3,
-    CAST(TRIM(d1) AS STRING) as d1,
-    CAST(TRIM(d2) AS STRING) as d2,
-    CAST(TRIM(d3) AS STRING) as d3,
-    CAST(TRIM(sendto) AS STRING) as sendto,
-    CAST(TRIM(sendtime) AS STRING) as sendtime,
-    CAST(TRIM(comment) AS STRING) as comment,
-    CAST(TRIM(stktype) AS STRING) as stktype
+    NULLIF(CAST(TRIM(docno) AS STRING), '') as docno,
+    NULLIF(CAST(TRIM(lv1) AS STRING), '') as lv1,
+    NULLIF(CAST(TRIM(lv2) AS STRING), '') as lv2,
+    NULLIF(CAST(TRIM(lv3) AS STRING), '') as lv3,
+    NULLIF(CAST(TRIM(note1) AS STRING), '') as note1,
+    NULLIF(CAST(TRIM(note2) AS STRING), '') as note2,
+    NULLIF(CAST(TRIM(note3) AS STRING), '') as note3,
+    NULLIF(CAST(TRIM(u1) AS STRING), '') as u1,
+    NULLIF(CAST(TRIM(u2) AS STRING), '') as u2,
+    NULLIF(CAST(TRIM(u3) AS STRING), '') as u3,
+    NULLIF(CAST(TRIM(d1) AS STRING), '') as d1,
+    NULLIF(CAST(TRIM(d2) AS STRING), '') as d2,
+    NULLIF(CAST(TRIM(d3) AS STRING), '') as d3,
+    NULLIF(CAST(TRIM(sendto) AS STRING), '') as sendto,
+    NULLIF(CAST(TRIM(sendtime) AS STRING), '') as sendtime,
+    NULLIF(CAST(TRIM(comment) AS STRING), '') as comment,
+    NULLIF(CAST(TRIM(stktype) AS STRING), '') as stktype
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

@@ -29,23 +29,23 @@ js {
 }
 
 SELECT
-    CAST(TRIM(cpxstkid) AS STRING) as cpxstkid,
+    NULLIF(CAST(TRIM(cpxstkid) AS STRING), '') as cpxstkid,
     CAST(cpxlinkid AS INT64) as cpxlinkid,
-    CAST(TRIM(cpxvnosid) AS STRING) as cpxvnosid,
+    NULLIF(CAST(TRIM(cpxvnosid) AS STRING), '') as cpxvnosid,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cpxdateid, 1, 19)) AS cpxdateid,
-    CAST(TRIM(cpxjob) AS STRING) as cpxjob,
-    CAST(TRIM(cpxdep) AS STRING) as cpxdep,
-    CAST(TRIM(cpxper) AS STRING) as cpxper,
-    CAST(TRIM(cpxdoc) AS STRING) as cpxdoc,
-    CAST(TRIM(cpxmec) AS STRING) as cpxmec,
-    CAST(TRIM(cpxsto) AS STRING) as cpxsto,
+    NULLIF(CAST(TRIM(cpxjob) AS STRING), '') as cpxjob,
+    NULLIF(CAST(TRIM(cpxdep) AS STRING), '') as cpxdep,
+    NULLIF(CAST(TRIM(cpxper) AS STRING), '') as cpxper,
+    NULLIF(CAST(TRIM(cpxdoc) AS STRING), '') as cpxdoc,
+    NULLIF(CAST(TRIM(cpxmec) AS STRING), '') as cpxmec,
+    NULLIF(CAST(TRIM(cpxsto) AS STRING), '') as cpxsto,
     CAST(cpxstkreq AS FLOAT64) as cpxstkreq,
     CAST(cpxstkcut AS FLOAT64) as cpxstkcut,
     CAST(cpxclearstk AS INT64) as cpxclearstk,
     CAST(cpxclearuser AS INT64) as cpxclearuser,
     CAST(cpxclearall AS INT64) as cpxclearall,
     CAST(cpxstatus AS INT64) as cpxstatus,
-    CAST(TRIM(rowguid) AS STRING) as rowguid
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

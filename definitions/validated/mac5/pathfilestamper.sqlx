@@ -31,20 +31,20 @@ js {
 SELECT
     CAST(id AS INT64) as id,
     CAST(mainqtid AS INT64) as mainqtid,
-    CAST(TRIM(preorderno) AS STRING) as preorderno,
-    CAST(TRIM(orderno) AS STRING) as orderno,
-    CAST(TRIM(type) AS STRING) as type,
-    CAST(TRIM(path212) AS STRING) as path212,
-    CAST(TRIM(path10acc) AS STRING) as path10acc,
-    CAST(TRIM(path10fac) AS STRING) as path10fac,
-    CAST(TRIM(filename) AS STRING) as filename,
-    CAST(TRIM(uinsert) AS STRING) as uinsert,
-    CAST(TRIM(date) AS STRING) as date,
+    NULLIF(CAST(TRIM(preorderno) AS STRING), '') as preorderno,
+    NULLIF(CAST(TRIM(orderno) AS STRING), '') as orderno,
+    NULLIF(CAST(TRIM(type) AS STRING), '') as type,
+    NULLIF(CAST(TRIM(path212) AS STRING), '') as path212,
+    NULLIF(CAST(TRIM(path10acc) AS STRING), '') as path10acc,
+    NULLIF(CAST(TRIM(path10fac) AS STRING), '') as path10fac,
+    NULLIF(CAST(TRIM(filename) AS STRING), '') as filename,
+    NULLIF(CAST(TRIM(uinsert) AS STRING), '') as uinsert,
+    NULLIF(CAST(TRIM(date) AS STRING), '') as date,
     CAST(status AS INT64) as status,
-    CAST(TRIM(pathqtid) AS STRING) as pathqtid,
-    CAST(TRIM(note) AS STRING) as note,
+    NULLIF(CAST(TRIM(pathqtid) AS STRING), '') as pathqtid,
+    NULLIF(CAST(TRIM(note) AS STRING), '') as note,
     PARSE_DATE('%Y-%m-%d', SUBSTR(datepayinadmin, 1, 19)) as datepayinadmin,
-    CAST(TRIM(refpo) AS STRING) as refpo
+    NULLIF(CAST(TRIM(refpo) AS STRING), '') as refpo
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

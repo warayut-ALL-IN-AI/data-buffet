@@ -29,19 +29,19 @@ js {
 }
 
 SELECT
-    CAST(TRIM(percode) AS STRING) as percode,
-    CAST(TRIM(perdep) AS STRING) as perdep,
-    CAST(TRIM(pertaxnos) AS STRING) as pertaxnos,
-    CAST(TRIM(pernamet) AS STRING) as pernamet,
-    CAST(TRIM(pernamee) AS STRING) as pernamee,
+    NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
+    NULLIF(CAST(TRIM(perdep) AS STRING), '') as perdep,
+    NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
+    NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
+    NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19)) AS perbdate,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19)) AS perworks,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19)) AS perworkf,
-    CAST(TRIM(peradd1) AS STRING) as peradd1,
-    CAST(TRIM(peradd2) AS STRING) as peradd2,
-    CAST(TRIM(peradd3) AS STRING) as peradd3,
-    CAST(TRIM(pertel) AS STRING) as pertel,
-    CAST(TRIM(perpositn) AS STRING) as perpositn,
+    NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
+    NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
+    NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
+    NULLIF(CAST(TRIM(pertel) AS STRING), '') as pertel,
+    NULLIF(CAST(TRIM(perpositn) AS STRING), '') as perpositn,
     CAST(perstatus AS INT64) as perstatus,
     CAST(pernchild AS INT64) as pernchild,
     CAST(percisstudy AS INT64) as percisstudy,
@@ -49,13 +49,13 @@ SELECT
     CAST(persalary AS FLOAT64) as persalary,
     CAST(perhide AS INT64) as perhide,
     CAST(perlock AS INT64) as perlock,
-    CAST(TRIM(permemo) AS STRING) as permemo,
+    NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19)) AS pereditlk,
-    CAST(TRIM(perrefwe) AS STRING) as perrefwe,
+    NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
-    CAST(TRIM(pereditmf) AS STRING) as pereditmf,
-    CAST(TRIM(rowguid) AS STRING) as rowguid,
-    CAST(TRIM(perzone) AS STRING) as perzone
+    NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid,
+    NULLIF(CAST(TRIM(perzone) AS STRING), '') as perzone
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

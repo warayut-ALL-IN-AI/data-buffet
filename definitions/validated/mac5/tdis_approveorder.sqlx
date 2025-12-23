@@ -30,10 +30,10 @@ js {
 
 SELECT
     CAST(id AS INT64) as id,
-    CAST(TRIM(preorder) AS STRING) as preorder,
-    CAST(TRIM(orderno) AS STRING) as orderno,
-    CAST(TRIM(userkey) AS STRING) as userkey,
-    CAST(TRIM(userapprove) AS STRING) as userapprove,
+    NULLIF(CAST(TRIM(preorder) AS STRING), '') as preorder,
+    NULLIF(CAST(TRIM(orderno) AS STRING), '') as orderno,
+    NULLIF(CAST(TRIM(userkey) AS STRING), '') as userkey,
+    NULLIF(CAST(TRIM(userapprove) AS STRING), '') as userapprove,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetime, 1, 19)) AS datetime
 
 FROM

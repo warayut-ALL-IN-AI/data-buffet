@@ -30,7 +30,7 @@ js {
 
 SELECT
     CAST(id AS INT64) as id,
-    CAST(TRIM(combostk) AS STRING) as combostk,
+    NULLIF(CAST(TRIM(combostk) AS STRING), '') as combostk,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(date, 1, 19)) AS date,
     CAST(uinsert AS STRING) as uinsert,
     CAST(uupdate AS STRING) as uupdate,

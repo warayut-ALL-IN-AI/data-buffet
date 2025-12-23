@@ -30,11 +30,11 @@ js {
 
 SELECT
     CAST(rnoid AS INT64) as rnoid,
-    CAST(TRIM(rnoprefix) AS STRING) as rnoprefix,
-    CAST(TRIM(rnoyear) AS STRING) as rnoyear,
-    CAST(TRIM(rnomonth) AS STRING) as rnomonth,
+    NULLIF(CAST(TRIM(rnoprefix) AS STRING), '') as rnoprefix,
+    NULLIF(CAST(TRIM(rnoyear) AS STRING), '') as rnoyear,
+    NULLIF(CAST(TRIM(rnomonth) AS STRING), '') as rnomonth,
     CAST(rnorunning AS INT64) as rnorunning,
-    CAST(TRIM(rnorunno) AS STRING) as rnorunno,
+    NULLIF(CAST(TRIM(rnorunno) AS STRING), '') as rnorunno,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(rnocrdate, 1, 19)) AS rnocrdate,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(rnoupdatedate, 1, 19)) AS rnoupdatedate
 

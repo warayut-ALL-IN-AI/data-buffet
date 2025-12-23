@@ -29,9 +29,9 @@ js {
 }
 
 SELECT
-    CAST(TRIM(mihvnos) AS STRING) as mihvnos,
-    CAST(TRIM(mihstatus) AS STRING) as mihstatus,
-    CAST(TRIM(sdate) AS STRING) as sdate
+    NULLIF(CAST(TRIM(mihvnos) AS STRING), '') as mihvnos,
+    NULLIF(CAST(TRIM(mihstatus) AS STRING), '') as mihstatus,
+    NULLIF(CAST(TRIM(sdate) AS STRING), '') as sdate
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

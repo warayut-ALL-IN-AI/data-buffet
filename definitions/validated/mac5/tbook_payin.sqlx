@@ -29,7 +29,7 @@ js {
 }
 
 SELECT
-    CAST(TRIM(orderno) AS STRING) as orderno,
+    NULLIF(CAST(TRIM(orderno) AS STRING), '') as orderno,
     CAST(status AS INT64) as status,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetime, 1, 19)) AS datetime,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetimeapprove, 1, 19)) AS datetimeapprove

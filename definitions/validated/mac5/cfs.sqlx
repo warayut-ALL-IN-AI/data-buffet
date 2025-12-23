@@ -29,15 +29,15 @@ js {
 }
 
 SELECT
-    CAST(TRIM(cfsvnosid) AS STRING) as cfsvnosid,
+    NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19)) AS cfsdateid,
-    CAST(TRIM(cfscusid) AS STRING) as cfscusid,
-    CAST(TRIM(cfstypeid) AS STRING) as cfstypeid,
-    CAST(TRIM(cfsjob) AS STRING) as cfsjob,
-    CAST(TRIM(cfsdep) AS STRING) as cfsdep,
-    CAST(TRIM(cfsper) AS STRING) as cfsper,
-    CAST(TRIM(cfsdoc) AS STRING) as cfsdoc,
-    CAST(TRIM(cfsmec) AS STRING) as cfsmec,
+    NULLIF(CAST(TRIM(cfscusid) AS STRING), '') as cfscusid,
+    NULLIF(CAST(TRIM(cfstypeid) AS STRING), '') as cfstypeid,
+    NULLIF(CAST(TRIM(cfsjob) AS STRING), '') as cfsjob,
+    NULLIF(CAST(TRIM(cfsdep) AS STRING), '') as cfsdep,
+    NULLIF(CAST(TRIM(cfsper) AS STRING), '') as cfsper,
+    NULLIF(CAST(TRIM(cfsdoc) AS STRING), '') as cfsdoc,
+    NULLIF(CAST(TRIM(cfsmec) AS STRING), '') as cfsmec,
     CAST(cfssumreq AS FLOAT64) as cfssumreq,
     CAST(cfssumcut1 AS FLOAT64) as cfssumcut1,
     CAST(cfssumcut2 AS FLOAT64) as cfssumcut2,
@@ -48,7 +48,7 @@ SELECT
     CAST(cfsexchg AS FLOAT64) as cfsexchg,
     CAST(cfsbillcut AS FLOAT64) as cfsbillcut,
     CAST(cfsbillclr AS INT64) as cfsbillclr,
-    CAST(TRIM(rowguid) AS STRING) as rowguid
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

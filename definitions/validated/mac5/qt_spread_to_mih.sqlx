@@ -31,11 +31,11 @@ js {
 SELECT
     CAST(id AS INT64) as id,
     CAST(qt_spread_ref_id AS INT64) as qt_spread_ref_id,
-    CAST(TRIM(qtid) AS STRING) as qtid,
-    CAST(TRIM(mihvnos) AS STRING) as mihvnos,
+    NULLIF(CAST(TRIM(qtid) AS STRING), '') as qtid,
+    NULLIF(CAST(TRIM(mihvnos) AS STRING), '') as mihvnos,
     CAST(status AS INT64) as status,
     CAST(rdysendtomac5 AS INT64) as rdysendtomac5,
-    CAST(TRIM(sto) AS STRING) as sto
+    NULLIF(CAST(TRIM(sto) AS STRING), '') as sto
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

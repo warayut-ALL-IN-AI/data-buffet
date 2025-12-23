@@ -29,24 +29,24 @@ js {
 }
 
 SELECT
-    CAST(TRIM(tabvnosid) AS STRING) as tabvnosid,
+    NULLIF(CAST(TRIM(tabvnosid) AS STRING), '') as tabvnosid,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tabdateid, 1, 19)) AS tabdateid,
-    CAST(TRIM(tabcusid) AS STRING) as tabcusid,
-    CAST(TRIM(tabtypeid) AS STRING) as tabtypeid,
-    CAST(TRIM(tablinktype) AS STRING) as tablinktype,
-    CAST(TRIM(tablinkvno) AS STRING) as tablinkvno,
+    NULLIF(CAST(TRIM(tabcusid) AS STRING), '') as tabcusid,
+    NULLIF(CAST(TRIM(tabtypeid) AS STRING), '') as tabtypeid,
+    NULLIF(CAST(TRIM(tablinktype) AS STRING), '') as tablinktype,
+    NULLIF(CAST(TRIM(tablinkvno) AS STRING), '') as tablinkvno,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tablinkvdate, 1, 19)) AS tablinkvdate,
-    CAST(TRIM(tablinkvcus) AS STRING) as tablinkvcus,
-    CAST(TRIM(tablinkvtype) AS STRING) as tablinkvtype,
+    NULLIF(CAST(TRIM(tablinkvcus) AS STRING), '') as tablinkvcus,
+    NULLIF(CAST(TRIM(tablinkvtype) AS STRING), '') as tablinkvtype,
     CAST(tablinkvid AS INT64) as tablinkvid,
-    CAST(TRIM(tabstk) AS STRING) as tabstk,
+    NULLIF(CAST(TRIM(tabstk) AS STRING), '') as tabstk,
     CAST(tabquan AS FLOAT64) as tabquan,
     CAST(tabquanp2 AS FLOAT64) as tabquanp2,
     CAST(tabsum AS FLOAT64) as tabsum,
     CAST(tabcurc AS INT64) as tabcurc,
     CAST(tabexchg AS FLOAT64) as tabexchg,
     CAST(tablistno AS INT64) as tablistno,
-    CAST(TRIM(rowguid) AS STRING) as rowguid
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

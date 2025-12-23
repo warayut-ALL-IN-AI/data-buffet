@@ -30,10 +30,10 @@ js {
 
 SELECT
     CAST(grpid AS INT64) as grpid,
-    CAST(TRIM(grpstatus) AS STRING) as grpstatus,
-    CAST(TRIM(grpname) AS STRING) as grpname,
-    CAST(TRIM(grpline) AS STRING) as grpline,
-    CAST(TRIM(rowguid) AS STRING) as rowguid
+    NULLIF(CAST(TRIM(grpstatus) AS STRING), '') as grpstatus,
+    NULLIF(CAST(TRIM(grpname) AS STRING), '') as grpname,
+    NULLIF(CAST(TRIM(grpline) AS STRING), '') as grpline,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

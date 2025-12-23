@@ -30,11 +30,11 @@ js {
 
 SELECT
     CAST(id AS INT64) as id,
-    CAST(TRIM(combostk) AS STRING) as combostk,
-    CAST(TRIM(stkcode) AS STRING) as stkcode,
+    NULLIF(CAST(TRIM(combostk) AS STRING), '') as combostk,
+    NULLIF(CAST(TRIM(stkcode) AS STRING), '') as stkcode,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(date, 1, 19)) AS date,
-    CAST(TRIM(uinsert) AS STRING) as uinsert,
-    CAST(TRIM(uupdate) AS STRING) as uupdate,
+    NULLIF(CAST(TRIM(uinsert) AS STRING), '') as uinsert,
+    NULLIF(CAST(TRIM(uupdate) AS STRING), '') as uupdate,
     CAST(status AS INT64) as status,
     CAST(quantity AS INT64) as quantity,
     CAST(price AS FLOAT64) as price,

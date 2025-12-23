@@ -30,7 +30,7 @@ js {
 
 SELECT
     CAST(id AS INT64) as id,
-    CAST(TRIM(debcode) AS STRING) as debcode
+    NULLIF(CAST(TRIM(debcode) AS STRING), '') as debcode
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

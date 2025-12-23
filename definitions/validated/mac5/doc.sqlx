@@ -29,18 +29,18 @@ js {
 }
 
 SELECT
-    CAST(TRIM(doccode) AS STRING) as doccode,
-    CAST(TRIM(docgroup) AS STRING) as docgroup,
-    CAST(TRIM(docdesct) AS STRING) as docdesct,
-    CAST(TRIM(docdesce) AS STRING) as docdesce,
+    NULLIF(CAST(TRIM(doccode) AS STRING), '') as doccode,
+    NULLIF(CAST(TRIM(docgroup) AS STRING), '') as docgroup,
+    NULLIF(CAST(TRIM(docdesct) AS STRING), '') as docdesct,
+    NULLIF(CAST(TRIM(docdesce) AS STRING), '') as docdesce,
     CAST(doclock AS INT64) as doclock,
-    CAST(TRIM(docacc) AS STRING) as docacc,
+    NULLIF(CAST(TRIM(docacc) AS STRING), '') as docacc,
     CAST(docdebit AS INT64) as docdebit,
-    CAST(TRIM(docrefwe) AS STRING) as docrefwe,
+    NULLIF(CAST(TRIM(docrefwe) AS STRING), '') as docrefwe,
     CAST(dochide AS INT64) as dochide,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(doceditdt, 1, 19)) AS doceditdt,
-    CAST(TRIM(doceditmf) AS STRING) as doceditmf,
-    CAST(TRIM(rowguid) AS STRING) as rowguid
+    NULLIF(CAST(TRIM(doceditmf) AS STRING), '') as doceditmf,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

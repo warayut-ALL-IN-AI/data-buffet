@@ -32,22 +32,22 @@ SELECT
     CAST(mirday AS INT64) as mirday,
     CAST(mirmonth AS INT64) as mirmonth,
     CAST(miryear AS INT64) as miryear,
-    CAST(TRIM(mirtype) AS STRING) as mirtype,
-    CAST(TRIM(mirvnos) AS STRING) as mirvnos,
-    CAST(TRIM(mircus) AS STRING) as mircus,
+    NULLIF(CAST(TRIM(mirtype) AS STRING), '') as mirtype,
+    NULLIF(CAST(TRIM(mirvnos) AS STRING), '') as mirvnos,
+    NULLIF(CAST(TRIM(mircus) AS STRING), '') as mircus,
     CAST(mirlistno AS INT64) as mirlistno,
-    CAST(TRIM(mirbinvno) AS STRING) as mirbinvno,
+    NULLIF(CAST(TRIM(mirbinvno) AS STRING), '') as mirbinvno,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19)) AS mirbinvdate,
-    CAST(TRIM(mirbinvtype) AS STRING) as mirbinvtype,
-    CAST(TRIM(mirdesc) AS STRING) as mirdesc,
+    NULLIF(CAST(TRIM(mirbinvtype) AS STRING), '') as mirbinvtype,
+    NULLIF(CAST(TRIM(mirdesc) AS STRING), '') as mirdesc,
     CAST(mircog AS FLOAT64) as mircog,
     CAST(mirvat AS FLOAT64) as mirvat,
     CAST(mirsum AS FLOAT64) as mirsum,
     CAST(mircurc AS INT64) as mircurc,
     CAST(mirexchg AS FLOAT64) as mirexchg,
     CAST(mirtag AS INT64) as mirtag,
-    CAST(TRIM(mirnotes) AS STRING) as mirnotes,
-    CAST(TRIM(miraccount) AS STRING) as miraccount
+    NULLIF(CAST(TRIM(mirnotes) AS STRING), '') as mirnotes,
+    NULLIF(CAST(TRIM(miraccount) AS STRING), '') as miraccount
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

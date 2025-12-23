@@ -29,14 +29,14 @@ js {
 }
 
 SELECT
-  CAST(TRIM(pgcg_id) AS STRING) AS pgcg_id,
-  CAST(TRIM(pgcg_pg_id) AS STRING) AS pgcg_pg_id,
-  CAST(TRIM(pgcg_cost_group_detail) AS STRING) AS pgcg_cost_group_detail,
+  NULLIF(CAST(TRIM(pgcg_id) AS STRING), '') AS pgcg_id,
+  NULLIF(CAST(TRIM(pgcg_pg_id) AS STRING), '') AS pgcg_pg_id,
+  NULLIF(CAST(TRIM(pgcg_cost_group_detail) AS STRING), '') AS pgcg_cost_group_detail,
   CAST(pgcg_is_use AS BOOL) AS pgcg_is_use,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pgcg_create_date, 1, 19)) AS pgcg_create_date,
-  CAST(TRIM(pgcg_create_by) AS STRING) AS pgcg_create_by,
+  NULLIF(CAST(TRIM(pgcg_create_by) AS STRING), '') AS pgcg_create_by,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pgcg_update_date, 1, 19)) AS pgcg_update_date,
-  CAST(TRIM(pgcg_update_by) AS STRING) AS pgcg_update_by,
+  NULLIF(CAST(TRIM(pgcg_update_by) AS STRING), '') AS pgcg_update_by,
   PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
 
 FROM

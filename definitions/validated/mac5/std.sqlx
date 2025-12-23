@@ -29,14 +29,14 @@ js {
 }
 
 SELECT
-    CAST(TRIM(stdcode) AS STRING) as stdcode,
+    NULLIF(CAST(TRIM(stdcode) AS STRING), '') as stdcode,
     CAST(stdtype AS INT64) as stdtype,
-    CAST(TRIM(stddebtor) AS STRING) as stddebtor,
-    CAST(TRIM(stdstkcode) AS STRING) as stdstkcode,
-    CAST(TRIM(stddesct1) AS STRING) as stddesct1,
-    CAST(TRIM(stddesce1) AS STRING) as stddesce1,
+    NULLIF(CAST(TRIM(stddebtor) AS STRING), '') as stddebtor,
+    NULLIF(CAST(TRIM(stdstkcode) AS STRING), '') as stdstkcode,
+    NULLIF(CAST(TRIM(stddesct1) AS STRING), '') as stddesct1,
+    NULLIF(CAST(TRIM(stddesce1) AS STRING), '') as stddesce1,
     CAST(stdautono AS INT64) as stdautono,
-    CAST(TRIM(rowguid) AS STRING) as rowguid
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

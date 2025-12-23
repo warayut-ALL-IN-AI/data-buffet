@@ -34,8 +34,8 @@ SELECT
     CAST(qtspread_ref_id AS INT64) as qtspread_ref_id,
     CAST(quodeid AS INT64) as quodeid,
     CAST(quolinkdel AS INT64) as quolinkdel,
-    CAST(TRIM(stkcode) AS STRING) as stkcode,
-    CAST(TRIM(stkgive) AS STRING) as stkgive,
+    NULLIF(CAST(TRIM(stkcode) AS STRING), '') as stkcode,
+    NULLIF(CAST(TRIM(stkgive) AS STRING), '') as stkgive,
     CAST(quantity AS INT64) as quantity,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetimekey, 1, 19)) AS datetimekey,
     CAST(status AS INT64) as status
