@@ -29,17 +29,17 @@ js {
 }
 
 SELECT
-  CAST(CPSstkID AS STRING) AS cpsstkid,
+  CAST(TRIM(CPSstkID) AS STRING) AS cpsstkid,
   CAST(CPSlinkID AS INT64) AS cpslinkid,
-  CAST(CPSvnosID AS STRING) AS cpsvnosid,
+  CAST(TRIM(CPSvnosID) AS STRING) AS cpsvnosid,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CPSdateID, 1, 19)) AS cpsdateid,
-  CAST(CPScusID AS STRING) AS cpscusid,
-  CAST(CPSjob AS STRING) AS cpsjob,
-  CAST(CPSdep AS STRING) AS cpsdep,
-  CAST(CPSper AS STRING) AS cpsper,
-  CAST(CPSdoc AS STRING) AS cpsdoc,
-  CAST(CPSmec AS STRING) AS cpsmec,
-  CAST(CPSsto AS STRING) AS cpssto,
+  CAST(TRIM(CPScusID) AS STRING) AS cpscusid,
+  CAST(TRIM(CPSjob) AS STRING) AS cpsjob,
+  CAST(TRIM(CPSdep) AS STRING) AS cpsdep,
+  CAST(TRIM(CPSper) AS STRING) AS cpsper,
+  CAST(TRIM(CPSdoc) AS STRING) AS cpsdoc,
+  CAST(TRIM(CPSmec) AS STRING) AS cpsmec,
+  CAST(TRIM(CPSsto) AS STRING) AS cpssto,
   CAST(CPSstkREQ AS FLOAT64) AS cpsstkreq,
   CAST(CPSstkCUT1 AS FLOAT64) AS cpsstkcut1,
   CAST(CPSstkCUT2 AS FLOAT64) AS cpsstkcut2,
@@ -55,7 +55,7 @@ SELECT
   CAST(CPScut AS INT64) AS cpscut,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CPSdelvDate, 1, 19)) AS cpsdelvdate,
   CAST(CPSlistNo AS INT64) AS cpslistno,
-  CAST(rowguid AS STRING) AS rowguid,
+  CAST(TRIM(rowguid) AS STRING) AS rowguid,
   PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
 FROM
   `${project_id}.${dataset_id}.${table_id}`

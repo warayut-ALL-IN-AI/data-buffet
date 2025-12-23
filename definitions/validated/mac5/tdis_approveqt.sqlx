@@ -29,23 +29,23 @@ js {
 }
 
 SELECT
-    CAST(docno AS STRING) as docno,
-    CAST(lv1 AS STRING) as lv1,
-    CAST(lv2 AS STRING) as lv2,
-    CAST(lv3 AS STRING) as lv3,
-    CAST(note1 AS STRING) as note1,
-    CAST(note2 AS STRING) as note2,
-    CAST(note3 AS STRING) as note3,
-    CAST(u1 AS STRING) as u1,
-    CAST(u2 AS STRING) as u2,
-    CAST(u3 AS STRING) as u3,
-    CAST(d1 AS STRING) as d1,
-    CAST(d2 AS STRING) as d2,
-    CAST(d3 AS STRING) as d3,
-    CAST(sendto AS STRING) as sendto,
-    CAST(sendtime AS STRING) as sendtime,
-    CAST(comment AS STRING) as comment,
-    CAST(stktype AS STRING) as stktype
+    CAST(TRIM(docno) AS STRING) as docno,
+    CAST(TRIM(lv1) AS STRING) as lv1,
+    CAST(TRIM(lv2) AS STRING) as lv2,
+    CAST(TRIM(lv3) AS STRING) as lv3,
+    CAST(TRIM(note1) AS STRING) as note1,
+    CAST(TRIM(note2) AS STRING) as note2,
+    CAST(TRIM(note3) AS STRING) as note3,
+    CAST(TRIM(u1) AS STRING) as u1,
+    CAST(TRIM(u2) AS STRING) as u2,
+    CAST(TRIM(u3) AS STRING) as u3,
+    CAST(TRIM(d1) AS STRING) as d1,
+    CAST(TRIM(d2) AS STRING) as d2,
+    CAST(TRIM(d3) AS STRING) as d3,
+    CAST(TRIM(sendto) AS STRING) as sendto,
+    CAST(TRIM(sendtime) AS STRING) as sendtime,
+    CAST(TRIM(comment) AS STRING) as comment,
+    CAST(TRIM(stktype) AS STRING) as stktype
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

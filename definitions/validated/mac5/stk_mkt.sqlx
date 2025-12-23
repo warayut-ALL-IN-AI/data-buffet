@@ -30,17 +30,17 @@ js {
 
 SELECT
     CAST(TRIM(stkcode) as STRING) as stkcode,
-    CAST(stkgroup as STRING) as stkgroup,
-    CAST(stkdesct1 as STRING) as stkdesct1,
-    CAST(zgroup1 as STRING) as zgroup1,
-    CAST(zgroup2 as STRING) as zgroup2,
-    CAST(zsize as STRING) as zsize,
-    CAST(zcolor as STRING) as zcolor,
-    CAST(zgroup3 as STRING) as zgroup3,
-    CAST(zgroup4 as STRING) as zgroup4,
-    CAST(zgroup5 as STRING) as zgroup5,
-    CAST(zgroup6 as STRING) as zgroup6,
-    CAST(zgroup7 as STRING) as zgroup7
+    CAST(TRIM(stkgroup) as STRING) as stkgroup,
+    CAST(TRIM(stkdesct1) as STRING) as stkdesct1,
+    CAST(TRIM(zgroup1) as STRING) as zgroup1,
+    CAST(TRIM(zgroup2) as STRING) as zgroup2,
+    CAST(TRIM(zsize) as STRING) as zsize,
+    CAST(TRIM(zcolor) as STRING) as zcolor,
+    CAST(TRIM(zgroup3) as STRING) as zgroup3,
+    CAST(TRIM(zgroup4) as STRING) as zgroup4,
+    CAST(TRIM(zgroup5) as STRING) as zgroup5,
+    CAST(TRIM(zgroup6) as STRING) as zgroup6,
+    CAST(TRIM(zgroup7) as STRING) as zgroup7
 FROM
   `${project_id}.${dataset_id}.${table_id}`
 ${partition_statement}

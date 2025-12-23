@@ -30,12 +30,12 @@ js {
 
 SELECT
     CAST(proagid AS INT64) as proagid,
-    CAST(proagstkcode AS STRING) as proagstkcode,
-    CAST(proagsttcode AS STRING) as proagsttcode,
-    CAST(proagstt AS STRING) as proagstt,
+    CAST(TRIM(proagstkcode) AS STRING) as proagstkcode,
+    CAST(TRIM(proagsttcode) AS STRING) as proagsttcode,
+    CAST(TRIM(proagstt) AS STRING) as proagstt,
     PARSE_DATE('%Y-%m-%d', SUBSTR(proagstrdate, 1, 10)) AS proagstrdate,
     PARSE_DATE('%Y-%m-%d', SUBSTR(proagenddate, 1, 10)) AS proagenddate,
-    CAST(proagregion AS STRING) as proagregion,
+    CAST(TRIM(proagregion) AS STRING) as proagregion,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19)) AS dinsert
 
 FROM

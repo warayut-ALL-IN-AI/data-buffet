@@ -29,15 +29,15 @@ js {
 }
 
 SELECT
-  CAST(pc_id AS STRING) AS pc_id,
-  CAST(pc_prod_id AS STRING) AS pc_prod_id,
-  CAST(pc_cat_id AS STRING) AS pc_cat_id,
+  CAST(TRIM(pc_id) AS STRING) AS pc_id,
+  CAST(TRIM(pc_prod_id) AS STRING) AS pc_prod_id,
+  CAST(TRIM(pc_cat_id) AS STRING) AS pc_cat_id,
   CAST(pc_is_ise AS BOOL) AS pc_is_ise,
   CAST(pc_is_active AS BOOL) AS pc_is_active,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pc_created_date, 1, 19)) AS pc_created_date,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pc_updated_date, 1, 19)) AS pc_updated_date,
-  CAST(pc_created_by AS STRING) AS pc_created_by,
-  CAST(pc_updated_by AS STRING) AS pc_updated_by,
+  CAST(TRIM(pc_created_by) AS STRING) AS pc_created_by,
+  CAST(TRIM(pc_updated_by) AS STRING) AS pc_updated_by,
   PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
 
 FROM

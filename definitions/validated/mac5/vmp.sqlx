@@ -115,7 +115,7 @@ SELECT
     CAST(vmprtotal AS INT64) as vmprtotal,
     CAST(vmprsalary AS INT64) as vmprsalary,
     CAST(vmprmemo AS INT64) as vmprmemo,
-    CAST(rowguid AS STRING) as rowguid
+    CAST(TRIM(rowguid) AS STRING) as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

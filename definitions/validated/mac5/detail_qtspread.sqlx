@@ -32,20 +32,20 @@ SELECT
     CAST(id AS INT64) as id,
     CAST(ref_id AS INT64) as ref_id,
     CAST(qtid AS INT64) as qtid,
-    CAST(quodeid AS STRING) as quodeid,
-    CAST(stkcode AS STRING) as stkcode,
+    CAST(TRIM(quodeid) AS STRING) as quodeid,
+    CAST(TRIM(stkcode) AS STRING) as stkcode,
     CAST(quantity AS FLOAT64) as quantity,
     CAST(price AS FLOAT64) as price,
-    CAST(total AS STRING) as total,
-    CAST(uinsert AS STRING) as uinsert,
-    CAST(uupdate AS STRING) as uupdate,
+    CAST(TRIM(total) AS STRING) as total,
+    CAST(TRIM(uinsert) AS STRING) as uinsert,
+    CAST(TRIM(uupdate) AS STRING) as uupdate,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19)) as dinsert,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19)) as dupdate,
-    CAST(status AS STRING) as status,
-    CAST(link AS STRING) as link,
-    CAST(type AS STRING) as type,
-    CAST(fandex AS STRING) as fandex,
-    CAST(itemsize AS STRING) as itemsize
+    CAST(TRIM(status) AS STRING) as status,
+    CAST(TRIM(link) AS STRING) as link,
+    CAST(TRIM(type) AS STRING) as type,
+    CAST(TRIM(fandex) AS STRING) as fandex,
+    CAST(TRIM(itemsize) AS STRING) as itemsize
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

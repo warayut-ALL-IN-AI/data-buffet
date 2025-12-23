@@ -30,15 +30,15 @@ js {
 
 SELECT
     CAST(id AS INT64) as id,
-    CAST(username AS STRING) as username,
-    CAST(password AS STRING) as password,
-    CAST(actionapp AS STRING) as actionapp,
-    CAST(name AS STRING) as name,
-    CAST(notes AS STRING) as notes,
-    CAST(department AS STRING) as department,
-    CAST(levelaction AS STRING) as levelaction,
-    CAST(email AS STRING) as email,
-    CAST(token AS STRING) as token,
+    CAST(TRIM(username) AS STRING) as username,
+    CAST(TRIM(password) AS STRING) as password,
+    CAST(TRIM(actionapp) AS STRING) as actionapp,
+    CAST(TRIM(name) AS STRING) as name,
+    CAST(TRIM(notes) AS STRING) as notes,
+    CAST(TRIM(department) AS STRING) as department,
+    CAST(TRIM(levelaction) AS STRING) as levelaction,
+    CAST(TRIM(email) AS STRING) as email,
+    CAST(TRIM(token) AS STRING) as token,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tokenexpiry, 1, 19)) AS tokenexpiry,
     CAST(istokenvalid AS INT64) as istokenvalid
 

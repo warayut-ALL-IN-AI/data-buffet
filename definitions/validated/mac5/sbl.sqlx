@@ -29,11 +29,11 @@ js {
 }
 
 SELECT
-    CAST(sblstk AS STRING) as sblstk,
-    CAST(sblsto AS STRING) as sblsto,
+    CAST(TRIM(sblstk) AS STRING) as sblstk,
+    CAST(TRIM(sblsto) AS STRING) as sblsto,
     CAST(sblquan AS FLOAT64) as sblquan,
     CAST(sblquanp2 AS FLOAT64) as sblquanp2,
-    CAST(rowguid AS STRING) as rowguid
+    CAST(TRIM(rowguid) AS STRING) as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

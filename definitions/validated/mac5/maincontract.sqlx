@@ -32,7 +32,7 @@ SELECT
     CAST(mcontractid AS INT64) as mcontractid,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dateinsert, 1, 19)) AS dateinsert,
     CAST(status AS INT64) as status,
-    CAST(uinsert AS STRING) as uinsert
+    CAST(TRIM(uinsert) AS STRING) as uinsert
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

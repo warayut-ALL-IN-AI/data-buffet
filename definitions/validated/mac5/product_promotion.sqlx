@@ -31,9 +31,9 @@ js {
 SELECT
     CAST(id AS INT64) as id,
     CAST(product_detail_id AS INT64) as product_detail_id,
-    CAST(sku_id AS STRING) as sku_id,
+    CAST(TRIM(sku_id) AS STRING) as sku_id,
     CAST(qty AS FLOAT64) as qty,
-    CAST(channel AS STRING) as channel,
+    CAST(TRIM(channel) AS STRING) as channel,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) AS create_date
 
 FROM

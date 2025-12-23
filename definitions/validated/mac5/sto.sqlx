@@ -29,15 +29,15 @@ js {
 }
 
 SELECT
-    CAST(stocode AS STRING) as stocode,
-    CAST(stogroup AS STRING) as stogroup,
-    CAST(stodesct AS STRING) as stodesct,
-    CAST(stodesce AS STRING) as stodesce,
+    CAST(TRIM(stocode) AS STRING) as stocode,
+    CAST(TRIM(stogroup) AS STRING) as stogroup,
+    CAST(TRIM(stodesct) AS STRING) as stodesct,
+    CAST(TRIM(stodesce) AS STRING) as stodesce,
     CAST(stolock AS INT64) as stolock,
     CAST(stohide AS INT64) as stohide,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stoeditdt, 1, 19)) AS stoeditdt,
-    CAST(stoeditmf AS STRING) as stoeditmf,
-    CAST(rowguid AS STRING) as rowguid
+    CAST(TRIM(stoeditmf) AS STRING) as stoeditmf,
+    CAST(TRIM(rowguid) AS STRING) as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

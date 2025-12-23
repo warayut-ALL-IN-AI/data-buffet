@@ -30,18 +30,18 @@ js {
 
 SELECT
     CAST(id AS INT64) as id,
-    CAST(order_no AS STRING) as order_no,
-    CAST(status AS STRING) as status,
+    CAST(TRIM(order_no) AS STRING) as order_no,
+    CAST(TRIM(status) AS STRING) as status,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) AS create_date,
-    CAST(promotion_type AS STRING) as promotion_type,
-    CAST(notes AS STRING) as notes,
-    CAST(sub_order AS STRING) as sub_order,
-    CAST(made_from AS STRING) as made_from,
+    CAST(TRIM(promotion_type) AS STRING) as promotion_type,
+    CAST(TRIM(notes) AS STRING) as notes,
+    CAST(TRIM(sub_order) AS STRING) as sub_order,
+    CAST(TRIM(made_from) AS STRING) as made_from,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetime, 1, 19)) AS datetime,
-    CAST(deliverystatus AS STRING) as deliverystatus,
-    CAST(cancelstatus AS STRING) as cancelstatus,
-    CAST(confirmstatus AS STRING) as confirmstatus,
-    CAST(order_source AS STRING) as order_source,
+    CAST(TRIM(deliverystatus) AS STRING) as deliverystatus,
+    CAST(TRIM(cancelstatus) AS STRING) as cancelstatus,
+    CAST(TRIM(confirmstatus) AS STRING) as confirmstatus,
+    CAST(TRIM(order_source) AS STRING) as order_source,
     CAST(is_complete AS INT64) as is_complete,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19)) AS update_date
 

@@ -31,20 +31,20 @@ js {
 SELECT
     CAST(id AS INT64) as id,
     CAST(mainqtid AS INT64) as mainqtid,
-    CAST(preorderno AS STRING) as preorderno,
-    CAST(orderno AS STRING) as orderno,
-    CAST(type AS STRING) as type,
-    CAST(path212 AS STRING) as path212,
-    CAST(path10acc AS STRING) as path10acc,
-    CAST(path10fac AS STRING) as path10fac,
-    CAST(filename AS STRING) as filename,
-    CAST(uinsert AS STRING) as uinsert,
-    CAST(date AS STRING) as date,
+    CAST(TRIM(preorderno) AS STRING) as preorderno,
+    CAST(TRIM(orderno) AS STRING) as orderno,
+    CAST(TRIM(type) AS STRING) as type,
+    CAST(TRIM(path212) AS STRING) as path212,
+    CAST(TRIM(path10acc) AS STRING) as path10acc,
+    CAST(TRIM(path10fac) AS STRING) as path10fac,
+    CAST(TRIM(filename) AS STRING) as filename,
+    CAST(TRIM(uinsert) AS STRING) as uinsert,
+    CAST(TRIM(date) AS STRING) as date,
     CAST(status AS INT64) as status,
-    CAST(pathqtid AS STRING) as pathqtid,
-    CAST(note AS STRING) as note,
+    CAST(TRIM(pathqtid) AS STRING) as pathqtid,
+    CAST(TRIM(note) AS STRING) as note,
     PARSE_DATE('%Y-%m-%d', SUBSTR(datepayinadmin, 1, 19)) as datepayinadmin,
-    CAST(refpo AS STRING) as refpo
+    CAST(TRIM(refpo) AS STRING) as refpo
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

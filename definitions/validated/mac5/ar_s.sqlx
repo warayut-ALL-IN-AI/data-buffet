@@ -30,11 +30,11 @@ js {
 
 SELECT
     CAST(ar_scode AS INT64) as ar_scode,
-    CAST(ar_snamet AS STRING) as ar_snamet,
-    CAST(ar_snamee AS STRING) as ar_snamee,
+    CAST(TRIM(ar_snamet) AS STRING) as ar_snamet,
+    CAST(TRIM(ar_snamee) AS STRING) as ar_snamee,
     CAST(ar_scolf AS INT64) as ar_scolf,
     CAST(ar_scolb AS INT64) as ar_scolb,
-    CAST(rowguid AS STRING) as rowguid
+    CAST(TRIM(rowguid) AS STRING) as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

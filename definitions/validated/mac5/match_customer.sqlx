@@ -30,9 +30,9 @@ js {
 
 SELECT
     CAST(id AS INT64) as id,
-    CAST(customer_allkon AS STRING) as customer_allkon,
-    CAST(customer_mac5 AS STRING) as customer_mac5,
-    CAST(mihjob AS STRING) as mihjob,
+    CAST(TRIM(customer_allkon) AS STRING) as customer_allkon,
+    CAST(TRIM(customer_mac5) AS STRING) as customer_mac5,
+    CAST(TRIM(mihjob) AS STRING) as mihjob,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) AS create_date
 
 FROM

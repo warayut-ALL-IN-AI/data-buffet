@@ -29,10 +29,10 @@ js {
 }
 
 SELECT
-    CAST(stgcode AS STRING) as stgcode,
-    CAST(stgdesct AS STRING) as stgdesct,
-    CAST(stgdesce AS STRING) as stgdesce,
-    CAST(rowguid AS STRING) as rowguid
+    CAST(TRIM(stgcode) AS STRING) as stgcode,
+    CAST(TRIM(stgdesct) AS STRING) as stgdesct,
+    CAST(TRIM(stgdesce) AS STRING) as stgdesce,
+    CAST(TRIM(rowguid) AS STRING) as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

@@ -29,19 +29,19 @@ js {
 }
 
 SELECT
-  CAST(bra_id AS STRING) AS bra_id,
-  CAST(bra_name AS STRING) AS bra_name,
-  CAST(bra_name_th AS STRING) AS bra_name_th,
-  CAST(bra_detail AS STRING) AS bra_detail,
-  CAST(bra_vendor_id AS STRING) AS bra_vendor_id,
-  CAST(bra_logo_name AS STRING) AS bra_logo_name,
-  CAST(bra_logo_path AS STRING) AS bra_logo_path,
+  CAST(TRIM(bra_id) AS STRING) AS bra_id,
+  CAST(TRIM(bra_name) AS STRING) AS bra_name,
+  CAST(TRIM(bra_name_th) AS STRING) AS bra_name_th,
+  CAST(TRIM(bra_detail) AS STRING) AS bra_detail,
+  CAST(TRIM(bra_vendor_id) AS STRING) AS bra_vendor_id,
+  CAST(TRIM(bra_logo_name) AS STRING) AS bra_logo_name,
+  CAST(TRIM(bra_logo_path) AS STRING) AS bra_logo_path,
   CAST(bra_is_use AS BOOL) AS bra_is_use,
   CAST(bra_is_active AS BOOL) AS bra_is_active,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(bra_created_date, 1, 19)) AS bra_created_date,
-  CAST(bra_created_by AS STRING) AS bra_created_by,
+  CAST(TRIM(bra_created_by) AS STRING) AS bra_created_by,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(bra_updated_date, 1, 19)) AS bra_updated_date,
-  CAST(bra_updated_by AS STRING) AS bra_updated_by,
+  CAST(TRIM(bra_updated_by) AS STRING) AS bra_updated_by,
   PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
 FROM
   `${project_id}.${dataset_id}.${table_id}`

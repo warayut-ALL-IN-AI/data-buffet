@@ -29,13 +29,13 @@ js {
 }
 
 SELECT
-    CAST(stfcode AS STRING) as stfcode,
-    CAST(stflist AS STRING) as stflist,
+    CAST(TRIM(stfcode) AS STRING) as stfcode,
+    CAST(TRIM(stflist) AS STRING) as stflist,
     CAST(stfquan AS FLOAT64) as stfquan,
     CAST(stfunit AS INT64) as stfunit,
     CAST(stfautono AS INT64) as stfautono,
-    CAST(stfmemo AS STRING) as stfmemo,
-    CAST(rowguid AS STRING) as rowguid
+    CAST(TRIM(stfmemo) AS STRING) as stfmemo,
+    CAST(TRIM(rowguid) AS STRING) as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

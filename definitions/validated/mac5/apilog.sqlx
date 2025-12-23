@@ -33,8 +33,8 @@ SELECT
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(runat, 1, 19)) AS runat,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(completedat, 1, 19)) AS completedat,
     CAST(issuccess AS INT64) as issuccess,
-    CAST(errormessage AS STRING) as errormessage,
-    CAST(resultjson AS STRING) as resultjson
+    CAST(TRIM(errormessage) AS STRING) as errormessage,
+    CAST(TRIM(resultjson) AS STRING) as resultjson
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

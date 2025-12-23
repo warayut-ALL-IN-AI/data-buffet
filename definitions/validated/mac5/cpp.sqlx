@@ -29,17 +29,17 @@ js {
 }
 
 SELECT
-    CAST(cppstkid AS STRING) as cppstkid,
+    CAST(TRIM(cppstkid) AS STRING) as cppstkid,
     CAST(cpplinkid AS INT64) as cpplinkid,
-    CAST(cppvnosid AS STRING) as cppvnosid,
+    CAST(TRIM(cppvnosid) AS STRING) as cppvnosid,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cppdateid, 1, 19)) AS cppdateid,
-    CAST(cppcusid AS STRING) as cppcusid,
-    CAST(cppjob AS STRING) as cppjob,
-    CAST(cppdep AS STRING) as cppdep,
-    CAST(cppper AS STRING) as cppper,
-    CAST(cppdoc AS STRING) as cppdoc,
-    CAST(cppmec AS STRING) as cppmec,
-    CAST(cppsto AS STRING) as cppsto,
+    CAST(TRIM(cppcusid) AS STRING) as cppcusid,
+    CAST(TRIM(cppjob) AS STRING) as cppjob,
+    CAST(TRIM(cppdep) AS STRING) as cppdep,
+    CAST(TRIM(cppper) AS STRING) as cppper,
+    CAST(TRIM(cppdoc) AS STRING) as cppdoc,
+    CAST(TRIM(cppmec) AS STRING) as cppmec,
+    CAST(TRIM(cppsto) AS STRING) as cppsto,
     CAST(cppstkreq AS FLOAT64) as cppstkreq,
     CAST(cppstkcut1 AS FLOAT64) as cppstkcut1,
     CAST(cppstkcut2 AS FLOAT64) as cppstkcut2,
@@ -55,7 +55,7 @@ SELECT
     CAST(cppcut AS INT64) as cppcut,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cppdelvdate, 1, 19)) AS cppdelvdate,
     CAST(cpplistno AS INT64) as cpplistno,
-    CAST(rowguid AS STRING) as rowguid
+    CAST(TRIM(rowguid) AS STRING) as rowguid
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`
