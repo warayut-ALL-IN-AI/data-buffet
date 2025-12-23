@@ -87,7 +87,7 @@ SELECT
     CAST(TRIM(debprice) AS STRING) as debprice,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditlk, 1, 19)) AS debeditlk,
     CAST(TRIM(debrefwe) AS STRING) as debrefwe,
-    CAST(TRIM(debbillad) AS INT64) as debbillad,
+    CAST(debbillad AS INT64) as debbillad,
     CAST(TRIM(debsortnt) AS STRING) as debsortnt,
     CAST(TRIM(debsortne) AS STRING) as debsortne,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditdt, 1, 19)) AS debeditdt,

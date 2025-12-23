@@ -162,7 +162,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ap_s`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/AP_S/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/ap_s/*.avro']
 );
 
 -- Table: ar_s
@@ -170,7 +170,7 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuff
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MAC5}.ar_s`
 OPTIONS (
   format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/AR_S/*.avro']
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/ar_s/*.avro']
 );
 
 -- Table: doc
