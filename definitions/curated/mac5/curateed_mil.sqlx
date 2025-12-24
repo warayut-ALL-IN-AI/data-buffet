@@ -1,0 +1,178 @@
+config {
+    type: "operations",
+    dependencies: ["mih", "mih2", "mil"],
+    tags: [databuffet.TAG_CURATED],
+}
+
+with mih_raw as (
+  SELECT 	
+    mihday,
+    mihmonth,
+    mihyear,
+    mihtype,
+    mihvnos,
+    mihcus,
+    mihref1,
+  FROM databuffet-nonprd.validated_mac5.mih
+  WHERE mihtype = 'IS'
+    and mihref1 is not null
+    and mihcancel <> -1
+    -- and mihvnos in ('6712005748', '6712000024')
+
+), mil_raw as (
+  SELECT
+    mil.* except(milquan_raw, milcog_raw, mildisca_raw, miladisc_raw, milvat_raw, milsum_raw), 
+    mih.mihref1
+  FROM databuffet-nonprd.validated_mac5.mil
+  INNER JOIN mih_raw as mih 
+    ON mih.mihday = mil.milday
+      and mih.mihmonth = mil.milmonth
+      and mih.mihyear = mil.milyear
+      and mih.mihtype = mil.miltype
+      and mih.mihvnos = mil.milvnos
+      and mih.mihcus = mil.milcus
+
+), filter_mih2 as (
+  SELECT DISTINCT
+    mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
+    CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale1, 
+    CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale2,
+    row_number() over(partition by mih2vnos, mih2cus, mih2per2 order by mih2rev desc) as chk_row
+  FROM databuffet-nonprd.validated_mac5.mih2
+  WHERE mih2cus is not null
+    and mih2per2 is not null
+    and mih2per2pc is not null
+    and (mih2perpc <> '100%' and mih2perpc <> '00%')
+    and EXISTS (
+      SELECT 1 FROM mil_raw as mil 
+      WHERE mih2.mih2type = 'PS'
+        and mih2.mih2vnos = mil.mihref1
+        and mih2.mih2cus = mil.milcus
+    )
+
+), includ_mil as (
+  SELECT 
+    mil.* except(milper, milquan, milcog, mildisca, miladisc, milvat, milsum),
+    -- raw data for re-check
+    -- milquan, milcog, mildisca, miladisc, milvat, milsum, 
+    -- (CASE WHEN split_sale = 1 THEN per_sale1 ELSE per_sale2 END) as per_sale,
+
+    -- calulate per sale
+    (CASE WHEN split_sale = 1 THEN milper ELSE mih2per2 END) as milper,
+    (CASE WHEN split_sale = 1 THEN milquan * (per_sale1/100) ELSE milquan * (per_sale2/100) END) as milquan, 
+    (CASE WHEN split_sale = 1 THEN milcog * (per_sale1/100) ELSE milcog * (per_sale2/100) END) as milcog,
+    (CASE WHEN split_sale = 1 THEN mildisca * (per_sale1/100) ELSE mildisca * (per_sale2/100) END) as mildisca,
+    (CASE WHEN split_sale = 1 THEN miladisc * (per_sale1/100) ELSE miladisc * (per_sale2/100) END) as miladisc,
+    (CASE WHEN split_sale = 1 THEN milvat * (per_sale1/100) ELSE milvat * (per_sale2/100) END) as milvat,
+    (CASE WHEN split_sale = 1 THEN milsum * (per_sale1/100) ELSE milsum * (per_sale2/100) END) as milsum
+  FROM mil_raw as mil
+  INNER JOIN filter_mih2 as mih2
+    ON mil.mihref1 = mih2.mih2vnos
+      and mil.milcus = mih2.mih2cus
+      and chk_row = 1
+  CROSS JOIN (
+    SELECT 1 as split_sale
+    UNION ALL 
+    SELECT 2 as split_sale
+  )
+
+), exclude_mil as (
+  SELECT
+    *
+  FROM mil_raw as mil
+  WHERE NOT EXISTS (
+    SELECT 1 
+    FROM includ_mil as mil2
+    WHERE mil.milday = mil2.milday
+      and mil.milmonth = mil2.milmonth
+      and mil.milyear = mil2.milyear
+      and mil.miltype = mil2.miltype
+      and mil.milvnos = mil2.milvnos
+      and mil.milcus = mil2.milcus
+      and mil.millistno = mil2.millistno
+  )
+
+), final as (
+  SELECT 
+    milday, milmonth, milyear, miltype, milvnos, milcus, milstk, miljob, mildep, milper, 
+    mildoc, milmec, milsto, milstomt, millistno, milquan, milquanp2, miladisc, milcog, 
+    milconv, mildisca, mildisct, milvat, milsum, milcut, milstype, miluname, mildesc, 
+    milvcol1, milvcol2, milvcol3, milvcol4, milcurc, milexchg, milacost, milpqm, milpmfrom, 
+    milpmto, miltag, millinkvcno, millinkvcdate, millinkvctype, millinkvcdeposit, 
+    millinkvcid, milclearum, milexpdate, milnotes, milnotkl, mildelvdt, mildatesp, 
+    milnumcsp, milnumisp, milcost, milucost, miluprice, milusequanp, milvcol5, milfitem, asatdate,
+  FROM exclude_mil
+  UNION ALL
+  SELECT 
+    milday, milmonth, milyear, miltype, milvnos, milcus, milstk, miljob, mildep, milper, 
+    mildoc, milmec, milsto, milstomt, millistno, milquan, milquanp2, miladisc, milcog, 
+    milconv, mildisca, mildisct, milvat, milsum, milcut, milstype, miluname, mildesc, 
+    milvcol1, milvcol2, milvcol3, milvcol4, milcurc, milexchg, milacost, milpqm, milpmfrom, 
+    milpmto, miltag, millinkvcno, millinkvcdate, millinkvctype, millinkvcdeposit, 
+    millinkvcid, milclearum, milexpdate, milnotes, milnotkl, mildelvdt, mildatesp, 
+    milnumcsp, milnumisp, milcost, milucost, miluprice, milusequanp, milvcol5, milfitem, asatdate,
+  FROM includ_mil
+
+)
+  select 
+    milday as mil_day,
+    milmonth as mil_month,
+    milyear as mil_year,
+    miltype as mil_type,
+    milvnos as mil_vnos,
+    milcus as mil_cus,
+    milstk as mil_stk,
+    miljob as mil_job,
+    mildep as mil_dep,
+    milper as mil_per, 
+    mildoc as mil_doc, 
+    milmec as mil_mec,
+    milsto as mil_sto,
+    milstomt as mil_stomt,
+    millistno as mil_listno,
+    milquan as mil_quan,
+    milquanp2 as mil_quanp2,
+    miladisc as mil_adisc,
+    milcog as mil_cog, 
+    milconv as mil_conv,
+    mildisca as mil_disca,
+    mildisct as mil_disct,
+    milvat as mil_vat,
+    milsum as mil_sum,
+    milcut as mil_cut,
+    milstype as mil_stype,
+    miluname as mil_uname,
+    mildesc as mil_desc, 
+    milvcol1 as mil_vcol1,
+    milvcol2 as mil_vcol2,
+    milvcol3 as mil_vcol3,
+    milvcol4 as mil_vcol4,
+    milcurc as mil_curc,
+    milexchg as mil_exchg,
+    milacost as mil_acost,
+    milpqm as mil_pqm,
+    milpmfrom as mil_pmfrom, 
+    milpmto as mil_pmto,
+    miltag as mil_tag,
+    millinkvcno as mil_linkvcno,
+    millinkvcdate as mil_linkvcdate,
+    millinkvctype as mil_linkvctype,
+    millinkvcdeposit as mil_linkvcdeposit, 
+    millinkvcid as mil_linkvcid,
+    milclearum as mil_clearum,
+    milexpdate as mil_expdate,
+    milnotes as mil_notes,
+    milnotkl as mil_notkl,
+    mildelvdt as mil_delvdt,
+    mildatesp as mil_datesp, 
+    milnumcsp as mil_numcsp,
+    milnumisp as mil_numisp,
+    milcost as mil_cost,
+    milucost as mil_ucost,
+    miluprice as mil_uprice,
+    milusequanp as mil_usequanp,
+    milvcol5 as mil_vcol5,
+    milfitem as mil_fitem,
+    asatdate as asatdate, 
+  from final
+  order by 1, 2, 3, 4, 5, 6, 7, 9

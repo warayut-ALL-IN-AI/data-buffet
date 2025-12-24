@@ -9,5 +9,4 @@ module.exports = {
     REGION: dataform.projectConfig.defaultLocation,
     ...variables,
     primaryKeys,
-    dependencies,
 }

@@ -1,7 +1,7 @@
 config {
     type: "incremental",
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
-    dependencies: [...databuffet.dependencies[databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5]],
+    dependencies: ["validated_schema_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
     uniqueKey: [...databuffet.primaryKeys[databuffet.SOURCE_MAC5]["cps"]],
     bigquery: {
