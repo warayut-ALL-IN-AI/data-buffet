@@ -136,8 +136,7 @@
             "MIHmonth",
             "MIHyear",
             "MIHtype",
-            "MIHvnos",
-            "MIHcus"
+            "MIHvnos"
         ],
         "mih2": [
             "MIH2day",
