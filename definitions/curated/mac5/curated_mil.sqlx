@@ -1,0 +1,225 @@
+config {
+    type: "incremental",
+    schema: databuffet.CURATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: ["curated_mih", "mih2", "mil"],
+    tags: [databuffet.TAG_CURATED],
+    uniqueKey: ["milDay", "milMonth", "milYear", "milType", "milVnos", "milCus", "milListno"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: ["milVnos", "milCus", "milType", "milYear"],
+        updatePartitionFilter: "asatdate >= CURRENT_DATE('Asia/Bangkok')-7"
+    }
+}
+
+js {
+    // Define table references
+    const sourceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+        name: "mil",
+    };
+
+    // Build source table reference
+    const sourceTableRef = `\`${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}\``;
+
+    // Define all columns in one place
+    const columns = [
+        { name: "milDay", source: "milday" },
+        { name: "milMonth", source: "milmonth" },
+        { name: "milYear", source: "milyear" },
+        { name: "milType", source: "miltype" },
+        { name: "milVnos", source: "milvnos" },
+        { name: "milCus", source: "milcus" },
+        { name: "milStk", source: "milstk" },
+        { name: "milJob", source: "miljob" },
+        { name: "milDep", source: "mildep" },
+        { name: "milPer", source: "milper" },
+        { name: "milDoc", source: "mildoc" },
+        { name: "milMec", source: "milmec" },
+        { name: "milSto", source: "milsto" },
+        { name: "milStomt", source: "milstomt" },
+        { name: "milListno", source: "millistno" },
+        { name: "milQuan", source: "milquan" },
+        { name: "milQuanp2", source: "milquanp2" },
+        { name: "milAdisc", source: "miladisc" },
+        { name: "milCog", source: "milcog" },
+        { name: "milConv", source: "milconv" },
+        { name: "milDisca", source: "mildisca" },
+        { name: "milDisct", source: "mildisct" },
+        { name: "milVat", source: "milvat" },
+        { name: "milSum", source: "milsum" },
+        { name: "milCut", source: "milcut" },
+        { name: "milStype", source: "milstype" },
+        { name: "milUname", source: "miluname" },
+        { name: "milDesc", source: "mildesc" },
+        { name: "milVcol1", source: "milvcol1" },
+        { name: "milVcol2", source: "milvcol2" },
+        { name: "milVcol3", source: "milvcol3" },
+        { name: "milVcol4", source: "milvcol4" },
+        { name: "milCurc", source: "milcurc" },
+        { name: "milExchg", source: "milexchg" },
+        { name: "milAcost", source: "milacost" },
+        { name: "milPqm", source: "milpqm" },
+        { name: "milPmfrom", source: "milpmfrom" },
+        { name: "milPmto", source: "milpmto" },
+        { name: "milTag", source: "miltag" },
+        { name: "milLinkvcno", source: "millinkvcno" },
+        { name: "milLinkvcdate", source: "millinkvcdate" },
+        { name: "milLinkvctype", source: "millinkvctype" },
+        { name: "milLinkvcdeposit", source: "millinkvcdeposit" },
+        { name: "milLinkvcid", source: "millinkvcid" },
+        { name: "milClearum", source: "milclearum" },
+        { name: "milExpdate", source: "milexpdate" },
+        { name: "milNotes", source: "milnotes" },
+        { name: "milNotkl", source: "milnotkl" },
+        { name: "milDelvdt", source: "mildelvdt" },
+        { name: "milDatesp", source: "mildatesp" },
+        { name: "milNumcsp", source: "milnumcsp" },
+        { name: "milNumisp", source: "milnumisp" },
+        { name: "milCost", source: "milcost" },
+        { name: "milUcost", source: "milucost" },
+        { name: "milUprice", source: "miluprice" },
+        { name: "milUsequanp", source: "milusequanp" },
+        { name: "milVcol5", source: "milvcol5" },
+        { name: "milFitem", source: "milfitem" },
+        { name: "asatdate", source: "asatdate" },
+    ];
+
+    // Generate SELECT column mappings
+    const selectColumns = columns
+        .map(col => `  ${col.source} as ${col.name}`)
+        .join(",\n");
+}
+
+SELECT
+${selectColumns}
+FROM ${sourceTableRef}
+${ when(incremental(), `WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+
+post_operations {
+  -------- CREATE TEMP TABLE --------
+  BEGIN
+    CREATE OR REPLACE TEMP TABLE new_data_curated_mil AS
+    WITH mih_raw AS (
+      SELECT
+        mihDay,
+        mihMonth,
+        mihYear,
+        mihType,
+        mihVnos,
+        mihCus,
+        mihRef1,
+        mihCancel
+      FROM ${ref("curated_mih")}
+      WHERE mihType = 'IS'
+        AND mihRef1 IS NOT NULL
+        AND mihCancel <> -1
+        ${ when(incremental(), `AND asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+
+    ), mil_raw AS (
+      SELECT
+        mil.*,
+        mih.mihRef1
+      FROM ${self()} AS mil
+      INNER JOIN mih_raw AS mih
+        ON mih.mihDay = mil.milDay
+          AND mih.mihMonth = mil.milMonth
+          AND mih.mihYear = mil.milYear
+          AND mih.mihType = mil.milType
+          AND mih.mihVnos = mil.milVnos
+          AND mih.mihCus = mil.milCus
+
+    ), filter_mih2 AS (
+      SELECT DISTINCT
+        mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
+        CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) AS per_sale1,
+        CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) AS per_sale2,
+        ROW_NUMBER() OVER(PARTITION BY mih2vnos, mih2cus, mih2per2 ORDER BY mih2rev DESC) AS chk_row
+      FROM ${ref("mih2")}
+      WHERE mih2cus IS NOT NULL
+        AND mih2per2 IS NOT NULL
+        AND mih2per2pc IS NOT NULL
+        AND (mih2perpc <> '100%' AND mih2perpc <> '00%')
+        AND mih2type = 'PS'
+        AND EXISTS (
+          SELECT 1 FROM mil_raw AS mil
+          WHERE mih2vnos = mil.mihRef1
+            AND mih2cus = mil.milCus
+        )
+
+    ), includ_mil AS (
+      SELECT
+        mil.* EXCEPT(milPer, milQuan, milCog, milDisca, milAdisc, milVat, milSum),
+        -- Calculate per sale
+        (CASE WHEN split_sale = 1 THEN milPer ELSE mih2per2 END) AS milPer,
+        (CASE WHEN split_sale = 1 THEN milQuan * (per_sale1/100) ELSE milQuan * (per_sale2/100) END) AS milQuan,
+        (CASE WHEN split_sale = 1 THEN milCog * (per_sale1/100) ELSE milCog * (per_sale2/100) END) AS milCog,
+        (CASE WHEN split_sale = 1 THEN milDisca * (per_sale1/100) ELSE milDisca * (per_sale2/100) END) AS milDisca,
+        (CASE WHEN split_sale = 1 THEN milAdisc * (per_sale1/100) ELSE milAdisc * (per_sale2/100) END) AS milAdisc,
+        (CASE WHEN split_sale = 1 THEN milVat * (per_sale1/100) ELSE milVat * (per_sale2/100) END) AS milVat,
+        (CASE WHEN split_sale = 1 THEN milSum * (per_sale1/100) ELSE milSum * (per_sale2/100) END) AS milSum
+      FROM mil_raw AS mil
+      INNER JOIN filter_mih2 AS mih2
+        ON mil.mihRef1 = mih2.mih2vnos
+          AND mil.milCus = mih2.mih2cus
+          AND chk_row = 1
+      CROSS JOIN (
+        SELECT 1 AS split_sale
+        UNION ALL
+        SELECT 2 AS split_sale
+      )
+
+    ), exclude_mil AS (
+      SELECT *
+      FROM mil_raw AS mil
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM includ_mil AS mil2
+        WHERE mil.milDay = mil2.milDay
+          AND mil.milMonth = mil2.milMonth
+          AND mil.milYear = mil2.milYear
+          AND mil.milType = mil2.milType
+          AND mil.milVnos = mil2.milVnos
+          AND mil.milCus = mil2.milCus
+          AND mil.milListno = mil2.milListno
+      )
+
+    ), final AS (
+      SELECT * FROM exclude_mil
+      UNION ALL
+      SELECT * FROM includ_mil
+    )
+
+    SELECT *
+    FROM final
+    ORDER BY milDay, milMonth, milYear, milType, milVnos, milCus, milStk, milDep
+    ;
+  END;
+  -------- CREATE TEMP TABLE --------
+
+  -------- DELETE WITH PK KEY --------
+  BEGIN
+    DELETE FROM ${self()} AS old_data
+    WHERE EXISTS (
+      SELECT 1 FROM new_data_curated_mil AS new_data
+      WHERE old_data.milDay = new_data.milDay
+        AND old_data.milMonth = new_data.milMonth
+        AND old_data.milYear = new_data.milYear
+        AND old_data.milType = new_data.milType
+        AND old_data.milVnos = new_data.milVnos
+        AND old_data.milCus = new_data.milCus
+        AND old_data.milListno = new_data.milListno
+    )
+    ;
+  END;
+  -------- DELETE WITH PK KEY --------
+
+  -------- INSERT DATA --------
+  BEGIN
+    INSERT INTO ${self()}
+    SELECT *
+    FROM new_data_curated_mil
+    ;
+  END;
+  -------- INSERT DATA --------
+}

@@ -1,0 +1,8 @@
+config {
+  type: "operations",
+  tags: [databuffet.TAG_REINITIAL],
+}
+
+
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_SCHEMA}_${databuffet.SOURCE_MAC5}.curated_mih`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_SCHEMA}_${databuffet.SOURCE_MAC5}.curated_mil`;

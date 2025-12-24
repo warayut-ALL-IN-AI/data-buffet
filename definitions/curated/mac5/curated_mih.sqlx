@@ -1,0 +1,117 @@
+config {
+    type: "incremental",
+    schema: databuffet.CURATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: ["mih"],
+    tags: [databuffet.TAG_CURATED],
+    uniqueKey: ["mihDay", "mihMonth", "mihYear", "mihType", "mihVnos", "mihCus"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: ["mihVnos", "mihCus", "mihType", "mihYear"],
+        updatePartitionFilter: "asatdate >= CURRENT_DATE('Asia/Bangkok')-7"
+    }
+}
+
+js {
+    // Define table references
+    const sourceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+        name: "mih",
+    };
+
+    // Build source table reference
+    const sourceTableRef = `\`${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}\``;
+
+    // Define all columns in one place
+    const columns = [
+        { name: "mihDay", type: "INT64", source: "mihday" },
+        { name: "mihMonth", type: "INT64", source: "mihmonth" },
+        { name: "mihYear", type: "INT64", source: "mihyear" },
+        { name: "mihType", type: "STRING", source: "mihtype" },
+        { name: "mihVnos", type: "STRING", source: "mihvnos" },
+        { name: "mihCus", type: "STRING", source: "mihcus" },
+        { name: "mihJob", type: "STRING", source: "mihjob" },
+        { name: "mihDep", type: "STRING", source: "mihdep" },
+        { name: "mihPer", type: "STRING", source: "mihper" },
+        { name: "mihDoc", type: "STRING", source: "mihdoc" },
+        { name: "mihMec", type: "STRING", source: "mihmec" },
+        { name: "mihVatno", type: "STRING", source: "mihvatno" },
+        { name: "mihDesc", type: "STRING", source: "mihdesc" },
+        { name: "mihMemo", type: "STRING", source: "mihmemo" },
+        { name: "mihNotes", type: "STRING", source: "mihnotes" },
+        { name: "mihRef1", type: "STRING", source: "mihref1" },
+        { name: "mihRef2", type: "STRING", source: "mihref2" },
+        { name: "mihRef3", type: "STRING", source: "mihref3" },
+        { name: "mihDischt1", type: "STRING", source: "mihdischt1" },
+        { name: "mihDischt2", type: "STRING", source: "mihdischt2" },
+        { name: "mihDelvsite", type: "STRING", source: "mihdelvsite" },
+        { name: "mihDelvdate", type: "DATETIME", source: "mihdelvdate" },
+        { name: "mihStanding", type: "INT64", source: "mihstanding" },
+        { name: "mihLinkgl", type: "INT64", source: "mihlinkgl" },
+        { name: "mihNouplink", type: "INT64", source: "mihnouplink" },
+        { name: "mihNolist", type: "INT64", source: "mihnolist" },
+        { name: "mihCurc", type: "INT64", source: "mihcurc" },
+        { name: "mihVatinlist", type: "INT64", source: "mihvatinlist" },
+        { name: "mihLock", type: "INT64", source: "mihlock" },
+        { name: "mihPrintn", type: "INT64", source: "mihprintn" },
+        { name: "mihCheque", type: "INT64", source: "mihcheque" },
+        { name: "mihCancel", type: "INT64", source: "mihcancel" },
+        { name: "mihStatus", type: "INT64", source: "mihstatus" },
+        { name: "mihClearum", type: "INT64", source: "mihclearum" },
+        { name: "mihCtermno", type: "INT64", source: "mihctermno" },
+        { name: "mihCog", type: "FLOAT64", source: "mihcog" },
+        { name: "mihVatsum", type: "FLOAT64", source: "mihvatsum" },
+        { name: "mihNetsum", type: "FLOAT64", source: "mihnetsum" },
+        { name: "mihDisclst", type: "FLOAT64", source: "mihdisclst" },
+        { name: "mihDischf1", type: "FLOAT64", source: "mihdischf1" },
+        { name: "mihDischf2", type: "FLOAT64", source: "mihdischf2" },
+        { name: "mihExchg", type: "FLOAT64", source: "mihexchg" },
+        { name: "mihExtrasum", type: "FLOAT64", source: "mihextrasum" },
+        { name: "mihExtravat", type: "FLOAT64", source: "mihextravat" },
+        { name: "mihExtracut", type: "INT64", source: "mihextracut" },
+        { name: "mihExtramem", type: "STRING", source: "mihextramem" },
+        { name: "mihRecno", type: "STRING", source: "mihrecno" },
+        { name: "mihRecdate", type: "DATETIME", source: "mihrecdate" },
+        { name: "mihSavetag", type: "STRING", source: "mihsavetag" },
+        { name: "mihKeyuser", type: "STRING", source: "mihkeyuser" },
+        { name: "mihKeydate", type: "DATETIME", source: "mihkeydate" },
+        { name: "mihDocrunno", type: "STRING", source: "mihdocrunno" },
+        { name: "mihDategl", type: "DATETIME", source: "mihdategl" },
+        { name: "mihDuepo", type: "DATETIME", source: "mihduepo" },
+        { name: "mihEditlk", type: "DATETIME", source: "miheditlk" },
+        { name: "mihIscf", type: "INT64", source: "mihiscf" },
+        { name: "mihIssp", type: "INT64", source: "mihissp" },
+        { name: "mihDates1", type: "DATETIME", source: "mihdates1" },
+        { name: "mihDates2", type: "DATETIME", source: "mihdates2" },
+        { name: "mihNumsi", type: "INT64", source: "mihnumsi" },
+        { name: "mihNumsc", type: "FLOAT64", source: "mihnumsc" },
+        { name: "mihVatpc", type: "FLOAT64", source: "mihvatpc" },
+        { name: "mihIncluded", type: "INT64", source: "mihincluded" },
+        { name: "mihTaxvnos", type: "STRING", source: "mihtaxvnos" },
+        { name: "mihTaxdate", type: "DATETIME", source: "mihtaxdate" },
+        { name: "mihTaxsum", type: "FLOAT64", source: "mihtaxsum" },
+        { name: "mihLoad", type: "INT64", source: "mihload" },
+        { name: "mihPaiddate", type: "DATETIME", source: "mihpaiddate" },
+        { name: "mihBookordernum", type: "STRING", source: "mihbookordernum" },
+        { name: "mihSenddate", type: "DATETIME", source: "mihsenddate" },
+        { name: "mihBl", type: "INT64", source: "mihbl" },
+        { name: "mihRpv", type: "INT64", source: "mihrpv" },
+        { name: "mihClearcut", type: "INT64", source: "mihclearcut" },
+        { name: "mihSettlecut", type: "INT64", source: "mihsettlecut" },
+        { name: "rowguid", type: "STRING", source: "rowguid" },
+        { name: "moddate", type: "DATETIME", source: "moddate" },
+        { name: "mihMemoNew", type: "STRING", source: "mihmemo_new" },
+        { name: "memoExtract", type: "STRING", source: "memo_extract" },
+        { name: "asatdate", type: "DATE", source: "asatdate" },
+    ];
+
+    // Generate SELECT column mappings
+    const selectColumns = columns
+        .map(col => `  ${col.source} as ${col.name}`)
+        .join(",\n");
+}
+
+SELECT
+${selectColumns}
+FROM ${sourceTableRef}
+${ when(incremental(), `WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }

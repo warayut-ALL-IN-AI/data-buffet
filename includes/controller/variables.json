@@ -1,6 +1,7 @@
 {
 
     "TAG_INITIAL": "initial",
+    "TAG_REINITIAL": "re-initial",
     "TAG_VALIDATED": "validated",
     "TAG_CURATED": "curated",
 
