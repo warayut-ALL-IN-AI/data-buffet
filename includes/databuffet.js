@@ -1,6 +1,5 @@
 const variables = require("./controller/variables.json")
 const primaryKeys = require("./controller/primary-keys.json")
-const dependencies = require("./controller/dependencies.json")
 
 
 module.exports = {
