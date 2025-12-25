@@ -100,37 +100,37 @@ post_operations {
             SELECT 
                 prdSku,
                 JSON_VALUE(dimField, '$.label') as dimField_label,
-                JSON_VALUE(dimField, '$.value') as dimField_value,
+                NULLIF(TRIM(JSON_VALUE(dimField, '$.value')), '') as dimField_value,
                 JSON_VALUE(SpeciFeild, '$.label') as SpeciFeild_label,
-                JSON_VALUE(SpeciFeild, '$.value') as SpeciFeild_value,
+                NULLIF(TRIM(JSON_VALUE(SpeciFeild, '$.value')), '') as SpeciFeild_value,
             FROM `databuffet-nonprd.validated_mastersku.product_detail` as pd
-            INNER JOIN `databuffet-nonprd.curated_mastersku.curated_product` as p
+            LEFT JOIN `databuffet-nonprd.curated_mastersku.curated_product` as p
                 ON p.prdId = pd.pd_prd_id
-            , UNNEST (JSON_QUERY_ARRAY(prdDiminsionData, '$.dimFeild'))  as dimField
-            , UNNEST (JSON_QUERY_ARRAY(pd_spacific_fields, '$.SpeciFeild'))  as SpeciFeild
+            LEFT JOIN UNNEST (JSON_QUERY_ARRAY(prdDiminsionData, '$.dimFeild'))  as dimField
+            LEFT JOIN UNNEST (JSON_QUERY_ARRAY(pd_spacific_fields, '$.SpeciFeild'))  as SpeciFeild
             ${ when(incremental(), `WHERE p.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
             -- WHERE p.prdSku in ('MSKU1000091280', 'MSKU0000024500', 'MSKU0000024833')
 
             ), arge_data as (
             select prdSku, 
                 max((case 
-                when lower(dimField_label) in ('ขนาด', 'size') then dimField_value
-                else null
+                    when lower(dimField_label) in ('ขนาด', 'size') then dimField_value
+                    else null
                 end)) as dimField_prdSize,
                 
                 max((case 
-                when lower(dimField_label) in ('สี', 'color') then dimField_value
-                else null
+                    when lower(dimField_label) in ('สี', 'color') then dimField_value
+                    else null
                 end)) as dimField_prdColor,
                 
                 max((case 
-                when lower(SpeciFeild_label) in ('ขนาด', 'size') then SpeciFeild_value
-                else null
+                    when lower(SpeciFeild_label) in ('ขนาด', 'size') then SpeciFeild_value
+                    else null
                 end)) as SpeciFeild_prdSize,
                 
                 max((case 
-                when lower(SpeciFeild_label) in ('สี', 'color') then SpeciFeild_value
-                else null
+                    when lower(SpeciFeild_label) in ('สี', 'color') then SpeciFeild_value
+                    else null
                 end)) as SpeciFeild_prdColor,
             from rows_product
             group by prdSku
