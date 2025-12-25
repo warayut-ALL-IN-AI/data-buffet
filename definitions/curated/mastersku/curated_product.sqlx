@@ -149,13 +149,13 @@ post_operations {
                 prdSize,
                 (CASE 
                     WHEN REGEXP_CONTAINS(SPLIT(prdColor, ' ')[SAFE_OFFSET(0)], r'[ก-๙]') 
-                        THEN TRIM(REGEXP_EXTRACT(prdColor, r'^([ก-๙\s]+)'))
+                        THEN NULLIF(TRIM(REGEXP_EXTRACT(prdColor, r'^([ก-๙\s]+)')), '')
                     ELSE NULL
                 END) AS prdColorTH,                
                 (CASE 
                     WHEN NOT REGEXP_CONTAINS(SPLIT(prdColor, ' ')[SAFE_OFFSET(0)], r'[ก-๙]') 
                         THEN NULLIF(TRIM(prdColor), '')
-                    ELSE TRIM(REGEXP_REPLACE(prdColor, r'^([ก-๙\s]+)', '')) 
+                    ELSE NULLIF(TRIM(REGEXP_REPLACE(prdColor, r'^([ก-๙\s]+)', '')), '')
                 END) AS prdColorEN
             FROM cleaning_data
     ) src
