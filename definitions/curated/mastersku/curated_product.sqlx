@@ -108,7 +108,8 @@ post_operations {
                 ON p.prdId = pd.pd_prd_id
             , UNNEST (JSON_QUERY_ARRAY(prdDiminsionData, '$.dimFeild'))  as dimField
             , UNNEST (JSON_QUERY_ARRAY(pd_spacific_fields, '$.SpeciFeild'))  as SpeciFeild
-            WHERE p.prdSku in ('MSKU1000091280', 'MSKU0000024500', 'MSKU0000024833')
+            ${ when(incremental(), `WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+            -- WHERE p.prdSku in ('MSKU1000091280', 'MSKU0000024500', 'MSKU0000024833')
 
             ), arge_data as (
             select prdSku, 
