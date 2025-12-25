@@ -3,7 +3,7 @@ config {
     schema: databuffet.CURATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
     dependencies: ["mih"],
     tags: [databuffet.TAG_CURATED],
-    uniqueKey: ["mihDay", "mihMonth", "mihYear", "mihType", "mihVnos", "mihCus"],
+    uniqueKey: ["mihDay", "mihMonth", "mihYear", "mihType", "mihVnos"],
     bigquery: {
         partitionBy: "asatdate",
         clusterBy: ["mihVnos", "mihCus", "mihType", "mihYear"],
