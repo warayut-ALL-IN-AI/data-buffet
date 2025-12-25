@@ -115,6 +115,7 @@ post_operations {
         AND mihRef1 IS NOT NULL
         AND mihCancel <> -1
         ${ when(incremental(), `AND asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+      QUALIFY row_number() over(partition by mihDay, mihMonth, mihYear, mihType, mihVnos, mihCus order by asatdate desc) = 1
 
     ), mil_raw AS (
       SELECT
@@ -128,6 +129,7 @@ post_operations {
           AND mih.mihType = mil.milType
           AND mih.mihVnos = mil.milVnos
           AND mih.mihCus = mil.milCus
+      QUALIFY row_number() over(partition by mil.milDay, mil.milMonth, mil.milYear, mil.milType, mil.milVnos, mil.milCus, mil.milListno order by mil.asatdate desc) = 1
 
     ), filter_mih2 AS (
       SELECT DISTINCT
