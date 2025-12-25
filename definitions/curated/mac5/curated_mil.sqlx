@@ -20,7 +20,7 @@ js {
     };
 
     // Build source table reference
-    const sourceTableRef = `\`${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}\``;
+    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Define all columns in one place
     const columns = [
