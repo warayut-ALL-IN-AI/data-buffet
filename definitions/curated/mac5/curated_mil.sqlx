@@ -110,7 +110,7 @@ post_operations {
         mihCus,
         mihRef1,
         mihCancel
-      FROM ${ref("curated_mih")}
+      FROM ${ref("mih")}
       WHERE mihType = 'IS'
         AND mihRef1 IS NOT NULL
         AND mihCancel <> -1
@@ -121,7 +121,7 @@ post_operations {
       SELECT
         mil.*,
         mih.mihRef1
-      FROM ${self()} AS mil
+      FROM ${ref("mil")} AS mil
       INNER JOIN mih_raw AS mih
         ON mih.mihDay = mil.milDay
           AND mih.mihMonth = mil.milMonth
