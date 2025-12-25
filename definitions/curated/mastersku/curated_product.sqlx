@@ -134,7 +134,7 @@ post_operations {
                 end)) as SpeciFeild_prdColor,
             from rows_product
             group by prdSku
-            having dimField_prdSize is not null or dimField_prdColor is not null or SpeciFeild_prdSize is not null or SpeciFeild_prdColor is not null
+            -- having dimField_prdSize is not null or dimField_prdColor is not null or SpeciFeild_prdSize is not null or SpeciFeild_prdColor is not null
             
             ), cleaning_data as (
             select 
