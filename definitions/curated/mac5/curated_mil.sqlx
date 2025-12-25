@@ -136,7 +136,7 @@ post_operations {
         mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
         CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) AS per_sale1,
         CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) AS per_sale2,
-        ROW_NUMBER() OVER(PARTITION BY mih2vnos, mih2cus, mih2per2 ORDER BY mih2rev DESC) AS chk_row
+        ROW_NUMBER() OVER(PARTITION BY mih2vnos, mih2cus ORDER BY mih2rev DESC) AS chk_row
       FROM ${ref("mih2")}
       WHERE mih2cus IS NOT NULL
         AND mih2per2 IS NOT NULL
