@@ -18,7 +18,7 @@ js {
     let partition_statement, post_operations_statement;
 
     if (pk_key && pk_key.length > 0) {
-        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY stkeditdt desc, stkdesct1 desc, stkdesct2 desc) = 1`;
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY stkcode885 desc, stkeditdt desc, stkdesct1 desc, stkdesct2 desc) = 1`;
         post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
     ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
 
@@ -29,7 +29,7 @@ js {
 }
 
 SELECT
-    NULLIF(CAST(TRIM(stkcode) AS STRING), '') as stkcode,
+    NULLIF(CAST(TRIM(REGEXP_REPLACE(stkcode, r'[\n\r\t]', '')) AS STRING), '') as stkcode,
     NULLIF(CAST(TRIM(stkgroup) AS STRING), '') as stkgroup,
     NULLIF(CAST(TRIM(stkcode2) AS STRING), '') as stkcode2,
     NULLIF(CAST(TRIM(stkdesct1) AS STRING), '') as stkdesct1,
