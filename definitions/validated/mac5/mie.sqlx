@@ -3,7 +3,7 @@ config {
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
     dependencies: ["validated_schema_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
-    uniqueKey: [...databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mie"]],
+    uniqueKey: ["MIEday","MIEmonth","MIEyear","MIEtype","MIEvnos","MIEcus"],
     bigquery: {
         clusterBy: []
     },
@@ -13,7 +13,7 @@ js {
     const project_id = databuffet.DATABASE
     const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
     const table_id = name()
-    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["mie"]
+    const pk_key = ["MIEday","MIEmonth","MIEyear","MIEtype","MIEvnos","MIEcus"]
 
     let partition_statement, post_operations_statement;
 

@@ -3,7 +3,7 @@ config {
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU,
     dependencies: ["validated_schema_mastersku"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
-    uniqueKey: [...databuffet.primaryKeys[databuffet.SOURCE_MASTERSKU]["product_detail"]],
+    uniqueKey: ["pd_id"],
     bigquery: {
         clusterBy: []
     },
@@ -13,7 +13,7 @@ js {
     const project_id = databuffet.DATABASE
     const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU
     const table_id = name()
-    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MASTERSKU]["product_detail"]
+    const pk_key = ["pd_id"]
 
     let partition_statement, post_operations_statement;
 
