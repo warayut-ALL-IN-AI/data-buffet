@@ -1,0 +1,48 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: ["validated_schema_mac5"],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
+    uniqueKey: [...databuffet.primaryKeys[databuffet.SOURCE_MAC5]["ap_s"]],
+    bigquery: {
+        clusterBy: []
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = databuffet.primaryKeys[databuffet.SOURCE_MAC5]["ap_s"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ap_snamet desc, ap_snamee desc) = 1`;
+        post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+    ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+    CAST(ap_scode AS INT64) as ap_scode,
+    NULLIF(CAST(TRIM(ap_snamet) AS STRING), '') as ap_snamet,
+    NULLIF(CAST(TRIM(ap_snamee) AS STRING), '') as ap_snamee,
+    CAST(ap_scolf AS INT64) as ap_scolf,
+    CAST(ap_scolb AS INT64) as ap_scolb,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

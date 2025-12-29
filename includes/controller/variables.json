@@ -4,6 +4,8 @@
     "TAG_REINITIAL": "re-initial",
     "TAG_VALIDATED": "validated",
     "TAG_CURATED": "curated",
+    "TAG_DIM": "dimension",
+    "TAG_FACT": "fact",
 
     "TAG_VALIDATED_INCREMENTAL": "validated_incremental",
     "TAG_VALIDATED_FULL": "validated_full",
