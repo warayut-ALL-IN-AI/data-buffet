@@ -1,0 +1,89 @@
+config {
+  type: "operations",
+  dependencies: [],
+  tags: [databuffet.TAG_DIM_YEARLY],
+}
+
+-- CREATE OR REPLACE TABLE `databuffet-nonprd.dimension_table.dim_calendar` 
+-- CLUSTER BY Date, HolidayFlag, LongWeekEndFlag, WeekendFlag
+-- AS
+
+BEGIN
+  -- CREATE TEMP TABLE
+  CREATE OR REPLACE TEMP TABLE temp_data_calendar AS
+  WITH GeneratedDates AS (
+    -- สร้างวันที่ (ปรับช่วงปีได้ที่นี่)
+    SELECT date_value
+    FROM UNNEST(GENERATE_DATE_ARRAY( DATE_TRUNC(DATE_ADD(CURRENT_DATE('Asia/Bangkok'), INTERVAL 1 YEAR), YEAR), DATE(EXTRACT(YEAR FROM CURRENT_DATE('Asia/Bangkok')) + 2, 12, 31) )) AS date_value
+
+  ), BaseCalendar AS (
+    -- เตรียมข้อมูลพื้นฐานและ Join Holiday
+    SELECT 
+      d.date_value,
+      EXTRACT(DAYOFWEEK FROM d.date_value) IN (1, 7) AS IsWeekend, -- 1=Sun, 7=Sat
+      h.HolidayDate IS NOT NULL AS IsHoliday,
+      h.HolidayName,
+      h.HolidayNameEng
+    FROM GeneratedDates d
+    LEFT JOIN `databuffet-nonprd.onetime.MasterPublicHoliday` h 
+      ON d.date_value = h.HolidayDate
+
+  ), MarkOffDays AS (
+    -- ระบุว่าวันนี้ "ได้หยุด" หรือไม่
+    SELECT 
+      *, (CASE WHEN IsWeekend OR IsHoliday THEN 1 ELSE 0 END) AS IsDayOff
+    FROM BaseCalendar
+
+  ), GroupingOffDays AS (
+    -- จัดกลุ่มวันหยุดต่อเนื่อง
+    SELECT 
+      *, SUM(CASE WHEN IsDayOff = 1 THEN 0 ELSE 1 END) OVER (ORDER BY date_value) AS GroupID
+    FROM MarkOffDays
+
+  ), CalculateDuration AS (
+    -- นับจำนวนวันหยุดต่อเนื่องในแต่ละกลุ่ม
+    SELECT 
+      *, SUM(IsDayOff) OVER (PARTITION BY GroupID) AS ConsecutiveOffDays
+    FROM GroupingOffDays
+    
+  )
+  SELECT
+    d.date_value AS Date,
+    FORMAT_DATE('%A', d.date_value) AS DayLongName,
+    FORMAT_DATE('%a', d.date_value) AS DayShortName,
+    FORMAT_DATE('%B', d.date_value) AS MonthLongName,
+    FORMAT_DATE('%m', d.date_value) AS MonthNumber,
+    CONCAT(FORMAT_DATE('%y', d.date_value), '-', FORMAT_DATE('%b', d.date_value) ) AS MonthOfYear,
+    FORMAT_DATE('%b', d.date_value) AS MonthShortName,
+    CONCAT('Q', CAST(EXTRACT(QUARTER FROM d.date_value) AS STRING)) AS QuaterNumber,
+    FORMAT('%02d', EXTRACT(WEEK FROM d.date_value) + 1) AS Week,
+    (CASE WHEN d.IsWeekend THEN 'Yes' ELSE 'No' END) AS WeekendFlag,
+    EXTRACT(DAYOFWEEK FROM d.date_value) AS WeekNumber,
+    EXTRACT(YEAR FROM d.date_value) AS Year,
+    FORMAT_DATE('%Y%m', d.date_value) AS YearMonthNumber,
+    FORMAT_DATE('%Y-%b', d.date_value) AS YearMonthShort,
+    FORMAT_DATE('Q%Q %Y', d.date_value) AS YearQuater,
+    FORMAT_DATE('%d', d.date_value) AS Day,
+    (CASE 
+      WHEN d.IsHoliday THEN 'Yes' 
+      ELSE (CASE WHEN d.IsWeekend THEN 'Yes' ELSE 'No' END) 
+    END) AS HolidayFlag,
+    d.HolidayName AS HolidayNameTH,
+    d.HolidayNameEng AS HolidayNameEN,
+    (CASE 
+      WHEN d.IsDayOff = 1 AND d.ConsecutiveOffDays >= 3 THEN 'Yes' 
+      ELSE 'No'
+    END) AS LongWeekEndFlag
+
+  FROM CalculateDuration as d
+  ORDER BY d.date_value;
+
+  -- DELETE
+  DELETE FROM `databuffet-nonprd.dimension_table.dim_calendar` 
+  WHERE Date in (select distinct Date from temp_data_calendar);
+
+  -- INSERT
+  INSERT INTO `databuffet-nonprd.dimension_table.dim_calendar` 
+  SELECT * FROM temp_data_calendar;
+
+END;
