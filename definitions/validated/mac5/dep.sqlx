@@ -20,8 +20,22 @@ js {
     if (pk_key && pk_key.length > 0) {
         partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY depeditdt desc) = 1`;
         post_operations_statement = `BEGIN
-    EXECUTE IMMEDIATE 'ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS';
-    EXECUTE IMMEDIATE 'ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED';
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    -- Retry loop
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            -- ลอง ALTER TABLE
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            -- ถ้า error ให้ retry
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
 END;`;
 
     } else {
