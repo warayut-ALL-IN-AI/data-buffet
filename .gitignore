@@ -2,3 +2,6 @@ workflow_settings.yaml
 node_modules/
 FORAI/
 .claude/
+requirement.md
+CLAUDE.md
+DOCUMENT/

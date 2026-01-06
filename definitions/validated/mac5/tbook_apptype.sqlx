@@ -19,8 +19,10 @@ js {
 
     if (pk_key && pk_key.length > 0) {
         partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY iddesc desc, name desc) = 1`;
-        post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
-    ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
+        post_operations_statement = `EXECUTE IMMEDIATE '''
+    ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+    ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+    ''';`;
 
     } else {
         partition_statement = "";
