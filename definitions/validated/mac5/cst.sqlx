@@ -5,7 +5,8 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
     uniqueKey: ["CSTdate","CSTtype","CSTvnos","CSTcus","CSTstk","CSTsto","CSTio","CSTlist"],
     bigquery: {
-        clusterBy: []
+        partitionBy: "asatdate",
+        clusterBy: ["cstdate", "cstcus", "cststk"]
     },
 }
 

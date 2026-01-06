@@ -105,4 +105,40 @@ OPTIONS (
   uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/vendor/*'],
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/vendor/'
 );
+
+-- Table: unit
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.unit`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.unit`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING 
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/unit/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/unit/'
+);
+
+-- Table: product_status
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_status`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_status`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING 
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product_status/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product_status/'
+);
+
+-- Table: product_admin_status
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_admin_status`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_admin_status`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING 
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product_admin_status/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MASTERSKU}/product_admin_status/'
+);
 ----------------------------------- INCREMENTAL ------------------------------------

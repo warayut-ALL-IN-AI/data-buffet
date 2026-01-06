@@ -5,7 +5,7 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
     uniqueKey: ["proagid","proagstkcode"],
     bigquery: {
-        clusterBy: []
+        clusterBy: ["proagid","proagstkcode"]
     },
 }
 

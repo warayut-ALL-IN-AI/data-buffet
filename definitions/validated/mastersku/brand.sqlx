@@ -5,7 +5,8 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
     uniqueKey: ["bra_id"],
     bigquery: {
-        clusterBy: []
+        partitionBy : "asatdate",
+        clusterBy: ["bra_id"]
     },
 }
 

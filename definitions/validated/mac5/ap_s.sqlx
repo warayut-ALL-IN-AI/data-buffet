@@ -5,7 +5,7 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
     uniqueKey: ["ap_scode"],
     bigquery: {
-        clusterBy: []
+        clusterBy: ["ap_scode"]
     },
 }
 

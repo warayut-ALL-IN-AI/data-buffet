@@ -5,7 +5,8 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
     uniqueKey: ["MILday","MILmonth","MILyear","MILtype","MILvnos","MILcus","MILlistNo"],
     bigquery: {
-        clusterBy: []
+        partitionBy: "asatdate",
+        clusterBy: ["miltype", "milvnos", "milcus", "millistno"]
     },
 }
 

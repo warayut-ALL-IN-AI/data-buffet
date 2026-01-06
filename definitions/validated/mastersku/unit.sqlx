@@ -3,10 +3,10 @@ config {
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU,
     dependencies: ["validated_schema_mastersku"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
-    uniqueKey: ["pgcg_id"],
+    uniqueKey: ["unit_id"],
     bigquery: {
         partitionBy : "asatdate",
-        clusterBy: ["pgcg_id"]
+        clusterBy: ["unit_id"]
     },
 }
 
@@ -14,7 +14,7 @@ js {
     const project_id = databuffet.DATABASE
     const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU
     const table_id = name()
-    const pk_key = ["pgcg_id"]
+    const pk_key = ["unit_id"]
 
     let partition_statement, post_operations_statement;
 
@@ -30,15 +30,13 @@ js {
 }
 
 SELECT
-  NULLIF(CAST(TRIM(pgcg_id) AS STRING), '') AS pgcg_id,
-  NULLIF(CAST(TRIM(pgcg_pg_id) AS STRING), '') AS pgcg_pg_id,
-  NULLIF(CAST(TRIM(pgcg_cost_group_detail) AS STRING), '') AS pgcg_cost_group_detail,
-  CAST(pgcg_is_use AS BOOL) AS pgcg_is_use,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pgcg_create_date, 1, 19)) AS pgcg_create_date,
-  NULLIF(CAST(TRIM(pgcg_create_by) AS STRING), '') AS pgcg_create_by,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pgcg_update_date, 1, 19)) AS pgcg_update_date,
-  NULLIF(CAST(TRIM(pgcg_update_by) AS STRING), '') AS pgcg_update_by,
-  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
+  NULLIF(CAST(TRIM(unit_id) AS STRING), '') AS unit_id,
+  NULLIF(CAST(TRIM(unit_type_name) AS STRING), '') AS unit_type_name,
+  NULLIF(CAST(TRIM(unit_name) AS STRING), '') AS unit_name,
+  CAST(unit_is_use AS BOOL) as unit_is_use,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(unit_created_date, 1, 19)) as unit_created_date,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(unit_updated_date, 1, 19)) as unit_updated_date,
+  PARSE_DATE('%Y%m%d', ASATDATE) as asatdate,
 
 FROM
   `${project_id}.${dataset_id}.${table_id}`

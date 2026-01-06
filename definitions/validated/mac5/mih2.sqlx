@@ -5,7 +5,8 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
     uniqueKey: ["MIH2day","MIH2month","MIH2year","MIH2type","MIH2vnos","MIH2cus","MIH2rev"],
     bigquery: {
-        clusterBy: []
+        partitionBy: "asatdate",
+        clusterBy: ["mih2type", "mih2vnos", "mih2cus"]
     },
 }
 

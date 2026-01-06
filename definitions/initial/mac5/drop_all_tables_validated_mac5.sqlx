@@ -82,3 +82,4 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${da
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MAC5}.tmp_pdf_supalai`;
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MAC5}.userloginanyprogram`;
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MAC5}.vmp`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MAC5}.stk_mkt`;

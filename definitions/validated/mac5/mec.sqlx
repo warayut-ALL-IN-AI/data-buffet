@@ -5,7 +5,7 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
     uniqueKey: ["meccode"],
     bigquery: {
-        clusterBy: []
+        clusterBy: ["meccode"]
     },
 }
 
