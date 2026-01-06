@@ -75,4 +75,7 @@ BEGIN
   INSERT INTO databuffet-nonprd.curated_mastersku.product_for_aisearch
   SELECT * FROM temp_product_for_aisearch;
 
+  ---- DROP TEMP TABLE
+  DROP TABLE IF EXISTS temp_product_for_aisearch;
+
 END;
