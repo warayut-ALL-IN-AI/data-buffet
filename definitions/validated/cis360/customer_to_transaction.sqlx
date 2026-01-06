@@ -1,0 +1,65 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_CIS360,
+    dependencies: ["validated_schema_cis360"],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
+    uniqueKey: ["id"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: ["id"]
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_CIS360
+    const table_id = name()
+    const pk_key = ["id"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1`;
+        post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+    ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+    NULLIF(CAST(TRIM(id) AS STRING), '') as id,
+    NULLIF(CAST(TRIM(buyer_id) AS STRING), '') as buyer_id,
+    NULLIF(CAST(TRIM(seller_id) AS STRING), '') as seller_id,
+    CAST(transaction_type_id as INT64) as transaction_type_id,
+    CAST(platform_id as INT64) as platform_id,
+    CAST(platform_reference_id as INT64) as platform_reference_id,
+    NULLIF(CAST(TRIM(buyer_name) AS STRING), '') as buyer_name,
+    NULLIF(CAST(TRIM(seller_name) AS STRING), '') as seller_name,
+    NULLIF(CAST(TRIM(transaction_code) AS STRING), '') as transaction_code,
+    CAST(total_items AS INT64) as total_items,
+    CAST(total_amount AS FLOAT64) as total_amount,
+    NULLIF(CAST(TRIM(url_reference) AS STRING), '') as url_reference,
+    CAST(is_delete as BOOL) as is_delete,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(transaction_date, 1, 19)) as transaction_date,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) as create_date,
+    NULLIF(CAST(TRIM(create_by) AS STRING), '') as create_by,
+    NULLIF(CAST(TRIM(create_by_platform) AS STRING), '') as create_by_platform,
+    NULLIF(CAST(TRIM(update_by_platform) AS STRING), '') as update_by_platform,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19)) as update_date,
+    NULLIF(CAST(TRIM(update_by) AS STRING), '') AS update_by,
+    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

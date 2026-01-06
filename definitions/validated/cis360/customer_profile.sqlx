@@ -1,0 +1,71 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_CIS360,
+    dependencies: ["validated_schema_cis360"],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
+    uniqueKey: ["id"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: ["id"]
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_CIS360
+    const table_id = name()
+    const pk_key = ["id"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1`;
+        post_operations_statement = `ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+    ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+    NULLIF(CAST(TRIM(id) AS STRING), '') as id,
+    NULLIF(CAST(TRIM(allkons_id) AS STRING), '') as allkons_id,
+    NULLIF(CAST(TRIM(tax_id) AS STRING), '') as tax_id,
+    NULLIF(CAST(TRIM(customer_id) AS STRING), '') as customer_id,    
+    CAST(customer_type_id AS INT64) as customer_type_id,
+    CAST(customer_profile_type_id AS INT64) as customer_profile_type_id,
+    CAST(customer_status_id AS INT64) as customer_status_id,
+    NULLIF(CAST(TRIM(image_profile_id) AS STRING), '') as image_profile_id,
+    NULLIF(CAST(TRIM(customer_code) AS STRING), '') as customer_code,
+    CAST(prefix_id AS INT64) as prefix_id,
+    NULLIF(CAST(TRIM(first_name) AS STRING), '') as first_name,
+    NULLIF(CAST(TRIM(middle_name) AS STRING), '') as middle_name,
+    NULLIF(CAST(TRIM(last_name) AS STRING), '') as last_name,
+    NULLIF(CAST(TRIM(full_name) AS STRING), '') as full_name,
+    NULLIF(CAST(TRIM(kyc_status) AS STRING), '') as kyc_status,
+    CAST(active_status as BOOL) as active_status,
+    CAST(is_dopa as BOOL) as is_dopa,
+    CAST(is_dbd as BOOL) as is_dbd,
+    CAST(is_allow_concern as BOOL) as is_allow_concern,
+    CAST(is_delete as BOOL) as is_delete,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) as create_date,
+    NULLIF(CAST(TRIM(create_by) AS STRING), '') as create_by,
+    NULLIF(CAST(TRIM(create_by_platform) AS STRING), '') as create_by_platform,
+    NULLIF(CAST(TRIM(update_by_platform) AS STRING), '') as update_by_platform,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19)) as update_date,
+    NULLIF(CAST(TRIM(update_by) AS STRING), '') AS update_by,
+    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

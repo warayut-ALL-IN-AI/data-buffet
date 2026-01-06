@@ -82,7 +82,7 @@ OPTIONS (
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_CIS360}/customer_profile_tag/'
 );
 
--- Table : customer_profile_tag
+-- Table : customer_profile_category
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile_category`;
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile_category`
 WITH PARTITION COLUMNS (
@@ -262,18 +262,6 @@ OPTIONS (
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_CIS360}/sub_district/'
 );
 
--- Table : sub_district
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.sub_district`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.sub_district`
-WITH PARTITION COLUMNS (
-    ASATDATE STRING 
-)
-OPTIONS (
-  format = 'AVRO',
-  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_CIS360}/sub_district/*'],
-  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_CIS360}/sub_district/'
-);
-
 -- Table : district
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.district`;
 CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.district`
@@ -308,5 +296,17 @@ OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_CIS360}/country/*'],
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_CIS360}/country/'
+);
+
+-- Table : prefix
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.prefix`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.prefix`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING 
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_CIS360}/prefix/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_CIS360}/prefix/'
 );
 ----------------------------------- INCREMENTAL ------------------------------------
