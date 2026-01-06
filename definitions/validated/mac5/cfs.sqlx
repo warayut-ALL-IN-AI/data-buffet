@@ -20,8 +20,8 @@ js {
     if (pk_key && pk_key.length > 0) {
         partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY cfsdateid desc) = 1`;
         post_operations_statement = `BEGIN
-    ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
-    ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+    EXECUTE IMMEDIATE 'ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS';
+    EXECUTE IMMEDIATE 'ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED';
 END;`;
 
     } else {
