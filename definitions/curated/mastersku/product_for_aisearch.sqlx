@@ -1,0 +1,78 @@
+config {
+    type: "operations",
+    dependencies: ["curated_product"],
+    tags: [databuffet.TAG_CURATED],
+}
+
+DECLARE run_date DATE DEFAULT CURRENT_DATE('Asia/Bangkok');
+
+BEGIN
+  ------ CREATE TEMP TABLE
+  CREATE OR REPLACE TEMP TABLE temp_product_for_aisearch AS
+  SELECT
+    run_date as asatdate,
+    product.prdSku as id, 
+    STRUCT(
+        product.prdDescription as product_name,
+        product.prdSku as sku_code,
+        product.prdSaleUnite as sales_unit,
+        product.prdTag as product_tags_json,
+        product.prdUniversalBarcode as barcode,
+        cate.cat_name,
+        IFNULL(brand.bra_name, brand.bra_name_th) as brand_name,
+        vendor.vd_name,
+        (CASE 
+          WHEN product.prdIsActive = true and product.prdIsUse = true and pd.pd_is_system = true then 'Approve'
+          ELSE 'Non-Approve'
+        END) as product_status,
+        product.prdDiminsionData as product_dimensions_json,
+        pd.pd_detail as product_description,
+        pd.pd_series as product_series,
+        pd.pd_model as product_model,
+        pd.pd_material as product_material,
+        pd.pd_shape as product_shape,
+        pd.pd_package_wide as package_width,
+        package_width_unit.unit_name as package_width_unit,
+        pd.pd_package_long as package_length,
+        package_length_unit.unit_name as package_length_unit,
+        pd.pd_package_hight as package_height,
+        package_height_unit.unit_name as package_height_unit,
+        pd.pd_net_weight as product_weight_net,
+        product_weight_net_unit.unit_name as product_weight_net_unit,
+        pd.pd_gross_weight as product_weight_gross,
+        product_weight_gross_unit.unit_name as product_weight_gross_unit,
+        pd.pd_spacific_fields as special_specifications_json
+    ) as structData
+  FROM `databuffet-nonprd.curated_mastersku.curated_product` as product
+  
+  LEFT JOIN `databuffet-nonprd.validated_mastersku.product_detail` as pd
+    ON product.prdId = pd.pd_prd_id
+  LEFT JOIN `databuffet-nonprd.validated_mastersku.brand` as brand
+    ON product.prdBrandId = brand.bra_id
+  LEFT JOIN `databuffet-nonprd.validated_mastersku.category` as cate
+    ON product.prdCatId = cate.cat_id
+  LEFT JOIN `databuffet-nonprd.validated_mastersku.vendor` as vendor
+    ON product.prdVendorId = vendor.vd_id
+
+  LEFT JOIN `databuffet-nonprd.validated_mastersku.unit` as package_width_unit
+    ON pd.pd_uw_id = package_width_unit.unit_id
+  LEFT JOIN `databuffet-nonprd.validated_mastersku.unit` as package_length_unit
+    ON pd.pd_ul_id = package_length_unit.unit_id
+  LEFT JOIN `databuffet-nonprd.validated_mastersku.unit` as package_height_unit
+    ON pd.pd_uh_id = package_height_unit.unit_id
+  LEFT JOIN `databuffet-nonprd.validated_mastersku.unit` as product_weight_net_unit
+    ON pd.pd_net_unit_id = product_weight_net_unit.unit_id
+  LEFT JOIN `databuffet-nonprd.validated_mastersku.unit` as product_weight_gross_unit
+    ON pd.pd_gross_unit_id = product_weight_gross_unit.unit_id
+
+  WHERE product.asatdate between run_date-1 and run_date;
+
+  ---- DELETE DATA BEFOR INSERT
+  DELETE FROM databuffet-nonprd.curated_mastersku.product_for_aisearch
+  WHERE asatdate = run_date;
+  
+  ---- INSERT DATA 
+  INSERT INTO databuffet-nonprd.curated_mastersku.product_for_aisearch
+  SELECT * FROM temp_product_for_aisearch;
+
+END;
