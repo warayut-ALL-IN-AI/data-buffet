@@ -1,7 +1,7 @@
 config {
     type: "incremental",
     schema: databuffet.CURATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
-    dependencies: ["curated_mih", "mih2", "mil"],
+    dependencies: ["curated_schema_mac5", "curated_mih", "mih2", "mil"],
     tags: [databuffet.TAG_CURATED],
     uniqueKey: ["milDay", "milMonth", "milYear", "milType", "milVnos", "milCus", "milListno"],
     bigquery: {
@@ -128,8 +128,8 @@ post_operations {
       FROM (
         SELECT DISTINCT
           mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
-          CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) AS per_sale1,
-          CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) AS per_sale2,
+          ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale1,
+          ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale2,
         FROM ${ref("mih2")}
         WHERE mih2cus IS NOT NULL
           AND mih2per2 IS NOT NULL
@@ -279,7 +279,7 @@ post_operations {
         mil.milFitem,
         mil.mihRef1,
         mil.asatdate,
-        '100%' as percent_sale
+        '100.00%' as percent_sale
       FROM mil_raw AS mil
       WHERE NOT EXISTS (
         SELECT 1

@@ -1,7 +1,7 @@
 config {
     type: "incremental",
     schema: databuffet.CURATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
-    dependencies: ["mih"],
+    dependencies: ["curated_schema_mac5", "mih", "mih2"],
     tags: [databuffet.TAG_CURATED],
     uniqueKey: ["mihDay", "mihMonth", "mihYear", "mihType", "mihVnos"],
     bigquery: {
@@ -33,13 +33,37 @@ js {
 
     };
 
+    const mih2Table = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+        name: "mih2",
+
+    };
+
     // Build source table reference
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
     const ar_sTableRef = `${ar_sTable.database}.${ar_sTable.schema}.${ar_sTable.name}`;
     const ap_sTableRef = `${ap_sTable.database}.${ap_sTable.schema}.${ap_sTable.name}`;
+    const mih2TableRef = `${mih2Table.database}.${mih2Table.schema}.${mih2Table.name}`;
 
 }
 
+WITH mih2_raw as (
+    SELECT *
+    FROM (
+        SELECT DISTINCT
+            mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
+            ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale1,
+            ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale2,
+        FROM ${mih2TableRef}
+        WHERE mih2cus IS NOT NULL
+            AND mih2per2 IS NOT NULL
+            AND mih2per2pc IS NOT NULL
+        QUALIFY ROW_NUMBER() OVER(PARTITION BY mih2vnos, mih2cus ORDER BY mih2rev DESC) = 1
+    )
+    WHERE (mih2perpc <> '100%' AND mih2perpc <> '00%')
+
+)
 SELECT
     mih.mihday as mihDay,
     mih.mihmonth as mihMonth,
@@ -124,11 +148,16 @@ SELECT
       WHEN mih.mihtype in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_s.ar_snamet
       WHEN mih.mihtype in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_s.ap_snamet
       ELSE null
-    END) as mihstatus_desc
+    END) as mihstatus_desc,
+    IFNULL(CONCAT(mih2.per_sale1, '%'), '100.00%') as percentSale1,
+    IFNULL(CONCAT(mih2.per_sale2, '%'), '0.00%') as percentSale2,
 FROM ${sourceTableRef} as mih
-left join ${ar_sTableRef} as ar_s
-    on mih.mihstatus = ar_s.ar_scode
-left join ${ap_sTableRef} as ap_s
-    on mih.mihstatus = ap_s.ap_scode
+LEFT JOIN ${ar_sTableRef} as ar_s
+    ON mih.mihstatus = ar_s.ar_scode
+LEFT JOIN ${ap_sTableRef} as ap_s
+    ON mih.mihstatus = ap_s.ap_scode
+LEFT JOIN mih2_raw as mih2
+    ON mih.mihRef1 = mih2.mih2vnos
+        AND mih.mihCus = mih2.mih2cus
 
 ${ when(incremental(), `WHERE mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
