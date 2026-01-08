@@ -44,7 +44,7 @@ END;`;
 
 SELECT
     NULLIF(CAST(TRIM(REGEXP_REPLACE(stkcode, r'[\n\r\t]', '')) AS STRING), '') as stkcode,
-    NULLIF(CAST(TRIM(stkgroup) AS STRING), '') as stkgroup,
+    NULLIF(CAST(TRIM(REGEXP_REPLACE(stkgroup, r'[\n\r\t-.]', '')) AS STRING), '') as stkgroup,
     NULLIF(CAST(TRIM(stkcode2) AS STRING), '') as stkcode2,
     NULLIF(CAST(TRIM(stkdesct1) AS STRING), '') as stkdesct1,
     NULLIF(CAST(TRIM(stkdesct2) AS STRING), '') as stkdesct2,

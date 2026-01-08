@@ -26,6 +26,7 @@
     "SOURCE_CIS360": "cis360",
 
     "GCS_MAC5": "mac5_ag01",
+    "GCS_MAC5_REPORT": "mac5_report",
     "GCS_MASTERSKU": "mastersku",
     "GCS_CIS360": "cis360"
 

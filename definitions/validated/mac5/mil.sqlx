@@ -50,7 +50,7 @@ SELECT
   NULLIF(CAST(TRIM(MILtype) AS STRING), '') AS miltype,
   NULLIF(CAST(TRIM(MILvnos) AS STRING), '') AS milvnos,
   NULLIF(CAST(TRIM(MILcus) AS STRING), '') AS milcus,
-  NULLIF(CAST(TRIM(MILstk) AS STRING), '') AS milstk,
+  NULLIF(CAST(TRIM(REGEXP_REPLACE(MILstk, r'[\n\r\t]', '')) AS STRING), '') AS milstk,
   NULLIF(CAST(TRIM(MILjob) AS STRING), '') AS miljob,
   NULLIF(CAST(TRIM(MILdep) AS STRING), '') AS mildep,
   NULLIF(CAST(TRIM(MILper) AS STRING), '') AS milper,

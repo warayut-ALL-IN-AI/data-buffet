@@ -18,7 +18,7 @@ js {
     let partition_statement, post_operations_statement;
 
     if (pk_key && pk_key.length > 0) {
-        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY stgdesct desc, stgdesce desc, rowguid desc) = 1`;
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY stgdesct desc) = 1`;
         post_operations_statement = `
 BEGIN
     DECLARE retry_count INT64 DEFAULT 0;
@@ -40,29 +40,16 @@ END;`;
         partition_statement = "";
         post_operations_statement = "";
     }
-
 }
-WITH stgacc AS (
-    SELECT stgcode, gacccode, gaccname
-    FROM ${ref("stgacc")} as stgacc
-    LEFT JOIN ${ref("stg_report")} as stg_report
-        ON stgacc.gacccode = stg_report.stgacccode
-    QUALIFY row_number() over(partition by stgcode order by gacccode desc) = 1
 
-)
 SELECT
-    NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
-    NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
-    NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
-    NULLIF(CAST(TRIM(stg.rowguid) AS STRING), '') as rowguid,
-    NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
-    NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname,
+    NULLIF(CAST(TRIM(REGEXP_REPLACE(STGcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
+    NULLIF(CAST(TRIM(STGdescT) AS STRING), '') as stgdesct,
+    NULLIF(CAST(TRIM(STGdescE) AS STRING), '') as stgdesce,
+    NULLIF(CAST(TRIM(stgacccode) AS STRING), '') as stgacccode
 
 FROM
-  `${project_id}.${dataset_id}.${table_id}` as stg
-LEFT JOIN stgacc as stgacc
-    ON stg.stgcode = stgacc.stgcode
-
+  `${project_id}.${dataset_id}.${table_id}`
 ${partition_statement}
 
 pre_operations {
