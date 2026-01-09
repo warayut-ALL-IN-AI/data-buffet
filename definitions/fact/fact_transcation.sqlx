@@ -11,7 +11,7 @@ BEGIN
     SELECT 
       *, 
       PARSE_DATE('%Y%m%d', CONCAT(milYear, FORMAT("%02d", milMonth), FORMAT("%02d", milDay))) as mix_date
-    FROM databuffet-nonprd.onetime.PowerBI_Data_Buffet_Transaction
+    FROM databuffet-nonprd.onetime.Transaction_Data_Mart
     WHERE asatdate BETWEEN DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 1 YEAR) AND CURRENT_DATE('Asia/Bangkok')
       -- AND milVnos = '6611006411'
 
@@ -42,7 +42,7 @@ BEGIN
     -- SaleRepSK
     left join databuffet-nonprd.dimension_table.dim_sale_representative as sale_sk
       on mix_date between sale_sk.StartDate and sale_sk.EndDate
-        and TRIM(tran.milPer) = CAST(sale_sk.EmployeeID as STRING)
+        and TRIM(tran.milPer) = TRIM(sale_sk.EmployeeID)
 
     -- DepartmentSK
     left join databuffet-nonprd.dimension_table.dim_department as dep_sk
