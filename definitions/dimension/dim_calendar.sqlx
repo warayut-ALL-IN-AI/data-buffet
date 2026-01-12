@@ -46,37 +46,53 @@ BEGIN
       *, SUM(IsDayOff) OVER (PARTITION BY GroupID) AS ConsecutiveOffDays
     FROM GroupingOffDays
     
-  )
-  SELECT
-    d.date_value AS Date,
-    FORMAT_DATE('%A', d.date_value) AS DayLongName,
-    FORMAT_DATE('%a', d.date_value) AS DayShortName,
-    FORMAT_DATE('%B', d.date_value) AS MonthLongName,
-    FORMAT_DATE('%m', d.date_value) AS MonthNumber,
-    CONCAT(FORMAT_DATE('%y', d.date_value), '-', FORMAT_DATE('%b', d.date_value) ) AS MonthOfYear,
-    FORMAT_DATE('%b', d.date_value) AS MonthShortName,
-    CONCAT('Q', CAST(EXTRACT(QUARTER FROM d.date_value) AS STRING)) AS QuaterNumber,
-    FORMAT('%02d', EXTRACT(WEEK FROM d.date_value) + 1) AS Week,
-    (CASE WHEN d.IsWeekend THEN 'Yes' ELSE 'No' END) AS WeekendFlag,
-    EXTRACT(DAYOFWEEK FROM d.date_value) AS WeekNumber,
-    EXTRACT(YEAR FROM d.date_value) AS Year,
-    FORMAT_DATE('%Y%m', d.date_value) AS YearMonthNumber,
-    FORMAT_DATE('%Y-%b', d.date_value) AS YearMonthShort,
-    FORMAT_DATE('Q%Q %Y', d.date_value) AS YearQuater,
-    FORMAT_DATE('%d', d.date_value) AS Day,
-    (CASE 
-      WHEN d.IsHoliday THEN 'Yes' 
-      ELSE (CASE WHEN d.IsWeekend THEN 'Yes' ELSE 'No' END) 
-    END) AS HolidayFlag,
-    d.HolidayName AS HolidayNameTH,
-    d.HolidayNameEng AS HolidayNameEN,
-    (CASE 
-      WHEN d.IsDayOff = 1 AND d.ConsecutiveOffDays >= 3 THEN 'Yes' 
-      ELSE 'No'
-    END) AS LongWeekEndFlag
+  ), final_table as (
+    SELECT
+      d.date_value AS Date,
+      FORMAT_DATE('%A', d.date_value) AS DayLongName,
+      FORMAT_DATE('%a', d.date_value) AS DayShortName,
+      FORMAT_DATE('%B', d.date_value) AS MonthLongName,
+      FORMAT_DATE('%m', d.date_value) AS MonthNumber,
+      CONCAT(FORMAT_DATE('%y', d.date_value), '-', FORMAT_DATE('%b', d.date_value) ) AS MonthOfYear,
+      FORMAT_DATE('%b', d.date_value) AS MonthShortName,
+      CONCAT('Q', CAST(EXTRACT(QUARTER FROM d.date_value) AS STRING)) AS QuaterNumber,
+      FORMAT('%02d', EXTRACT(WEEK FROM d.date_value) + 1) AS Week,
+      (CASE WHEN d.IsWeekend THEN 'Yes' ELSE 'No' END) AS WeekendFlag,
+      EXTRACT(DAYOFWEEK FROM d.date_value) AS WeekNumber,
+      EXTRACT(YEAR FROM d.date_value) AS Year,
+      FORMAT_DATE('%Y%m', d.date_value) AS YearMonthNumber,
+      FORMAT_DATE('%Y-%b', d.date_value) AS YearMonthShort,
+      FORMAT_DATE('Q%Q %Y', d.date_value) AS YearQuater,
+      FORMAT_DATE('%d', d.date_value) AS Day,
+      (CASE 
+        WHEN d.IsHoliday = true THEN 'Yes' 
+        ELSE (CASE WHEN d.IsWeekend THEN 'Yes' ELSE 'No' END) 
+      END) AS HolidayFlag,
+      d.HolidayName AS HolidayNameTH,
+      d.HolidayNameEng AS HolidayNameEN,
+      (CASE 
+        WHEN d.IsDayOff = 1 AND d.ConsecutiveOffDays >= 3 THEN 'Yes' 
+        ELSE 'No'
+      END) AS LongWeekEndFlag
 
-  FROM CalculateDuration as d
-  ORDER BY d.date_value;
+    FROM CalculateDuration as d
+  )
+  SELECT 
+    * except(HolidayNameTH, HolidayNameEN, LongWeekEndFlag),
+    (CASE 
+      WHEN HolidayFlag = 'Yes' THEN HolidayNameTH
+      WHEN WeekendFlag = 'Yes' THEN 'วันหยุดสุดสัปดาห์'
+      ELSE 'วันธรรมดา'
+    END) as HolidayNameTH, 
+    (CASE 
+      WHEN HolidayFlag = 'Yes' THEN HolidayNameTH
+      WHEN WeekendFlag = 'Yes' THEN 'Weekend'
+      ELSE 'Normal day'
+    END) as HolidayNameEN, 
+    LongWeekEndFlag
+  FROM final_table
+  ORDER BY Date;
+  
 
   -- DELETE
   DELETE FROM `databuffet-nonprd.dimension_table.dim_calendar` 
