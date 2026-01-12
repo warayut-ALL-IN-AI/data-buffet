@@ -80,13 +80,13 @@ BEGIN
   SELECT 
     * except(HolidayNameTH, HolidayNameEN, LongWeekEndFlag),
     (CASE 
-      WHEN HolidayFlag = 'Yes' THEN HolidayNameTH
-      WHEN WeekendFlag = 'Yes' THEN 'วันหยุดสุดสัปดาห์'
+      WHEN HolidayFlag = 'Yes' AND HolidayNameTH IS NOT NULL THEN HolidayNameTH
+      WHEN HolidayFlag = 'Yes' AND WeekendFlag = 'Yes' THEN 'วันหยุดสุดสัปดาห์'
       ELSE 'วันธรรมดา'
     END) as HolidayNameTH, 
     (CASE 
-      WHEN HolidayFlag = 'Yes' THEN HolidayNameTH
-      WHEN WeekendFlag = 'Yes' THEN 'Weekend'
+      WHEN HolidayFlag = 'Yes' AND HolidayNameTH IS NOT NULL THEN HolidayNameTH
+      WHEN HolidayFlag = 'Yes' AND WeekendFlag = 'Yes' THEN 'Weekend'
       ELSE 'Normal day'
     END) as HolidayNameEN, 
     LongWeekEndFlag
