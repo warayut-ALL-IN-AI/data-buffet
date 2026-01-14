@@ -107,6 +107,6 @@ END;
 
 BEGIN
   DELETE FROM databuffet-nonprd.fact_table.fact_transaction
-  WHERE mix_date < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 3 YEAR), YEAR)
+  WHERE mix_date < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR)
   ;
 END;
