@@ -1,0 +1,61 @@
+config {
+  type: "operations",
+  dependencies: ["stk", "stg", "product", "product_detail"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+BEGIN
+  drop table if exists databuffet-nonprd.dimension_table.dim_product_master;
+  
+  create or replace table databuffet-nonprd.dimension_table.dim_product_master
+  cluster by ProductCode, ProductGroupMAC5, ProductGroupACC, ProductGroupMAC5Type
+  as
+  select 
+  a.stkcode as ProductCode ,
+  a.stkcode2 as ProductCode1,
+  a.stkdesct1 as ProductMac5Description,
+  g.stgcode as ProductGroupMAC5, 
+  g.stgdesct as ProductGroupMac5Description,
+  g.stgdesce as ProductGroupMAC5Type,
+  g.gacccode as ProductGroupACC,
+  g.gaccname as ProductGroupACCName,
+  pd.pd_product_name as ProductName,
+  p.prd_description as ProductDescription,
+  p.prd_dimension1 as ProductDimension1 ,
+  p.prd_dimension2 as ProductDimension2,
+  p.prd_dimension3 as ProductDimension3,
+  p.prd_dimension4 as ProductDimension4,
+  pd.pd_garantee as ProductGarantee,
+  pd.pd_garantee_detail as ProductGaranteeDetail,
+  (case 
+    when 
+      pd.pd_certificate is not null 
+      and pd.pd_certificate <> '' 
+      and pd.pd_certificate <> 'โปรดระบุ' 
+      and pd.pd_certificate <> '-' 
+      and pd.pd_certificate <> 'None' 
+      and pd.pd_certificate <> 'No'
+    then 'Yes' 
+    else 'No' 
+  end) as ThaiIndustrialStandardFlag,
+  (case
+    when pdr.Rebate is not null then 'Yes'
+    else 'No'
+  end) as ProductFCExcFlag,
+  pd.pd_certificate as ThaiIndustrialSatandardDetail,
+  p.prd_brand_id as BrandID,
+  p.prd_vendor_id as VendorID,
+  a.stksto as WarehouseID,
+  a.STKcode885 as Barcode
+
+  from `databuffet-nonprd.validated_mac5.stk` a  
+  left join `databuffet-nonprd.validated_mac5.stg` g on a.STKgroup = g.STGcode
+  left join `databuffet-nonprd.validated_mastersku.product` p on a.STKcode885 = p.prd_barcode
+  left join `databuffet-nonprd.validated_mastersku.product_detail` pd on p.prd_id = pd.pd_prd_id
+  left join `databuffet-nonprd.dimension_table.dim_product_rebate` pdr on a.stkcode = pdr.Rebate
+  --left join `databuffet-nonprd.validated_mastersku.brand` brand on p.prd_brand_id = brand.bra_id
+  --left join `databuffet-nonprd.validated_mastersku.vendor` vendor on p.prd_vendor_id = vendor.vd_id
+  --where a.STKcode885 is not null and a.STKcode885 <> '' 
+  ;
+  
+END;
