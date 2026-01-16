@@ -8,108 +8,108 @@ BEGIN
   CREATE OR REPLACE TEMP TABLE temp_fact_transaction 
   AS
   WITH raw_transction as (
-  SELECT 
-    *, 
-    PARSE_DATE('%Y%m%d', CONCAT(milYear, FORMAT("%02d", milMonth), FORMAT("%02d", milDay))) as mix_date
-  FROM databuffet-nonprd.onetime.Transaction_Data_Mart
-  WHERE asatdate BETWEEN DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR) AND CURRENT_DATE('Asia/Bangkok')
-    -- AND milVnos = '6611006411'
+    SELECT 
+      *, 
+      PARSE_DATE('%Y%m%d', CONCAT(milYear, FORMAT("%02d", milMonth), FORMAT("%02d", milDay))) as mix_date
+    FROM databuffet-nonprd.onetime.Transaction_Data_Mart
+    WHERE asatdate BETWEEN DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR) AND CURRENT_DATE('Asia/Bangkok')
+      -- AND milVnos = '6611006411'
 
-), final as (
-  select 
-    -- Surrogate Key
-    sale_sk.SaleRepSK,
-    dep_sk.DepartmentSK,
-    reg_sk.RegionSK,
-    reg_m_sk.RegionManagerSK,
-    sec_sk.SectionSK,
-    sec_m_sk.SectionManagerSK,
-    dir_sk.DirectorSK,
-    channel_sk.ChannelSK,
-    coststk_sk.CostStkSk,
-    costgroup_sk.CostGroupSK,
+  ), final as (
+    select 
+      -- Surrogate Key
+      sale_sk.SaleRepSK,
+      dep_sk.DepartmentSK,
+      reg_sk.RegionSK,
+      reg_m_sk.RegionManagerSK,
+      sec_sk.SectionSK,
+      sec_m_sk.SectionManagerSK,
+      dir_sk.DirectorSK,
+      channel_sk.ChannelSK,
+      coststk_sk.CostStkSk,
+      costgroup_sk.CostGroupSK,
 
-    -- Relation
-    -- tran.milPer,
-    -- sale_sk.EmployeeID,
-    -- dep_sk.DepartmentID,
-    -- reg_sk.RegionID,
-    -- sec_sk.SectionID,
-    -- dir_sk.DirectorID,
-    -- reg_m_sk.RegionID,
-    -- sec_m_sk.SectionID,
+      -- Relation
+      -- tran.milPer,
+      -- sale_sk.EmployeeID,
+      -- dep_sk.DepartmentID,
+      -- reg_sk.RegionID,
+      -- sec_sk.SectionID,
+      -- dir_sk.DirectorID,
+      -- reg_m_sk.RegionID,
+      -- sec_m_sk.SectionID,
 
-    -- DATA
-    trans.*
-  from raw_transction as trans
-  -- Basic Data
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_product_master` AS productmaster
-    ON trans.milstk = productmaster.ProductCode
+      -- DATA
+      trans.*
+    from raw_transction as trans
+    -- Basic Data
+    LEFT JOIN `databuffet-nonprd.dimension_table.dim_product_master` AS productmaster
+      ON trans.milstk = productmaster.ProductCode
 
-  -- SaleRepSK
-  left join databuffet-nonprd.dimension_table.dim_sale_representative as sale_sk
-    on mix_date between sale_sk.StartDate and sale_sk.EndDate
-      and TRIM(trans.milPer) = CAST(sale_sk.EmployeeID as STRING)
+    -- SaleRepSK
+    left join databuffet-nonprd.dimension_table.dim_sale_representative as sale_sk
+      on mix_date between sale_sk.StartDate and sale_sk.EndDate
+        and TRIM(trans.milPer) = CAST(sale_sk.EmployeeID as STRING)
 
-  -- DepartmentSK
-  left join databuffet-nonprd.dimension_table.dim_department as dep_sk
-    on mix_date between dep_sk.StartDate and dep_sk.EndDate
-      and sale_sk.DepartmentID = dep_sk.DepartmentID
+    -- DepartmentSK
+    left join databuffet-nonprd.dimension_table.dim_department as dep_sk
+      on mix_date between dep_sk.StartDate and dep_sk.EndDate
+        and sale_sk.DepartmentID = dep_sk.DepartmentID
 
-  -- RegionSK
-  left join databuffet-nonprd.dimension_table.dim_region as reg_sk
-    on mix_date between reg_sk.StartDate and reg_sk.EndDate
-      and dep_sk.RegionID = reg_sk.RegionID
+    -- RegionSK
+    left join databuffet-nonprd.dimension_table.dim_region as reg_sk
+      on mix_date between reg_sk.StartDate and reg_sk.EndDate
+        and dep_sk.RegionID = reg_sk.RegionID
 
-  -- RegionManagerSK
-  left join databuffet-nonprd.dimension_table.dim_region_manager as reg_m_sk
-    on mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
-      and reg_sk.RegionID = reg_m_sk.RegionID
+    -- RegionManagerSK
+    left join databuffet-nonprd.dimension_table.dim_region_manager as reg_m_sk
+      on mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
+        and reg_sk.RegionID = reg_m_sk.RegionID
 
-  -- SectionSK
-  left join databuffet-nonprd.dimension_table.dim_section as sec_sk
-    on mix_date between sec_sk.StartDate and sec_sk.EndDate
-      and dep_sk.SectionID = sec_sk.SectionID
+    -- SectionSK
+    left join databuffet-nonprd.dimension_table.dim_section as sec_sk
+      on mix_date between sec_sk.StartDate and sec_sk.EndDate
+        and dep_sk.SectionID = sec_sk.SectionID
 
-  -- SectionManagerSK
-  left join databuffet-nonprd.dimension_table.dim_section_manager as sec_m_sk
-    on mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
-      and sec_sk.SectionID = sec_m_sk.SectionID
+    -- SectionManagerSK
+    left join databuffet-nonprd.dimension_table.dim_section_manager as sec_m_sk
+      on mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
+        and sec_sk.SectionID = sec_m_sk.SectionID
 
-  -- DirectorSK
-  left join databuffet-nonprd.dimension_table.dim_director as dir_sk
-    on mix_date between dir_sk.StartDate and dir_sk.EndDate
-      and reg_sk.DirectorID = dir_sk.DirectorID
+    -- DirectorSK
+    left join databuffet-nonprd.dimension_table.dim_director as dir_sk
+      on mix_date between dir_sk.StartDate and dir_sk.EndDate
+        and reg_sk.DirectorID = dir_sk.DirectorID
 
-  -- ChannelSK
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_channel` AS channel_sk
-      ON trans.milDep = channel_sk.DepCode
-      
-  -- Join เพื่อหา ChannelCostID ใหม่ในกรณีที่เป็น COST99999
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_channel_cost` AS channel_cost
-      ON sec_sk.SectionID = channel_cost.ChannelCostName
+    -- ChannelSK
+    LEFT JOIN `databuffet-nonprd.dimension_table.dim_channel` AS channel_sk
+        ON trans.milDep = channel_sk.DepCode
+        
+    -- Join เพื่อหา ChannelCostID ใหม่ในกรณีที่เป็น COST99999
+    LEFT JOIN `databuffet-nonprd.dimension_table.dim_channel_cost` AS channel_cost
+        ON sec_sk.SectionID = channel_cost.ChannelCostName
 
-  -- CostStkSk
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_cost_stk` AS coststk_sk
-      ON productmaster.ProductCode = coststk_sk.MilStk
-      AND coststk_sk.ChannelCostID = (CASE 
-                                    WHEN channel_sk.ChannelCostID != 'COST99999' THEN channel_sk.ChannelCostID 
-                                    ELSE channel_cost.ChannelCostID 
-                                  END)
-      AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
-
-  -- CostGroupSK
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_cost_group` AS costgroup_sk
-      ON productmaster.ProductGroupACC = costgroup_sk.GAccID
-      AND costgroup_sk.ChannelCostID = (CASE 
+    -- CostStkSk
+    LEFT JOIN `databuffet-nonprd.dimension_table.dim_cost_stk` AS coststk_sk
+        ON productmaster.ProductCode = coststk_sk.MilStk
+        AND coststk_sk.ChannelCostID = (CASE 
                                       WHEN channel_sk.ChannelCostID != 'COST99999' THEN channel_sk.ChannelCostID 
                                       ELSE channel_cost.ChannelCostID 
                                     END)
-      AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
-)
-  select *
-  from final
-  ;
+        AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
+
+    -- CostGroupSK
+    LEFT JOIN `databuffet-nonprd.dimension_table.dim_cost_group` AS costgroup_sk
+        ON productmaster.ProductGroupACC = costgroup_sk.GAccID
+        AND costgroup_sk.ChannelCostID = (CASE 
+                                        WHEN channel_sk.ChannelCostID != 'COST99999' THEN channel_sk.ChannelCostID 
+                                        ELSE channel_cost.ChannelCostID 
+                                      END)
+        AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
+  )
+    select *
+    from final
+    ;
 
 
   BEGIN    
