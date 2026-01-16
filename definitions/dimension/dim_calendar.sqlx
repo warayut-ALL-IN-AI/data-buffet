@@ -22,8 +22,8 @@ BEGIN
       d.date_value,
       EXTRACT(DAYOFWEEK FROM d.date_value) IN (1, 7) AS IsWeekend, -- 1=Sun, 7=Sat
       h.HolidayDate IS NOT NULL AS IsHoliday,
-      h.HolidayName,
-      h.HolidayNameEng
+      h.HolidayNameTH,
+      h.HolidayNameEN
     FROM GeneratedDates d
     LEFT JOIN `databuffet-nonprd.dimension_table.dim_holiday` h 
       ON d.date_value = h.HolidayDate
@@ -68,8 +68,8 @@ BEGIN
         WHEN d.IsHoliday = true THEN 'Yes' 
         ELSE (CASE WHEN d.IsWeekend THEN 'Yes' ELSE 'No' END) 
       END) AS HolidayFlag,
-      d.HolidayName AS HolidayNameTH,
-      d.HolidayNameEng AS HolidayNameEN,
+      d.HolidayNameTH,
+      d.HolidayNameEN,
       (CASE 
         WHEN d.IsDayOff = 1 AND d.ConsecutiveOffDays >= 3 THEN 'Yes' 
         ELSE 'No'
