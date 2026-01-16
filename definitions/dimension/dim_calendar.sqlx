@@ -25,7 +25,7 @@ BEGIN
       h.HolidayName,
       h.HolidayNameEng
     FROM GeneratedDates d
-    LEFT JOIN `databuffet-nonprd.onetime.MasterPublicHoliday` h 
+    LEFT JOIN `databuffet-nonprd.dimension_table.dim_holiday` h 
       ON d.date_value = h.HolidayDate
 
   ), MarkOffDays AS (
