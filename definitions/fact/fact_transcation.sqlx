@@ -19,6 +19,7 @@ BEGIN
     select 
       -- Surrogate Key
       sale_sk.SaleRepSK,
+      payment_sk.PaymentSK,
       dep_sk.DepartmentSK,
       reg_sk.RegionSK,
       reg_m_sk.RegionManagerSK,
@@ -45,6 +46,10 @@ BEGIN
     -- Basic Data
     LEFT JOIN `databuffet-nonprd.dimension_table.dim_product_master` AS productmaster
       ON trans.milstk = productmaster.ProductCode
+    
+    -- PaymentSK
+    left join databuffet-nonprd.dimension_table.dim_payment as payment_sk
+      on trans.memoextract = payment_sk.CodeMemo
 
     -- SaleRepSK
     left join databuffet-nonprd.dimension_table.dim_sale_representative as sale_sk
