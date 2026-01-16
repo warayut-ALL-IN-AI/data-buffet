@@ -10,7 +10,7 @@ BEGIN
   create or replace table databuffet-nonprd.dimension_table.dim_product_master
   cluster by ProductCode, ProductGroupMAC5, ProductGroupACC, ProductGroupMAC5Type
   as
-  select 
+  select
   a.stkcode as ProductCode ,
   a.stkcode2 as ProductCode1,
   a.stkdesct1 as ProductMac5Description,
@@ -56,6 +56,7 @@ BEGIN
   --left join `databuffet-nonprd.validated_mastersku.brand` brand on p.prd_brand_id = brand.bra_id
   --left join `databuffet-nonprd.validated_mastersku.vendor` vendor on p.prd_vendor_id = vendor.vd_id
   --where a.STKcode885 is not null and a.STKcode885 <> '' 
+  qualify row_number() over(partition by prd_barcode order by prd_updated_date desc) = 1
   ;
   
 END;
