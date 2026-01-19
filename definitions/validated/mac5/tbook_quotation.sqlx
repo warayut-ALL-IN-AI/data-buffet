@@ -47,7 +47,7 @@ SELECT
     NULLIF(CAST(TRIM(running) AS STRING), '') as running,
     NULLIF(CAST(TRIM(atten) AS STRING), '') as atten,
     NULLIF(CAST(TRIM(address) AS STRING), '') as address,
-    NULLIF(CAST(TRIM(sdate) AS STRING), '') as sdate,
+    PARSE_DATE('%Y-%m-%d', NULLIF(CAST(TRIM(sdate) AS STRING), '')) as sdate,
     NULLIF(CAST(TRIM(project) AS STRING), '') as project,
     NULLIF(CAST(TRIM(tel) AS STRING), '') is not null as tel,
     NULLIF(CAST(TRIM(sale) AS STRING), '') is not null as sale,
