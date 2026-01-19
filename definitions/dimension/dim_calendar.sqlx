@@ -5,6 +5,7 @@ config {
 }
 
 -- CREATE OR REPLACE TABLE `databuffet-nonprd.dimension_table.dim_calendar` 
+-- PARTITION BY Date
 -- CLUSTER BY Date, HolidayFlag, LongWeekEndFlag, WeekendFlag
 -- AS
 
@@ -20,7 +21,7 @@ BEGIN
     -- เตรียมข้อมูลพื้นฐานและ Join Holiday
     SELECT 
       d.date_value,
-      EXTRACT(DAYOFWEEK FROM d.date_value) IN (1, 7) AS IsWeekend, -- 1=Sun, 7=Sat
+      EXTRACT(DAYOFWEEK FROM d.date_value) IN (1) AS IsWeekend, -- 1=Sun
       h.HolidayDate IS NOT NULL AS IsHoliday,
       h.HolidayNameTH,
       h.HolidayNameEN

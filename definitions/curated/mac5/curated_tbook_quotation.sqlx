@@ -1,0 +1,99 @@
+config {
+    type: "incremental",
+    schema: databuffet.CURATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: ["curated_schema_mac5", "tbook_quotation"],
+    tags: [databuffet.TAG_CURATED],
+    uniqueKey: ["running"],
+    bigquery: {
+        // partitionBy: "asatdate",
+        clusterBy: ["running", "cashstatus", "cancel"],
+        // updatePartitionFilter: "asatdate >= CURRENT_DATE('Asia/Bangkok')-7"
+    }
+}
+
+js {
+    // Define table references
+    const sourceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+        name: "tbook_quotation",
+    };
+
+    // Build source table reference
+    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
+
+}
+
+select 
+    id as ID,
+    running as Running,
+    atten as Atten,
+    address as Address,
+    sdate as SDate,
+    project as Project,
+    tel as TelePhone,
+    sale as Sale,
+    price_validity as PriceValidity,
+    termdelivery as TermDelivery,
+    termpayment as TermPayment,
+    uinsert as UInsert,
+    dinsert as DInsert,
+    uupdate as UUpdate,
+    dupdate as Dupdate,
+    agent1 as Agent1,
+    agent2 as Agent2,
+    period as Period,
+    pos as Position,
+    vat as Vat,
+    disc as Disc,
+    extrasum as ExtraSum,
+    extradesc as ExtraDesc,
+    date1st as DateStart1,
+    date1end as DateEnd1,
+    date2st as DateStart2,
+    date2end as DateEnd2,
+    cashstatus as CashStatus,
+    note as Note,
+    noteforapp as NoteForApp,
+    memoforapp as MemoForApp,
+    rev as Rev,
+    typecus as TypeCus,
+    channel as Channel,
+    channel2 as Channel2,
+    typeprice as TypePrice,
+    fob as FOB,
+    cancel as Cancel,
+    apptype as AppType,
+    typedeb as TypeDeb,
+    saledep as SaleDep,
+    typeproject as TypeProject,
+    selectstatus as SelectStatus,
+    conpostatus as ConpoStatus,
+    lat as Lat,
+    long as Long,
+    mapnote as MapNote,
+    fileupload as FileUpload,
+    city as City,
+    rdosend as RdoSend,
+    cname as CustomerName,
+    ctel as CustomerTelePhone,
+    caddress as CustomerAddress,
+    checknote as CheckNote,
+    textnote as TextNote,
+    statusspread as StatusSpread,
+    chkbox as ChkBox,
+    fobstt as FobStt,
+    quotation_ref as QuotationRef,
+    customer_id as CustomerId,
+    customer_group as CustomerGroup,
+    quotation_id as QuotationId,
+    estatus as EStatus,
+    area as Area,
+    district as District,
+    postcode as PostCode,
+    qtstepprice as QtStepPrice,
+    extradis as ExtraDis,
+from `databuffet-nonprd.validated_mac5.tbook_quotation`
+qualify row_number() over(partition by running order by rev desc, id desc) = 1
+
+-- ${ when(incremental(), `WHERE mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
