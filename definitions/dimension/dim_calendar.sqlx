@@ -58,7 +58,7 @@ BEGIN
       FORMAT_DATE('%b', d.date_value) AS MonthShortName,
       CONCAT('Q', CAST(EXTRACT(QUARTER FROM d.date_value) AS STRING)) AS QuaterNumber,
       FORMAT('%02d', EXTRACT(WEEK FROM d.date_value) + 1) AS Week,
-      (CASE WHEN d.IsWeekend THEN 'Yes' ELSE 'No' END) AS WeekendFlag,
+      (CASE WHEN d.IsWeekend THEN 'Yes' ELSE 'No' END) AS WeekEndFlag,
       EXTRACT(DAYOFWEEK FROM d.date_value) AS DayOfWeek,
       EXTRACT(YEAR FROM d.date_value) AS Year,
       FORMAT_DATE('%Y%m', d.date_value) AS YearMonthNumber,
