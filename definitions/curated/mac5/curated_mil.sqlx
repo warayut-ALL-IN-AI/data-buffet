@@ -84,7 +84,7 @@ SELECT
   milvcol5 as milVcol5,
   milfitem as milFitem,
   asatdate as asatdate,
-  '100%' as percent_sale
+  '100.00%' as percent_sale
 FROM ${sourceTableRef}
 ${ when(incremental(), `WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
 
@@ -92,35 +92,36 @@ post_operations {
   -------- CREATE TEMP TABLE --------
   BEGIN
     CREATE OR REPLACE TEMP TABLE new_data_curated_mil AS
-    WITH mih_raw AS (
-      SELECT
-        mihDay,
-        mihMonth,
-        mihYear,
-        mihType,
-        mihVnos,
-        mihCus,
-        mihRef1,
-        mihCancel
-      FROM ${ref("mih")}
-      WHERE mihType = 'IS'
-        AND mihRef1 IS NOT NULL
-        AND mihCancel <> -1
-        ${ when(incremental(), `AND asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
-      QUALIFY row_number() over(partition by mihDay, mihMonth, mihYear, mihType, mihVnos, mihCus order by asatdate desc) = 1
-
-    ), mil_raw AS (
+    WITH 
+    -- mih_raw AS (
+    --   SELECT
+    --     mihDay,
+    --     mihMonth,
+    --     mihYear,
+    --     mihType,
+    --     mihVnos,
+    --     mihCus,
+    --     mihRef1,
+    --     mihCancel
+    --   FROM ${ref("mih")}
+    --   WHERE mihType = 'IS'
+    --     AND mihRef1 IS NOT NULL
+    --     AND mihCancel <> -1
+    --     ${ when(incremental(), `AND asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+    --   QUALIFY row_number() over(partition by mihDay, mihMonth, mihYear, mihType, mihVnos, mihCus order by asatdate desc) = 1
+    -- ),
+    mil_raw AS (
       SELECT
         mil.*,
-        mih.mihRef1
+        -- mih.mihRef1
       FROM ${ref("mil")} AS mil
-      INNER JOIN mih_raw AS mih
-        ON mih.mihDay = mil.milDay
-          AND mih.mihMonth = mil.milMonth
-          AND mih.mihYear = mil.milYear
-          AND mih.mihType = mil.milType
-          AND mih.mihVnos = mil.milVnos
-          AND mih.mihCus = mil.milCus
+    --   INNER JOIN mih_raw AS mih
+    --     ON mih.mihDay = mil.milDay
+    --       AND mih.mihMonth = mil.milMonth
+    --       AND mih.mihYear = mil.milYear
+    --       AND mih.mihType = mil.milType
+    --       AND mih.mihVnos = mil.milVnos
+    --       AND mih.mihCus = mil.milCus
       QUALIFY row_number() over(partition by mil.milDay, mil.milMonth, mil.milYear, mil.milType, mil.milVnos, mil.milCus, mil.milListno order by mil.asatdate desc) = 1
 
     ), filter_mih2 AS (
@@ -134,10 +135,10 @@ post_operations {
         WHERE mih2cus IS NOT NULL
           AND mih2per2 IS NOT NULL
           AND mih2per2pc IS NOT NULL
-          AND mih2type = 'PS'
+        --   AND mih2type = 'PS'
           AND EXISTS (
             SELECT 1 FROM mil_raw AS mil
-            WHERE mih2vnos = mil.mihRef1
+            WHERE mih2vnos = mil.milLinkvcno
               AND mih2cus = mil.milCus
           )
         QUALIFY ROW_NUMBER() OVER(PARTITION BY mih2vnos, mih2cus ORDER BY mih2rev DESC) = 1
@@ -204,12 +205,12 @@ post_operations {
         mil.milUsequanp,
         mil.milVcol5,
         mil.milFitem,
-        mil.mihRef1,
+        -- mil.mihRef1,
         mil.asatdate,
         (CASE WHEN split_sale = 1 THEN CONCAT(mih2.per_sale1, '%') ELSE CONCAT(mih2.per_sale2, '%') END) AS percent_sale,
       FROM mil_raw AS mil
       INNER JOIN filter_mih2 AS mih2
-        ON mil.mihRef1 = mih2.mih2vnos
+        ON mil.milLinkvcno = mih2.mih2vnos
           AND mil.milCus = mih2.mih2cus
       CROSS JOIN (
         SELECT 1 AS split_sale
@@ -277,7 +278,7 @@ post_operations {
         mil.milUsequanp,
         mil.milVcol5,
         mil.milFitem,
-        mil.mihRef1,
+        -- mil.mihRef1,
         mil.asatdate,
         '100.00%' as percent_sale
       FROM mil_raw AS mil
@@ -294,9 +295,9 @@ post_operations {
       )
 
     ), final AS (
-      SELECT * EXCEPT(mihRef1) FROM exclude_mil
+      SELECT * FROM exclude_mil
       UNION ALL
-      SELECT * EXCEPT(mihRef1) FROM includ_mil
+      SELECT * FROM includ_mil
     )
 
     SELECT *
