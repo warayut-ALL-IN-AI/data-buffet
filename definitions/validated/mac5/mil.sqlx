@@ -1,12 +1,12 @@
 config {
     type: "incremental",
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
-    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
+    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "mih"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
-    uniqueKey: ["MILday","MILmonth","MILyear","MILtype","MILvnos","MILcus","MILlistNo"],
+    uniqueKey: ["MILtype","MILvnos","MILlistNo"],
     bigquery: {
         partitionBy: "asatdate",
-        clusterBy: ["miltype", "milvnos", "milcus", "millistno"]
+        clusterBy: ["miltype", "milvnos", "millistno"]
     },
 }
 
@@ -14,7 +14,7 @@ js {
     const project_id = databuffet.DATABASE
     const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
     const table_id = name()
-    const pk_key = ["MILday","MILmonth","MILyear","MILtype","MILvnos","MILcus","MILlistNo"]
+    const pk_key = ["MILtype","MILvnos","MILlistNo"]
 
     let partition_statement, post_operations_statement;
 
@@ -43,6 +43,20 @@ END;`;
     }
 }
 
+WITH cte_mil as (
+  select * from `${project_id}.${dataset_id}.${table_id}`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
+
+), cte_mih as (
+  select 
+    t1.mihtype,
+    t1.mihvnos,
+    t1.mihdischf1
+
+  from ${ref("mih")} as t1
+  where exists (select 1 from cte_mil as t2 where t1.mihvnos = t2.milvnos and t1.mihtype = t2.miltype)
+
+)
 SELECT
   CAST(MILday AS INT64) AS milday,
   CAST(MILmonth AS INT64) AS milmonth,
@@ -96,8 +110,8 @@ SELECT
   CAST(MILvat AS FLOAT64) AS milvat_raw,
 
   (CASE 
-    WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MILsum AS FLOAT64) * -1
-    ELSE CAST(MILsum AS FLOAT64)
+    WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(IF( (MILsum - (mihdischf1*-1)) < 0, 0, MILsum) * -1 AS FLOAT64)
+    ELSE CAST((MILsum - MILadisc) AS FLOAT64)
   END) AS milsum,
   CAST(MILsum AS FLOAT64) AS milsum_raw,
 
@@ -136,9 +150,11 @@ SELECT
   NULLIF(CAST(TRIM(MILvCol5) AS STRING), '') AS milvcol5,
   CAST(MILfitem AS INT64) AS milfitem,
   PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
-FROM
-  `${project_id}.${dataset_id}.${table_id}`
-${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
+FROM cte_mil as mil
+LEFT JOIN cte_mih as mih
+  on mil.milvnos = mih.mihvnos
+    and mil.miltype = mih.mihtype
+
 ${partition_statement}
 
 pre_operations {

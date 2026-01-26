@@ -3,10 +3,10 @@ config {
     schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
-    uniqueKey: ["MIHday","MIHmonth","MIHyear","MIHtype","MIHvnos"],
+    uniqueKey: ["MIHtype","MIHvnos"],
     bigquery: {
         partitionBy: "asatdate",
-        clusterBy: ["mihtype", "mihvnos", "mihcus"]
+        clusterBy: ["mihtype", "mihvnos"]
     },
 }
 
@@ -14,7 +14,7 @@ js {
     const project_id = databuffet.DATABASE
     const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
     const table_id = name()
-    const pk_key = ["MIHday","MIHmonth","MIHyear","MIHtype","MIHvnos"]
+    const pk_key = ["MIHtype","MIHvnos"]
 
     let partition_statement, post_operations_statement;
 

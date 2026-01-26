@@ -1,0 +1,68 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
+    uniqueKey: [],
+    bigquery: {
+        clusterBy: []
+    },
+}
+
+js {
+    const project_id = databuffet.DATABASE
+    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const table_id = name()
+    const pk_key = []
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ap_snamet desc, ap_snamee desc) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+  NULLIF(TRIM(fdocument), '') as fdocument,
+  NULLIF(TRIM(fserial_no), '') as fserial_no,
+  NULLIF(TRIM(fcode), '') as fcode,
+  NULLIF(TRIM(fvehicle), '') as fvehicle,
+  NULLIF(TRIM(fitem), '') as fitem,
+  NULLIF(TRIM(fitem2), '') as fitem2,
+  qty2,
+  NULLIF(TRIM(s1), '') as s1,
+  NULLIF(TRIM(s2), '') as s2,
+  NULLIF(TRIM(s3), '') as s3,
+  NULLIF(TRIM(stt), '') as stt,
+  NULLIF(TRIM(username), '') as username,
+
+FROM
+  `${project_id}.${dataset_id}.${table_id}`
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}
