@@ -8,36 +8,36 @@ BEGIN
   CREATE OR REPLACE TEMP TABLE temp_fact_transcation 
   AS
   WITH raw_transction as (
-  SELECT 
-    channel_sk.ChannelSK,
-    channel_sk.ChannelCostID,
-    channel_sk.ChannelFinanceSK,
-    channel_sk.ChannelSaleSK,
-    channel_sk.ChannelCostSK,
-    payment_sk.PaymentSK,
+    SELECT 
+      channel_sk.ChannelSK,
+      channel_sk.ChannelCostID,
+      channel_sk.ChannelFinanceSK,
+      channel_sk.ChannelSaleSK,
+      channel_sk.ChannelCostSK,
+      payment_sk.PaymentSK,
 
-    PARSE_DATE('%Y%m%d', CONCAT(trans.milYear, FORMAT("%02d", trans.milMonth), FORMAT("%02d", trans.milDay))) as mix_date,
+      PARSE_DATE('%Y%m%d', CONCAT(trans.milYear, FORMAT("%02d", trans.milMonth), FORMAT("%02d", trans.milDay))) as mix_date,
+      
+      -- productmaster.ProductCode,
+      productmaster.ProductGroupACC,
+      trans.*
+    FROM databuffet-nonprd.onetime.Transaction_Data_Mart as trans
     
-    productmaster.ProductCode,
-    productmaster.ProductGroupACC,
-    trans.*
-  FROM databuffet-nonprd.onetime.Transaction_Data_Mart as trans
-  
-  -- Product Master
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_product_master` AS productmaster
-    ON trans.milstk = productmaster.ProductCode
+    -- Product Master
+    LEFT JOIN `databuffet-nonprd.dimension_table.dim_product_master` AS productmaster
+      ON trans.milstk = productmaster.ProductCode
 
-  -- PaymentSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_payment as payment_sk
-    ON trans.memoextract = payment_sk.CodeMemo
+    -- PaymentSK
+    LEFT JOIN databuffet-nonprd.dimension_table.dim_payment as payment_sk
+      ON trans.memoextract = payment_sk.CodeMemo
 
-  -- ChannelSK
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_channel` AS channel_sk
-    ON IFNULL(trans.milDep, 'N/A') = channel_sk.DepCode
-    
-  WHERE asatdate BETWEEN DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR) AND CURRENT_DATE('Asia/Bangkok')
-    -- AND milVnos = '6901003086'
-    -- AND trans.milPer = '1065043'
+    -- ChannelSK
+    LEFT JOIN `databuffet-nonprd.dimension_table.dim_channel` AS channel_sk
+      ON IFNULL(trans.milDep, 'N/A') = channel_sk.DepCode
+      
+    WHERE asatdate BETWEEN DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR) AND CURRENT_DATE('Asia/Bangkok')
+      -- AND milVnos = '6901003086'
+      -- AND trans.milPer = '1065043'
 
 ), final_part1 as (
   SELECT 
@@ -63,14 +63,14 @@ BEGIN
 
   -- CostStkSk
   LEFT JOIN `databuffet-nonprd.dimension_table.dim_cost_stk` AS coststk_sk
-      ON trans.ProductCode = coststk_sk.MilStk
-      AND coststk_sk.ChannelCostID = trans.ChannelCostID
+      ON trans.milStk = coststk_sk.MilStk
+      AND trans.ChannelCostID = coststk_sk.ChannelCostID
       AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
 
   -- CostGroupSK
   LEFT JOIN `databuffet-nonprd.dimension_table.dim_cost_group` AS costgroup_sk
       ON trans.ProductGroupACC = costgroup_sk.GAccID
-      AND costgroup_sk.ChannelCostID = trans.ChannelCostID
+      AND trans.ChannelCostID = costgroup_sk.ChannelCostID 
       AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
 
   -- SaleRepSK
@@ -199,7 +199,7 @@ BEGIN
 
   -- CostStkSk
   LEFT JOIN `databuffet-nonprd.dimension_table.dim_cost_stk` AS coststk_sk
-    ON trans.ProductCode = coststk_sk.MilStk
+    ON trans.milStk = coststk_sk.MilStk
       AND coststk_sk.ChannelCostID = channel_cost.ChannelCostID
       AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
 
@@ -212,11 +212,11 @@ BEGIN
   WHERE trans.ChannelCostID = 'COST99999'
 
 ), mix_table as (
-  select * except(ProductCode, ProductGroupACC)
+  select * except(ProductGroupACC)
   from final_part1
   -- where mildep is null
   union all
-  select * except(ProductCode, ProductGroupACC)
+  select * except(ProductGroupACC)
   from final_part2
   -- where mildep is null
 )
