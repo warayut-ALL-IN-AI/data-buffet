@@ -110,7 +110,7 @@ SELECT
   CAST(MILvat AS FLOAT64) AS milvat_raw,
 
   (CASE 
-    WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(IF( (MILsum - (mihdischf1*-1)) < 0, 0, MILsum) * -1 AS FLOAT64)
+    WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(IF( (MILsum - (mihdischf1*-1)) < 0, 0, CAST((MILsum - MILadisc) AS FLOAT64)) * -1 AS FLOAT64)
     ELSE CAST((MILsum - MILadisc) AS FLOAT64)
   END) AS milsum,
   CAST(MILsum AS FLOAT64) AS milsum_raw,
