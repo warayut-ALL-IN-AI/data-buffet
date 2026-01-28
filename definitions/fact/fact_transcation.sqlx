@@ -232,12 +232,8 @@ BEGIN
     WHERE EXISTS (
         SELECT 1 
         FROM temp_fact_transcation AS S 
-        WHERE T.milDay = S.milDay
-          AND T.milMonth = S.milMonth
-          AND T.milYear = S.milYear
-          AND T.milVnos = S.milVnos
+        WHERE T.milVnos = S.milVnos
           AND T.milType = S.milType
-          AND T.milCus = S.milCus
           AND T.milPer = S.milPer
           AND T.milListno = S.milListno
     )

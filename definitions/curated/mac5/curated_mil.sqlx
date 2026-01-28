@@ -92,37 +92,11 @@ post_operations {
   -------- CREATE TEMP TABLE --------
   BEGIN
     CREATE OR REPLACE TEMP TABLE new_data_curated_mil AS
-    WITH 
-    -- mih_raw AS (
-    --   SELECT
-    --     mihDay,
-    --     mihMonth,
-    --     mihYear,
-    --     mihType,
-    --     mihVnos,
-    --     mihCus,
-    --     mihRef1,
-    --     mihCancel
-    --   FROM ${ref("mih")}
-    --   WHERE mihType = 'IS'
-    --     AND mihRef1 IS NOT NULL
-    --     AND mihCancel <> -1
-    --     ${ when(incremental(), `AND asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
-    --   QUALIFY row_number() over(partition by mihDay, mihMonth, mihYear, mihType, mihVnos, mihCus order by asatdate desc) = 1
-    -- ),
-    mil_raw AS (
+    WITH mil_raw AS (
       SELECT
-        mil.*,
-        -- mih.mihRef1
+        mil.*
       FROM ${ref("mil")} AS mil
-    --   INNER JOIN mih_raw AS mih
-    --     ON mih.mihDay = mil.milDay
-    --       AND mih.mihMonth = mil.milMonth
-    --       AND mih.mihYear = mil.milYear
-    --       AND mih.mihType = mil.milType
-    --       AND mih.mihVnos = mil.milVnos
-    --       AND mih.mihCus = mil.milCus
-      QUALIFY row_number() over(partition by mil.milDay, mil.milMonth, mil.milYear, mil.milType, mil.milVnos, mil.milCus, mil.milListno order by mil.asatdate desc) = 1
+      QUALIFY row_number() over(partition by mil.milType, mil.milVnos, mil.milListno order by mil.asatdate desc) = 1
 
     ), filter_mih2 AS (
       SELECT *
@@ -285,12 +259,8 @@ post_operations {
       WHERE NOT EXISTS (
         SELECT 1
         FROM includ_mil AS mil2
-        WHERE mil.milDay = mil2.milDay
-          AND mil.milMonth = mil2.milMonth
-          AND mil.milYear = mil2.milYear
-          AND mil.milType = mil2.milType
+        WHERE mil.milType = mil2.milType
           AND mil.milVnos = mil2.milVnos
-          AND mil.milCus = mil2.milCus
           AND mil.milListno = mil2.milListno
       )
 
@@ -302,7 +272,7 @@ post_operations {
 
     SELECT *
     FROM final
-    ORDER BY milDay, milMonth, milYear, milType, milVnos, milCus, milListno, milPer
+    ORDER BY milType, milVnos, milListno, milPer
     ;
   -------- CREATE TEMP TABLE --------
 
@@ -310,12 +280,8 @@ post_operations {
     DELETE FROM ${self()} AS old_data
     WHERE EXISTS (
       SELECT 1 FROM new_data_curated_mil AS new_data
-      WHERE old_data.milDay = new_data.milDay
-        AND old_data.milMonth = new_data.milMonth
-        AND old_data.milYear = new_data.milYear
-        AND old_data.milType = new_data.milType
+      WHERE old_data.milType = new_data.milType
         AND old_data.milVnos = new_data.milVnos
-        AND old_data.milCus = new_data.milCus
         AND old_data.milListno = new_data.milListno
     )
     ;
@@ -323,8 +289,7 @@ post_operations {
 
   -------- INSERT DATA --------
     INSERT INTO ${self()}
-    SELECT *
-    FROM new_data_curated_mil
+    SELECT * FROM new_data_curated_mil
     ;
   -------- INSERT DATA --------
 
