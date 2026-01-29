@@ -11,9 +11,17 @@ config {
 }
 
 js {
-    const project_id = databuffet.DATABASE
-    const dataset_id = databuffet.RAW_MAC5
-    const table_id = name()
+    // Define table references
+    const sourceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.RAW_MAC5,
+        name: name(),
+    };
+
+    // Build source table reference
+    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
+
+    // Keep existing logic
     const pk_key = ["serial"]
 
     let partition_statement, post_operations_statement;
@@ -79,7 +87,7 @@ SELECT
   NULLIF(CAST(TRIM(Ostatus) AS STRING), '') AS ostatus,
   PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
 FROM
-  `${project_id}.${dataset_id}.${table_id}`
+  `${sourceTableRef}`
 ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
 ${partition_statement}
 
