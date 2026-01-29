@@ -4,4 +4,4 @@ config {
     tags: [databuffet.TAG_VALIDATED],
 }
 
-CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_CIS360}` OPTIONS(location="${databuffet.REGION}") ;
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}` OPTIONS(location="${databuffet.REGION}") ;

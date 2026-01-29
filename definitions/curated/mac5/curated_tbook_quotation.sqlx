@@ -1,6 +1,6 @@
 config {
     type: "incremental",
-    schema: databuffet.CURATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    schema: databuffet.CURATED_MAC5,
     dependencies: ["curated_schema_mac5", "tbook_quotation"],
     tags: [databuffet.TAG_CURATED],
     uniqueKey: ["running"],
@@ -80,7 +80,7 @@ select
     postcode as PostCode,
     qtstepprice as QtStepPrice,
     extradis as ExtraDis,
-from ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5, "tbook_quotation")}
+from ${ref(databuffet.VALIDATED_MAC5, "tbook_quotation")}
 qualify row_number() over(partition by running order by rev desc, id desc) = 1
 
 -- ${ when(incremental(), `WHERE mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }

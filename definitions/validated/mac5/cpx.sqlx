@@ -1,6 +1,6 @@
 config {
     type: "table",
-    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
+    schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
     uniqueKey: ["cpxstkid","cpxlinkid","cpxvnosid","cpxdateid"],
@@ -11,7 +11,7 @@ config {
 
 js {
     const project_id = databuffet.DATABASE
-    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MAC5
+    const dataset_id = databuffet.RAW_MAC5
     const table_id = name()
     const pk_key = ["cpxstkid","cpxlinkid","cpxvnosid","cpxdateid"]
 

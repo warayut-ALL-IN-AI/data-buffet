@@ -4,14 +4,14 @@ config {
 }
 
 
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.brand`;
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.category`;
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product`;
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_category`;
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_detail`;
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group`;
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group_cost_group`;
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.vendor`;
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.unit`;
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_status`;
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_admin_status`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.brand`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.category`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product_category`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product_detail`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product_group`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product_group_cost_group`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.vendor`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.unit`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product_status`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product_admin_status`;

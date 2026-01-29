@@ -1,6 +1,6 @@
 config {
     type: "incremental",
-    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_CIS360,
+    schema: databuffet.VALIDATED_CIS360,
     dependencies: ["validated_schema_cis360", "create_all_table_raw_cis360"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
     uniqueKey: ["id"],
@@ -12,7 +12,7 @@ config {
 
 js {
     const project_id = databuffet.DATABASE
-    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_CIS360
+    const dataset_id = databuffet.RAW_CIS360
     const table_id = name()
     const pk_key = ["id"]
 

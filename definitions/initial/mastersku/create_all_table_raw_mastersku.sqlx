@@ -5,14 +5,14 @@ config {
 }
 
 ------------------------------------- SCHEMA --------------------------------------
-CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}` OPTIONS(location="${databuffet.REGION}");
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}` OPTIONS(location="${databuffet.REGION}");
 ------------------------------------- SCHEMA --------------------------------------
 
 
 ----------------------------------- INCREMENTAL ------------------------------------
 -- Table: brand
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.brand`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.brand`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.brand`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.brand`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -23,8 +23,8 @@ OPTIONS (
 );
 
 -- Table: category
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.category`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.category`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.category`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.category`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -35,8 +35,8 @@ OPTIONS (
 );
 
 -- Table: product
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -47,8 +47,8 @@ OPTIONS (
 );
 
 -- Table: product_category
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_category`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_category`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product_category`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product_category`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -59,8 +59,8 @@ OPTIONS (
 );
 
 -- Table: product_detail
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_detail`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_detail`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product_detail`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product_detail`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -71,8 +71,8 @@ OPTIONS (
 );
 
 -- Table: product_group
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product_group`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product_group`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -83,8 +83,8 @@ OPTIONS (
 );
 
 -- Table: product_group_cost_group
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group_cost_group`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_group_cost_group`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product_group_cost_group`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product_group_cost_group`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -95,8 +95,8 @@ OPTIONS (
 );
 
 -- Table: vendor
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.vendor`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.vendor`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.vendor`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.vendor`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -107,8 +107,8 @@ OPTIONS (
 );
 
 -- Table: unit
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.unit`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.unit`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.unit`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.unit`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -119,8 +119,8 @@ OPTIONS (
 );
 
 -- Table: product_status
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_status`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_status`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product_status`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product_status`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -131,8 +131,8 @@ OPTIONS (
 );
 
 -- Table: product_admin_status
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_admin_status`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_MASTERSKU}.product_admin_status`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product_admin_status`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}.product_admin_status`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )

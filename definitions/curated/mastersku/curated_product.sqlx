@@ -1,6 +1,6 @@
 config {
     type: "incremental",
-    schema: databuffet.CURATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU,
+    schema: databuffet.CURATED_MASTERSKU,
     dependencies: ["product"],
     tags: [databuffet.TAG_CURATED],
     uniqueKey: ["prdSku"],
@@ -62,7 +62,7 @@ SELECT
   prd_total_cost_combo_price as prdTotalCostComboPrice,
   prd_barcode_format as prdBarcodeFormat,
   asatdate as asatdate
-FROM ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "product")}
+FROM ${ref(databuffet.VALIDATED_MASTERSKU, "product")}
 ${ when(incremental(), `WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
 QUALIFY row_number() over(partition by prdSku order by prdUpdatedDate desc) = 1
 
@@ -81,7 +81,7 @@ post_operations {
                 NULLIF(TRIM(JSON_VALUE(dimField, '$.value')), '') as dimField_value,
                 JSON_VALUE(SpeciFeild, '$.label') as SpeciFeild_label,
                 NULLIF(TRIM(JSON_VALUE(SpeciFeild, '$.value')), '') as SpeciFeild_value,
-            FROM ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "product_detail")} as pd
+            FROM ${ref(databuffet.VALIDATED_MASTERSKU, "product_detail")} as pd
             LEFT JOIN ${self()} as p
                 ON p.prdId = pd.pd_prd_id
             LEFT JOIN UNNEST (JSON_QUERY_ARRAY(prdDiminsionData, '$.dimFeild'))  as dimField

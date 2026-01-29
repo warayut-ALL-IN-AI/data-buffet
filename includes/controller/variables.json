@@ -25,6 +25,18 @@
     "SOURCE_MASTERSKU": "mastersku",
     "SOURCE_CIS360": "cis360",
 
+    "RAW_MAC5": "raw_mac5",
+    "VALIDATED_MAC5": "validated_mac5",
+    "CURATED_MAC5": "curated_mac5",
+
+    "RAW_MASTERSKU": "raw_mastersku",
+    "VALIDATED_MASTERSKU": "validated_mastersku",
+    "CURATED_MASTERSKU": "curated_mastersku",
+
+    "RAW_CIS360": "raw_cis360",
+    "VALIDATED_CIS360": "validated_cis360",
+    "CURATED_CIS360": "curated_cis360",
+
     "GCS_MAC5": "mac5_ag01",
     "GCS_MAC5_REPORT": "mac5_report",
     "GCS_MASTERSKU": "mastersku",

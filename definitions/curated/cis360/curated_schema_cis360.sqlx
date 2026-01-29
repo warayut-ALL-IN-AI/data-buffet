@@ -4,4 +4,4 @@ config {
     tags: [databuffet.TAG_CURATED],
 }
 
-CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_SCHEMA}_${databuffet.SOURCE_CIS360}` OPTIONS(location="${databuffet.REGION}") ;
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_CIS360}` OPTIONS(location="${databuffet.REGION}") ;

@@ -5,14 +5,14 @@ config {
 }
 
 ------------------------------------- SCHEMA --------------------------------------
-CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}` OPTIONS(location="${databuffet.REGION}");
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}` OPTIONS(location="${databuffet.REGION}");
 ------------------------------------- SCHEMA --------------------------------------
 
 
 ----------------------------------- INCREMENTAL ------------------------------------
 -- Table : juristic_profile
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.juristic_profile`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.juristic_profile`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.juristic_profile`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.juristic_profile`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -23,8 +23,8 @@ OPTIONS (
 );
 
 -- Table : customer_profile_nature_business
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile_nature_business`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile_nature_business`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_profile_nature_business`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_profile_nature_business`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -35,8 +35,8 @@ OPTIONS (
 );
 
 -- Table : customer_profile
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_profile`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_profile`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -47,8 +47,8 @@ OPTIONS (
 );
 
 -- Table : customer_profile_role_business
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile_role_business`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile_role_business`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_profile_role_business`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_profile_role_business`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -59,8 +59,8 @@ OPTIONS (
 );
 
 -- Table : customer_address
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_address`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_address`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_address`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_address`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -71,8 +71,8 @@ OPTIONS (
 );
 
 -- Table : customer_profile_tag
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile_tag`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile_tag`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_profile_tag`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_profile_tag`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -83,8 +83,8 @@ OPTIONS (
 );
 
 -- Table : customer_profile_category
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile_category`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile_category`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_profile_category`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_profile_category`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -95,8 +95,8 @@ OPTIONS (
 );
 
 -- Table : customer_to_platform
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_to_platform`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_to_platform`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_to_platform`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_to_platform`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -107,8 +107,8 @@ OPTIONS (
 );
 
 -- Table : customer_to_transaction
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_to_transaction`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_to_transaction`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_to_transaction`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_to_transaction`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -119,8 +119,8 @@ OPTIONS (
 );
 
 -- Table : customer_to_customer
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_to_customer`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_to_customer`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_to_customer`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_to_customer`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -131,8 +131,8 @@ OPTIONS (
 );
 
 -- Table : role_business
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.role_business`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.role_business`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.role_business`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.role_business`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -143,8 +143,8 @@ OPTIONS (
 );
 
 -- Table : nature_business
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.nature_business`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.nature_business`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.nature_business`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.nature_business`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -155,8 +155,8 @@ OPTIONS (
 );
 
 -- Table : address_type
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.address_type`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.address_type`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.address_type`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.address_type`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -167,8 +167,8 @@ OPTIONS (
 );
 
 -- Table : organize_type
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.organize_type`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.organize_type`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.organize_type`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.organize_type`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -179,8 +179,8 @@ OPTIONS (
 );
 
 -- Table : juristic_type
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.juristic_type`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.juristic_type`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.juristic_type`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.juristic_type`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -191,8 +191,8 @@ OPTIONS (
 );
 
 -- Table : customer_status
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_status`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_status`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_status`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_status`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -203,8 +203,8 @@ OPTIONS (
 );
 
 -- Table : customer_profile_type
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile_type`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_profile_type`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_profile_type`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_profile_type`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -215,8 +215,8 @@ OPTIONS (
 );
 
 -- Table : customer_type
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_type`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.customer_type`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_type`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.customer_type`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -227,8 +227,8 @@ OPTIONS (
 );
 
 -- Table : category
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.category`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.category`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.category`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.category`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -239,8 +239,8 @@ OPTIONS (
 );
 
 -- Table : zipcode
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.zipcode`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.zipcode`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.zipcode`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.zipcode`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -251,8 +251,8 @@ OPTIONS (
 );
 
 -- Table : sub_district
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.sub_district`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.sub_district`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.sub_district`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.sub_district`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -263,8 +263,8 @@ OPTIONS (
 );
 
 -- Table : district
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.district`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.district`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.district`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.district`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -275,8 +275,8 @@ OPTIONS (
 );
 
 -- Table : province
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.province`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.province`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.province`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.province`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -287,8 +287,8 @@ OPTIONS (
 );
 
 -- Table : country
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.country`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.country`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.country`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.country`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )
@@ -299,8 +299,8 @@ OPTIONS (
 );
 
 -- Table : prefix
-DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.prefix`;
-CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_SCHEMA}_${databuffet.SOURCE_CIS360}.prefix`
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.prefix`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_CIS360}.prefix`
 WITH PARTITION COLUMNS (
     ASATDATE STRING 
 )

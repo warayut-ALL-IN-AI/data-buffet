@@ -1,6 +1,6 @@
 config {
     type: "incremental",
-    schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU,
+    schema: databuffet.VALIDATED_MASTERSKU,
     dependencies: ["validated_schema_mastersku", "create_all_table_raw_mastersku"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
     uniqueKey: ["pc_id"],
@@ -12,7 +12,7 @@ config {
 
 js {
     const project_id = databuffet.DATABASE
-    const dataset_id = databuffet.RAW_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU
+    const dataset_id = databuffet.RAW_MASTERSKU
     const table_id = name()
     const pk_key = ["pc_id"]
 
