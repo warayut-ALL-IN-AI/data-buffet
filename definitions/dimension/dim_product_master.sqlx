@@ -4,10 +4,35 @@ config {
   tags: [databuffet.TAG_DIM_DAILY],
 }
 
+js {
+    // Define table references
+    const DimProductTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_master",
+    };
+    const DimProductTableRef = `${DimProductTable.database}.${DimProductTable.schema}.${DimProductTable.name}`;
+    
+    const DimHolidayTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_holiday",
+    };
+    const DimHolidayTableRef = `${DimHolidayTable.database}.${DimHolidayTable.schema}.${DimHolidayTable.name}`;
+
+    const DimProductRebateTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_rebate",
+    };
+    const DimProductRebateTableRef = `${DimProductRebateTable.database}.${DimProductRebateTable.schema}.${DimProductRebateTable.name}`;
+
+}
+
 BEGIN
-  drop table if exists ${databuffet.DATABASE}.dimension_table.dim_product_master;
+  drop table if exists `${DimProductTableRef}`;
   
-  create or replace table ${databuffet.DATABASE}.dimension_table.dim_product_master
+  create or replace table `${DimProductTableRef}`
   cluster by ProductCode, ProductGroupMAC5, ProductGroupACC, ProductGroupMAC5Type
   as
   select
@@ -48,11 +73,11 @@ BEGIN
   a.stksto as WarehouseID,
   a.STKcode885 as Barcode
 
-  from `${databuffet.DATABASE}.validated_mac5.stk` a  
-  left join `${databuffet.DATABASE}.validated_mac5.stg` g on a.STKgroup = g.STGcode
-  left join `${databuffet.DATABASE}.validated_mastersku.product` p on a.STKcode885 = p.prd_barcode
-  left join `${databuffet.DATABASE}.validated_mastersku.product_detail` pd on p.prd_id = pd.pd_prd_id
-  left join `${databuffet.DATABASE}.dimension_table.dim_product_rebate` pdr on a.stkcode = pdr.Rebate
+  from ${ref(databuffet.VALIDATED_MAC5, "stk")} as a  
+  left join ${ref(databuffet.VALIDATED_MAC5, "stg")} as g on a.STKgroup = g.STGcode
+  left join ${ref(databuffet.VALIDATED_MASTERSKU, "product")} as p on a.STKcode885 = p.prd_barcode
+  left join ${ref(databuffet.VALIDATED_MASTERSKU, "product_detail")} as pd on p.prd_id = pd.pd_prd_id
+  left join `${DimProductRebateTableRef}` as pdr on a.stkcode = pdr.Rebate
   --left join `${databuffet.DATABASE}.validated_mastersku.brand` brand on p.prd_brand_id = brand.bra_id
   --left join `${databuffet.DATABASE}.validated_mastersku.vendor` vendor on p.prd_vendor_id = vendor.vd_id
   --where a.STKcode885 is not null and a.STKcode885 <> '' 
