@@ -4,6 +4,19 @@ config {
     tags: [databuffet.TAG_CURATED],
 }
 
+js {
+    // Define table references
+    const sourceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.CURATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU,
+        name: "product_for_aisearch",
+    };
+
+    // Build source table reference
+    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
+
+}
+
 DECLARE run_date DATE DEFAULT CURRENT_DATE('Asia/Bangkok');
 
 BEGIN
@@ -43,36 +56,36 @@ BEGIN
         product_weight_gross_unit.unit_name as product_weight_gross_unit,
         pd.pd_spacific_fields as special_specifications_json
     ) as structData
-  FROM `databuffet-nonprd.curated_mastersku.curated_product` as product
+  FROM ${ref(databuffet.CURATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "curated_product")} as product
   
-  LEFT JOIN `databuffet-nonprd.validated_mastersku.product_detail` as pd
+  LEFT JOIN ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "product_detail")} as pd
     ON product.prdId = pd.pd_prd_id
-  LEFT JOIN `databuffet-nonprd.validated_mastersku.brand` as brand
+  LEFT JOIN ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "brand")} as brand
     ON product.prdBrandId = brand.bra_id
-  LEFT JOIN `databuffet-nonprd.validated_mastersku.category` as cate
+  LEFT JOIN ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "category")} as cate
     ON product.prdCatId = cate.cat_id
-  LEFT JOIN `databuffet-nonprd.validated_mastersku.vendor` as vendor
+  LEFT JOIN ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "vendor")} as vendor
     ON product.prdVendorId = vendor.vd_id
 
-  LEFT JOIN `databuffet-nonprd.validated_mastersku.unit` as package_width_unit
+  LEFT JOIN ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "unit")} as package_width_unit
     ON pd.pd_uw_id = package_width_unit.unit_id
-  LEFT JOIN `databuffet-nonprd.validated_mastersku.unit` as package_length_unit
+  LEFT JOIN ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "unit")} as package_length_unit
     ON pd.pd_ul_id = package_length_unit.unit_id
-  LEFT JOIN `databuffet-nonprd.validated_mastersku.unit` as package_height_unit
+  LEFT JOIN ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "unit")} as package_height_unit
     ON pd.pd_uh_id = package_height_unit.unit_id
-  LEFT JOIN `databuffet-nonprd.validated_mastersku.unit` as product_weight_net_unit
+  LEFT JOIN ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "unit")} as product_weight_net_unit
     ON pd.pd_net_unit_id = product_weight_net_unit.unit_id
-  LEFT JOIN `databuffet-nonprd.validated_mastersku.unit` as product_weight_gross_unit
+  LEFT JOIN ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "unit")} as product_weight_gross_unit
     ON pd.pd_gross_unit_id = product_weight_gross_unit.unit_id
 
   WHERE product.asatdate between run_date-1 and run_date;
 
   ---- DELETE DATA BEFOR INSERT
-  DELETE FROM databuffet-nonprd.curated_mastersku.product_for_aisearch
+  DELETE FROM `${sourceTableRef}`
   WHERE asatdate = run_date;
   
   ---- INSERT DATA 
-  INSERT INTO databuffet-nonprd.curated_mastersku.product_for_aisearch
+  INSERT INTO `${sourceTableRef}`
   SELECT * FROM temp_product_for_aisearch;
 
   ---- DROP TEMP TABLE

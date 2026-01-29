@@ -11,19 +11,6 @@ config {
     }
 }
 
-js {
-    // Define table references
-    const sourceTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
-        name: "tbook_quotation",
-    };
-
-    // Build source table reference
-    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
-
-}
-
 select 
     id as ID,
     running as Running,
@@ -93,7 +80,7 @@ select
     postcode as PostCode,
     qtstepprice as QtStepPrice,
     extradis as ExtraDis,
-from `databuffet-nonprd.validated_mac5.tbook_quotation`
+from ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5, "tbook_quotation")}
 qualify row_number() over(partition by running order by rev desc, id desc) = 1
 
 -- ${ when(incremental(), `WHERE mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }

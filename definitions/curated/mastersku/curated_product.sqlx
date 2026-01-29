@@ -11,19 +11,6 @@ config {
     }
 }
 
-js {
-    // Define table references
-    const sourceTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU,
-        name: "product",
-    };
-
-    // Build source table reference
-    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
-
-}
-
 SELECT
   prd_id as prdId,
   prd_sku as prdSku,
@@ -75,13 +62,13 @@ SELECT
   prd_total_cost_combo_price as prdTotalCostComboPrice,
   prd_barcode_format as prdBarcodeFormat,
   asatdate as asatdate
-FROM ${sourceTableRef}
+FROM ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "product")}
 ${ when(incremental(), `WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
 QUALIFY row_number() over(partition by prdSku order by prdUpdatedDate desc) = 1
 
 
 post_operations {
-    UPDATE `databuffet-nonprd.curated_mastersku.curated_product` t
+    UPDATE ${self()} as t
     SET 
     t.prdColorTH = src.prdColorTH,
     t.prdColorEN = src.prdColorEN,
@@ -94,8 +81,8 @@ post_operations {
                 NULLIF(TRIM(JSON_VALUE(dimField, '$.value')), '') as dimField_value,
                 JSON_VALUE(SpeciFeild, '$.label') as SpeciFeild_label,
                 NULLIF(TRIM(JSON_VALUE(SpeciFeild, '$.value')), '') as SpeciFeild_value,
-            FROM `databuffet-nonprd.validated_mastersku.product_detail` as pd
-            LEFT JOIN `databuffet-nonprd.curated_mastersku.curated_product` as p
+            FROM ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU, "product_detail")} as pd
+            LEFT JOIN ${self()} as p
                 ON p.prdId = pd.pd_prd_id
             LEFT JOIN UNNEST (JSON_QUERY_ARRAY(prdDiminsionData, '$.dimFeild'))  as dimField
             LEFT JOIN UNNEST (JSON_QUERY_ARRAY(pd_spacific_fields, '$.SpeciFeild'))  as SpeciFeild

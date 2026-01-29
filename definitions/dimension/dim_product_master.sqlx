@@ -5,9 +5,9 @@ config {
 }
 
 BEGIN
-  drop table if exists databuffet-nonprd.dimension_table.dim_product_master;
+  drop table if exists ${databuffet.DATABASE}.dimension_table.dim_product_master;
   
-  create or replace table databuffet-nonprd.dimension_table.dim_product_master
+  create or replace table ${databuffet.DATABASE}.dimension_table.dim_product_master
   cluster by ProductCode, ProductGroupMAC5, ProductGroupACC, ProductGroupMAC5Type
   as
   select
@@ -48,13 +48,13 @@ BEGIN
   a.stksto as WarehouseID,
   a.STKcode885 as Barcode
 
-  from `databuffet-nonprd.validated_mac5.stk` a  
-  left join `databuffet-nonprd.validated_mac5.stg` g on a.STKgroup = g.STGcode
-  left join `databuffet-nonprd.validated_mastersku.product` p on a.STKcode885 = p.prd_barcode
-  left join `databuffet-nonprd.validated_mastersku.product_detail` pd on p.prd_id = pd.pd_prd_id
-  left join `databuffet-nonprd.dimension_table.dim_product_rebate` pdr on a.stkcode = pdr.Rebate
-  --left join `databuffet-nonprd.validated_mastersku.brand` brand on p.prd_brand_id = brand.bra_id
-  --left join `databuffet-nonprd.validated_mastersku.vendor` vendor on p.prd_vendor_id = vendor.vd_id
+  from `${databuffet.DATABASE}.validated_mac5.stk` a  
+  left join `${databuffet.DATABASE}.validated_mac5.stg` g on a.STKgroup = g.STGcode
+  left join `${databuffet.DATABASE}.validated_mastersku.product` p on a.STKcode885 = p.prd_barcode
+  left join `${databuffet.DATABASE}.validated_mastersku.product_detail` pd on p.prd_id = pd.pd_prd_id
+  left join `${databuffet.DATABASE}.dimension_table.dim_product_rebate` pdr on a.stkcode = pdr.Rebate
+  --left join `${databuffet.DATABASE}.validated_mastersku.brand` brand on p.prd_brand_id = brand.bra_id
+  --left join `${databuffet.DATABASE}.validated_mastersku.vendor` vendor on p.prd_vendor_id = vendor.vd_id
   --where a.STKcode885 is not null and a.STKcode885 <> '' 
   qualify row_number() over(partition by Barcode order by prd_updated_date desc) = 1
   ;

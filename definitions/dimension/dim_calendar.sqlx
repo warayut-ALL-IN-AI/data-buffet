@@ -4,7 +4,20 @@ config {
   tags: [databuffet.TAG_DIM_YEARLY],
 }
 
--- CREATE OR REPLACE TABLE `databuffet-nonprd.dimension_table.dim_calendar` 
+-- js {
+--     // Define table references
+--     const sourceTable = {
+--         database: databuffet.DATABASE,
+--         schema: databuffet.CURATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU,
+--         name: "dim_calendar",
+--     };
+
+--     // Build source table reference
+--     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
+
+-- }
+
+-- CREATE OR REPLACE TABLE `${databuffet.DATABASE}.dimension_table.dim_calendar` 
 -- PARTITION BY Date
 -- CLUSTER BY Date, HolidayFlag, LongWeekEndFlag, WeekendFlag
 -- AS
@@ -26,7 +39,7 @@ BEGIN
       h.HolidayNameTH,
       h.HolidayNameEN
     FROM GeneratedDates d
-    LEFT JOIN `databuffet-nonprd.dimension_table.dim_holiday` h 
+    LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_holiday` h 
       ON d.date_value = h.HolidayDate
 
   ), MarkOffDays AS (
@@ -96,11 +109,11 @@ BEGIN
   
 
   -- DELETE
-  DELETE FROM `databuffet-nonprd.dimension_table.dim_calendar` 
+  DELETE FROM `${databuffet.DATABASE}.dimension_table.dim_calendar` 
   WHERE Date in (select distinct Date from temp_data_calendar);
 
   -- INSERT
-  INSERT INTO `databuffet-nonprd.dimension_table.dim_calendar` 
+  INSERT INTO `${databuffet.DATABASE}.dimension_table.dim_calendar` 
   SELECT * FROM temp_data_calendar;
 
 END;

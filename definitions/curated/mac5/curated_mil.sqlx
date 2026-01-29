@@ -11,19 +11,6 @@ config {
     }
 }
 
-js {
-    // Define table references
-    const sourceTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
-        name: "mil",
-    };
-
-    // Build source table reference
-    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
-
-}
-
 SELECT
   milday as milDay,
   milmonth as milMonth,
@@ -85,7 +72,7 @@ SELECT
   milfitem as milFitem,
   asatdate as asatdate,
   '100.00%' as percent_sale
-FROM ${sourceTableRef}
+FROM ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5, "mil")}
 ${ when(incremental(), `WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
 
 post_operations {
@@ -95,7 +82,7 @@ post_operations {
     WITH mil_raw AS (
       SELECT
         mil.*
-      FROM ${ref("mil")} AS mil
+      FROM ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5, "mil")} AS mil
       QUALIFY row_number() over(partition by mil.milType, mil.milVnos, mil.milListno order by mil.asatdate desc) = 1
 
     ), filter_mih2 AS (
@@ -105,7 +92,7 @@ post_operations {
           mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
           ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale1,
           ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale2,
-        FROM ${ref("mih2")}
+        FROM ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5, "mih2")}
         WHERE mih2cus IS NOT NULL
           AND mih2per2 IS NOT NULL
           AND mih2per2pc IS NOT NULL

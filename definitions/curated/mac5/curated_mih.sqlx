@@ -11,43 +11,6 @@ config {
     }
 }
 
-js {
-    // Define table references
-    const sourceTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
-        name: "mih",
-    };
-
-    const ar_sTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
-        name: "ar_s",
-
-    };
-
-    const ap_sTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
-        name: "ap_s",
-
-    };
-
-    const mih2Table = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5,
-        name: "mih2",
-
-    };
-
-    // Build source table reference
-    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
-    const ar_sTableRef = `${ar_sTable.database}.${ar_sTable.schema}.${ar_sTable.name}`;
-    const ap_sTableRef = `${ap_sTable.database}.${ap_sTable.schema}.${ap_sTable.name}`;
-    const mih2TableRef = `${mih2Table.database}.${mih2Table.schema}.${mih2Table.name}`;
-
-}
-
 WITH mih2_raw as (
     SELECT *
     FROM (
@@ -55,7 +18,7 @@ WITH mih2_raw as (
             mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
             ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale1,
             ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale2,
-        FROM ${mih2TableRef}
+        FROM ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5, "mih2")}
         WHERE mih2cus IS NOT NULL
             AND mih2per2 IS NOT NULL
             AND mih2per2pc IS NOT NULL
@@ -151,10 +114,10 @@ SELECT
     END) as mihstatus_desc,
     IFNULL(CONCAT(mih2.per_sale1, '%'), '100.00%') as percentSale1,
     IFNULL(CONCAT(mih2.per_sale2, '%'), '0.00%') as percentSale2,
-FROM ${sourceTableRef} as mih
-LEFT JOIN ${ar_sTableRef} as ar_s
+FROM ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5, "mih")} as mih
+LEFT JOIN ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5, "ar_s")} as ar_s
     ON mih.mihstatus = ar_s.ar_scode
-LEFT JOIN ${ap_sTableRef} as ap_s
+LEFT JOIN ${ref(databuffet.VALIDATED_SCHEMA + "_" + databuffet.SOURCE_MAC5, "ap_s")} as ap_s
     ON mih.mihstatus = ap_s.ap_scode
 LEFT JOIN mih2_raw as mih2
     ON mih.mihRef1 = mih2.mih2vnos

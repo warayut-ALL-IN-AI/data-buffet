@@ -21,18 +21,18 @@ BEGIN
       -- productmaster.ProductCode,
       productmaster.ProductGroupACC,
       trans.*
-    FROM databuffet-nonprd.onetime.Transaction_Data_Mart as trans
+    FROM ${databuffet.DATABASE}.onetime.Transaction_Data_Mart as trans
     
     -- Product Master
-    LEFT JOIN `databuffet-nonprd.dimension_table.dim_product_master` AS productmaster
+    LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_product_master` AS productmaster
       ON trans.milstk = productmaster.ProductCode
 
     -- PaymentSK
-    LEFT JOIN databuffet-nonprd.dimension_table.dim_payment as payment_sk
+    LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_payment as payment_sk
       ON trans.memoextract = payment_sk.CodeMemo
 
     -- ChannelSK
-    LEFT JOIN `databuffet-nonprd.dimension_table.dim_channel` AS channel_sk
+    LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_channel` AS channel_sk
       ON IFNULL(trans.milDep, 'N/A') = channel_sk.DepCode
       
     WHERE asatdate BETWEEN DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR) AND CURRENT_DATE('Asia/Bangkok')
@@ -62,19 +62,19 @@ BEGIN
   FROM raw_transction as trans
 
   -- CostStkSk
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_cost_stk` AS coststk_sk
+  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_cost_stk` AS coststk_sk
       ON trans.milStk = coststk_sk.MilStk
       AND trans.ChannelCostID = coststk_sk.ChannelCostID
       AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
 
   -- CostGroupSK
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_cost_group` AS costgroup_sk
+  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_cost_group` AS costgroup_sk
       ON trans.ProductGroupACC = costgroup_sk.GAccID
       AND trans.ChannelCostID = costgroup_sk.ChannelCostID 
       AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
 
   -- SaleRepSK
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_sale_representative` as sale_sk
+  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_sale_representative` as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and (CASE 
             WHEN sale_sk.DepCode IS NOT NULL and sale_sk.CostChannelID IS NOT NULL
@@ -88,12 +88,12 @@ BEGIN
           END)
 
   -- DepartmentSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_department as dep_sk
+  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_department as dep_sk
     ON trans.mix_date between dep_sk.StartDate and dep_sk.EndDate
       and sale_sk.DepartmentID = dep_sk.DepartmentID
 
   -- RegionSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_region as reg_sk
+  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_region as reg_sk
     ON trans.mix_date between reg_sk.StartDate and reg_sk.EndDate
       and (CASE 
         WHEN reg_sk.RegionID != reg_sk.SubRegionID
@@ -102,7 +102,7 @@ BEGIN
       END)
 
   -- RegionManagerSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_region_manager as reg_m_sk
+  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_region_manager as reg_m_sk
     ON trans.mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
       and (CASE 
         WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
@@ -111,17 +111,17 @@ BEGIN
       END)
 
   -- SectionSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_section as sec_sk
+  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_section as sec_sk
     ON trans.mix_date between sec_sk.StartDate and sec_sk.EndDate
       and dep_sk.SectionID = sec_sk.SectionID
 
   -- SectionManagerSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_section_manager as sec_m_sk
+  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_section_manager as sec_m_sk
     ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
       and sec_sk.SectionID = sec_m_sk.SectionID
 
   -- DirectorSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_director as dir_sk
+  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_director as dir_sk
     ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
       and reg_sk.DirectorID = dir_sk.DirectorID
 
@@ -150,18 +150,18 @@ BEGIN
   FROM raw_transction as trans
 
   -- SaleRepSK
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_sale_representative` as sale_sk
+  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_sale_representative` as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and sale_sk.DepCode is null and sale_sk.CostChannelID is null
       and TRIM(trans.milPer) = TRIM(CAST(sale_sk.EmployeeID as STRING))
 
   -- DepartmentSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_department as dep_sk
+  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_department as dep_sk
     ON trans.mix_date between dep_sk.StartDate and dep_sk.EndDate
       and sale_sk.DepartmentID = dep_sk.DepartmentID
 
   -- RegionSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_region as reg_sk
+  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_region as reg_sk
     ON trans.mix_date between reg_sk.StartDate and reg_sk.EndDate
       and (CASE 
         WHEN reg_sk.RegionID != reg_sk.SubRegionID
@@ -170,7 +170,7 @@ BEGIN
       END)
 
   -- RegionManagerSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_region_manager as reg_m_sk
+  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_region_manager as reg_m_sk
     ON trans.mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
       and (CASE 
         WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
@@ -179,32 +179,32 @@ BEGIN
       END)
 
   -- SectionSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_section as sec_sk
+  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_section as sec_sk
     ON trans.mix_date between sec_sk.StartDate and sec_sk.EndDate
       and dep_sk.SectionID = sec_sk.SectionID
 
   -- SectionManagerSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_section_manager as sec_m_sk
+  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_section_manager as sec_m_sk
     ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
       and sec_sk.SectionID = sec_m_sk.SectionID
 
   -- DirectorSK
-  LEFT JOIN databuffet-nonprd.dimension_table.dim_director as dir_sk
+  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_director as dir_sk
     ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
       and reg_sk.DirectorID = dir_sk.DirectorID
   
   -- Join เพื่อหา ChannelCostID ใหม่ในกรณีที่เป็น COST99999
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_channel_cost` AS channel_cost
+  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_channel_cost` AS channel_cost
     ON sec_sk.SectionID = channel_cost.ChannelCostName
 
   -- CostStkSk
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_cost_stk` AS coststk_sk
+  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_cost_stk` AS coststk_sk
     ON trans.milStk = coststk_sk.MilStk
       AND coststk_sk.ChannelCostID = channel_cost.ChannelCostID
       AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
 
   -- CostGroupSK
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_cost_group` AS costgroup_sk
+  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_cost_group` AS costgroup_sk
     ON trans.ProductGroupACC = costgroup_sk.GAccID
       AND costgroup_sk.ChannelCostID = channel_cost.ChannelCostID
       AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
@@ -228,7 +228,7 @@ BEGIN
 --   -- ALL : 2388305
 
   BEGIN    
-    DELETE FROM `databuffet-nonprd.fact_table.fact_transcation` AS T
+    DELETE FROM `${databuffet.DATABASE}.fact_table.fact_transcation` AS T
     WHERE EXISTS (
         SELECT 1 
         FROM temp_fact_transcation AS S 
@@ -241,13 +241,13 @@ BEGIN
   END;
 
   BEGIN
-    INSERT INTO `databuffet-nonprd.fact_table.fact_transcation` 
+    INSERT INTO `${databuffet.DATABASE}.fact_table.fact_transcation` 
     SELECT * FROM temp_fact_transcation;
   END;
 
 END;
 
 BEGIN
-  DELETE FROM databuffet-nonprd.fact_table.fact_transcation
+  DELETE FROM ${databuffet.DATABASE}.fact_table.fact_transcation
   WHERE mix_date < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR);
 END;
