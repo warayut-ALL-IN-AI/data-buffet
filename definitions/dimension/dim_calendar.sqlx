@@ -4,20 +4,25 @@ config {
   tags: [databuffet.TAG_DIM_YEARLY],
 }
 
--- js {
---     // Define table references
---     const sourceTable = {
---         database: databuffet.DATABASE,
---         schema: databuffet.CURATED_SCHEMA + "_" + databuffet.SOURCE_MASTERSKU,
---         name: "dim_calendar",
---     };
+js {
+    // Define table references
+    const DimCalendarTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_calendar",
+    };
+    const DimCalendarTableRef = `${DimCalendarTable.database}.${DimCalendarTable.schema}.${DimCalendarTable.name}`;
+    
+    const DimHolidayTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_holiday",
+    };
+    const DimHolidayTableRef = `${DimHolidayTable.database}.${DimHolidayTable.schema}.${DimHolidayTable.name}`;
 
---     // Build source table reference
---     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
+}
 
--- }
-
--- CREATE OR REPLACE TABLE `${databuffet.DATABASE}.dimension_table.dim_calendar` 
+-- CREATE OR REPLACE TABLE `${DimCalendarTableRef}` 
 -- PARTITION BY Date
 -- CLUSTER BY Date, HolidayFlag, LongWeekEndFlag, WeekendFlag
 -- AS
@@ -39,7 +44,7 @@ BEGIN
       h.HolidayNameTH,
       h.HolidayNameEN
     FROM GeneratedDates d
-    LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_holiday` h 
+    LEFT JOIN `${DimHolidayTableRef}` h 
       ON d.date_value = h.HolidayDate
 
   ), MarkOffDays AS (
@@ -109,11 +114,11 @@ BEGIN
   
 
   -- DELETE
-  DELETE FROM `${databuffet.DATABASE}.dimension_table.dim_calendar` 
+  DELETE FROM `${DimCalendarTableRef}` 
   WHERE Date in (select distinct Date from temp_data_calendar);
 
   -- INSERT
-  INSERT INTO `${databuffet.DATABASE}.dimension_table.dim_calendar` 
+  INSERT INTO `${DimCalendarTableRef}` 
   SELECT * FROM temp_data_calendar;
 
 END;

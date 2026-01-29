@@ -17,14 +17,6 @@
     "TAG_CURATED_INCREMENTAL": "curated_incremental",
     "TAG_CURATED_FULL": "curated_full",
 
-    "RAW_SCHEMA": "raw",
-    "VALIDATED_SCHEMA": "validated",
-    "CURATED_SCHEMA": "curated",
-
-    "SOURCE_MAC5": "mac5",
-    "SOURCE_MASTERSKU": "mastersku",
-    "SOURCE_CIS360": "cis360",
-
     "RAW_MAC5": "raw_mac5",
     "VALIDATED_MAC5": "validated_mac5",
     "CURATED_MAC5": "curated_mac5",
@@ -36,6 +28,8 @@
     "RAW_CIS360": "raw_cis360",
     "VALIDATED_CIS360": "validated_cis360",
     "CURATED_CIS360": "curated_cis360",
+
+    "DIMENSION_TABLE" : "dimension_table",
 
     "GCS_MAC5": "mac5_ag01",
     "GCS_MAC5_REPORT": "mac5_report",
