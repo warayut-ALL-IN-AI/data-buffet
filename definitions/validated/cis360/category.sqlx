@@ -10,11 +10,18 @@ config {
     },
 }
 
-js {    // Define table references    const sourceTable = {        database: databuffet.DATABASE,        schema: databuffet.RAW_CIS360,        name: name(),    };    // Build source table reference    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;    // Keep existing logic
+js { 
+    // Define table references
+    const sourceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.RAW_CIS360,
+        name: name(),
+    };
+
+    // Build source table reference
+    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
+
     const pk_key = ["id"];
-
-
-
 
     let partition_statement, post_operations_statement;
 
