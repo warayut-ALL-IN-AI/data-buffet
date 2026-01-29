@@ -6,6 +6,13 @@ config {
 
 js {
     // Define table references
+    const FactTranscationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: "fact_transcation",
+    };
+    const FactTranscationTableRef = `${FactTranscationTable.database}.${FactTranscationTable.schema}.${FactTranscationTable.name}`;
+
     const DimProductTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -322,7 +329,7 @@ BEGIN
 --   -- ALL : 2388305
 
   BEGIN    
-    DELETE FROM `${databuffet.DATABASE}.fact_table.fact_transcation` AS T
+    DELETE FROM `${FactTranscationTableRef}` AS T
     WHERE EXISTS (
         SELECT 1 
         FROM temp_fact_transcation AS S 
@@ -335,13 +342,13 @@ BEGIN
   END;
 
   BEGIN
-    INSERT INTO `${databuffet.DATABASE}.fact_table.fact_transcation` 
+    INSERT INTO `${FactTranscationTableRef}` 
     SELECT * FROM temp_fact_transcation;
   END;
 
 END;
 
 BEGIN
-  DELETE FROM ${databuffet.DATABASE}.fact_table.fact_transcation
+  DELETE FROM ${FactTranscationTableRef}
   WHERE mix_date < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR);
 END;
