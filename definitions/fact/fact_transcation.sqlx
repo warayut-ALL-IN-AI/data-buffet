@@ -4,6 +4,100 @@ config {
   tags: [databuffet.TAG_FACT_DAILY],
 }
 
+js {
+    // Define table references
+    const DimProductTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_master",
+    };
+    const DimProductTableRef = `${DimProductTable.database}.${DimProductTable.schema}.${DimProductTable.name}`;
+    
+    const DimPaymentTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_payment",
+    };
+    const DimPaymentTableRef = `${DimPaymentTable.database}.${DimPaymentTable.schema}.${DimPaymentTable.name}`;
+    
+    const DimChannelTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_channel",
+    };
+    const DimChannelTableRef = `${DimChannelTable.database}.${DimChannelTable.schema}.${DimChannelTable.name}`;
+    
+    const DimCostStkTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_cost_stk",
+    };
+    const DimCostStkTableRef = `${DimCostStkTable.database}.${DimCostStkTable.schema}.${DimCostStkTable.name}`;
+    
+    const DimCostGroupTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_cost_group",
+    };
+    const DimCostGroupTableRef = `${DimCostGroupTable.database}.${DimCostGroupTable.schema}.${DimCostGroupTable.name}`;
+    
+    const DimSaleRepGroupTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative",
+    };
+    const DimSaleRepGroupTableRef = `${DimSaleRepGroupTable.database}.${DimSaleRepGroupTable.schema}.${DimSaleRepGroupTable.name}`;
+    
+    const DimDepartmentTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_department",
+    };
+    const DimDepartmentTableRef = `${DimDepartmentTable.database}.${DimDepartmentTable.schema}.${DimDepartmentTable.name}`;
+    
+    const DimRegionTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region",
+    };
+    const DimRegionTableRef = `${DimRegionTable.database}.${DimRegionTable.schema}.${DimRegionTable.name}`;
+    
+    const DimRegionManagerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region_manager",
+    };
+    const DimRegionManagerTableRef = `${DimRegionManagerTable.database}.${DimRegionManagerTable.schema}.${DimRegionManagerTable.name}`;
+
+    const DimSectionTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section",
+    };
+    const DimSectionTableRef = `${DimSectionTable.database}.${DimSectionTable.schema}.${DimSectionTable.name}`;
+
+    const DimSectionManagerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_manager",
+    };
+    const DimSectionManagerTableRef = `${DimSectionManagerTable.database}.${DimSectionManagerTable.schema}.${DimSectionManagerTable.name}`;
+
+    const DimDirectorTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_director",
+    };
+    const DimDirectorTableRef = `${DimDirectorTable.database}.${DimDirectorTable.schema}.${DimDirectorTable.name}`;
+
+    const DimChannelCostTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_channel_cost",
+    };
+    const DimChannelCostTableRef = `${DimChannelCostTable.database}.${DimChannelCostTable.schema}.${DimChannelCostTable.name}`;
+}
+
 BEGIN
   CREATE OR REPLACE TEMP TABLE temp_fact_transcation 
   AS
@@ -24,15 +118,15 @@ BEGIN
     FROM ${databuffet.DATABASE}.onetime.Transaction_Data_Mart as trans
     
     -- Product Master
-    LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_product_master` AS productmaster
+    LEFT JOIN `${DimProductTableRef}` AS productmaster
       ON trans.milstk = productmaster.ProductCode
 
     -- PaymentSK
-    LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_payment as payment_sk
+    LEFT JOIN ${DimPaymentTableRef} as payment_sk
       ON trans.memoextract = payment_sk.CodeMemo
 
     -- ChannelSK
-    LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_channel` AS channel_sk
+    LEFT JOIN `${DimChannelTableRef}` AS channel_sk
       ON IFNULL(trans.milDep, 'N/A') = channel_sk.DepCode
       
     WHERE asatdate BETWEEN DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR) AND CURRENT_DATE('Asia/Bangkok')
@@ -62,19 +156,19 @@ BEGIN
   FROM raw_transction as trans
 
   -- CostStkSk
-  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_cost_stk` AS coststk_sk
+  LEFT JOIN `${DimCostStkTableRef}` AS coststk_sk
       ON trans.milStk = coststk_sk.MilStk
       AND trans.ChannelCostID = coststk_sk.ChannelCostID
       AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
 
   -- CostGroupSK
-  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_cost_group` AS costgroup_sk
+  LEFT JOIN `${DimCostGroupTable}` AS costgroup_sk
       ON trans.ProductGroupACC = costgroup_sk.GAccID
       AND trans.ChannelCostID = costgroup_sk.ChannelCostID 
       AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
 
   -- SaleRepSK
-  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_sale_representative` as sale_sk
+  LEFT JOIN `${DimSaleRepGroupTable}` as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and (CASE 
             WHEN sale_sk.DepCode IS NOT NULL and sale_sk.CostChannelID IS NOT NULL
@@ -88,12 +182,12 @@ BEGIN
           END)
 
   -- DepartmentSK
-  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_department as dep_sk
+  LEFT JOIN ${DimDepartmentTableRef} as dep_sk
     ON trans.mix_date between dep_sk.StartDate and dep_sk.EndDate
       and sale_sk.DepartmentID = dep_sk.DepartmentID
 
   -- RegionSK
-  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_region as reg_sk
+  LEFT JOIN ${DimRegionTableRef} as reg_sk
     ON trans.mix_date between reg_sk.StartDate and reg_sk.EndDate
       and (CASE 
         WHEN reg_sk.RegionID != reg_sk.SubRegionID
@@ -102,7 +196,7 @@ BEGIN
       END)
 
   -- RegionManagerSK
-  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_region_manager as reg_m_sk
+  LEFT JOIN ${DimRegionManagerTableRef} as reg_m_sk
     ON trans.mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
       and (CASE 
         WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
@@ -111,17 +205,17 @@ BEGIN
       END)
 
   -- SectionSK
-  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_section as sec_sk
+  LEFT JOIN ${DimSectionTableRef} as sec_sk
     ON trans.mix_date between sec_sk.StartDate and sec_sk.EndDate
       and dep_sk.SectionID = sec_sk.SectionID
 
   -- SectionManagerSK
-  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_section_manager as sec_m_sk
+  LEFT JOIN ${DimSectionManagerTableRef} as sec_m_sk
     ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
       and sec_sk.SectionID = sec_m_sk.SectionID
 
   -- DirectorSK
-  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_director as dir_sk
+  LEFT JOIN ${DimDirectorTableRef} as dir_sk
     ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
       and reg_sk.DirectorID = dir_sk.DirectorID
 
@@ -150,18 +244,18 @@ BEGIN
   FROM raw_transction as trans
 
   -- SaleRepSK
-  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_sale_representative` as sale_sk
+  LEFT JOIN `${DimSaleRepGroupTable}` as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and sale_sk.DepCode is null and sale_sk.CostChannelID is null
       and TRIM(trans.milPer) = TRIM(CAST(sale_sk.EmployeeID as STRING))
 
   -- DepartmentSK
-  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_department as dep_sk
+  LEFT JOIN ${DimDepartmentTableRef} as dep_sk
     ON trans.mix_date between dep_sk.StartDate and dep_sk.EndDate
       and sale_sk.DepartmentID = dep_sk.DepartmentID
 
   -- RegionSK
-  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_region as reg_sk
+  LEFT JOIN ${DimRegionTableRef} as reg_sk
     ON trans.mix_date between reg_sk.StartDate and reg_sk.EndDate
       and (CASE 
         WHEN reg_sk.RegionID != reg_sk.SubRegionID
@@ -170,7 +264,7 @@ BEGIN
       END)
 
   -- RegionManagerSK
-  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_region_manager as reg_m_sk
+  LEFT JOIN ${DimRegionManagerTableRef} as reg_m_sk
     ON trans.mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
       and (CASE 
         WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
@@ -179,32 +273,32 @@ BEGIN
       END)
 
   -- SectionSK
-  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_section as sec_sk
+  LEFT JOIN ${DimSectionTableRef} as sec_sk
     ON trans.mix_date between sec_sk.StartDate and sec_sk.EndDate
       and dep_sk.SectionID = sec_sk.SectionID
 
   -- SectionManagerSK
-  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_section_manager as sec_m_sk
+  LEFT JOIN ${DimSectionManagerTableRef} as sec_m_sk
     ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
       and sec_sk.SectionID = sec_m_sk.SectionID
 
   -- DirectorSK
-  LEFT JOIN ${databuffet.DATABASE}.dimension_table.dim_director as dir_sk
+  LEFT JOIN ${DimDirectorTableRef} as dir_sk
     ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
       and reg_sk.DirectorID = dir_sk.DirectorID
   
   -- Join เพื่อหา ChannelCostID ใหม่ในกรณีที่เป็น COST99999
-  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_channel_cost` AS channel_cost
+  LEFT JOIN ${DimChannelCostTableRef} AS channel_cost
     ON sec_sk.SectionID = channel_cost.ChannelCostName
 
   -- CostStkSk
-  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_cost_stk` AS coststk_sk
+  LEFT JOIN `${DimCostStkTableRef}` AS coststk_sk
     ON trans.milStk = coststk_sk.MilStk
       AND coststk_sk.ChannelCostID = channel_cost.ChannelCostID
       AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
 
   -- CostGroupSK
-  LEFT JOIN `${databuffet.DATABASE}.dimension_table.dim_cost_group` AS costgroup_sk
+  LEFT JOIN `${DimCostGroupTable}` AS costgroup_sk
     ON trans.ProductGroupACC = costgroup_sk.GAccID
       AND costgroup_sk.ChannelCostID = channel_cost.ChannelCostID
       AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
