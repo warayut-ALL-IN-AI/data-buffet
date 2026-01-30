@@ -129,7 +129,7 @@ BEGIN
       ON trans.milstk = productmaster.ProductCode
 
     -- PaymentSK
-    LEFT JOIN ${DimPaymentTableRef} as payment_sk
+    LEFT JOIN `${DimPaymentTableRef}` as payment_sk
       ON trans.memoextract = payment_sk.CodeMemo
 
     -- ChannelSK
@@ -169,13 +169,13 @@ BEGIN
       AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
 
   -- CostGroupSK
-  LEFT JOIN `${DimCostGroupTable}` AS costgroup_sk
+  LEFT JOIN `${DimCostGroupTableRef}` AS costgroup_sk
       ON trans.ProductGroupACC = costgroup_sk.GAccID
       AND trans.ChannelCostID = costgroup_sk.ChannelCostID 
       AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
 
   -- SaleRepSK
-  LEFT JOIN `${DimSaleRepGroupTable}` as sale_sk
+  LEFT JOIN `${DimSaleRepGroupTableRef}` as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and (CASE 
             WHEN sale_sk.DepCode IS NOT NULL and sale_sk.CostChannelID IS NOT NULL
@@ -189,12 +189,12 @@ BEGIN
           END)
 
   -- DepartmentSK
-  LEFT JOIN ${DimDepartmentTableRef} as dep_sk
+  LEFT JOIN `${DimDepartmentTableRef}` as dep_sk
     ON trans.mix_date between dep_sk.StartDate and dep_sk.EndDate
       and sale_sk.DepartmentID = dep_sk.DepartmentID
 
   -- RegionSK
-  LEFT JOIN ${DimRegionTableRef} as reg_sk
+  LEFT JOIN `${DimRegionTableRef}` as reg_sk
     ON trans.mix_date between reg_sk.StartDate and reg_sk.EndDate
       and (CASE 
         WHEN reg_sk.RegionID != reg_sk.SubRegionID
@@ -203,7 +203,7 @@ BEGIN
       END)
 
   -- RegionManagerSK
-  LEFT JOIN ${DimRegionManagerTableRef} as reg_m_sk
+  LEFT JOIN `${DimRegionManagerTableRef}` as reg_m_sk
     ON trans.mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
       and (CASE 
         WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
@@ -212,17 +212,17 @@ BEGIN
       END)
 
   -- SectionSK
-  LEFT JOIN ${DimSectionTableRef} as sec_sk
+  LEFT JOIN `${DimSectionTableRef}` as sec_sk
     ON trans.mix_date between sec_sk.StartDate and sec_sk.EndDate
       and dep_sk.SectionID = sec_sk.SectionID
 
   -- SectionManagerSK
-  LEFT JOIN ${DimSectionManagerTableRef} as sec_m_sk
+  LEFT JOIN `${DimSectionManagerTableRef}` as sec_m_sk
     ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
       and sec_sk.SectionID = sec_m_sk.SectionID
 
   -- DirectorSK
-  LEFT JOIN ${DimDirectorTableRef} as dir_sk
+  LEFT JOIN `${DimDirectorTableRef}` as dir_sk
     ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
       and reg_sk.DirectorID = dir_sk.DirectorID
 
@@ -251,18 +251,18 @@ BEGIN
   FROM raw_transction as trans
 
   -- SaleRepSK
-  LEFT JOIN `${DimSaleRepGroupTable}` as sale_sk
+  LEFT JOIN `${DimSaleRepGroupTableRef}` as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and sale_sk.DepCode is null and sale_sk.CostChannelID is null
       and TRIM(trans.milPer) = TRIM(CAST(sale_sk.EmployeeID as STRING))
 
   -- DepartmentSK
-  LEFT JOIN ${DimDepartmentTableRef} as dep_sk
+  LEFT JOIN `${DimDepartmentTableRef}` as dep_sk
     ON trans.mix_date between dep_sk.StartDate and dep_sk.EndDate
       and sale_sk.DepartmentID = dep_sk.DepartmentID
 
   -- RegionSK
-  LEFT JOIN ${DimRegionTableRef} as reg_sk
+  LEFT JOIN `${DimRegionTableRef}` as reg_sk
     ON trans.mix_date between reg_sk.StartDate and reg_sk.EndDate
       and (CASE 
         WHEN reg_sk.RegionID != reg_sk.SubRegionID
@@ -271,7 +271,7 @@ BEGIN
       END)
 
   -- RegionManagerSK
-  LEFT JOIN ${DimRegionManagerTableRef} as reg_m_sk
+  LEFT JOIN `${DimRegionManagerTableRef}` as reg_m_sk
     ON trans.mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
       and (CASE 
         WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
@@ -280,22 +280,22 @@ BEGIN
       END)
 
   -- SectionSK
-  LEFT JOIN ${DimSectionTableRef} as sec_sk
+  LEFT JOIN `${DimSectionTableRef}` as sec_sk
     ON trans.mix_date between sec_sk.StartDate and sec_sk.EndDate
       and dep_sk.SectionID = sec_sk.SectionID
 
   -- SectionManagerSK
-  LEFT JOIN ${DimSectionManagerTableRef} as sec_m_sk
+  LEFT JOIN `${DimSectionManagerTableRef}` as sec_m_sk
     ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
       and sec_sk.SectionID = sec_m_sk.SectionID
 
   -- DirectorSK
-  LEFT JOIN ${DimDirectorTableRef} as dir_sk
+  LEFT JOIN `${DimDirectorTableRef}` as dir_sk
     ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
       and reg_sk.DirectorID = dir_sk.DirectorID
   
   -- Join เพื่อหา ChannelCostID ใหม่ในกรณีที่เป็น COST99999
-  LEFT JOIN ${DimChannelCostTableRef} AS channel_cost
+  LEFT JOIN `${DimChannelCostTableRef}` AS channel_cost
     ON sec_sk.SectionID = channel_cost.ChannelCostName
 
   -- CostStkSk
@@ -305,7 +305,7 @@ BEGIN
       AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
 
   -- CostGroupSK
-  LEFT JOIN `${DimCostGroupTable}` AS costgroup_sk
+  LEFT JOIN `${DimCostGroupTableRef}` AS costgroup_sk
     ON trans.ProductGroupACC = costgroup_sk.GAccID
       AND costgroup_sk.ChannelCostID = channel_cost.ChannelCostID
       AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
