@@ -4,7 +4,7 @@ config {
     name: "cdc_change_log",
     tags: [databuffet.TAG_CDC, databuffet.TAG_CDC_INCREMENTAL],
     bigquery: {
-        partitionBy: "change_date",
+        partitionBy: "asatdate",
         clusterBy: ["source_system", "source_schema", "source_table", "change_type"],
         partitionExpirationDays: 7
     },
@@ -77,21 +77,57 @@ js {
 
         return `
     -- CDC for ${sourceName}.${tableName}
+    WITH raw_data AS (
+        SELECT * FROM ${databuffet.DATABASE}.${rawSchema}.${tableName}
+        ${rawWhere}
+    ),
+    validated_data AS (
+        SELECT * FROM ${databuffet.DATABASE}.${validatedSchema}.${tableName}
+        ${validatedWhere}
+    ),
+    -- CHANGED: Records with field differences
+    changed_records AS (
+        SELECT
+            'CHANGED' AS change_type,
+            CURRENT_DATE('Asia/Bangkok') AS asatdate,
+            JSON_OBJECT(${pkJsonFields}) AS pk_fields,
+            TO_HEX(MD5(CONCAT(${pkHashConcat}))) AS pk_hash,
+            TO_JSON(raw) AS raw_json,
+            TO_JSON(val) AS val_json,
+            raw,
+            val
+        FROM raw_data AS raw
+        INNER JOIN validated_data AS val ON ${pkJoinCondition}
+        WHERE ${changedFieldsChecks}
+    ),
+    -- NEW: Records in validated but not in raw
+    new_records AS (
+        SELECT
+            'NEW' AS change_type,
+            CURRENT_DATE('Asia/Bangkok') AS asatdate,
+            JSON_OBJECT(${pkJsonFields}) AS pk_fields,
+            TO_HEX(MD5(CONCAT(${pkHashConcat}))) AS pk_hash,
+            CAST(NULL AS STRING) AS raw_json,
+            TO_JSON(val) AS val_json,
+            CAST(NULL AS JSON) AS changed_fields_json,
+            CAST(NULL AS ARRAY<STRING>) AS changed_field_names_array,
+            0 AS num_fields_changed_count
+        FROM validated_data AS val
+        LEFT JOIN raw_data AS raw ON ${pkJoinCondition}
+        WHERE raw.${primaryKeys[0]} IS NULL
+    )
+    -- CHANGED records with calculated changed_fields
     SELECT
         GENERATE_UUID() AS cdc_record_id,
         '${sourceName}' AS source_system,
         '${validatedSchema}' AS source_schema,
         '${tableName}' AS source_table,
-
-        -- PK as JSON
-        JSON_OBJECT(${pkJsonFields}) AS pk_fields,
-        TO_HEX(MD5(CONCAT(${pkHashConcat}))) AS pk_hash,
-
+        pk_fields,
+        pk_hash,
         change_type,
-        change_date,
+        asatdate,
         CURRENT_TIMESTAMP() AS change_timestamp,
-
-        -- Changed fields JSON
+        -- Calculate changed fields for CHANGED records
         (SELECT AS VALUE
             JSON_OBJECT(
                 ARRAY_AGG(field_change.field_name),
@@ -100,48 +136,39 @@ js {
             FROM UNNEST([${changedFieldsJson}]) AS field_change
             WHERE field_change IS NOT NULL
         ) AS changed_fields,
-
         ARRAY(
             SELECT field_change.field_name
             FROM UNNEST([${changedFieldsJson}]) AS field_change
             WHERE field_change IS NOT NULL
         ) AS changed_field_names,
-
         (SELECT COUNT(*)
          FROM UNNEST([${changedFieldsJson}]) AS field_change
          WHERE field_change IS NOT NULL) AS num_fields_changed,
-
-        TO_JSON(raw) AS record_raw,
-        TO_JSON(val) AS record_validated,
-
+        raw_json AS record_raw,
+        val_json AS record_validated,
         CURRENT_TIMESTAMP() AS cdc_processed_at
-    FROM (
-        WITH raw_data AS (
-            SELECT * FROM ${databuffet.DATABASE}.${rawSchema}.${tableName}
-            ${rawWhere}
-        ),
-        validated_data AS (
-            SELECT * FROM ${databuffet.DATABASE}.${validatedSchema}.${tableName}
-            ${validatedWhere}
-        )
-        -- Use FULL OUTER JOIN to get all records
-        SELECT
-            CASE
-                WHEN raw.${primaryKeys[0]} IS NULL THEN 'VALIDATED_ONLY'
-                WHEN val.${primaryKeys[0]} IS NULL THEN 'RAW_ONLY'
-                ELSE 'CHANGED'
-            END AS change_type,
-            CURRENT_DATE('Asia/Bangkok') AS change_date,
-            raw,
-            val
-        FROM raw_data AS raw
-        FULL OUTER JOIN validated_data AS val ON ${pkJoinCondition}
-        WHERE
-            -- Include only: CHANGED records, RAW_ONLY, or VALIDATED_ONLY
-            (raw.${primaryKeys[0]} IS NULL) OR  -- VALIDATED_ONLY
-            (val.${primaryKeys[0]} IS NULL) OR  -- RAW_ONLY
-            (${changedFieldsChecks})            -- CHANGED (with field differences)
-    )
+    FROM changed_records
+
+    UNION ALL
+
+    -- NEW records (no changed_fields calculation needed)
+    SELECT
+        GENERATE_UUID() AS cdc_record_id,
+        '${sourceName}' AS source_system,
+        '${validatedSchema}' AS source_schema,
+        '${tableName}' AS source_table,
+        pk_fields,
+        pk_hash,
+        change_type,
+        asatdate,
+        CURRENT_TIMESTAMP() AS change_timestamp,
+        changed_fields_json AS changed_fields,
+        changed_field_names_array AS changed_field_names,
+        num_fields_changed_count AS num_fields_changed,
+        raw_json AS record_raw,
+        val_json AS record_validated,
+        CURRENT_TIMESTAMP() AS cdc_processed_at
+    FROM new_records
     `;
     }
 
