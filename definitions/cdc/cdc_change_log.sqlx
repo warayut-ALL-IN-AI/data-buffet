@@ -92,8 +92,8 @@ js {
             CURRENT_DATE('Asia/Bangkok') AS asatdate,
             JSON_OBJECT(${pkJsonFields}) AS pk_fields,
             TO_HEX(MD5(CONCAT(${pkHashConcat}))) AS pk_hash,
-            TO_JSON(raw) AS raw_json,
-            TO_JSON(val) AS val_json,
+            TO_JSON_STRING(raw) AS raw_json,
+            TO_JSON_STRING(val) AS val_json,
             raw,
             val
         FROM raw_data AS raw
@@ -108,8 +108,8 @@ js {
             JSON_OBJECT(${pkJsonFields}) AS pk_fields,
             TO_HEX(MD5(CONCAT(${pkHashConcat}))) AS pk_hash,
             CAST(NULL AS STRING) AS raw_json,
-            TO_JSON(val) AS val_json,
-            CAST(NULL AS JSON) AS changed_fields_json,
+            TO_JSON_STRING(val) AS val_json,
+            CAST(NULL AS STRING) AS changed_fields_json,
             CAST(NULL AS ARRAY<STRING>) AS changed_field_names_array,
             0 AS num_fields_changed_count
         FROM validated_data AS val
@@ -127,14 +127,16 @@ js {
         change_type,
         asatdate,
         CURRENT_TIMESTAMP() AS change_timestamp,
-        -- Calculate changed fields for CHANGED records
-        (SELECT AS VALUE
-            JSON_OBJECT(
-                ARRAY_AGG(field_change.field_name),
-                ARRAY_AGG(JSON_OBJECT('raw', field_change.raw_value, 'validated', field_change.validated_value))
+        -- Calculate changed fields for CHANGED records (convert to STRING)
+        TO_JSON_STRING(
+            (SELECT AS VALUE
+                JSON_OBJECT(
+                    ARRAY_AGG(field_change.field_name),
+                    ARRAY_AGG(JSON_OBJECT('raw', field_change.raw_value, 'validated', field_change.validated_value))
+                )
+                FROM UNNEST([${changedFieldsJson}]) AS field_change
+                WHERE field_change IS NOT NULL
             )
-            FROM UNNEST([${changedFieldsJson}]) AS field_change
-            WHERE field_change IS NOT NULL
         ) AS changed_fields,
         ARRAY(
             SELECT field_change.field_name
