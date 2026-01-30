@@ -1,6 +1,6 @@
 config {
     type: "operations",
-    // dependencies: ["drop_all_tables_CURATED_mastersku", "create_all_table_raw_mastersku"],
+    dependencies: ["validated_schema_mastersku"],
     tags: [databuffet.TAG_CURATED],
 }
 
