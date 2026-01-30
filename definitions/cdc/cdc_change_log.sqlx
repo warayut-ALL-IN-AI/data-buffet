@@ -44,8 +44,8 @@ js {
             `UPPER(TRIM(CAST(raw.${pk} AS STRING))) = UPPER(TRIM(CAST(val.${pk} AS STRING)))`
         ).join(' AND ');
 
-        // Build changed fields check (normalize whitespace + remove trailing non-alphanumeric + treat empty string as NULL)
-        // Trailing pattern: Remove ALL non-alphanumeric characters (keeps English letters, numbers, Thai chars only)
+        // Build changed fields check (normalize whitespace + remove trailing special characters + treat empty string as NULL)
+        // Trailing pattern: Remove special characters (keeps Thai language, English language, and numbers)
         const changedFieldsChecks = checkFields.map(field =>
             `(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\u0E00-\\u0E7F]+$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\u0E00-\\u0E7F]+$', ''), ''))`
         ).join(' OR ');
@@ -56,8 +56,8 @@ js {
         // Build PK hash
         const pkHashConcat = primaryKeys.map(pk => `IFNULL(CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING), '')`).join(", ',', ");
 
-        // Build changed fields JSON (normalize whitespace + remove trailing non-alphanumeric + treat empty string as NULL)
-        // Trailing pattern: Remove ALL non-alphanumeric characters (keeps English letters, numbers, Thai chars only)
+        // Build changed fields JSON (normalize whitespace + remove trailing special characters + treat empty string as NULL)
+        // Trailing pattern: Remove special characters (keeps Thai language, English language, and numbers)
         const changedFieldsJson = checkFields.map(field => `
             IF(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\u0E00-\\u0E7F]+$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\u0E00-\\u0E7F]+$', ''), ''),
                 STRUCT(
