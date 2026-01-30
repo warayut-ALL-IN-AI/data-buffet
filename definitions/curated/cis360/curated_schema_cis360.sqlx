@@ -1,6 +1,6 @@
 config {
     type: "operations",
-    // dependencies: ["drop_all_tables_CURATED_mac5", "create_all_table_raw_mac5"],
+    dependencies: ["validated_schema_cis360"],
     tags: [databuffet.TAG_CURATED],
 }
 
