@@ -44,9 +44,9 @@ js {
             `UPPER(TRIM(CAST(raw.${pk} AS STRING))) = UPPER(TRIM(CAST(val.${pk} AS STRING)))`
         ).join(' AND ');
 
-        // Build changed fields check
+        // Build changed fields check (with TRIM to ignore whitespace differences)
         const changedFieldsChecks = checkFields.map(field =>
-            `(CAST(raw.${field} AS STRING) IS DISTINCT FROM CAST(val.${field} AS STRING))`
+            `(TRIM(CAST(raw.${field} AS STRING)) IS DISTINCT FROM TRIM(CAST(val.${field} AS STRING)))`
         ).join(' OR ');
 
         // Build PK JSON
@@ -55,9 +55,9 @@ js {
         // Build PK hash
         const pkHashConcat = primaryKeys.map(pk => `IFNULL(CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING), '')`).join(", ',', ");
 
-        // Build changed fields JSON
+        // Build changed fields JSON (with TRIM to ignore whitespace differences)
         const changedFieldsJson = checkFields.map(field => `
-            IF(CAST(raw.${field} AS STRING) IS DISTINCT FROM CAST(val.${field} AS STRING),
+            IF(TRIM(CAST(raw.${field} AS STRING)) IS DISTINCT FROM TRIM(CAST(val.${field} AS STRING)),
                 STRUCT(
                     '${field}' AS field_name,
                     TO_JSON_STRING(raw.${field}) AS raw_value,
