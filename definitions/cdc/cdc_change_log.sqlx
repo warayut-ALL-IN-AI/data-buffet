@@ -124,39 +124,23 @@ js {
             SELECT * FROM ${databuffet.DATABASE}.${validatedSchema}.${tableName}
             ${validatedWhere}
         )
-        -- CHANGED: Records in both with field differences
+        -- Use FULL OUTER JOIN to get all records
         SELECT
-            'CHANGED' AS change_type,
+            CASE
+                WHEN raw.${primaryKeys[0]} IS NULL THEN 'VALIDATED_ONLY'
+                WHEN val.${primaryKeys[0]} IS NULL THEN 'RAW_ONLY'
+                ELSE 'CHANGED'
+            END AS change_type,
             CURRENT_DATE('Asia/Bangkok') AS change_date,
             raw,
             val
         FROM raw_data AS raw
-        INNER JOIN validated_data AS val ON ${pkJoinCondition}
-        WHERE ${changedFieldsChecks}
-
-        UNION ALL
-
-        -- RAW_ONLY: In raw but not validated
-        SELECT
-            'RAW_ONLY' AS change_type,
-            CURRENT_DATE('Asia/Bangkok') AS change_date,
-            raw,
-            CAST(NULL AS STRUCT<${primaryKeys[0]} STRING>) AS val
-        FROM raw_data AS raw
-        LEFT JOIN validated_data AS val ON ${pkJoinCondition}
-        WHERE val.${primaryKeys[0]} IS NULL
-
-        UNION ALL
-
-        -- VALIDATED_ONLY: In validated but not raw
-        SELECT
-            'VALIDATED_ONLY' AS change_type,
-            CURRENT_DATE('Asia/Bangkok') AS change_date,
-            CAST(NULL AS STRUCT<${primaryKeys[0]} STRING>) AS raw,
-            val
-        FROM validated_data AS val
-        LEFT JOIN raw_data AS raw ON ${pkJoinCondition}
-        WHERE raw.${primaryKeys[0]} IS NULL
+        FULL OUTER JOIN validated_data AS val ON ${pkJoinCondition}
+        WHERE
+            -- Include only: CHANGED records, RAW_ONLY, or VALIDATED_ONLY
+            (raw.${primaryKeys[0]} IS NULL) OR  -- VALIDATED_ONLY
+            (val.${primaryKeys[0]} IS NULL) OR  -- RAW_ONLY
+            (${changedFieldsChecks})            -- CHANGED (with field differences)
     )
     `;
     }
