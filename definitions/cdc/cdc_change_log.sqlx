@@ -69,7 +69,7 @@ js {
 
         // CDC logic: Raw วันนี้ vs Validated (latest version filtered by raw PKs)
         const rawWhere = partitionField
-            ? `WHERE ${partitionField} = FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok'))`  // Raw: วันนี้
+            ? `WHERE ${partitionField} = FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`  // Raw: วันนี้
             : '';
 
         // Validated: No date filter - use PK filter instead (efficient semi-join)
