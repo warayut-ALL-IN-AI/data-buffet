@@ -81,16 +81,18 @@ js {
         SELECT * FROM ${databuffet.DATABASE}.${rawSchema}.${tableName}
         ${rawWhere}
     ),
+    raw_keys AS (
+        -- Extract unique PKs from raw_data
+        SELECT DISTINCT ${primaryKeys.join(', ')} FROM raw_data
+    ),
     validated_data AS (
         -- Filter validated by PKs from raw_data only (scan only matching rows)
         -- Then get the latest version (most recent asatdate) for each PK
         SELECT * FROM (
-            SELECT *,
-                ROW_NUMBER() OVER(PARTITION BY ${primaryKeys.join(', ')} ORDER BY asatdate DESC) AS rn
-            FROM ${databuffet.DATABASE}.${validatedSchema}.${tableName}
-            WHERE (${primaryKeys.join(', ')}) IN (
-                SELECT ${primaryKeys.join(', ')} FROM raw_data
-            )
+            SELECT val.*,
+                ROW_NUMBER() OVER(PARTITION BY ${primaryKeys.map(pk => `val.${pk}`).join(', ')} ORDER BY val.asatdate DESC) AS rn
+            FROM ${databuffet.DATABASE}.${validatedSchema}.${tableName} AS val
+            INNER JOIN raw_keys ON ${primaryKeys.map(pk => `val.${pk} = raw_keys.${pk}`).join(' AND ')}
         )
         WHERE rn = 1
     ),
