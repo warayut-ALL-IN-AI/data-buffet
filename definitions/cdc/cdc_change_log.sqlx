@@ -47,7 +47,7 @@ js {
         // Build changed fields check (normalize whitespace + remove trailing special characters + treat empty string as NULL)
         // Trailing pattern: Remove special characters (keeps Thai language, English language, and numbers)
         const changedFieldsChecks = checkFields.map(field =>
-            `(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\u0E00-\\u0E7F]+$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\u0E00-\\u0E7F]+$', ''), ''))`
+            `(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\x{0E00}-\\x{0E7F}]+$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\x{0E00}-\\x{0E7F}]+$', ''), ''))`
         ).join(' OR ');
 
         // Build PK JSON
@@ -59,7 +59,7 @@ js {
         // Build changed fields JSON (normalize whitespace + remove trailing special characters + treat empty string as NULL)
         // Trailing pattern: Remove special characters (keeps Thai language, English language, and numbers)
         const changedFieldsJson = checkFields.map(field => `
-            IF(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\u0E00-\\u0E7F]+$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\u0E00-\\u0E7F]+$', ''), ''),
+            IF(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\x{0E00}-\\x{0E7F}]+$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\x{0E00}-\\x{0E7F}]+$', ''), ''),
                 STRUCT(
                     '${field}' AS field_name,
                     TO_JSON_STRING(raw.${field}) AS raw_value,
