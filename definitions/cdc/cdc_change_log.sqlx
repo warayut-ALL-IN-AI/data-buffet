@@ -85,10 +85,13 @@ js {
         SELECT * FROM ${databuffet.DATABASE}.${validatedSchema}.${tableName}
         ${validatedWhere}
     ),
-    -- CHANGED: Records with field differences
-    changed_records AS (
+    -- เริ่มจาก RAW → เช็คที่ VALIDATED
+    all_records AS (
         SELECT
-            'CHANGED' AS change_type,
+            CASE
+                WHEN val.${primaryKeys[0]} IS NULL THEN 'NEW'  -- ยังไม่มีใน validated
+                ELSE 'CHANGED'  -- มีทั้ง 2 ฝั่ง และค่าต่างกัน
+            END AS change_type,
             CURRENT_DATE('Asia/Bangkok') AS asatdate,
             JSON_OBJECT(${pkJsonFields}) AS pk_fields,
             TO_HEX(MD5(CONCAT(${pkHashConcat}))) AS pk_hash,
@@ -97,26 +100,12 @@ js {
             raw,
             val
         FROM raw_data AS raw
-        INNER JOIN validated_data AS val ON ${pkJoinCondition}
-        WHERE ${changedFieldsChecks}
-    ),
-    -- NEW: Records in validated but not in raw
-    new_records AS (
-        SELECT
-            'NEW' AS change_type,
-            CURRENT_DATE('Asia/Bangkok') AS asatdate,
-            JSON_OBJECT(${pkJsonFields}) AS pk_fields,
-            TO_HEX(MD5(CONCAT(${pkHashConcat}))) AS pk_hash,
-            CAST(NULL AS STRING) AS raw_json,
-            TO_JSON_STRING(val) AS val_json,
-            CAST(NULL AS STRING) AS changed_fields_json,
-            CAST(NULL AS ARRAY<STRING>) AS changed_field_names_array,
-            0 AS num_fields_changed_count
-        FROM validated_data AS val
-        LEFT JOIN raw_data AS raw ON ${pkJoinCondition}
-        WHERE raw.${primaryKeys[0]} IS NULL
+        LEFT JOIN validated_data AS val ON ${pkJoinCondition}
+        WHERE
+            val.${primaryKeys[0]} IS NULL OR  -- NEW: ยังไม่มีใน validated
+            (${changedFieldsChecks})  -- CHANGED: มีแล้วแต่ค่าต่างกัน
     )
-    -- CHANGED records with calculated changed_fields
+    -- Final SELECT with conditional changed_fields calculation
     SELECT
         GENERATE_UUID() AS cdc_record_id,
         '${sourceName}' AS source_system,
@@ -127,50 +116,41 @@ js {
         change_type,
         asatdate,
         CURRENT_TIMESTAMP() AS change_timestamp,
-        -- Calculate changed fields for CHANGED records (convert to STRING)
-        TO_JSON_STRING(
-            (SELECT AS VALUE
-                JSON_OBJECT(
-                    ARRAY_AGG(field_change.field_name),
-                    ARRAY_AGG(JSON_OBJECT('raw', field_change.raw_value, 'validated', field_change.validated_value))
+        -- Calculate changed fields only for CHANGED records (NULL for NEW)
+        CASE
+            WHEN change_type = 'CHANGED' THEN
+                TO_JSON_STRING(
+                    (SELECT AS VALUE
+                        JSON_OBJECT(
+                            ARRAY_AGG(field_change.field_name),
+                            ARRAY_AGG(JSON_OBJECT('raw', field_change.raw_value, 'validated', field_change.validated_value))
+                        )
+                        FROM UNNEST([${changedFieldsJson}]) AS field_change
+                        WHERE field_change IS NOT NULL
+                    )
                 )
-                FROM UNNEST([${changedFieldsJson}]) AS field_change
-                WHERE field_change IS NOT NULL
-            )
-        ) AS changed_fields,
-        ARRAY(
-            SELECT field_change.field_name
-            FROM UNNEST([${changedFieldsJson}]) AS field_change
-            WHERE field_change IS NOT NULL
-        ) AS changed_field_names,
-        (SELECT COUNT(*)
-         FROM UNNEST([${changedFieldsJson}]) AS field_change
-         WHERE field_change IS NOT NULL) AS num_fields_changed,
+            ELSE NULL
+        END AS changed_fields,
+        CASE
+            WHEN change_type = 'CHANGED' THEN
+                ARRAY(
+                    SELECT field_change.field_name
+                    FROM UNNEST([${changedFieldsJson}]) AS field_change
+                    WHERE field_change IS NOT NULL
+                )
+            ELSE CAST(NULL AS ARRAY<STRING>)
+        END AS changed_field_names,
+        CASE
+            WHEN change_type = 'CHANGED' THEN
+                (SELECT COUNT(*)
+                 FROM UNNEST([${changedFieldsJson}]) AS field_change
+                 WHERE field_change IS NOT NULL)
+            ELSE 0
+        END AS num_fields_changed,
         raw_json AS record_raw,
         val_json AS record_validated,
         CURRENT_TIMESTAMP() AS cdc_processed_at
-    FROM changed_records
-
-    UNION ALL
-
-    -- NEW records (no changed_fields calculation needed)
-    SELECT
-        GENERATE_UUID() AS cdc_record_id,
-        '${sourceName}' AS source_system,
-        '${validatedSchema}' AS source_schema,
-        '${tableName}' AS source_table,
-        pk_fields,
-        pk_hash,
-        change_type,
-        asatdate,
-        CURRENT_TIMESTAMP() AS change_timestamp,
-        changed_fields_json AS changed_fields,
-        changed_field_names_array AS changed_field_names,
-        num_fields_changed_count AS num_fields_changed,
-        raw_json AS record_raw,
-        val_json AS record_validated,
-        CURRENT_TIMESTAMP() AS cdc_processed_at
-    FROM new_records
+    FROM all_records
     `;
     }
 
