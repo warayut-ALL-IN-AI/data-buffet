@@ -44,9 +44,9 @@ js {
             `UPPER(TRIM(CAST(raw.${pk} AS STRING))) = UPPER(TRIM(CAST(val.${pk} AS STRING)))`
         ).join(' AND ');
 
-        // Build changed fields check (with TRIM to ignore whitespace differences)
+        // Build changed fields check (remove leading/trailing whitespace including \r\n\t)
         const changedFieldsChecks = checkFields.map(field =>
-            `(TRIM(CAST(raw.${field} AS STRING)) IS DISTINCT FROM TRIM(CAST(val.${field} AS STRING)))`
+            `(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[\\s\\r\\n\\t]+$', '') IS DISTINCT FROM REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[\\s\\r\\n\\t]+$', ''))`
         ).join(' OR ');
 
         // Build PK JSON
@@ -55,9 +55,9 @@ js {
         // Build PK hash
         const pkHashConcat = primaryKeys.map(pk => `IFNULL(CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING), '')`).join(", ',', ");
 
-        // Build changed fields JSON (with TRIM to ignore whitespace differences)
+        // Build changed fields JSON (remove leading/trailing whitespace including \r\n\t)
         const changedFieldsJson = checkFields.map(field => `
-            IF(TRIM(CAST(raw.${field} AS STRING)) IS DISTINCT FROM TRIM(CAST(val.${field} AS STRING)),
+            IF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[\\s\\r\\n\\t]+$', '') IS DISTINCT FROM REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[\\s\\r\\n\\t]+$', ''),
                 STRUCT(
                     '${field}' AS field_name,
                     TO_JSON_STRING(raw.${field}) AS raw_value,
