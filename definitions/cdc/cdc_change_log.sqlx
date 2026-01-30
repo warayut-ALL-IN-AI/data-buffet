@@ -67,13 +67,13 @@ js {
             )`
         ).join(',\n            ');
 
-        // CDC logic: Raw วันนี้ vs Validated เมื่อวาน
+        // CDC logic: Raw วันนี้ vs Validated (latest version filtered by raw PKs)
         const rawWhere = partitionField
             ? `WHERE ${partitionField} = FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok'))`  // Raw: วันนี้
             : '';
-        const validatedWhere = partitionField
-            ? `WHERE ${partitionField} = DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 1 DAY)`  // Validated: เมื่อวาน
-            : '';
+
+        // Validated: No date filter - use PK filter instead (efficient semi-join)
+        // const validatedWhere is not used anymore - filtering by PK in CTE
 
         return `
     -- CDC for ${sourceName}.${tableName}
@@ -82,8 +82,17 @@ js {
         ${rawWhere}
     ),
     validated_data AS (
-        SELECT * FROM ${databuffet.DATABASE}.${validatedSchema}.${tableName}
-        ${validatedWhere}
+        -- Filter validated by PKs from raw_data only (scan only matching rows)
+        -- Then get the latest version (most recent asatdate) for each PK
+        SELECT * FROM (
+            SELECT *,
+                ROW_NUMBER() OVER(PARTITION BY ${primaryKeys.join(', ')} ORDER BY asatdate DESC) AS rn
+            FROM ${databuffet.DATABASE}.${validatedSchema}.${tableName}
+            WHERE (${primaryKeys.join(', ')}) IN (
+                SELECT ${primaryKeys.join(', ')} FROM raw_data
+            )
+        )
+        WHERE rn = 1
     ),
     -- เริ่มจาก RAW → เช็คที่ VALIDATED
     all_records AS (
