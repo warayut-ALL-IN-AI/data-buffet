@@ -99,10 +99,10 @@ js {
     -- เริ่มจาก RAW → เช็คที่ VALIDATED
     all_records AS (
         SELECT
-            CASE
+            (CASE
                 WHEN val.${primaryKeys[0]} IS NULL THEN 'NEW'  -- ยังไม่มีใน validated
                 ELSE 'CHANGED'  -- มีทั้ง 2 ฝั่ง และค่าต่างกัน
-            END AS change_type,
+            END) AS change_type,
             CURRENT_DATE('Asia/Bangkok') AS asatdate,
             JSON_OBJECT(${pkJsonFields}) AS pk_fields,
             TO_HEX(MD5(CONCAT(${pkHashConcat}))) AS pk_hash,
@@ -128,7 +128,7 @@ js {
         asatdate,
         CURRENT_TIMESTAMP() AS change_timestamp,
         -- Calculate changed fields only for CHANGED records (NULL for NEW)
-        CASE
+        (CASE
             WHEN change_type = 'CHANGED' THEN
                 TO_JSON_STRING(
                     (SELECT AS VALUE
@@ -141,8 +141,8 @@ js {
                     )
                 )
             ELSE NULL
-        END AS changed_fields,
-        CASE
+        END) AS changed_fields,
+        (CASE
             WHEN change_type = 'CHANGED' THEN
                 ARRAY(
                     SELECT field_change.field_name
@@ -150,14 +150,14 @@ js {
                     WHERE field_change IS NOT NULL
                 )
             ELSE CAST(NULL AS ARRAY<STRING>)
-        END AS changed_field_names,
-        CASE
+        END) AS changed_field_names,
+        (CASE
             WHEN change_type = 'CHANGED' THEN
                 (SELECT COUNT(*)
                  FROM UNNEST([${changedFieldsJson}]) AS field_change
                  WHERE field_change IS NOT NULL)
             ELSE 0
-        END AS num_fields_changed,
+        END) AS num_fields_changed,
         raw_json AS record_raw,
         val_json AS record_validated,
         CURRENT_TIMESTAMP() AS cdc_processed_at
