@@ -1,0 +1,168 @@
+config {
+    type: "incremental",
+    schema: databuffet.CDC_DATESET,
+    name: "cdc_change_log",
+    tags: [databuffet.TAG_CDC, databuffet.TAG_CDC_INCREMENTAL],
+    bigquery: {
+        partitionBy: "change_date",
+        clusterBy: ["source_system", "source_schema", "source_table", "change_type"],
+        partitionExpirationDays: 7
+    },
+    description: "CDC change tracking: compares raw vs validated data transformations"
+}
+
+js {
+    // Load all CDC configurations
+    const cdcConfig = databuffet.cdcConfig;
+    const enabledTables = [];
+
+    // Collect all enabled tables from all sources
+    for (const [sourceName, sourceConfig] of Object.entries(cdcConfig.cdc_enabled_sources)) {
+        if (!sourceConfig.enabled) continue;
+
+        for (const [tableName, tableConfig] of Object.entries(sourceConfig.tables)) {
+            if (!tableConfig.enabled) continue;
+
+            enabledTables.push({
+                sourceName,
+                tableName,
+                rawSchema: tableConfig.raw_schema,
+                validatedSchema: tableConfig.validated_schema,
+                primaryKeys: tableConfig.primary_keys,
+                checkFields: tableConfig.check_fields,
+                partitionField: tableConfig.partition_field
+            });
+        }
+    }
+
+    // Generate CDC SQL for a single table
+    function generateTableCdc(table) {
+        const {sourceName, tableName, rawSchema, validatedSchema, primaryKeys, checkFields, partitionField} = table;
+
+        // Build PK join condition
+        const pkJoinCondition = primaryKeys.map(pk =>
+            `UPPER(TRIM(CAST(raw.${pk} AS STRING))) = UPPER(TRIM(CAST(val.${pk} AS STRING)))`
+        ).join(' AND ');
+
+        // Build changed fields check
+        const changedFieldsChecks = checkFields.map(field =>
+            `(CAST(raw.${field} AS STRING) IS DISTINCT FROM CAST(val.${field} AS STRING))`
+        ).join(' OR ');
+
+        // Build PK JSON
+        const pkJsonFields = primaryKeys.map(pk => `'${pk}', CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING)`).join(', ');
+
+        // Build PK hash
+        const pkHashConcat = primaryKeys.map(pk => `IFNULL(CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING), '')`).join(", ',', ");
+
+        // Build changed fields JSON
+        const changedFieldsJson = checkFields.map(field => `
+            IF(CAST(raw.${field} AS STRING) IS DISTINCT FROM CAST(val.${field} AS STRING),
+                STRUCT(
+                    '${field}' AS field_name,
+                    TO_JSON_STRING(raw.${field}) AS raw_value,
+                    TO_JSON_STRING(val.${field}) AS validated_value
+                ),
+                NULL
+            )`
+        ).join(',\n            ');
+
+        // Generate WHERE clause for partition
+        const rawWhere = partitionField
+            ? `WHERE ${partitionField} = FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok'))`
+            : '';
+        const validatedWhere = partitionField
+            ? `WHERE ${partitionField} = CURRENT_DATE('Asia/Bangkok')`
+            : '';
+
+        return `
+    -- CDC for ${sourceName}.${tableName}
+    SELECT
+        GENERATE_UUID() AS cdc_record_id,
+        '${sourceName}' AS source_system,
+        '${validatedSchema}' AS source_schema,
+        '${tableName}' AS source_table,
+
+        -- PK as JSON
+        JSON_OBJECT(${pkJsonFields}) AS pk_fields,
+        TO_HEX(MD5(CONCAT(${pkHashConcat}))) AS pk_hash,
+
+        change_type,
+        change_date,
+        CURRENT_TIMESTAMP() AS change_timestamp,
+
+        -- Changed fields JSON
+        (SELECT AS VALUE
+            JSON_OBJECT(
+                ARRAY_AGG(field_change.field_name),
+                ARRAY_AGG(JSON_OBJECT('raw', field_change.raw_value, 'validated', field_change.validated_value))
+            )
+            FROM UNNEST([${changedFieldsJson}]) AS field_change
+            WHERE field_change IS NOT NULL
+        ) AS changed_fields,
+
+        ARRAY(
+            SELECT field_change.field_name
+            FROM UNNEST([${changedFieldsJson}]) AS field_change
+            WHERE field_change IS NOT NULL
+        ) AS changed_field_names,
+
+        (SELECT COUNT(*)
+         FROM UNNEST([${changedFieldsJson}]) AS field_change
+         WHERE field_change IS NOT NULL) AS num_fields_changed,
+
+        TO_JSON(raw) AS record_raw,
+        TO_JSON(val) AS record_validated,
+
+        CURRENT_TIMESTAMP() AS cdc_processed_at
+    FROM (
+        WITH raw_data AS (
+            SELECT * FROM ${databuffet.DATABASE}.${rawSchema}.${tableName}
+            ${rawWhere}
+        ),
+        validated_data AS (
+            SELECT * FROM ${databuffet.DATABASE}.${validatedSchema}.${tableName}
+            ${validatedWhere}
+        )
+        -- CHANGED: Records in both with field differences
+        SELECT
+            'CHANGED' AS change_type,
+            CURRENT_DATE('Asia/Bangkok') AS change_date,
+            raw,
+            val
+        FROM raw_data AS raw
+        INNER JOIN validated_data AS val ON ${pkJoinCondition}
+        WHERE ${changedFieldsChecks}
+
+        UNION ALL
+
+        -- RAW_ONLY: In raw but not validated
+        SELECT
+            'RAW_ONLY' AS change_type,
+            CURRENT_DATE('Asia/Bangkok') AS change_date,
+            raw,
+            CAST(NULL AS STRUCT<${primaryKeys[0]} STRING>) AS val
+        FROM raw_data AS raw
+        LEFT JOIN validated_data AS val ON ${pkJoinCondition}
+        WHERE val.${primaryKeys[0]} IS NULL
+
+        UNION ALL
+
+        -- VALIDATED_ONLY: In validated but not raw
+        SELECT
+            'VALIDATED_ONLY' AS change_type,
+            CURRENT_DATE('Asia/Bangkok') AS change_date,
+            CAST(NULL AS STRUCT<${primaryKeys[0]} STRING>) AS raw,
+            val
+        FROM validated_data AS val
+        LEFT JOIN raw_data AS raw ON ${pkJoinCondition}
+        WHERE raw.${primaryKeys[0]} IS NULL
+    )
+    `;
+    }
+
+    // Generate CDC processing for all tables and union them
+    const allCdcStatements = enabledTables.map(table => generateTableCdc(table)).join('\n\nUNION ALL\n');
+}
+
+${allCdcStatements}

@@ -1,0 +1,7 @@
+config {
+    type: "operations",
+    // dependencies: ["drop_all_tables_CURATED_mac5", "create_all_table_raw_mac5"],
+    tags: [databuffet.TAG_CDC],
+}
+
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.CDC_DATESET}` OPTIONS(location="${databuffet.REGION}") ;

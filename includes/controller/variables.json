@@ -17,6 +17,10 @@
     "TAG_CURATED_INCREMENTAL": "curated_incremental",
     "TAG_CURATED_FULL": "curated_full",
 
+    "CDC_DATESET" : "cdc_dataset",
+    "TAG_CDC": "cdc",
+    "TAG_CDC_INCREMENTAL": "cdc_incremental",
+
     "RAW_MAC5": "raw_mac5",
     "VALIDATED_MAC5": "validated_mac5",
     "CURATED_MAC5": "curated_mac5",
@@ -31,7 +35,6 @@
 
     "DIMENSION_TABLE" : "dimension_table",
     "FACT_TABLE" : "fact_table",
-    "CDC_DATESET" : "cdc_dataset",
 
     "GCS_MAC5": "mac5_ag01",
     "GCS_MAC5_REPORT": "mac5_report",

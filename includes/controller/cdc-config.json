@@ -1,0 +1,38 @@
+{
+  "cdc_enabled_sources": {
+    "mac5": {
+      "enabled": true,
+      "tables": {
+        "mil": {
+          "enabled": true,
+          "primary_keys": ["miltype", "milvnos", "millistno"],
+          "check_fields": ["milquan", "milsum", "milvat", "miladisc", "milcog"],
+          "raw_schema": "raw_mac5",
+          "validated_schema": "validated_mac5",
+          "partition_field": "asatdate"
+        },
+        "mih": {
+          "enabled": true,
+          "primary_keys": ["mihtype", "mihvnos"],
+          "check_fields": ["mihnetsum", "mihvatsum", "mihcog", "mihstatus"],
+          "raw_schema": "raw_mac5",
+          "validated_schema": "validated_mac5",
+          "partition_field": "asatdate"
+        }
+      }
+    },
+    "mastersku": {
+      "enabled": false,
+      "tables": {
+        "product": {
+          "enabled": true,
+          "primary_keys": ["prd_id"],
+          "check_fields": ["prd_name_th", "prd_price", "prd_status"],
+          "raw_schema": "raw_mastersku",
+          "validated_schema": "validated_mastersku",
+          "partition_field": null
+        }
+      }
+    }
+  }
+}
