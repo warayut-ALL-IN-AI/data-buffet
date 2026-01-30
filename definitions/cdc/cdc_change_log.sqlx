@@ -1,7 +1,7 @@
 config {
     type: "incremental",
     schema: databuffet.CDC_DATESET,
-    name: "cdc_change_log",
+    dependencies: ["cdc_schema"],
     tags: [databuffet.TAG_CDC, databuffet.TAG_CDC_INCREMENTAL],
     bigquery: {
         partitionBy: "asatdate",
