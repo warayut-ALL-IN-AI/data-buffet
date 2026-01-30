@@ -67,12 +67,12 @@ js {
             )`
         ).join(',\n            ');
 
-        // Generate WHERE clause for partition
+        // CDC logic: Raw วันนี้ vs Validated เมื่อวาน
         const rawWhere = partitionField
-            ? `WHERE ${partitionField} = FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok'))`
+            ? `WHERE ${partitionField} = FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok'))`  // Raw: วันนี้
             : '';
         const validatedWhere = partitionField
-            ? `WHERE ${partitionField} = CURRENT_DATE('Asia/Bangkok')`
+            ? `WHERE ${partitionField} = DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 1 DAY)`  // Validated: เมื่อวาน
             : '';
 
         return `
