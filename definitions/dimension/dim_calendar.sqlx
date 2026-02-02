@@ -9,7 +9,7 @@ js {
     const DimCalendarTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
-        name: "dim_calendar",
+        name: name(),
     };
     const DimCalendarTableRef = `${DimCalendarTable.database}.${DimCalendarTable.schema}.${DimCalendarTable.name}`;
     

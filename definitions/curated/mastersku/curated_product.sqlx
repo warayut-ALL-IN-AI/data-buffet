@@ -1,7 +1,7 @@
 config {
     type: "incremental",
     schema: databuffet.CURATED_MASTERSKU,
-    dependencies: ["product"],
+    dependencies: [],
     tags: [databuffet.TAG_CURATED],
     uniqueKey: ["prdSku"],
     bigquery: {

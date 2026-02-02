@@ -1,0 +1,150 @@
+config {
+  type: "operations",
+  dependencies: [],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    // Define table references
+    const DimInvoiceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimInvoiceTableRef = `${DimInvoiceTable.database}.${DimInvoiceTable.schema}.${DimInvoiceTable.name}`;
+
+}
+
+BEGIN
+  drop table if exists `${DimInvoiceTableRef}`;
+  
+  create or replace table `${DimInvoiceTableRef}`
+  cluster by mihtype, mihvnos, mihcus
+  as
+  with mih_raw as (
+    SELECT  
+      mihDay,
+      mihMonth,
+      mihYear,
+      mihType,
+      mihVnos,
+      mihCus,
+      mihRef1,
+      mihPer,
+      mihStatus,
+      (CASE
+        WHEN mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
+        WHEN mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
+        ELSE null
+      END) as StatusDesc,
+      mihCancel,
+
+    FROM ${databuffet.CURATED_MAC5, ref('curated_mih')}
+    left join ${databuffet.VALIDATED_MAC5, ref('ar_s')}
+      on mihStatus = ar_scode
+    left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')}
+      on mihStatus = ap_scode
+    WHERE mihType = 'IS'
+      and mihRef1 is not null
+      and mihCancel <> -1
+
+  ), mih_raw2 as (
+    SELECT  
+      mihDay,
+      mihMonth,
+      mihYear,
+      mihType,
+      mihVnos,
+      mihCus,
+      mihRef1,
+      mihPer,
+      mihStatus,
+      (CASE
+        WHEN mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
+        WHEN mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
+        ELSE null
+      END) as StatusDesc,
+      mihCancel
+      
+    FROM ${databuffet.CURATED_MAC5, ref('curated_mih')}
+    left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')}
+      on mihStatus = ar_scode
+    left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')}
+      on mihStatus = ap_scode
+
+  ), filter_mih2 as (
+    SELECT DISTINCT
+      mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,mih2per2pc,
+      CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale1, 
+      CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale2,
+      row_number() over(partition by mih2vnos, mih2cus order by mih2rev desc) as chk_row
+    FROM ${databuffet.VALIDATED_MAC5, ref('mih2')} as mih2
+    WHERE mih2cus is not null
+      and mih2per2 is not null
+      and mih2per2pc is not null
+      and (mih2perpc <> '100%' and mih2perpc <> '00%')
+      and EXISTS (
+        SELECT 1 FROM mih_raw as mih 
+        WHERE mih2.mih2type = 'PS'
+          and mih2.mih2vnos = mih.mihref1
+          and mih2.mih2cus = mih.mihcus
+      )
+
+  ), includ_mih as (
+    SELECT 
+    mihDay
+    ,mihMonth
+    ,mihYear
+    ,mihType
+    ,mihCus
+    ,mih.mihVnos
+    ,mihPer
+    ,per_sale1
+    ,mih2per2
+    ,per_sale2
+    ,mihStatus
+    ,StatusDesc
+    ,mihCancel
+    ,mihRef1
+
+    FROM mih_raw as mih
+    INNER JOIN filter_mih2 as mih2
+      ON mih.mihref1 = mih2.mih2vnos
+        and mih.mihcus = mih2.mih2cus
+        and chk_row = 1
+
+  ), exclude_mil as (
+    SELECT
+      mih2.mihDay
+      ,mih2.mihMonth
+      ,mih2.mihYear
+      ,mih2.mihType
+      ,mih2.mihCus
+      ,mih2.mihVnos
+      ,mih2.mihPer  
+      ,100 as per_sale1
+      ,'0' as mih2per2
+      , 0 as per_sale2
+      ,mihStatus
+      ,StatusDesc
+      ,mihCancel
+      ,mihRef1
+
+    FROM mih_raw2 as mih2
+    WHERE NOT EXISTS (
+      SELECT 1 
+      FROM includ_mih as mil2
+      WHERE mih2.mihType = mil2.mihType
+        and mih2.mihVnos = mil2.mihVnos
+    )
+
+  ) 
+  select t.* ,case when t.per_sale1 <> 100 then 'Yes' else 'No' end as InvoiceSalesFlag
+  from (
+    select * from exclude_mil
+    UNION ALL
+    SELECT *  FROM includ_mih
+  ) t
+  ;
+
+END;

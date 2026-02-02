@@ -9,7 +9,7 @@ js {
     const FactTranscationTable = {
         database: databuffet.DATABASE,
         schema: databuffet.FACT_TABLE,
-        name: "fact_transcation",
+        name: name(),
     };
     const FactTranscationTableRef = `${FactTranscationTable.database}.${FactTranscationTable.schema}.${FactTranscationTable.name}`;
 

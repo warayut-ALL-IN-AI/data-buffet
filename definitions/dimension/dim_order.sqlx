@@ -1,0 +1,98 @@
+config {
+  type: "operations",
+  dependencies: [],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    // Define table references
+    const DimOrderTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimOrderTableRef = `${DimOrderTable.database}.${DimOrderTable.schema}.${DimOrderTable.name}`;
+
+}
+
+BEGIN
+  drop table if exists `${DimOrderTableRef}`;
+  
+  create or replace table `${DimOrderTableRef}`
+  cluster by mihvnos
+  as
+  with mil as (
+    select miltype, milvnos, milstk, milQuan, milSum, millinkvcno
+    from ${ref(databuffet.CURATED_MAC5, 'curated_mil')}
+    where miltype in ('PS', 'IS')
+
+  ), main_table as (
+    select milvnos, milstk, milQuan, milSum
+    from mil as mil
+    where miltype = 'PS'
+      -- and milvnos = 'HP68020182'
+
+  ), sec_table as (
+    select millinkvcno, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
+    from mil as mil
+    where miltype = 'IS'
+      and exists (
+        select 1 
+        from main_table as main 
+        where mil.millinkvcno = main.milvnos
+          and mil.milstk = main.milstk
+      )
+    group by 1, 2
+
+  ), cal_table as (
+    select 
+      main.milvnos, main.milstk,
+      main.milQuan as main_qty, main.milSum as main_sum,
+      sec.milQuan as sec_qty, sec.milSum as sec_sum,
+      (case 
+        when sec.millinkvcno is null and sec.milstk is null then 'On Order'
+        when sec.milQuan >= main.milQuan and sec.milSum >= main.milSum  then 'Complete'
+        else 'In Process'
+      end) as item_status
+    from main_table as main
+    left join sec_table as sec
+      on main.milvnos = sec.millinkvcno
+        and main.milstk = sec.milstk
+
+  ), order_status as (
+    select 
+      milvnos,
+      (case 
+        when countif(item_status = 'In Process') > 0 then 'In Process'
+        when countif(item_status = 'On Order') > 0 then 'On Order'
+        else 'Complete'
+      end) as OrderStatus
+    from cal_table
+    group by 1
+
+  )
+  SELECT  
+    mihYear, 
+    mihMonth, 
+    mihDay,
+    mihVnos, 
+    mihJob, 
+    mihRef1, 
+    mihRef2, 
+    mihRef3, 
+    mihCancel, 
+    mihStatus ,
+    ar.ar_snamet as StatusName,
+    memoExtract,
+    mihMemoNew,
+    mihstatus_desc as mihStatusDesc,
+    mihCus,
+  FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
+  LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar 
+    on mih.mihStatus = ar.ar_scode
+  LEFT JOIN order_status as order_status
+    on order_status.milvnos = mih.mihVnos
+  WHERE mihType = 'PS' 
+  ;
+
+END;

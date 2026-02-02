@@ -1,6 +1,6 @@
 config {
   type: "operations",
-  dependencies: ["stk", "stg", "product", "product_detail"],
+  dependencies: [],
   tags: [databuffet.TAG_DIM_DAILY],
 }
 
@@ -9,7 +9,7 @@ js {
     const DimProductTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
-        name: "dim_product_master",
+        name: name(),
     };
     const DimProductTableRef = `${DimProductTable.database}.${DimProductTable.schema}.${DimProductTable.name}`;
     
