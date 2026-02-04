@@ -57,12 +57,23 @@ WITH cte_mil as (
 
 ), cte_mih as (
   select 
+    t1.mihyear,
+    t1.mihmonth,
+    t1.mihday,
     t1.mihtype,
     t1.mihvnos,
+    t1.mihcus,
     t1.mihdischf1
 
   from ${ref("mih")} as t1
-  where exists (select 1 from cte_mil as t2 where t1.mihvnos = t2.milvnos and t1.mihtype = t2.miltype)
+  where exists (select 1 from cte_mil as t2 
+    where t1.mihyear = t2.milyear
+      and t1.mihmonth = t2.milmonth
+      and t1.mihday = t2.milday
+      and t1.mihtype = t2.miltype
+      and t1.mihvnos = t2.milvnos
+      and t1.mihcus = t2.milcus
+  )
 
 )
 SELECT
@@ -160,8 +171,12 @@ SELECT
   PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
 FROM cte_mil as mil
 LEFT JOIN cte_mih as mih
-  on mil.milvnos = mih.mihvnos
-    and mil.miltype = mih.mihtype
+  on mil.milyear = mih.mihyear
+  and mil.milmonth = mih.mihmonth
+  and mil.milday = mih.mihday
+  and mil.miltype = mih.mihtype
+  and mil.milvnos = mih.mihvnos
+  and mil.milcus = mih.mihcus
 
 ${partition_statement}
 

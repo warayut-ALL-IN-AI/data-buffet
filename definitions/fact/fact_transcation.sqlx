@@ -103,6 +103,28 @@ js {
         name: "dim_channel_cost",
     };
     const DimChannelCostTableRef = `${DimChannelCostTable.database}.${DimChannelCostTable.schema}.${DimChannelCostTable.name}`;
+
+    const DimStkMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_stk_mkt",
+    };
+    const DimStkMktTableRef = `${DimStkMktTable.database}.${DimStkMktTable.schema}.${DimStkMktTable.name}`;
+
+    const DimProductGroupBySaleDayofworkTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_target_product_group_by_sale_dayofwork",
+    };
+    const DimProductGroupBySaleDayofworkTableRef = `${DimProductGroupBySaleDayofworkTable.database}.${DimProductGroupBySaleDayofworkTable.schema}.${DimProductGroupBySaleDayofworkTable.name}`;
+    
+    const DimProductMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_mkt",
+    };
+    const DimProductMktTableRef = `${DimProductMktTable.database}.${DimProductMktTable.schema}.${DimProductMktTable.name}`;
+
 }
 
 BEGIN
@@ -159,7 +181,10 @@ BEGIN
     trans.ChannelCostSK,
 
     -- DATA
-    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK)
+    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK),
+
+    -- FOR USE THIS PROCESS
+    dep_sk.DepartmentID
   FROM raw_transction as trans
 
   -- CostStkSk
@@ -247,7 +272,10 @@ BEGIN
     channel_cost.ChannelCostSK,
 
     -- DATA
-    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK)
+    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK),
+
+    -- FOR USE THIS PROCESS
+    dep_sk.DepartmentID
   FROM raw_transction as trans
 
   -- SaleRepSK
@@ -321,8 +349,31 @@ BEGIN
   from final_part2
   -- where mildep is null
 )
-  select *
+  select 
+    -- SK
+    stk_mkt.StkMktSK,
+    product_mkt.ProductMktSK,
+    tg_dayofwork.TargetBySaleDayofworkSK,
+    tg_dayofwork.TargetProductGroupSK, 
+    tg_dayofwork.RateTargetSK,
+
+    -- DATA
+    mix_table.* except(DepartmentID)
   from mix_table
+  left join `${DimStkMktTableRef}` as stk_mkt
+    on mix_table.milStk = stk_mkt.StkCode
+  left join `${DimProductMktTableRef}` as product_mkt
+    on stk_mkt.MarketingGroupID = product_mkt.MarketingGroupID
+        and stk_mkt.SubMarketingID = product_mkt.SubMarketingID
+        and stk_mkt.SegmentID = product_mkt.SegmentID
+  left join `${DimProductGroupBySaleDayofworkTableRef}` as tg_dayofwork
+    on mix_table.milyear = tg_dayofwork.year
+        and mix_table.milmonth = tg_dayofwork.month
+        and mix_table.milday = CAST(tg_dayofwork.day AS INT64)
+        and mix_table.DepartmentID = tg_dayofwork.DepartmentID
+        and stk_mkt.MarketingGroupID = tg_dayofwork.MarketingGroupID
+        and stk_mkt.SubMarketingID = tg_dayofwork.SubMarketingID
+        and stk_mkt.SegmentID = tg_dayofwork.SegmentID
   ;
 
 --   -- 1767567
