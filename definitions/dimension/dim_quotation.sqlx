@@ -2,6 +2,7 @@ config {
   type: "operations",
   dependencies: [],
   tags: [databuffet.TAG_DIM_DAILY],
+  hasOutput: true
 }
 
 js {
@@ -12,82 +13,136 @@ js {
         name: name(),
     };
     const DimQuotationTableRef = `${DimQuotationTable.database}.${DimQuotationTable.schema}.${DimQuotationTable.name}`;
-
 }
 
-BEGIN
-  drop table if exists `${DimQuotationTableRef}`;
-  
-  create or replace table `${DimQuotationTableRef}`
-  cluster by Running
-  as
-  with quotation_table as (
-    select 
-      ID,
-      Running, 
-      SDate,
-      EXTRACT(YEAR FROM CAST(SDate AS DATE)) Year,
-      EXTRACT(MONTH FROM CAST(SDate AS DATE)) Month,
-      EXTRACT(DAY FROM CAST(SDate AS DATE)) Day,
-      Atten,
-      Project,
-      UInsert,
-      PriceValidity,
-      TermDelivery,
-      TermPayment 
-    from ${ref(databuffet.CURATED_MAC5, 'curated_tbook_quotation')}
-    -- where ID = 452240
+-- 2. เริ่มกระบวนการ MERGE
+MERGE `${DimQuotationTableRef}` T
+USING (
+    WITH quotation_table as (
+        select 
+            ID,
+            Running, 
+            SDate,
+            EXTRACT(YEAR FROM CAST(SDate AS DATE)) Year,
+            EXTRACT(MONTH FROM CAST(SDate AS DATE)) Month,
+            EXTRACT(DAY FROM CAST(SDate AS DATE)) Day,
+            Atten,
+            Project,
+            UInsert,
+            PriceValidity,
+            TermDelivery,
+            TermPayment 
+        from ${ref(databuffet.CURATED_MAC5, 'curated_tbook_quotation')}
+    ), 
+    main_table as (
+        select 
+            qt.Running, qt_detail.stkcode, qt_detail.quantity, qt_detail.total
+        from ${ref(databuffet.VALIDATED_MAC5, 'tbook_quodetail')} as qt_detail
+        inner join quotation_table as qt
+            on qt_detail.linkid = qt.id
+    ), 
+    sec_table as (
+        select mih.mihref1, mil.milstk, sum(mil.milQuan) as milQuan, sum(mil.milSum) as milSum
+        from ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
+        left join ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
+            on mih.mihvnos = mil.milvnos
+            and mih.mihtype = mil.miltype
+        where mih.mihtype = 'PS'
+            and exists (select 1 from quotation_table as qt where mih.mihref1 = qt.Running)
+        group by 1, 2
+    ), 
+    cal_table as (
+        select 
+            main.Running, main.stkcode,
+            main.quantity as main_qty, main.total as main_sum,
+            sec.milQuan as sec_qty, sec.milSum as sec_sum,
+            (case 
+                when sec.mihref1 is null and sec.milstk is null then 'On Order'
+                when sec.milQuan >= main.quantity and sec.milSum >= main.total  then 'Complete'
+                else 'In Process'
+            end) as item_status
+        from main_table as main
+        left join sec_table as sec
+            on main.Running = sec.mihref1
+            and main.stkcode = sec.milstk
+    ), 
+    order_status as (
+        select 
+            Running,
+            (case 
+                when countif(item_status = 'In Process') > 0 then 'In Process'
+                when countif(item_status = 'On Order') > 0 then 'On Order'
+                else 'Complete'
+            end) as OrderStatus
+        from cal_table
+        group by 1
+    ),
+    source_data AS (
+        select 
+            qt.*,
+            order_status.OrderStatus
+        from quotation_table as qt
+        left join order_status as order_status
+            on order_status.Running = qt.Running
+    ),
+    -- หา Max QuotationSK จาก Target
+    target_max AS (
+        SELECT IFNULL(MAX(QuotationSK), 0) as max_sk FROM `${DimQuotationTableRef}`
+    ),
+    -- Prepare Data & Generate SK
+    prepared_source AS (
+        SELECT 
+            S.*,
+            T.QuotationSK as existing_sk,
+            -- Run number สำหรับแถวใหม่เท่านั้น
+            ROW_NUMBER() OVER (
+                PARTITION BY (CASE WHEN T.Running IS NULL THEN 1 ELSE 0 END) 
+                ORDER BY S.Running
+            ) as rn_new
+        FROM source_data S
+        LEFT JOIN `${DimQuotationTableRef}` T
+            ON S.Running = T.Running
+    )
 
-  ), main_table as (
-    select 
-      qt.Running, qt_detail.stkcode, qt_detail.quantity, qt_detail.total
-    from ${ref(databuffet.VALIDATED_MAC5, 'tbook_quodetail')} as qt_detail
-    inner join quotation_table as qt
-      on qt_detail.linkid = qt.id
+    SELECT 
+        src.*,
+        CASE 
+            WHEN existing_sk IS NOT NULL THEN existing_sk
+            ELSE (SELECT max_sk FROM target_max) + rn_new
+        END as final_QuotationSK
+    FROM prepared_source src
 
-  ), sec_table as (
-    select mih.mihref1, mil.milstk, sum(mil.milQuan) as milQuan, sum(mil.milSum) as milSum
-    from ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
-    left join ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
-      on mih.mihvnos = mil.milvnos
-        and mih.mihtype = mil.miltype
-    where mih.mihtype = 'PS'
-      and exists (select 1 from quotation_table as qt where mih.mihref1 = qt.Running)
-    group by 1, 2
+) S
+ON T.Running = S.Running
 
-  ), cal_table as (
-    select 
-      main.Running, main.stkcode,
-      main.quantity as main_qty, main.total as main_sum,
-      sec.milQuan as sec_qty, sec.milSum as sec_sum,
-      (case 
-        when sec.mihref1 is null and sec.milstk is null then 'On Order'
-        when sec.milQuan >= main.quantity and sec.milSum >= main.total  then 'Complete'
-        else 'In Process'
-      end) as item_status
-    from main_table as main
-    left join sec_table as sec
-      on main.Running = sec.mihref1
-        and main.stkcode = sec.milstk
+-- กรณีเจอข้อมูล (Update)
+WHEN MATCHED THEN
+  UPDATE SET 
+    ID = S.ID,
+    SDate = S.SDate,
+    Year = S.Year,
+    Month = S.Month,
+    Day = S.Day,
+    Atten = S.Atten,
+    Project = S.Project,
+    UInsert = S.UInsert,
+    PriceValidity = S.PriceValidity,
+    TermDelivery = S.TermDelivery,
+    TermPayment = S.TermPayment,
+    OrderStatus = S.OrderStatus
+    -- ยกเว้น: QuotationSK, OrderSK, InvoiceSK
 
-  ), order_status as (
-    select 
-      Running,
-      (case 
-        when countif(item_status = 'In Process') > 0 then 'In Process'
-        when countif(item_status = 'On Order') > 0 then 'On Order'
-        else 'Complete'
-      end) as OrderStatus
-    from cal_table
-    group by 1
-
+-- กรณีไม่เจอข้อมูล (Insert)
+WHEN NOT MATCHED THEN
+  INSERT (
+    QuotationSK,
+    ID, Running, SDate, Year, Month, Day,
+    Atten, Project, UInsert, PriceValidity, 
+    TermDelivery, TermPayment, OrderStatus
   )
-    select 
-      qt.*,
-      order_status.OrderStatus
-    from quotation_table as qt
-    left join order_status as order_status
-      on order_status.Running = qt.Running
-    ;
-
-END;
+  VALUES (
+    S.final_QuotationSK,
+    S.ID, S.Running, S.SDate, S.Year, S.Month, S.Day,
+    S.Atten, S.Project, S.UInsert, S.PriceValidity, 
+    S.TermDelivery, S.TermPayment, S.OrderStatus
+  );

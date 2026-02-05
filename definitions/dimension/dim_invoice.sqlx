@@ -2,6 +2,7 @@ config {
   type: "operations",
   dependencies: [],
   tags: [databuffet.TAG_DIM_DAILY],
+  hasOutput: true
 }
 
 js {
@@ -12,139 +13,161 @@ js {
         name: name(),
     };
     const DimInvoiceTableRef = `${DimInvoiceTable.database}.${DimInvoiceTable.schema}.${DimInvoiceTable.name}`;
-
 }
 
-BEGIN
-  drop table if exists `${DimInvoiceTableRef}`;
-  
-  create or replace table `${DimInvoiceTableRef}`
-  cluster by mihtype, mihvnos, mihcus
-  as
-  with mih_raw as (
-    SELECT  
-      mihDay,
-      mihMonth,
-      mihYear,
-      mihType,
-      mihVnos,
-      mihCus,
-      mihRef1,
-      mihPer,
-      mihStatus,
-      (CASE
-        WHEN mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
-        WHEN mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
-        ELSE null
-      END) as StatusDesc,
-      mihCancel,
-
-    FROM ${databuffet.CURATED_MAC5, ref('curated_mih')}
-    left join ${databuffet.VALIDATED_MAC5, ref('ar_s')}
-      on mihStatus = ar_scode
-    left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')}
-      on mihStatus = ap_scode
-    WHERE mihType = 'IS'
-      and mihRef1 is not null
-      and mihCancel <> -1
-
-  ), mih_raw2 as (
-    SELECT  
-      mihDay,
-      mihMonth,
-      mihYear,
-      mihType,
-      mihVnos,
-      mihCus,
-      mihRef1,
-      mihPer,
-      mihStatus,
-      (CASE
-        WHEN mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
-        WHEN mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
-        ELSE null
-      END) as StatusDesc,
-      mihCancel
-      
-    FROM ${databuffet.CURATED_MAC5, ref('curated_mih')}
-    left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')}
-      on mihStatus = ar_scode
-    left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')}
-      on mihStatus = ap_scode
-
-  ), filter_mih2 as (
-    SELECT DISTINCT
-      mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,mih2per2pc,
-      CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale1, 
-      CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale2,
-      row_number() over(partition by mih2vnos, mih2cus order by mih2rev desc) as chk_row
-    FROM ${databuffet.VALIDATED_MAC5, ref('mih2')} as mih2
-    WHERE mih2cus is not null
-      and mih2per2 is not null
-      and mih2per2pc is not null
-      and (mih2perpc <> '100%' and mih2perpc <> '00%')
-      and EXISTS (
-        SELECT 1 FROM mih_raw as mih 
-        WHERE mih2.mih2type = 'PS'
-          and mih2.mih2vnos = mih.mihref1
-          and mih2.mih2cus = mih.mihcus
-      )
-
-  ), includ_mih as (
-    SELECT 
-    mihDay
-    ,mihMonth
-    ,mihYear
-    ,mihType
-    ,mihCus
-    ,mih.mihVnos
-    ,mihPer
-    ,per_sale1
-    ,mih2per2
-    ,per_sale2
-    ,mihStatus
-    ,StatusDesc
-    ,mihCancel
-    ,mihRef1
-
-    FROM mih_raw as mih
-    INNER JOIN filter_mih2 as mih2
-      ON mih.mihref1 = mih2.mih2vnos
-        and mih.mihcus = mih2.mih2cus
-        and chk_row = 1
-
-  ), exclude_mil as (
-    SELECT
-      mih2.mihDay
-      ,mih2.mihMonth
-      ,mih2.mihYear
-      ,mih2.mihType
-      ,mih2.mihCus
-      ,mih2.mihVnos
-      ,mih2.mihPer  
-      ,100 as per_sale1
-      ,'0' as mih2per2
-      , 0 as per_sale2
-      ,mihStatus
-      ,StatusDesc
-      ,mihCancel
-      ,mihRef1
-
-    FROM mih_raw2 as mih2
-    WHERE NOT EXISTS (
-      SELECT 1 
-      FROM includ_mih as mil2
-      WHERE mih2.mihType = mil2.mihType
-        and mih2.mihVnos = mil2.mihVnos
+-- 2. เริ่มกระบวนการ MERGE
+MERGE `${DimInvoiceTableRef}` T
+USING (
+    WITH mih_raw as (
+        SELECT  
+          mihDay, mihMonth, mihYear, mihType, mihVnos, mihCus, mihRef1, mihPer, mihStatus,
+          (CASE
+            WHEN mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
+            WHEN mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
+            ELSE null
+          END) as StatusDesc,
+          mihCancel,
+        FROM ${databuffet.CURATED_MAC5, ref('curated_mih')}
+        left join ${databuffet.VALIDATED_MAC5, ref('ar_s')} on mihStatus = ar_scode
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} on mihStatus = ap_scode
+        WHERE mihType = 'IS'
+          and mihRef1 is not null
+          and mihCancel <> -1
+          and asatdate >= current_date('Asia/Bangkok')-1
+    ), 
+    mih_raw2 as (
+        SELECT  
+          mihDay, mihMonth, mihYear, mihType, mihVnos, mihCus, mihRef1, mihPer, mihStatus,
+          (CASE
+            WHEN mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
+            WHEN mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
+            ELSE null
+          END) as StatusDesc,
+          mihCancel
+        FROM ${databuffet.CURATED_MAC5, ref('curated_mih')}
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} on mihStatus = ar_scode
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} on mihStatus = ap_scode
+        WHERE asatdate >= current_date('Asia/Bangkok')-1
+    ), 
+    filter_mih2 as (
+        SELECT DISTINCT
+          mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,mih2per2pc,
+          CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale1, 
+          CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale2,
+          row_number() over(partition by mih2vnos, mih2cus order by mih2rev desc) as chk_row
+        FROM ${databuffet.VALIDATED_MAC5, ref('mih2')} as mih2
+        WHERE mih2cus is not null
+          and mih2per2 is not null
+          and mih2per2pc is not null
+          and (mih2perpc <> '100%' and mih2perpc <> '00%')
+          and EXISTS (
+            SELECT 1 FROM mih_raw as mih 
+            WHERE mih2.mih2type = 'PS'
+              and mih2.mih2vnos = mih.mihref1
+              and mih2.mih2cus = mih.mihcus
+          )
+    ), 
+    includ_mih as (
+        SELECT 
+          mihDay, mihMonth, mihYear, mihType, mihCus, mih.mihVnos, mihPer,
+          per_sale1, mih2per2, per_sale2, mihStatus, StatusDesc, mihCancel, mihRef1
+        FROM mih_raw as mih
+        INNER JOIN filter_mih2 as mih2
+          ON mih.mihref1 = mih2.mih2vnos
+            and mih.mihcus = mih2.mih2cus
+            and chk_row = 1
+    ), 
+    exclude_mil as (
+        SELECT
+          mih2.mihDay, mih2.mihMonth, mih2.mihYear, mih2.mihType, mih2.mihCus, mih2.mihVnos, mih2.mihPer,  
+          100 as per_sale1,
+          '0' as mih2per2,
+          0 as per_sale2,
+          mihStatus, StatusDesc, mihCancel, mihRef1
+        FROM mih_raw2 as mih2
+        WHERE NOT EXISTS (
+          SELECT 1 
+          FROM includ_mih as mil2
+          WHERE mih2.mihType = mil2.mihType
+            and mih2.mihVnos = mil2.mihVnos
+        )
+    ),
+    source_combined as (
+        select t.* ,case when t.per_sale1 <> 100 then 'Yes' else 'No' end as InvoiceSalesFlag
+        from (
+            select * from exclude_mil
+            UNION ALL
+            SELECT * FROM includ_mih
+        ) t
+        WHERE mihtype in ('IS', 'BS', 'AS', 'QS')
+    ),
+    -- ดึงค่า Max InvoiceSK ปัจจุบันจาก Target
+    target_max AS (
+        SELECT IFNULL(MAX(InvoiceSK), 0) as max_sk FROM `${DimInvoiceTableRef}`
+    ),
+    -- Join Source กับ Target เพื่อเตรียมข้อมูลสำหรับ Merge และ Gen SK
+    prepared_source AS (
+        SELECT 
+            S.*,
+            T.InvoiceSK as existing_sk,
+            -- คำนวณ Row Number เฉพาะกลุ่มที่เป็นข้อมูลใหม่ (Target เป็น Null)
+            ROW_NUMBER() OVER (
+                PARTITION BY (CASE WHEN T.mihVnos IS NULL THEN 1 ELSE 0 END) 
+                ORDER BY S.mihYear, S.mihMonth, S.mihDay, S.mihVnos
+            ) as rn_new
+        FROM source_combined S
+        LEFT JOIN `${DimInvoiceTableRef}` T
+            ON S.mihYear = T.mihYear 
+            AND S.mihMonth = T.mihMonth 
+            AND S.mihDay = T.mihDay 
+            AND S.mihVnos = T.mihVnos 
+            AND S.mihCus = T.mihCus
     )
 
-  ) 
-  select t.* ,case when t.per_sale1 <> 100 then 'Yes' else 'No' end as InvoiceSalesFlag
-  from (
-    select * from exclude_mil
-    UNION ALL
-    SELECT *  FROM includ_mih
-  ) t
-  ;
+    SELECT 
+        src.*,
+        -- ถ้ามี SK เดิม (Update) ให้ใช้ของเดิม
+        -- ถ้าเป็นแถวใหม่ (Insert) ให้เอา Max + Running Number
+        CASE 
+            WHEN existing_sk IS NOT NULL THEN existing_sk
+            ELSE (SELECT max_sk FROM target_max) + rn_new
+        END as final_InvoiceSK
+    FROM prepared_source src
+) S
+ON T.mihYear = S.mihYear 
+   AND T.mihMonth = S.mihMonth 
+   AND T.mihDay = S.mihDay 
+   AND T.mihVnos = S.mihVnos 
+   AND T.mihCus = S.mihCus
 
-END;
+-- กรณีเจอข้อมูลเดิม (Update)
+WHEN MATCHED THEN
+  UPDATE SET 
+    mihType = S.mihType,
+    mihPer = S.mihPer,
+    per_sale1 = S.per_sale1,
+    mih2per2 = S.mih2per2,
+    per_sale2 = S.per_sale2,
+    mihStatus = S.mihStatus,
+    StatusDesc = S.StatusDesc,
+    mihCancel = S.mihCancel,
+    mihRef1 = S.mihRef1,
+    InvoiceSalesFlag = S.InvoiceSalesFlag
+    -- ยกเว้น: OrderSK, InvoiceSK, QuotationSK ไม่ถูก update
+
+-- กรณีไม่เจอข้อมูล (Insert)
+WHEN NOT MATCHED THEN
+  INSERT (
+    InvoiceSK,
+    mihDay, mihMonth, mihYear, 
+    mihType, mihVnos, mihCus,
+    mihRef1, mihPer, mihStatus, StatusDesc, mihCancel,
+    per_sale1, mih2per2, per_sale2, InvoiceSalesFlag
+  )
+  VALUES (
+    S.final_InvoiceSK, -- ใช้ SK ที่คำนวณใหม่
+    S.mihDay, S.mihMonth, S.mihYear, 
+    S.mihType, S.mihVnos, S.mihCus,
+    S.mihRef1, S.mihPer, S.mihStatus, S.StatusDesc, S.mihCancel,
+    S.per_sale1, S.mih2per2, S.per_sale2, S.InvoiceSalesFlag
+  );

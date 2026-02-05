@@ -2,6 +2,7 @@ config {
   type: "operations",
   dependencies: [],
   tags: [databuffet.TAG_DIM_DAILY],
+  hasOutput: true
 }
 
 js {
@@ -9,90 +10,155 @@ js {
     const DimOrderTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
-        name: name(),
+        name: name(), // ใช้ชื่อไฟล์เป็นชื่อตาราง
     };
     const DimOrderTableRef = `${DimOrderTable.database}.${DimOrderTable.schema}.${DimOrderTable.name}`;
-
 }
 
-BEGIN
-  drop table if exists `${DimOrderTableRef}`;
-  
-  create or replace table `${DimOrderTableRef}`
-  cluster by mihvnos
-  as
-  with mil as (
-    select miltype, milvnos, milstk, milQuan, milSum, millinkvcno
-    from ${ref(databuffet.CURATED_MAC5, 'curated_mil')}
-    where miltype in ('PS', 'IS')
 
-  ), main_table as (
-    select milvnos, milstk, milQuan, milSum
-    from mil as mil
-    where miltype = 'PS'
-      -- and milvnos = 'HP68020182'
+-- 2. เริ่มกระบวนการ MERGE
+MERGE `${DimOrderTableRef}` T
+USING (
+    WITH mil as (
+        select miltype, milvnos, milstk, milQuan, milSum, millinkvcno
+        from ${ref(databuffet.CURATED_MAC5, 'curated_mil')}
+        where miltype in ('PS', 'IS')
+    ), 
+    main_table as (
+        select milvnos, milstk, milQuan, milSum
+        from mil
+        where miltype = 'PS'
+    ), 
+    sec_table as (
+        select millinkvcno, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
+        from mil
+        where miltype = 'IS'
+        and exists (
+            select 1 
+            from main_table as main 
+            where mil.millinkvcno = main.milvnos
+            and mil.milstk = main.milstk
+        )
+        group by 1, 2
+    ), 
+    cal_table as (
+        select 
+            main.milvnos, main.milstk,
+            main.milQuan as main_qty, main.milSum as main_sum,
+            sec.milQuan as sec_qty, sec.milSum as sec_sum,
+            (case 
+                when sec.millinkvcno is null and sec.milstk is null then 'On Order'
+                when sec.milQuan >= main.milQuan and sec.milSum >= main.milSum  then 'Complete'
+                else 'In Process'
+            end) as item_status
+        from main_table as main
+        left join sec_table as sec
+            on main.milvnos = sec.millinkvcno
+            and main.milstk = sec.milstk
+    ), 
+    order_status as (
+        select 
+            milvnos,
+            (case 
+                when countif(item_status = 'In Process') > 0 then 'In Process'
+                when countif(item_status = 'On Order') > 0 then 'On Order'
+                else 'Complete'
+            end) as OrderStatus
+        from cal_table
+        group by 1
+    ),
+    source_data AS (
+        SELECT  
+            mih.mihYear, 
+            mih.mihMonth, 
+            mih.mihDay,
+            mih.mihVnos, 
+            mih.mihJob, 
+            mih.mihRef1, 
+            mih.mihRef2, 
+            mih.mihRef3, 
+            mih.mihCancel, 
+            mih.mihStatus ,
+            ar.ar_snamet as StatusName,
+            mih.memoExtract,
+            mih.mihMemoNew,
+            mih.mihstatus_desc as mihStatusDesc,
+            mih.mihCus
+        FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
+        LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar 
+            on mih.mihStatus = ar.ar_scode
+        LEFT JOIN order_status as order_status
+            on order_status.milvnos = mih.mihVnos
+        WHERE mihType = 'PS' 
+    ),
+    -- ดึงค่า Max OrderSK ปัจจุบันจาก Target
+    target_max AS (
+        SELECT IFNULL(MAX(OrderSK), 0) as max_sk FROM `${DimOrderTableRef}`
+    ),
+    -- Join Source กับ Target เพื่อหาว่าเป็นแถวใหม่หรือไม่ และคำนวณ SK
+    prepared_source AS (
+        SELECT 
+            S.*,
+            T.OrderSK as existing_sk,
+            -- คำนวณ Row Number เฉพาะกลุ่มที่เป็นข้อมูลใหม่ (Target เป็น Null)
+            ROW_NUMBER() OVER (
+                PARTITION BY (CASE WHEN T.mihVnos IS NULL THEN 1 ELSE 0 END) 
+                ORDER BY S.mihYear, S.mihMonth, S.mihDay, S.mihVnos
+            ) as rn_new
+        FROM source_data S
+        LEFT JOIN `${DimOrderTableRef}` T
+            ON S.mihYear = T.mihYear 
+            AND S.mihMonth = T.mihMonth 
+            AND S.mihDay = T.mihDay 
+            AND S.mihVnos = T.mihVnos 
+            AND S.mihCus = T.mihCus
+    )
 
-  ), sec_table as (
-    select millinkvcno, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
-    from mil as mil
-    where miltype = 'IS'
-      and exists (
-        select 1 
-        from main_table as main 
-        where mil.millinkvcno = main.milvnos
-          and mil.milstk = main.milstk
-      )
-    group by 1, 2
+    SELECT 
+        src.*,
+        -- ถ้ามี SK เดิม (Update) ให้ใช้ของเดิม
+        -- ถ้าเป็นแถวใหม่ (Insert) ให้เอา Max + Running Number
+        CASE 
+            WHEN existing_sk IS NOT NULL THEN existing_sk
+            ELSE (SELECT max_sk FROM target_max) + rn_new
+        END as final_OrderSK
+    FROM prepared_source src
 
-  ), cal_table as (
-    select 
-      main.milvnos, main.milstk,
-      main.milQuan as main_qty, main.milSum as main_sum,
-      sec.milQuan as sec_qty, sec.milSum as sec_sum,
-      (case 
-        when sec.millinkvcno is null and sec.milstk is null then 'On Order'
-        when sec.milQuan >= main.milQuan and sec.milSum >= main.milSum  then 'Complete'
-        else 'In Process'
-      end) as item_status
-    from main_table as main
-    left join sec_table as sec
-      on main.milvnos = sec.millinkvcno
-        and main.milstk = sec.milstk
+) S
+ON T.mihYear = S.mihYear 
+   AND T.mihMonth = S.mihMonth 
+   AND T.mihDay = S.mihDay 
+   AND T.mihVnos = S.mihVnos 
+   AND T.mihCus = S.mihCus
 
-  ), order_status as (
-    select 
-      milvnos,
-      (case 
-        when countif(item_status = 'In Process') > 0 then 'In Process'
-        when countif(item_status = 'On Order') > 0 then 'On Order'
-        else 'Complete'
-      end) as OrderStatus
-    from cal_table
-    group by 1
+-- กรณีเจอข้อมูลเดิม (Update)
+WHEN MATCHED THEN
+  UPDATE SET 
+    mihJob = S.mihJob,
+    mihRef1 = S.mihRef1,
+    mihRef2 = S.mihRef2,
+    mihRef3 = S.mihRef3,
+    mihCancel = S.mihCancel,
+    mihStatus = S.mihStatus,
+    StatusName = S.StatusName,
+    memoExtract = S.memoExtract,
+    mihMemoNew = S.mihMemoNew,
+    mihStatusDesc = S.mihStatusDesc
+    -- ไม่ Update OrderSK, InvoiceSK, QuotationSK ตามเงื่อนไข
 
+-- กรณีไม่เจอข้อมูล (Insert)
+WHEN NOT MATCHED THEN
+  INSERT (
+    OrderSK, 
+    mihYear, mihMonth, mihDay, mihVnos, mihCus,
+    mihJob, mihRef1, mihRef2, mihRef3, 
+    mihCancel, mihStatus, StatusName, 
+    memoExtract, mihMemoNew, mihStatusDesc
   )
-  SELECT  
-    mihYear, 
-    mihMonth, 
-    mihDay,
-    mihVnos, 
-    mihJob, 
-    mihRef1, 
-    mihRef2, 
-    mihRef3, 
-    mihCancel, 
-    mihStatus ,
-    ar.ar_snamet as StatusName,
-    memoExtract,
-    mihMemoNew,
-    mihstatus_desc as mihStatusDesc,
-    mihCus,
-  FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
-  LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar 
-    on mih.mihStatus = ar.ar_scode
-  LEFT JOIN order_status as order_status
-    on order_status.milvnos = mih.mihVnos
-  WHERE mihType = 'PS' 
-  ;
-
-END;
+  VALUES (
+    S.final_OrderSK, -- ใช้ SK ที่คำนวณใหม่
+    S.mihYear, S.mihMonth, S.mihDay, S.mihVnos, S.mihCus,
+    S.mihJob, S.mihRef1, S.mihRef2, S.mihRef3, 
+    S.mihCancel, S.mihStatus, S.StatusName, 
+    S.memoExtract, S.mihMemoNew, S.mihStatusDesc
+  );
