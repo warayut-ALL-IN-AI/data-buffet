@@ -290,7 +290,17 @@ BEGIN
   FROM raw_transction as trans
 
   -- SaleRepSK
-  LEFT JOIN `${DimSaleRepGroupTableRef}` as sale_sk
+  LEFT JOIN (
+    select *,
+      (CASE 
+        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and TRIM(DepCode) is not null and CostChannelID is not null 
+          THEN 1
+        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and CostChannelID is not null 
+          THEN 2
+        ELSE 3
+      END) as seq_condition
+    from `${DimSaleRepGroupTableRef}`
+  ) as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and sale_sk.DepCode is null and sale_sk.CostChannelID is null
       and TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
