@@ -272,7 +272,7 @@ BEGIN
     channel_cost.ChannelCostSK,
 
     -- DATA
-    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK),
+    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK, milPer_raw),
 
     -- FOR USE THIS PROCESS
     dep_sk.DepartmentID
