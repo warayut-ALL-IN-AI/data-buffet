@@ -82,7 +82,7 @@ post_operations {
     CREATE OR REPLACE TEMP TABLE new_data_curated_mil AS
     WITH mil_raw AS (
       SELECT
-        mil.*
+        mil.*, mil.milPer as milPer_raw
       FROM ${ref(databuffet.VALIDATED_MAC5, "mil")} AS mil
       QUALIFY row_number() over(partition by mil.milType, mil.milVnos, mil.milListno order by mil.asatdate desc) = 1
 

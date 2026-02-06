@@ -181,7 +181,7 @@ BEGIN
     trans.ChannelCostSK,
 
     -- DATA
-    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK),
+    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK, milPer_raw),
 
     -- FOR USE THIS PROCESS
     dep_sk.DepartmentID
@@ -204,13 +204,13 @@ BEGIN
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and (CASE 
             WHEN sale_sk.DepCode IS NOT NULL and sale_sk.CostChannelID IS NOT NULL
-              THEN TRIM(trans.milPer) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+              THEN TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and TRIM(trans.milDep) = TRIM(sale_sk.DepCode)
                 and trans.ChannelCostID = sale_sk.CostChannelID
             WHEN sale_sk.DepCode IS NULL and sale_sk.CostChannelID IS NOT NULL
-              THEN TRIM(trans.milPer) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+              THEN TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and trans.ChannelCostID = sale_sk.CostChannelID
-            ELSE TRIM(trans.milPer) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+            ELSE TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
           END)
 
   -- DepartmentSK
@@ -282,7 +282,7 @@ BEGIN
   LEFT JOIN `${DimSaleRepGroupTableRef}` as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and sale_sk.DepCode is null and sale_sk.CostChannelID is null
-      and TRIM(trans.milPer) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+      and TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
 
   -- DepartmentSK
   LEFT JOIN `${DimDepartmentTableRef}` as dep_sk
