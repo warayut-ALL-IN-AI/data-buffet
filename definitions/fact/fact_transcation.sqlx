@@ -200,7 +200,17 @@ BEGIN
       AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
 
   -- SaleRepSK
-  LEFT JOIN `${DimSaleRepGroupTableRef}` as sale_sk
+  LEFT JOIN (
+    select *,
+      (CASE 
+        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and TRIM(DepCode) is not null and CostChannelID is not null 
+          THEN 1
+        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and CostChannelID is not null 
+          THEN 2
+        ELSE 3
+      END) as seq_condition
+    from `${DimSaleRepGroupTableRef}`
+  ) as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and (CASE 
             WHEN sale_sk.DepCode IS NOT NULL and sale_sk.CostChannelID IS NOT NULL
@@ -252,6 +262,7 @@ BEGIN
       and reg_sk.DirectorID = dir_sk.DirectorID
 
   WHERE IFNULL(trans.ChannelCostID, '') != 'COST99999'
+  qualify row_number() over(partition by trans.milType,trans.milVnos,trans.milCus,trans.milStk,trans.milPer,trans.milListno order by sale_sk.seq_condition) = 1
   
 ), final_part2 as (
   SELECT 
@@ -339,6 +350,7 @@ BEGIN
       AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
 
   WHERE trans.ChannelCostID = 'COST99999'
+  qualify row_number() over(partition by trans.milType,trans.milVnos,trans.milCus,trans.milStk,trans.milPer,trans.milListno order by sale_sk.seq_condition) = 1
 
 ), mix_table as (
   select * except(ProductGroupACC)
