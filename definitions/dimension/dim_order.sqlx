@@ -23,11 +23,13 @@ USING (
         select miltype, milvnos, milstk, milQuan, milSum, millinkvcno
         from ${ref(databuffet.CURATED_MAC5, 'curated_mil')}
         where miltype in ('PS', 'IS')
+            and asatdate >= current_date('Asia/Bangkok')-1
     ), 
     main_table as (
-        select milvnos, milstk, milQuan, milSum
+        select milvnos, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
         from mil
         where miltype = 'PS'
+        group by 1, 2
     ), 
     sec_table as (
         select millinkvcno, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
@@ -125,11 +127,7 @@ USING (
     FROM prepared_source src
 
 ) S
-ON T.mihYear = S.mihYear 
-   AND T.mihMonth = S.mihMonth 
-   AND T.mihDay = S.mihDay 
-   AND T.mihVnos = S.mihVnos 
-   AND T.mihCus = S.mihCus
+ON T.mihVnos = S.mihVnos
 
 -- กรณีเจอข้อมูลเดิม (Update)
 WHEN MATCHED THEN
