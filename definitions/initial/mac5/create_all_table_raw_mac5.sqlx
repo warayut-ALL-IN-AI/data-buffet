@@ -726,4 +726,28 @@ OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5}/tempgpsweb/*.avro']
 );
+
+-- Table: tdelivery
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5}.tdelivery`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5}.tdelivery`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_GPS}/tdelivery/*.avro']
+);
+
+-- Table: ttrip_document
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5}.ttrip_document`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5}.ttrip_document`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_GPS}/ttrip_document/*.avro']
+);
+
+-- Table: ttrip
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5}.ttrip`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5}.ttrip`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_GPS}/ttrip/*.avro']
+);
 -------------------------------------- FULL ---------------------------------------

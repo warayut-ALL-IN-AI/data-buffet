@@ -1,0 +1,89 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_MAC5,
+    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
+    uniqueKey: ["frun", "fcode"],
+    bigquery: {
+        clusterBy: ["frun", "fcode"]
+    },
+}
+
+js {
+    // Define table references
+    const sourceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.RAW_MAC5,
+        name: name(),
+    };
+
+    // Build source table reference
+    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
+
+    // Keep existing logic
+    const pk_key = ["frun", "fcode"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY fdate desc) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+
+}
+
+SELECT
+    NULLIF(CAST(TRIM(frun) AS STRING), '') as frun,
+    NULLIF(CAST(TRIM(fmaster) AS STRING), '') as fmaster,
+    NULLIF(CAST(TRIM(fcode) AS STRING), '') as fcode,
+    NULLIF(CAST(TRIM(fdate) AS STRING), '') as fdate,
+    NULLIF(CAST(TRIM(fvehicle) AS STRING), '') as fvehicle,
+    NULLIF(CAST(TRIM(fother) AS STRING), '') as fother,
+    CAST(fprice AS INT64) as fprice,
+    CAST(fbuddy AS INT64) as fbuddy,
+    NULLIF(CAST(TRIM(fdeduct_detail) AS STRING), '') as fdeduct_detail,
+    CAST(fdeduct_monkey AS FLOAT64) as fdeduct_monkey,
+    CAST(fdeduct_money AS FLOAT64) as fdeduct_money,
+    NULLIF(CAST(TRIM(ftype) AS STRING), '') as ftype,
+    NULLIF(CAST(TRIM(fcomplete) AS STRING), '') as fcomplete,
+    NULLIF(CAST(TRIM(foil) AS STRING), '') as foil,
+    NULLIF(CAST(TRIM(fpass_date) AS STRING), '') as fpass_date,
+    NULLIF(CAST(TRIM(fpay) AS STRING), '') as fpay,
+    CAST(foil_deduct AS INT64) as foil_deduct,
+    CAST(loadip AS INT64) as loadip,
+    NULLIF(CAST(TRIM(loadvnos) AS STRING), '') as loadvnos,
+    NULLIF(CAST(TRIM(fremark) AS STRING), '') as fremark,
+    CAST(flitre_price AS FLOAT64) as flitre_price,
+    CAST(flitre AS FLOAT64) as flitre,
+    CAST(fcubic AS FLOAT64) as fcubic,
+
+FROM
+  `${sourceTableRef}`
+
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

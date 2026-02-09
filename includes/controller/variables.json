@@ -38,6 +38,7 @@
 
     "GCS_MAC5": "mac5_ag01",
     "GCS_MAC5_REPORT": "mac5_report",
+    "GCS_MAC5_GPS": "mac5_gps",
     "GCS_MASTERSKU": "mastersku",
     "GCS_CIS360": "cis360"
 

@@ -86,3 +86,6 @@ DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stk_mk
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stg_report`;
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stgacc`;
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.tempgpsweb`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ttrip_document`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ttrip`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.tdelivery`;

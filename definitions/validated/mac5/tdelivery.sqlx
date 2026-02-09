@@ -1,0 +1,79 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_MAC5,
+    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
+    uniqueKey: ["frun"],
+    bigquery: {
+        clusterBy: ["frun"]
+    },
+}
+
+js {
+    // Define table references
+    const sourceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.RAW_MAC5,
+        name: name(),
+    };
+
+    // Build source table reference
+    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
+
+    // Keep existing logic
+    const pk_key = ["frun"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY fdatetime desc) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+
+}
+
+SELECT
+    NULLIF(CAST(TRIM(frun) AS STRING), '') as frun,
+    NULLIF(CAST(TRIM(fmaster) AS STRING), '') as fmaster,
+    NULLIF(CAST(TRIM(fserial_no) AS STRING), '') as fserial_no,
+    NULLIF(CAST(TRIM(fdatetime) AS STRING), '') as fdatetime,
+    NULLIF(CAST(TRIM(flattitude) AS STRING), '') as flattitude,
+    NULLIF(CAST(TRIM(flongtitude) AS STRING), '') as flongtitude,
+    NULLIF(CAST(TRIM(fpoi) AS STRING), '') as fpoi,
+    NULLIF(CAST(TRIM(fzone) AS STRING), '') as fzone,
+    NULLIF(CAST(TRIM(fvat) AS STRING), '') as fvat,
+    NULLIF(CAST(TRIM(freceive) AS STRING), '') as freceive,
+    NULLIF(CAST(TRIM(fdocument) AS STRING), '') as fdocument,
+    NULLIF(CAST(TRIM(flatd) AS STRING), '') as flatd,
+    NULLIF(CAST(TRIM(flongd) AS STRING), '') as flongd,
+
+FROM
+  `${sourceTableRef}`
+
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

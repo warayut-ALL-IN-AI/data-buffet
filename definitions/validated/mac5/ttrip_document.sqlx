@@ -1,0 +1,88 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_MAC5,
+    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
+    uniqueKey: ["frun", "fdocument", "fserial_no"],
+    bigquery: {
+        clusterBy: ["frun", "fdocument", "fserial_no"]
+    },
+}
+
+js {
+    // Define table references
+    const sourceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.RAW_MAC5,
+        name: name(),
+    };
+
+    // Build source table reference
+    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
+
+    // Keep existing logic
+    const pk_key = ["frun", "fdocument", "fserial_no"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY fdatetime desc) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+
+}
+
+SELECT    
+    NULLIF(CAST(TRIM(frun) AS STRING), '') as frun,
+    NULLIF(CAST(TRIM(fmaster) AS STRING), '') as fmaster,
+    NULLIF(CAST(TRIM(fdocument) AS STRING), '') as fdocument,
+    NULLIF(CAST(TRIM(fserial_no) AS STRING), '') as fserial_no,
+    NULLIF(CAST(TRIM(fitem) AS STRING), '') as fitem,
+    NULLIF(CAST(TRIM(fusername) AS STRING), '') as fusername,
+    NULLIF(CAST(TRIM(fdatetime) AS STRING), '') as fdatetime,
+    NULLIF(CAST(TRIM(fitem2) AS STRING), '') as fitem2,
+    NULLIF(CAST(TRIM(fdoc_type) AS STRING), '') as fdoc_type,
+    NULLIF(CAST(TRIM(fcancel) AS STRING), '') as fcancel,
+    NULLIF(CAST(TRIM(fref1) AS STRING), '') as fref1,
+    CAST(fdocument_rt AS INT64) as fdocument_rt,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(fdocument_rtdate, 1, 19)) as fdocument_rtdate,
+    CAST(fdocument_ac AS INT64) as fdocument_ac,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(fdocument_acdate, 1, 19)) as fdocument_acdate,
+    NULLIF(CAST(TRIM(frepro) AS STRING), '') as frepro,
+    CAST(fqty_order AS INT64) as fqty_order,
+    NULLIF(CAST(TRIM(fitemdoc) AS STRING), '') as fitemdoc,
+    NULLIF(CAST(TRIM(fitem3) AS STRING), '') as fitem3,
+    CAST(fprice AS FLOAT64) as fprice,
+    CAST(fin365 AS INT64) as fin365,
+    NULLIF(CAST(TRIM(im_mac) AS STRING), '') as im_mac,
+    NULLIF(CAST(TRIM(post) AS STRING), '') as post,
+FROM
+  `${sourceTableRef}`
+
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}
