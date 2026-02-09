@@ -138,12 +138,16 @@ BEGIN
       channel_sk.ChannelSaleSK,
       channel_sk.ChannelCostSK,
       payment_sk.PaymentSK,
+      
+      trans.ProvinceSK, 
+      trans.DistrictSK, 
+      trans.SubDistrictSK,
 
       PARSE_DATE('%Y%m%d', CONCAT(trans.milYear, FORMAT("%02d", trans.milMonth), FORMAT("%02d", trans.milDay))) as mix_date,
       
       -- productmaster.ProductCode,
       productmaster.ProductGroupACC,
-      trans.*
+      trans.* except(ProvinceSK, DistrictSK, SubDistrictSK)
     FROM ${databuffet.DATABASE}.onetime.Transaction_Data_Mart as trans
     
     -- Product Master
@@ -181,7 +185,7 @@ BEGIN
     trans.ChannelCostSK,
 
     -- DATA
-    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK, milPer_raw),
+    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK),
 
     -- FOR USE THIS PROCESS
     dep_sk.DepartmentID
@@ -205,9 +209,11 @@ BEGIN
       (CASE 
         WHEN TRIM(CAST(EmployeeID as STRING)) is not null and TRIM(DepCode) is not null and CostChannelID is not null 
           THEN 1
-        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and CostChannelID is not null 
+        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and ProvinceID is not null
           THEN 2
-        ELSE 3
+        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and CostChannelID is not null 
+          THEN 3
+        ELSE 4
       END) as seq_condition
     from `${DimSaleRepGroupTableRef}`
   ) as sale_sk
@@ -286,7 +292,7 @@ BEGIN
     channel_cost.ChannelCostSK,
 
     -- DATA
-    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK, milPer_raw),
+    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK),
 
     -- FOR USE THIS PROCESS
     dep_sk.DepartmentID
@@ -298,9 +304,11 @@ BEGIN
       (CASE 
         WHEN TRIM(CAST(EmployeeID as STRING)) is not null and TRIM(DepCode) is not null and CostChannelID is not null 
           THEN 1
-        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and CostChannelID is not null 
+        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and ProvinceID is not null
           THEN 2
-        ELSE 3
+        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and CostChannelID is not null 
+          THEN 3
+        ELSE 4
       END) as seq_condition
     from `${DimSaleRepGroupTableRef}`
   ) as sale_sk
