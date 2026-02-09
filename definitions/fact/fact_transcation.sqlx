@@ -217,6 +217,9 @@ BEGIN
               THEN TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and TRIM(trans.milDep) = TRIM(sale_sk.DepCode)
                 and trans.ChannelCostID = sale_sk.CostChannelID
+            WHEN sale_sk.ProvinceID IS NOT NULL
+              THEN TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and CAST(trans.ProvinceSK as STRING) IN  UNNEST(SPLIT(sale_sk.ProvinceID, '|'))
             WHEN sale_sk.DepCode IS NULL and sale_sk.CostChannelID IS NOT NULL
               THEN TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and trans.ChannelCostID = sale_sk.CostChannelID
