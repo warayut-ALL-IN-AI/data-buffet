@@ -31,7 +31,15 @@ USING (
             UInsert,
             PriceValidity,
             TermDelivery,
-            TermPayment 
+            TermPayment,            
+            REGEXP_EXTRACT(
+                TRIM(SPLIT(Atten, '\\')[SAFE_OFFSET(0)]), 
+                r'^[a-zA-Z0-9\s]{5,15}$'
+            ) as CustomerID,
+            REGEXP_EXTRACT(
+                TRIM(SPLIT(Project, '\\')[SAFE_OFFSET(0)]), 
+                r'^[a-zA-Z0-9\s]{2,4}$'
+            ) AS ProjectCode,
         from ${ref(databuffet.CURATED_MAC5, 'curated_tbook_quotation')}
     ), 
     main_table as (
@@ -129,6 +137,8 @@ WHEN MATCHED THEN
     PriceValidity = S.PriceValidity,
     TermDelivery = S.TermDelivery,
     TermPayment = S.TermPayment,
+    CustomerID = S.CustomerID,
+    ProjectCode = S.ProjectCode,
     OrderStatus = S.OrderStatus
     -- ยกเว้น: QuotationSK, OrderSK, InvoiceSK
 
@@ -138,11 +148,11 @@ WHEN NOT MATCHED THEN
     QuotationSK,
     ID, Running, SDate, Year, Month, Day,
     Atten, Project, UInsert, PriceValidity, 
-    TermDelivery, TermPayment, OrderStatus
+    TermDelivery, TermPayment, CustomerID, ProjectCode, OrderStatus
   )
   VALUES (
     S.final_QuotationSK,
     S.ID, S.Running, S.SDate, S.Year, S.Month, S.Day,
     S.Atten, S.Project, S.UInsert, S.PriceValidity, 
-    S.TermDelivery, S.TermPayment, S.OrderStatus
+    S.TermDelivery, S.TermPayment, S.CustomerID, S.ProjectCode, S.OrderStatus
   );
