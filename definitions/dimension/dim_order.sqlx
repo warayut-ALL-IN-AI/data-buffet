@@ -71,9 +71,11 @@ USING (
     ),
     source_data AS (
         SELECT  
+            PARSE_DATE('%Y%m%d', CONCAT(mihYear, FORMAT("%02d", mihMonth),  mihDay)) as mix_date,
             mih.mihYear, 
             mih.mihMonth, 
             mih.mihDay,
+            mih.mihType,
             mih.mihVnos, 
             mih.mihJob, 
             mih.mihRef1, 
@@ -112,6 +114,7 @@ USING (
             ON S.mihYear = T.mihYear 
             AND S.mihMonth = T.mihMonth 
             AND S.mihDay = T.mihDay 
+            AND S.mihType = T.mihType
             AND S.mihVnos = T.mihVnos 
             AND S.mihCus = T.mihCus
     )
@@ -127,11 +130,13 @@ USING (
     FROM prepared_source src
 
 ) S
-ON T.mihVnos = S.mihVnos
+ON T.mihType = S.mihType
+    and T.mihVnos = S.mihVnos
 
 -- กรณีเจอข้อมูลเดิม (Update)
 WHEN MATCHED THEN
   UPDATE SET 
+    mix_date = S.mix_date,
     mihJob = S.mihJob,
     mihRef1 = S.mihRef1,
     mihRef2 = S.mihRef2,
@@ -148,14 +153,14 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
   INSERT (
     OrderSK, 
-    mihYear, mihMonth, mihDay, mihVnos, mihCus,
+    mix_date, mihYear, mihMonth, mihDay, mihType, mihVnos, mihCus,
     mihJob, mihRef1, mihRef2, mihRef3, 
     mihCancel, mihStatus, StatusName, 
     memoExtract, mihMemoNew, mihStatusDesc
   )
   VALUES (
     S.final_OrderSK, -- ใช้ SK ที่คำนวณใหม่
-    S.mihYear, S.mihMonth, S.mihDay, S.mihVnos, S.mihCus,
+    S.mix_date, S.mihYear, S.mihMonth, S.mihDay, S.mihType, S.mihVnos, S.mihCus,
     S.mihJob, S.mihRef1, S.mihRef2, S.mihRef3, 
     S.mihCancel, S.mihStatus, S.StatusName, 
     S.memoExtract, S.mihMemoNew, S.mihStatusDesc

@@ -1,0 +1,70 @@
+config {
+    type: "table",
+    schema: databuffet.VALIDATED_MAC5,
+    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
+    uniqueKey: ["percode"],
+    bigquery: {
+        clusterBy: ["percode"]
+    },
+}
+
+js {
+    // Define table references
+    const sourceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.RAW_MAC5,
+        name: name(),
+    };
+
+    // Build source table reference
+    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
+
+    // Keep existing logic
+    const pk_key = ["percode"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY perstart desc, perend desc, pername desc) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+    NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
+    NULLIF(CAST(TRIM(pername) AS STRING), '') as pername,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perstart, 1, 19)) as perstart,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perend, 1, 19)) as perend,
+    NULLIF(CAST(TRIM(perzone) AS STRING), '') as perzone,
+    NULLIF(CAST(TRIM(persector) AS STRING), '') as persector,
+    CAST(zseq AS INT64) as zseq,
+FROM
+  `${sourceTableRef}`
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

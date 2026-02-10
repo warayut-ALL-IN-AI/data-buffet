@@ -146,11 +146,8 @@ USING (
         END as final_InvoiceSK
     FROM prepared_source src
 ) S
-ON S.mihYear = T.mihYear 
-  AND S.mihMonth = T.mihMonth 
-  AND S.mihDay = T.mihDay 
+ON S.mihType = T.mihType
   AND S.mihVnos = T.mihVnos 
-  AND S.mihCus = T.mihCus
   AND S.milLinkVcno = T.milLinkVcno
 
 -- กรณีเจอข้อมูลเดิม (Update)
