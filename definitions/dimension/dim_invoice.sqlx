@@ -93,12 +93,23 @@ USING (
         )
     ),
     source_combined as (
-        select t.* ,case when t.per_sale1 <> 100 then 'Yes' else 'No' end as InvoiceSalesFlag
+        select distinct
+          PARSE_DATE('%Y%m%d', CONCAT(mihYear, FORMAT("%02d", mihMonth),  mihDay)) as mix_date,
+          t.*,
+          (case when t.per_sale1 <> 100 then 'Yes' else 'No' end) as InvoiceSalesFlag,
+          mil.milLinkVcno
         from (
             select * from exclude_mil
             UNION ALL
             SELECT * FROM includ_mih
         ) t
+        inner join ${ref('curated_mil')} as mil
+          on t.mihYear = mil.milYear
+            and t.mihMonth = mil.milMonth
+            and t.mihDay = mil.milDay
+            and t.mihType = mil.milType
+            and t.mihVnos = mil.milVnos
+            and t.mihCus = mil.milCus
         WHERE mihtype in ('IS', 'BS', 'AS', 'QS')
     ),
     -- ดึงค่า Max InvoiceSK ปัจจุบันจาก Target
@@ -113,7 +124,7 @@ USING (
             -- คำนวณ Row Number เฉพาะกลุ่มที่เป็นข้อมูลใหม่ (Target เป็น Null)
             ROW_NUMBER() OVER (
                 PARTITION BY (CASE WHEN T.mihVnos IS NULL THEN 1 ELSE 0 END) 
-                ORDER BY S.mihYear, S.mihMonth, S.mihDay, S.mihVnos
+                ORDER BY S.mihYear, S.mihMonth, S.mihDay, S.mihVnos, S.mihCus, S.milLinkVcno
             ) as rn_new
         FROM source_combined S
         LEFT JOIN `${DimInvoiceTableRef}` T
@@ -122,6 +133,7 @@ USING (
             AND S.mihDay = T.mihDay 
             AND S.mihVnos = T.mihVnos 
             AND S.mihCus = T.mihCus
+            AND S.milLinkVcno = T.milLinkVcno
     )
 
     SELECT 
@@ -134,11 +146,17 @@ USING (
         END as final_InvoiceSK
     FROM prepared_source src
 ) S
-ON T.mihVnos = S.mihVnos 
+ON S.mihYear = T.mihYear 
+  AND S.mihMonth = T.mihMonth 
+  AND S.mihDay = T.mihDay 
+  AND S.mihVnos = T.mihVnos 
+  AND S.mihCus = T.mihCus
+  AND S.milLinkVcno = T.milLinkVcno
 
 -- กรณีเจอข้อมูลเดิม (Update)
 WHEN MATCHED THEN
   UPDATE SET 
+    mix_date = S.mix_date,
     mihType = S.mihType,
     mihPer = S.mihPer,
     per_sale1 = S.per_sale1,
@@ -155,15 +173,15 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
   INSERT (
     InvoiceSK,
-    mihDay, mihMonth, mihYear, 
-    mihType, mihVnos, mihCus,
+    mix_date, mihDay, mihMonth, mihYear, 
+    mihType, mihVnos, mihCus, milLinkVcno,
     mihRef1, mihPer, mihStatus, StatusDesc, mihCancel,
     per_sale1, mih2per2, per_sale2, InvoiceSalesFlag
   )
   VALUES (
     S.final_InvoiceSK, -- ใช้ SK ที่คำนวณใหม่
-    S.mihDay, S.mihMonth, S.mihYear, 
-    S.mihType, S.mihVnos, S.mihCus,
+    S.mix_date, S.mihDay, S.mihMonth, S.mihYear, 
+    S.mihType, S.mihVnos, S.mihCus, S.milLinkVcno,
     S.mihRef1, S.mihPer, S.mihStatus, S.StatusDesc, S.mihCancel,
     S.per_sale1, S.mih2per2, S.per_sale2, S.InvoiceSalesFlag
   );
