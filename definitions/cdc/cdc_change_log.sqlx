@@ -12,10 +12,6 @@ js {
     const cdcConfig = databuffet.cdcConfig;
     const enabledTables = [];
 
-    // Collect all enabled tables from all sources
-    // Table types:
-    //   - INCREMENTAL: Set partition_field (e.g., "asatdate") for transactional tables
-    //   - FULL DUMP: Leave partition_field null/undefined for reference tables
     for (const [sourceName, sourceConfig] of Object.entries(cdcConfig.cdc_enabled_sources)) {
         if (!sourceConfig.enabled) continue;
 
@@ -29,12 +25,11 @@ js {
                 validatedSchema: tableConfig.validated_schema,
                 primaryKeys: tableConfig.primary_keys,
                 checkFields: tableConfig.check_fields,
-                partitionField: tableConfig.partition_field  // null/undefined = FULL DUMP, value = INCREMENTAL
+                partitionField: tableConfig.partition_field
             });
         }
     }
 
-    // Helper: Build WHERE clause for raw data (incremental vs full dump)
     function buildRawWhereClause(partitionField) {
         if (!partitionField) {
             return '';  // Full dump: no filter
@@ -42,36 +37,26 @@ js {
         return `WHERE ${partitionField} = FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`;
     }
 
-    // Helper: Build PK join condition
     function buildPkJoinCondition(primaryKeys) {
         return primaryKeys.map(pk =>
             `UPPER(TRIM(CAST(raw.${pk} AS STRING))) = UPPER(TRIM(CAST(val.${pk} AS STRING)))`
         ).join(' AND ');
     }
 
-    // Helper: Build changed fields check
-    // Option A: Ignore whitespace + trailing special characters
-    // Step 1: Normalize whitespace (collapse to single space)
-    // Step 2: Remove trailing non-letter/non-number characters
-    // Step 3: Trim leading/trailing spaces
     function buildChangedFieldsChecks(checkFields) {
         return checkFields.map(field =>
             `(NULLIF(TRIM(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'[\\s\\r\\n\\t]+', ' '), r'[^\\p{L}\\p{N}]+\\$', '')), '') IS DISTINCT FROM NULLIF(TRIM(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'[\\s\\r\\n\\t]+', ' '), r'[^\\p{L}\\p{N}]+\\$', '')), ''))`
         ).join(' OR ');
     }
 
-    // Helper: Build PK JSON fields
     function buildPkJsonFields(primaryKeys) {
         return primaryKeys.map(pk => `'${pk}', CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING)`).join(', ');
     }
 
-    // Helper: Build PK hash concatenation
     function buildPkHashConcat(primaryKeys) {
         return primaryKeys.map(pk => `IFNULL(CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING), '')`).join(", ',', ");
     }
 
-    // Helper: Build changed fields JSON
-    // Option A: Ignore whitespace + trailing special characters
     function buildChangedFieldsJson(checkFields) {
         return checkFields.map(field => `
             IF(NULLIF(TRIM(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'[\\s\\r\\n\\t]+', ' '), r'[^\\p{L}\\p{N}]+\\$', '')), '') IS DISTINCT FROM NULLIF(TRIM(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'[\\s\\r\\n\\t]+', ' '), r'[^\\p{L}\\p{N}]+\\$', '')), ''),
@@ -85,7 +70,6 @@ js {
         ).join(',\n            ');
     }
 
-    // Generate CDC SQL template for a single table (as a string for EXECUTE IMMEDIATE)
     function generateTableCdcInsert(table) {
         const {sourceName, tableName, rawSchema, validatedSchema, primaryKeys, checkFields, partitionField} = table;
 
