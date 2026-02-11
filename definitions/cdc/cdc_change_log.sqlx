@@ -52,7 +52,7 @@ js {
     // Helper: Build changed fields check
     function buildChangedFieldsChecks(checkFields) {
         return checkFields.map(field =>
-            `(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\\\s\\\\r\\\\n\\\\t]+', ''), r'[^\\\\p{L}\\\\p{N}]+$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\\\s\\\\r\\\\n\\\\t]+', ''), r'[^\\\\p{L}\\\\p{N}]+$', ''), ''))`
+            `(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\\\s\\\\r\\\\n\\\\t]+', ''), r'[^\\\\p{L}\\\\p{N}]+\\$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\\\s\\\\r\\\\n\\\\t]+', ''), r'[^\\\\p{L}\\\\p{N}]+\\$', ''), ''))`
         ).join(' OR ');
     }
 
@@ -69,7 +69,7 @@ js {
     // Helper: Build changed fields JSON
     function buildChangedFieldsJson(checkFields) {
         return checkFields.map(field => `
-            IF(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\\\s\\\\r\\\\n\\\\t]+', ''), r'[^\\\\p{L}\\\\p{N}]+$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\\\s\\\\r\\\\n\\\\t]+', ''), r'[^\\\\p{L}\\\\p{N}]+$', ''), ''),
+            IF(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\\\s\\\\r\\\\n\\\\t]+', ''), r'[^\\\\p{L}\\\\p{N}]+\\$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\\\s\\\\r\\\\n\\\\t]+', ''), r'[^\\\\p{L}\\\\p{N}]+\\$', ''), ''),
                 STRUCT(
                     '${field}' AS field_name,
                     TO_JSON_STRING(raw.${field}) AS raw_value,
