@@ -124,7 +124,7 @@ js {
 
         return `
     -- Processing: ${sourceName}.${tableName} [${tableType}]
-    INSERT INTO \`${databuffet.PROJECT_ID}.${databuffet.CDC_DATESET}.cdc_change_log\` (
+    INSERT INTO \`${databuffet.DATABASE}.${databuffet.CDC_DATESET}.cdc_change_log\` (
         cdc_record_id,
         source_system,
         source_schema,
@@ -142,7 +142,7 @@ js {
         cdc_processed_at
     )
     WITH raw_data AS (
-        SELECT * FROM \`${databuffet.PROJECT_ID}.${rawSchema}.${tableName}\`
+        SELECT * FROM \`${databuffet.DATABASE}.${rawSchema}.${tableName}\`
         ${rawWhere}
     ),
     raw_keys AS (
@@ -152,7 +152,7 @@ js {
         SELECT * FROM (
             SELECT val.*,
                 ROW_NUMBER() OVER(PARTITION BY ${primaryKeys.map(pk => `val.${pk}`).join(', ')} ORDER BY val.asatdate DESC) AS rn
-            FROM \`${databuffet.PROJECT_ID}.${validatedSchema}.${tableName}\` AS val
+            FROM \`${databuffet.DATABASE}.${validatedSchema}.${tableName}\` AS val
             INNER JOIN raw_keys ON ${primaryKeys.map(pk => `val.${pk} = raw_keys.${pk}`).join(' AND ')}
         )
         WHERE rn = 1
@@ -238,7 +238,7 @@ BEGIN
     SELECT FORMAT('Starting CDC processing at %t', CURRENT_TIMESTAMP());
 
     -- Create target table if not exists (with proper schema and partitioning)
-    CREATE TABLE IF NOT EXISTS `${databuffet.PROJECT_ID}.${databuffet.CDC_DATESET}.cdc_change_log` (
+    CREATE TABLE IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.CDC_DATESET}.cdc_change_log` (
         cdc_record_id STRING NOT NULL,
         source_system STRING NOT NULL,
         source_schema STRING NOT NULL,
@@ -263,7 +263,7 @@ BEGIN
     );
 
     -- Delete today's partition if exists (idempotent daily refresh)
-    DELETE FROM `${databuffet.PROJECT_ID}.${databuffet.CDC_DATESET}.cdc_change_log`
+    DELETE FROM `${databuffet.DATABASE}.${databuffet.CDC_DATESET}.cdc_change_log`
     WHERE asatdate = CURRENT_DATE('Asia/Bangkok');
 
     SELECT FORMAT('Deleted existing records for date: %t', CURRENT_DATE('Asia/Bangkok'));
