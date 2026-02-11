@@ -1,14 +1,33 @@
+/*
+ * CDC Change Log - Loop Processing with BigQuery SQL Scripting
+ *
+ * Tracks changes between raw and validated layers for data quality monitoring.
+ * Uses procedural SQL to process tables one-by-one (more memory efficient).
+ *
+ * Supports two table patterns:
+ *
+ * 1. INCREMENTAL TABLES (with partition_field):
+ *    - Compares yesterday's raw data against latest validated snapshot
+ *    - Use for: Transactional data (mil, mih, cst, rcv, etc.)
+ *    - Raw filter: WHERE partition_field = yesterday
+ *
+ * 2. FULL DUMP TABLES (no partition_field):
+ *    - Compares entire current raw snapshot against latest validated snapshot
+ *    - Use for: Reference data (ap_s, ar_s, doc, per, product, etc.)
+ *    - Raw filter: No filter (entire table)
+ *
+ * Change Types:
+ * - NEW: Record exists in raw but not in validated (new record to be processed)
+ * - CHANGED: Record exists in both, but check_fields have different values
+ */
+
 config {
-    type: "incremental",
+    type: "operations",
     schema: databuffet.CDC_DATESET,
     dependencies: ["cdc_schema"],
     tags: [databuffet.TAG_CDC, databuffet.TAG_CDC_INCREMENTAL],
-    bigquery: {
-        partitionBy: "asatdate",
-        clusterBy: ["source_system", "source_schema", "source_table", "change_type"],
-        partitionExpirationDays: 7
-    },
-    description: "CDC change tracking: compares raw vs validated data transformations"
+    description: "CDC change tracking using loop processing (supports both incremental and full dump tables)",
+    hasOutput: true
 }
 
 js {
@@ -17,6 +36,9 @@ js {
     const enabledTables = [];
 
     // Collect all enabled tables from all sources
+    // Table types:
+    //   - INCREMENTAL: Set partition_field (e.g., "asatdate") for transactional tables
+    //   - FULL DUMP: Leave partition_field null/undefined for reference tables
     for (const [sourceName, sourceConfig] of Object.entries(cdcConfig.cdc_enabled_sources)) {
         if (!sourceConfig.enabled) continue;
 
@@ -30,36 +52,52 @@ js {
                 validatedSchema: tableConfig.validated_schema,
                 primaryKeys: tableConfig.primary_keys,
                 checkFields: tableConfig.check_fields,
-                partitionField: tableConfig.partition_field
+                partitionField: tableConfig.partition_field  // null/undefined = FULL DUMP, value = INCREMENTAL
             });
         }
     }
 
-    // Generate CDC SQL for a single table
-    function generateTableCdc(table) {
-        const {sourceName, tableName, rawSchema, validatedSchema, primaryKeys, checkFields, partitionField} = table;
+    // Helper: Escape single quotes for SQL string literals
+    function escapeSql(str) {
+        return str.replace(/'/g, "\\'");
+    }
 
-        // Build PK join condition
-        const pkJoinCondition = primaryKeys.map(pk =>
+    // Helper: Build WHERE clause for raw data (incremental vs full dump)
+    function buildRawWhereClause(partitionField) {
+        if (!partitionField) {
+            return '';  // Full dump: no filter
+        }
+        return `WHERE ${partitionField} = FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`;
+    }
+
+    // Helper: Build PK join condition
+    function buildPkJoinCondition(primaryKeys) {
+        return primaryKeys.map(pk =>
             `UPPER(TRIM(CAST(raw.${pk} AS STRING))) = UPPER(TRIM(CAST(val.${pk} AS STRING)))`
         ).join(' AND ');
+    }
 
-        // Build changed fields check (normalize whitespace + remove trailing special characters + treat empty string as NULL)
-        // Trailing pattern: Remove special characters (keeps Thai language, English language, and numbers)
-        const changedFieldsChecks = checkFields.map(field =>
-            `(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\x{0E00}-\\x{0E7F}]+$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\x{0E00}-\\x{0E7F}]+$', ''), ''))`
+    // Helper: Build changed fields check
+    function buildChangedFieldsChecks(checkFields) {
+        return checkFields.map(field =>
+            `(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\\\s\\\\r\\\\n\\\\t]+', ''), r'[^a-zA-Z0-9\\\\x{0E00}-\\\\x{0E7F}]+$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\\\s\\\\r\\\\n\\\\t]+', ''), r'[^a-zA-Z0-9\\\\x{0E00}-\\\\x{0E7F}]+$', ''), ''))`
         ).join(' OR ');
+    }
 
-        // Build PK JSON
-        const pkJsonFields = primaryKeys.map(pk => `'${pk}', CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING)`).join(', ');
+    // Helper: Build PK JSON fields
+    function buildPkJsonFields(primaryKeys) {
+        return primaryKeys.map(pk => `'${pk}', CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING)`).join(', ');
+    }
 
-        // Build PK hash
-        const pkHashConcat = primaryKeys.map(pk => `IFNULL(CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING), '')`).join(", ',', ");
+    // Helper: Build PK hash concatenation
+    function buildPkHashConcat(primaryKeys) {
+        return primaryKeys.map(pk => `IFNULL(CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING), '')`).join(", ',', ");
+    }
 
-        // Build changed fields JSON (normalize whitespace + remove trailing special characters + treat empty string as NULL)
-        // Trailing pattern: Remove special characters (keeps Thai language, English language, and numbers)
-        const changedFieldsJson = checkFields.map(field => `
-            IF(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\x{0E00}-\\x{0E7F}]+$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\s\\r\\n\\t]+', ''), r'[^a-zA-Z0-9\\x{0E00}-\\x{0E7F}]+$', ''), ''),
+    // Helper: Build changed fields JSON
+    function buildChangedFieldsJson(checkFields) {
+        return checkFields.map(field => `
+            IF(NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(raw.${field} AS STRING), r'^[\\\\s\\\\r\\\\n\\\\t]+', ''), r'[^a-zA-Z0-9\\\\x{0E00}-\\\\x{0E7F}]+$', ''), '') IS DISTINCT FROM NULLIF(REGEXP_REPLACE(REGEXP_REPLACE(CAST(val.${field} AS STRING), r'^[\\\\s\\\\r\\\\n\\\\t]+', ''), r'[^a-zA-Z0-9\\\\x{0E00}-\\\\x{0E7F}]+$', ''), ''),
                 STRUCT(
                     '${field}' AS field_name,
                     TO_JSON_STRING(raw.${field}) AS raw_value,
@@ -68,42 +106,62 @@ js {
                 NULL
             )`
         ).join(',\n            ');
+    }
 
-        // CDC logic: Raw วันนี้ vs Validated (latest version filtered by raw PKs)
-        const rawWhere = partitionField
-            ? `WHERE ${partitionField} = FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`  // Raw: วันนี้
-            : '';
+    // Generate CDC SQL template for a single table (as a string for EXECUTE IMMEDIATE)
+    function generateTableCdcInsert(table) {
+        const {sourceName, tableName, rawSchema, validatedSchema, primaryKeys, checkFields, partitionField} = table;
 
-        // Validated: No date filter - use PK filter instead (efficient semi-join)
-        // const validatedWhere is not used anymore - filtering by PK in CTE
+        const isIncrementalTable = !!partitionField;
+        const tableType = isIncrementalTable ? 'INCREMENTAL' : 'FULL_DUMP';
+
+        const rawWhere = buildRawWhereClause(partitionField);
+        const pkJoinCondition = buildPkJoinCondition(primaryKeys);
+        const changedFieldsChecks = buildChangedFieldsChecks(checkFields);
+        const pkJsonFields = buildPkJsonFields(primaryKeys);
+        const pkHashConcat = buildPkHashConcat(primaryKeys);
+        const changedFieldsJson = buildChangedFieldsJson(checkFields);
 
         return `
-    -- CDC for ${sourceName}.${tableName}
+    -- Processing: ${sourceName}.${tableName} [${tableType}]
+    INSERT INTO \`${databuffet.PROJECT_ID}.${databuffet.CDC_DATESET}.cdc_change_log\` (
+        cdc_record_id,
+        source_system,
+        source_schema,
+        source_table,
+        pk_fields,
+        pk_hash,
+        change_type,
+        asatdate,
+        change_timestamp,
+        changed_fields,
+        changed_field_names,
+        num_fields_changed,
+        record_raw,
+        record_validated,
+        cdc_processed_at
+    )
     WITH raw_data AS (
-        SELECT * FROM ${databuffet.DATABASE}.${rawSchema}.${tableName}
+        SELECT * FROM \`${databuffet.PROJECT_ID}.${rawSchema}.${tableName}\`
         ${rawWhere}
     ),
     raw_keys AS (
-        -- Extract unique PKs from raw_data
         SELECT DISTINCT ${primaryKeys.join(', ')} FROM raw_data
     ),
     validated_data AS (
-        -- Filter validated by PKs from raw_data only (scan only matching rows)
-        -- Then get the latest version (most recent asatdate) for each PK
         SELECT * FROM (
             SELECT val.*,
                 ROW_NUMBER() OVER(PARTITION BY ${primaryKeys.map(pk => `val.${pk}`).join(', ')} ORDER BY val.asatdate DESC) AS rn
-            FROM ${databuffet.DATABASE}.${validatedSchema}.${tableName} AS val
+            FROM \`${databuffet.PROJECT_ID}.${validatedSchema}.${tableName}\` AS val
             INNER JOIN raw_keys ON ${primaryKeys.map(pk => `val.${pk} = raw_keys.${pk}`).join(' AND ')}
         )
         WHERE rn = 1
     ),
-    -- เริ่มจาก RAW → เช็คที่ VALIDATED
     all_records AS (
         SELECT
             (CASE
-                WHEN val.${primaryKeys[0]} IS NULL THEN 'NEW'  -- ยังไม่มีใน validated
-                ELSE 'CHANGED'  -- มีทั้ง 2 ฝั่ง และค่าต่างกัน
+                WHEN val.${primaryKeys[0]} IS NULL THEN 'NEW'
+                ELSE 'CHANGED'
             END) AS change_type,
             CURRENT_DATE('Asia/Bangkok') AS asatdate,
             JSON_OBJECT(${pkJsonFields}) AS pk_fields,
@@ -115,10 +173,9 @@ js {
         FROM raw_data AS raw
         LEFT JOIN validated_data AS val ON ${pkJoinCondition}
         WHERE
-            val.${primaryKeys[0]} IS NULL OR  -- NEW: ยังไม่มีใน validated
-            (${changedFieldsChecks})  -- CHANGED: มีแล้วแต่ค่าต่างกัน
+            val.${primaryKeys[0]} IS NULL OR
+            (${changedFieldsChecks})
     )
-    -- Final SELECT with conditional changed_fields calculation
     SELECT
         GENERATE_UUID() AS cdc_record_id,
         '${sourceName}' AS source_system,
@@ -129,7 +186,6 @@ js {
         change_type,
         asatdate,
         CURRENT_TIMESTAMP() AS change_timestamp,
-        -- Calculate changed fields only for CHANGED records (NULL for NEW)
         (CASE
             WHEN change_type = 'CHANGED' THEN
                 TO_JSON_STRING(
@@ -163,12 +219,93 @@ js {
         raw_json AS record_raw,
         val_json AS record_validated,
         CURRENT_TIMESTAMP() AS cdc_processed_at
-    FROM all_records
-    `;
+    FROM all_records;
+`;
     }
-
-    // Generate CDC processing for all tables and union them
-    const allCdcStatements = enabledTables.map(table => generateTableCdc(table)).join('\n\nUNION ALL\n');
 }
 
-${allCdcStatements}
+-- ============================================================================
+-- BigQuery SQL Script: Loop through tables and process CDC
+-- ============================================================================
+
+BEGIN
+    DECLARE table_count INT64 DEFAULT 0;
+    DECLARE processed_count INT64 DEFAULT 0;
+    DECLARE error_count INT64 DEFAULT 0;
+    DECLARE current_table STRING;
+
+    -- Log start
+    SELECT FORMAT('Starting CDC processing at %t', CURRENT_TIMESTAMP());
+
+    -- Create target table if not exists (with proper schema and partitioning)
+    CREATE TABLE IF NOT EXISTS `${databuffet.PROJECT_ID}.${databuffet.CDC_DATESET}.cdc_change_log` (
+        cdc_record_id STRING NOT NULL,
+        source_system STRING NOT NULL,
+        source_schema STRING NOT NULL,
+        source_table STRING NOT NULL,
+        pk_fields JSON,
+        pk_hash STRING,
+        change_type STRING NOT NULL,
+        asatdate DATE NOT NULL,
+        change_timestamp TIMESTAMP NOT NULL,
+        changed_fields JSON,
+        changed_field_names ARRAY<STRING>,
+        num_fields_changed INT64,
+        record_raw JSON,
+        record_validated JSON,
+        cdc_processed_at TIMESTAMP NOT NULL
+    )
+    PARTITION BY asatdate
+    CLUSTER BY source_system, source_schema, source_table, change_type
+    OPTIONS (
+        partition_expiration_days=7,
+        description="CDC change tracking log - generated via loop processing"
+    );
+
+    -- Delete today's partition if exists (idempotent daily refresh)
+    DELETE FROM `${databuffet.PROJECT_ID}.${databuffet.CDC_DATESET}.cdc_change_log`
+    WHERE asatdate = CURRENT_DATE('Asia/Bangkok');
+
+    SELECT FORMAT('Deleted existing records for date: %t', CURRENT_DATE('Asia/Bangkok'));
+
+js {
+    // Generate individual INSERT statements for each table
+    const insertStatements = enabledTables.map((table, index) => {
+        const insertSql = generateTableCdcInsert(table);
+        return `
+    -- Table ${index + 1}/${enabledTables.length}: ${table.sourceName}.${table.tableName}
+    SET current_table = '${table.sourceName}.${table.tableName}';
+    SET table_count = table_count + 1;
+
+    BEGIN
+        ${insertSql}
+
+        SET processed_count = processed_count + 1;
+        SELECT FORMAT('✓ Processed: %s (Total: %d/%d)', current_table, processed_count, table_count);
+
+    EXCEPTION WHEN ERROR THEN
+        SET error_count = error_count + 1;
+        SELECT FORMAT('✗ Error processing %s: %s', current_table, @@error.message);
+        -- Continue processing other tables despite errors
+    END;
+`;
+    }).join('\n');
+}
+
+${insertStatements}
+
+    -- Final summary
+    SELECT FORMAT(
+        'CDC Processing Complete | Total: %d | Success: %d | Errors: %d | Time: %t',
+        table_count,
+        processed_count,
+        error_count,
+        CURRENT_TIMESTAMP()
+    );
+
+    -- Fail the operation if any errors occurred
+    IF error_count > 0 THEN
+        RAISE USING MESSAGE = FORMAT('CDC processing completed with %d errors', error_count);
+    END IF;
+
+END;

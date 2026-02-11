@@ -10,6 +10,14 @@
           "raw_schema": "raw_mac5",
           "validated_schema": "validated_mac5",
           "partition_field": "asatdate"
+        },
+        "deb": {
+          "enabled": true,
+          "primary_keys": ["debcode"],
+          "check_fields": ["debadd1at", "debadd2at", "debadd3at"],
+          "raw_schema": "raw_mac5",
+          "validated_schema": "validated_mac5",
+          "partition_field": null
         }
       }
     }

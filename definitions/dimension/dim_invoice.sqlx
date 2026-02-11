@@ -154,7 +154,6 @@ ON S.mihType = T.mihType
 WHEN MATCHED THEN
   UPDATE SET 
     mix_date = S.mix_date,
-    mihType = S.mihType,
     mihPer = S.mihPer,
     per_sale1 = S.per_sale1,
     mih2per2 = S.mih2per2,
