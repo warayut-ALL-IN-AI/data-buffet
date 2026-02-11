@@ -121,6 +121,8 @@ js {
         SELECT DISTINCT ${primaryKeys.join(', ')} FROM raw_data
     ),
     validated_data AS (
+        ${isIncrementalTable ? `
+        -- INCREMENTAL: Get latest version per PK (ordered by asatdate)
         SELECT * FROM (
             SELECT val.*,
                 ROW_NUMBER() OVER(PARTITION BY ${primaryKeys.map(pk => `val.${pk}`).join(', ')} ORDER BY val.asatdate DESC) AS rn
@@ -128,6 +130,12 @@ js {
             INNER JOIN raw_keys ON ${primaryKeys.map(pk => `val.${pk} = raw_keys.${pk}`).join(' AND ')}
         )
         WHERE rn = 1
+        ` : `
+        -- FULL DUMP: Get current snapshot (no asatdate field)
+        SELECT val.*
+        FROM \`${databuffet.DATABASE}.${validatedSchema}.${tableName}\` AS val
+        INNER JOIN raw_keys ON ${primaryKeys.map(pk => `val.${pk} = raw_keys.${pk}`).join(' AND ')}
+        `}
     ),
     all_records AS (
         SELECT
@@ -138,8 +146,8 @@ js {
             CURRENT_DATE('Asia/Bangkok') AS asatdate,
             JSON_OBJECT(${pkJsonFields}) AS pk_fields,
             TO_HEX(MD5(CONCAT(${pkHashConcat}))) AS pk_hash,
-            TO_JSON_STRING(raw) AS raw_json,
-            TO_JSON_STRING(val) AS val_json,
+            PARSE_JSON(TO_JSON_STRING(raw)) AS raw_json,
+            PARSE_JSON(TO_JSON_STRING(val)) AS val_json,
             raw,
             val
         FROM raw_data AS raw
@@ -160,15 +168,13 @@ js {
         CURRENT_TIMESTAMP() AS change_timestamp,
         (CASE
             WHEN change_type = 'CHANGED' THEN
-                TO_JSON_STRING(
-                    (SELECT AS VALUE
-                        JSON_OBJECT(
-                            ARRAY_AGG(field_change.field_name),
-                            ARRAY_AGG(JSON_OBJECT('raw', field_change.raw_value, 'validated', field_change.validated_value))
-                        )
-                        FROM UNNEST([${changedFieldsJson}]) AS field_change
-                        WHERE field_change IS NOT NULL
+                (SELECT AS VALUE
+                    JSON_OBJECT(
+                        ARRAY_AGG(field_change.field_name),
+                        ARRAY_AGG(JSON_OBJECT('raw', field_change.raw_value, 'validated', field_change.validated_value))
                     )
+                    FROM UNNEST([${changedFieldsJson}]) AS field_change
+                    WHERE field_change IS NOT NULL
                 )
             ELSE NULL
         END) AS changed_fields,
