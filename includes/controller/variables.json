@@ -34,6 +34,7 @@
     "CURATED_CIS360": "curated_cis360",
 
     "DIMENSION_TABLE" : "dimension_table",
+    "DIMENSION_VIEW" : "dimension_view",
     "FACT_TABLE" : "fact_table",
 
     "GCS_MAC5": "mac5_ag01",

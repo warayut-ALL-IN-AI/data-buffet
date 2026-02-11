@@ -50,8 +50,8 @@ js {
     
     const DimSaleRepGroupTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_sale_representative",
+        schema: databuffet.DIMENSION_VIEW,
+        name: "view_dim_sale_representative",
     };
     const DimSaleRepGroupTableRef = `${DimSaleRepGroupTable.database}.${DimSaleRepGroupTable.schema}.${DimSaleRepGroupTable.name}`;
     
@@ -147,6 +147,7 @@ BEGIN
       
       -- productmaster.ProductCode,
       productmaster.ProductGroupACC,
+      IF(channel_sk.DummyChannel <> 'not calculated', channel_sk.DummyChannel, CAST(NULL AS STRING)) as DummyChannel,
       trans.* except(ProvinceSK, DistrictSK, SubDistrictSK)
     FROM ${databuffet.DATABASE}.onetime.Transaction_Data_Mart as trans
     
@@ -220,16 +221,16 @@ BEGIN
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and (CASE 
             WHEN sale_sk.DepCode IS NOT NULL and sale_sk.CostChannelID IS NOT NULL
-              THEN TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and TRIM(trans.milDep) = TRIM(sale_sk.DepCode)
                 and trans.ChannelCostID = sale_sk.CostChannelID
             WHEN sale_sk.ProvinceID IS NOT NULL
-              THEN TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and CAST(trans.ProvinceSK as STRING) IN  UNNEST(SPLIT(sale_sk.ProvinceID, '|'))
             WHEN sale_sk.DepCode IS NULL and sale_sk.CostChannelID IS NOT NULL
-              THEN TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and trans.ChannelCostID = sale_sk.CostChannelID
-            ELSE TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+            ELSE TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
           END)
 
   -- DepartmentSK
@@ -314,7 +315,7 @@ BEGIN
   ) as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and sale_sk.DepCode is null and sale_sk.CostChannelID is null
-      and TRIM(trans.milPer_raw) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+      and TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
 
   -- DepartmentSK
   LEFT JOIN `${DimDepartmentTableRef}` as dep_sk
