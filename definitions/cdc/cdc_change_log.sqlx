@@ -1,26 +1,3 @@
-/*
- * CDC Change Log - Loop Processing with BigQuery SQL Scripting
- *
- * Tracks changes between raw and validated layers for data quality monitoring.
- * Uses procedural SQL to process tables one-by-one (more memory efficient).
- *
- * Supports two table patterns:
- *
- * 1. INCREMENTAL TABLES (with partition_field):
- *    - Compares yesterday's raw data against latest validated snapshot
- *    - Use for: Transactional data (mil, mih, cst, rcv, etc.)
- *    - Raw filter: WHERE partition_field = yesterday
- *
- * 2. FULL DUMP TABLES (no partition_field):
- *    - Compares entire current raw snapshot against latest validated snapshot
- *    - Use for: Reference data (ap_s, ar_s, doc, per, product, etc.)
- *    - Raw filter: No filter (entire table)
- *
- * Change Types:
- * - NEW: Record exists in raw but not in validated (new record to be processed)
- * - CHANGED: Record exists in both, but check_fields have different values
- */
-
 config {
     type: "operations",
     schema: databuffet.CDC_DATESET,
@@ -55,11 +32,6 @@ js {
                 partitionField: tableConfig.partition_field  // null/undefined = FULL DUMP, value = INCREMENTAL
             });
         }
-    }
-
-    // Helper: Escape single quotes for SQL string literals
-    function escapeSql(str) {
-        return str.replace(/'/g, "\\'");
     }
 
     // Helper: Build WHERE clause for raw data (incremental vs full dump)
