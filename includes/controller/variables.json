@@ -36,6 +36,7 @@
     "DIMENSION_TABLE" : "dimension_table",
     "DIMENSION_VIEW" : "dimension_view",
     "FACT_TABLE" : "fact_table",
+    "PROCESS_DATASET": "process_dataset",
 
     "GCS_MAC5": "mac5_ag01",
     "GCS_MAC5_REPORT": "mac5_report",

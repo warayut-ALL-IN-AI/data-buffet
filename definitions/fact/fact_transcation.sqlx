@@ -125,6 +125,13 @@ js {
     };
     const DimProductMktTableRef = `${DimProductMktTable.database}.${DimProductMktTable.schema}.${DimProductMktTable.name}`;
 
+    const DebAddressTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.PROCESS_DATASET,
+        name: "view_deb_address_data",
+    };
+    const DebAddressTableRef = `${DebAddressTable.database}.${DebAddressTable.schema}.${DebAddressTable.name}`;
+
 }
 
 BEGIN
@@ -139,16 +146,16 @@ BEGIN
       channel_sk.ChannelCostSK,
       payment_sk.PaymentSK,
       
-      trans.ProvinceSK, 
-      trans.DistrictSK, 
-      trans.SubDistrictSK,
+      trans.OrderProvinceSK, 
+      trans.OrderDistrictSK, 
+      trans.OrderSubDistrictSK,
 
       PARSE_DATE('%Y%m%d', CONCAT(trans.milYear, FORMAT("%02d", trans.milMonth), FORMAT("%02d", trans.milDay))) as mix_date,
       
       -- productmaster.ProductCode,
       productmaster.ProductGroupACC,
       IF(channel_sk.DummyChannel <> 'not calculated', channel_sk.DummyChannel, CAST(NULL AS STRING)) as DummyChannel,
-      trans.* except(ProvinceSK, DistrictSK, SubDistrictSK)
+      trans.* except(OrderProvinceSK, OrderDistrictSK, OrderSubDistrictSK)
     FROM ${databuffet.DATABASE}.onetime.Transaction_Data_Mart as trans
     
     -- Product Master
@@ -226,7 +233,7 @@ BEGIN
                 and trans.ChannelCostID = sale_sk.CostChannelID
             WHEN sale_sk.ProvinceID IS NOT NULL
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
-                and CAST(trans.ProvinceSK as STRING) IN  UNNEST(SPLIT(sale_sk.ProvinceID, '|'))
+                and CAST(trans.OrderProvinceSK as STRING) IN  UNNEST(SPLIT(sale_sk.ProvinceID, '|'))
             WHEN sale_sk.DepCode IS NULL and sale_sk.CostChannelID IS NOT NULL
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and trans.ChannelCostID = sale_sk.CostChannelID
@@ -385,6 +392,9 @@ BEGIN
 )
   select 
     -- SK
+    DebAddress.ProvinceSK as InvoiceProvinceSK, 
+    DebAddress.DistrictSK as InvoiceDistrictSK,
+    DebAddress.SubDistrictSK as InvoiceSubDistrictSK,
     stk_mkt.StkMktSK,
     product_mkt.ProductMktSK,
     tg_dayofwork.TargetBySaleDayofworkSK,
@@ -394,6 +404,8 @@ BEGIN
     -- DATA
     mix_table.* except(DepartmentID)
   from mix_table
+  left join `${DebAddressTableRef}` as DebAddress
+    on mix_table.milCus = DebAddress.DebCode
   left join `${DimStkMktTableRef}` as stk_mkt
     on mix_table.milStk = stk_mkt.StkCode
   left join `${DimProductMktTableRef}` as product_mkt
