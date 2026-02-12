@@ -228,16 +228,16 @@ BEGIN
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and (CASE 
             WHEN sale_sk.DepCode IS NOT NULL and sale_sk.CostChannelID IS NOT NULL
-              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and TRIM(trans.milDep) = TRIM(sale_sk.DepCode)
                 and trans.ChannelCostID = sale_sk.CostChannelID
             WHEN sale_sk.ProvinceID IS NOT NULL
-              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and CAST(trans.OrderProvinceSK as STRING) IN  UNNEST(SPLIT(sale_sk.ProvinceID, '|'))
             WHEN sale_sk.DepCode IS NULL and sale_sk.CostChannelID IS NOT NULL
-              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and trans.ChannelCostID = sale_sk.CostChannelID
-            ELSE TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+            ELSE TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
           END)
 
   -- DepartmentSK
@@ -322,7 +322,7 @@ BEGIN
   ) as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and sale_sk.DepCode is null and sale_sk.CostChannelID is null
-      and TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+      and TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
 
   -- DepartmentSK
   LEFT JOIN `${DimDepartmentTableRef}` as dep_sk
@@ -362,9 +362,37 @@ BEGIN
     ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
       and reg_sk.DirectorID = dir_sk.DirectorID
   
+  -- Sale Add-on
+  LEFT JOIN (
+    select *,
+      (CASE 
+        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and TRIM(DepCode) is not null and CostChannelID is not null 
+          THEN 1
+        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and ProvinceID is not null
+          THEN 2
+        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and CostChannelID is not null 
+          THEN 3
+        ELSE 4
+      END) as seq_condition
+    from `${DimSaleRepGroupTableRef}`
+  ) as sale_addon
+    ON trans.mix_date between sale_addon.StartDate and sale_addon.EndDate
+      and sale_addon.DepCode is null and sale_addon.CostChannelID is null
+      and TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
+
+  -- Department Add-on
+  LEFT JOIN `${DimDepartmentTableRef}` as dep_addon
+    ON trans.mix_date between dep_addon.StartDate and dep_addon.EndDate
+      and sale_addon.DepartmentID = dep_addon.DepartmentID
+
+  -- Section Add-on
+  LEFT JOIN `${DimSectionTableRef}` as sec_addon
+    ON trans.mix_date between sec_addon.StartDate and sec_addon.EndDate
+      and dep_addon.SectionID = sec_addon.SectionID
+
   -- Join เพื่อหา ChannelCostID ใหม่ในกรณีที่เป็น COST99999
   LEFT JOIN `${DimChannelCostTableRef}` AS channel_cost
-    ON sec_sk.SectionID = channel_cost.ChannelCostName
+    ON sec_addon.SectionID = channel_cost.ChannelCostName
 
   -- CostStkSk
   LEFT JOIN `${DimCostStkTableRef}` AS coststk_sk
