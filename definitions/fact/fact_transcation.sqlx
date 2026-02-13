@@ -170,7 +170,7 @@ BEGIN
     LEFT JOIN `${DimChannelTableRef}` AS channel_sk
       ON IFNULL(trans.milDep, 'N/A') = channel_sk.DepCode
       
-    WHERE asatdate BETWEEN DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR) AND CURRENT_DATE('Asia/Bangkok')
+    WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1
       -- AND milVnos = '6901003086'
       -- AND trans.milPer = '1065043'
 

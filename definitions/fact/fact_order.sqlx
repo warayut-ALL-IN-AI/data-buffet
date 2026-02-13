@@ -1,0 +1,79 @@
+config {
+  type: "operations",
+  dependencies: ["dim_order", "fact_quotation"],
+  tags: [databuffet.TAG_FACT_DAILY],
+}
+
+js {
+    // Define table references
+    const FactOrderTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: name(),
+    };
+    const FactOrderTableRef = `${FactOrderTable.database}.${FactOrderTable.schema}.${FactOrderTable.name}`;
+
+    const FactQuotationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: "fact_quotation",
+    };
+    const FactQuotationTableRef = `${FactQuotationTable.database}.${FactQuotationTable.schema}.${FactQuotationTable.name}`;
+
+    const DimOrderTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_order",
+    };
+    const DimOrderTableRef = `${DimOrderTable.database}.${DimOrderTable.schema}.${DimOrderTable.name}`;
+
+}
+
+BEGIN
+  drop table if exists `${FactOrderTableRef}`;
+  
+  create or replace table `${FactOrderTableRef}`
+  partition by asatdate
+  cluster by FactOrderSk
+  as
+  with mil as (
+    select 
+      t.OrderSK,
+      mil.milYear, mil.milMonth, mil.milDay,
+      mil.milType,
+      mil.milvnos,
+      mil.milStk,
+      mil.milCus,
+      t.mihRef1,
+      sum(mil.milQuan) as milQuan,
+      sum(mil.milAdisc) as milAdisc,
+      sum(mil.milCog) as milCog,
+      sum(mil.milDisca) as milDisca,
+      sum(mil.milSum) as milSum,
+    FROM ${ref('curated_mil')} as mil
+    INNER JOIN `${DimOrderTableRef}` as t 
+      on t.mihYear = mil.milYear
+        and t.mihMonth = mil.milMonth
+        and t.mihDay = mil.milDay
+        and t.mihType = mil.milType
+        and t.mihVnos = mil.milVnos
+        and t.mihCus = mil.milCus
+    group by 1,2,3,4,5,6,7,8,9
+
+  )
+  SELECT 
+    row_number() over(order by mil.milvnos, mil.milStk) as FactOrderSk,
+    mil.OrderSK,
+    fact_quo.QuotationSK,
+    fact_quo.FactQuotationSK,
+
+    PARSE_DATE('%Y%m%d', CONCAT(mil.milYear, FORMAT("%02d", mil.milMonth),  mil.milDay)) as mix_date,
+    mil.* except(OrderSK, mihRef1),
+    current_date('Asia/Bangkok') as asatdate
+  FROM mil as mil
+  LEFT JOIN `${FactQuotationTableRef}` AS fact_quo
+    ON mil.mihRef1 = fact_quo.Running
+    AND mil.milStk = fact_quo.StkCode
+  ;
+
+END;

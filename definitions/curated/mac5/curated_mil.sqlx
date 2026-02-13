@@ -87,7 +87,9 @@ post_operations {
       QUALIFY row_number() over(partition by mil.milType, mil.milVnos, mil.milListno order by mil.asatdate desc) = 1
 
     ), filter_mih2 AS (
-      SELECT *
+      SELECT mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
+        IF(per_sale1 > 100.00, 100.00, per_sale1) as per_sale1,
+        IF(per_sale2 > 100.00, 100.00, per_sale2) as per_sale2,
       FROM (
         SELECT DISTINCT
           mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,

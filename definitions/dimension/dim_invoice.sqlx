@@ -148,7 +148,7 @@ USING (
 ) S
 ON S.mihType = T.mihType
   AND S.mihVnos = T.mihVnos 
-  AND S.milLinkVcno = T.milLinkVcno
+  AND IFNULL(S.milLinkVcno, '') = IFNULL(T.milLinkVcno, '')
 
 -- กรณีเจอข้อมูลเดิม (Update)
 WHEN MATCHED THEN

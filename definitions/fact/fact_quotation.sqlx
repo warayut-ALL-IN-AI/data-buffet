@@ -1,0 +1,61 @@
+config {
+  type: "operations",
+  dependencies: ["dim_quotation"],
+  tags: [databuffet.TAG_FACT_DAILY],
+}
+
+js {
+    // Define table references
+    const FactQuotationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: name(),
+    };
+    const FactQuotationTableRef = `${FactQuotationTable.database}.${FactQuotationTable.schema}.${FactQuotationTable.name}`;
+
+    const DimQuotationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_quotation",
+    };
+    const DimQuotationTableRef = `${DimQuotationTable.database}.${DimQuotationTable.schema}.${DimQuotationTable.name}`;
+
+}
+
+BEGIN
+  drop table if exists `${FactQuotationTableRef}`;
+  
+  create or replace table `${FactQuotationTableRef}`
+  partition by asatdate
+  cluster by FactQuotationSK
+  as
+  with quotation_detail as (
+    select 
+      qt.QuotationSK,
+      qt.SDate,
+      qt.Year,
+      qt.Month,
+      qt.Day,
+      qt.Running, 
+      stkcode as StkCode,
+      qt.CustomerId,
+      qt.ProjectCode,
+      MAX(stkdesc) as StkDesc,
+      AVG(price) as Price,
+      SUM(quantity) as Quantity,
+      SUM(total) as Total,
+    from ${ref('tbook_quodetail')} as qt_detail
+    inner join `${DimQuotationTableRef}` as qt 
+      on qt.id = qt_detail.linkid
+    group by 1,2,3,4,5,6,7,8,9
+    
+  )
+    select 
+      row_number() over(order by Running, StkCode) as FactQuotationSK,
+      QuotationSK,
+      * except(QuotationSK),
+      current_date('Asia/Bangkok') as asatdate
+    from quotation_detail
+    ;
+
+END;

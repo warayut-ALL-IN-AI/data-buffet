@@ -1,0 +1,84 @@
+config {
+  type: "operations",
+  dependencies: ["dim_invoice", "fact_order"],
+  tags: [databuffet.TAG_FACT_DAILY],
+}
+
+js {
+    // Define table references
+    const FactInvoiceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: name(),
+    };
+    const FactInvoiceTableRef = `${FactInvoiceTable.database}.${FactInvoiceTable.schema}.${FactInvoiceTable.name}`;
+
+    const FactOrderTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: "fact_order",
+    };
+    const FactOrderTableRef = `${FactOrderTable.database}.${FactOrderTable.schema}.${FactOrderTable.name}`;
+
+    const DimInvoiceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_invoice",
+    };
+    const DimInvoiceTableRef = `${DimInvoiceTable.database}.${DimInvoiceTable.schema}.${DimInvoiceTable.name}`;
+
+}
+
+BEGIN
+  drop table if exists `${FactInvoiceTableRef}`;
+  
+  create or replace table `${FactInvoiceTableRef}`
+  partition by asatdate
+  cluster by FactInvoiceSK
+  as  
+  with mil as (
+    select
+      milYear, milMonth, milDay,
+      t.InvoiceSk,
+      mil.milType,
+      mil.milvnos,
+      mil.milCus,
+      mil.milLinkVcno, 
+      mil.milStk,
+      sum(mil.milQuan) as milQuan,
+      sum(mil.milAdisc) as milAdisc,
+      sum(mil.milCog) as milCog,
+      sum(mil.milDisca) as milDisca,
+      sum(mil.milSum) as milSum,
+    FROM ${ref('curated_mil')} as mil
+    INNER JOIN `${DimInvoiceTableRef}` as t 
+      on t.mihYear = mil.milYear
+        and t.mihMonth = mil.milMonth
+        and t.mihDay = mil.milDay
+        and t.mihType = mil.milType
+        and t.mihVnos = mil.milVnos
+        and t.mihCus = mil.milCus
+        and IFNULL(t.milLinkVcno, '') = IFNULL(mil.milLinkVcno, '')
+    -- where t.mihvnos = '6603011218'
+    group by 1,2,3,4,5,6,7,8,9
+
+  )
+
+  select 
+    row_number() over(order by mil.milVnos, mil.milLinkVcno, mil.milStk) as FactInvoiceSK,
+    mil.InvoiceSK,
+    fact_ord.OrderSK,
+    fact_ord.FactOrderSK,
+    fact_ord.QuotationSK,
+    fact_ord.FactQuotationSK,
+    
+    PARSE_DATE('%Y%m%d', CONCAT(mil.milYear, FORMAT("%02d", mil.milMonth),  mil.milDay)) as mix_date,
+    mil.* except(InvoiceSk),
+    current_date('Asia/Bangkok') as asatdate
+  from mil as mil
+  LEFT JOIN `${FactOrderTableRef}` AS fact_ord
+    ON IFNULL(mil.milLinkVcno, '') = IFNULL(fact_ord.milVnos, '')
+    AND mil.milStk = fact_ord.milStk
+  ;
+
+END;
