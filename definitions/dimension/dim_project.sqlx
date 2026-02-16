@@ -54,7 +54,10 @@ USING (
         S.*,
         T.ProjectSK as existing_sk,
         -- รันลำดับสำหรับแถวที่ยังไม่มีใน Target (New Rows)
-        ROW_NUMBER() OVER (ORDER BY S.projectcode) as rn_new
+        ROW_NUMBER() OVER (            
+            PARTITION BY (CASE WHEN T.projectcode IS NULL THEN 1 ELSE 0 END) 
+            ORDER BY S.projectcode
+        ) as rn_new
       FROM source_data S
       LEFT JOIN `${DimProjectTableRef}` T
           ON S.projectcode = T.projectcode

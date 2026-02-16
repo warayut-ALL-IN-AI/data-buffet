@@ -1,0 +1,171 @@
+config {
+  type: "operations",
+  tags: [databuffet.TAG_DIM_DAILY],
+  hasOutput: true
+}
+
+js {
+    // Define table references
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+
+    const DebAddressTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.PROCESS_DATASET,
+        name: "view_deb_address_data",
+    };
+    const DebAddressTableRef = `${DebAddressTable.database}.${DebAddressTable.schema}.${DebAddressTable.name}`;
+
+}
+
+-- เริ่มกระบวนการ MERGE
+MERGE `${DimCustomerTableRef}` T
+USING (
+    WITH match_customer AS (
+        SELECT customer_allkon, customer_mac5
+        FROM (
+            SELECT 
+                a.customer_allkon, 
+                a.customer_mac5,
+                ROW_NUMBER() OVER(PARTITION BY a.customer_mac5 ORDER BY a.customer_allkon DESC) as rn
+            FROM ${ref(databuffet.VALIDATED_MAC5, 'match_customer')} as a
+            INNER JOIN (
+                SELECT DISTINCT customer_code 
+                FROM ${ref(databuffet.VALIDATED_CIS360, 'customer_profile')}
+            ) b 
+                ON a.customer_allkon = b.customer_code 
+        )
+        WHERE rn = 1
+    ),
+    Customer_360 AS (
+        SELECT 
+            cp.*,
+            cs.customer_status_name,
+            nb.nature_business_code,
+            nb.nature_business_name,
+            nb.nature_business_name_en,
+            ct.customer_type_name,
+            ct.customer_type_name_en
+        FROM ${ref(databuffet.VALIDATED_CIS360, 'customer_profile')} as cp 
+        LEFT JOIN ${ref(databuffet.VALIDATED_CIS360, 'customer_status')} as cs 
+            ON cp.customer_status_id = cs.id
+        LEFT JOIN ${ref(databuffet.VALIDATED_CIS360, 'customer_profile_nature_business')} as cpnb  
+            ON cp.id = cpnb.customer_profile_id 
+        LEFT JOIN ${ref(databuffet.VALIDATED_CIS360, 'nature_business')} as nb  
+            ON cpnb.nature_business_id = nb.id
+        LEFT JOIN ${ref(databuffet.VALIDATED_CIS360, 'customer_type')} as ct 
+            ON cp.customer_type_id = ct.id
+    ),
+    source_data AS (
+        SELECT 
+            deb_address.ProvinceSK as InvoiceProvinceSK,
+            deb_address.DistrictSK as InvoiceDistrictSK,
+            deb_address.SubDistrictSK as InvoiceSubDistrictSK,
+            deb.debcode,
+            deb.debdate,
+            cp.customer_code,
+            cp.prefix_id,
+            deb.debnamet,
+            cp.first_name, 
+            cp.last_name,
+            deb.debtaxclass,
+            cp.full_name, 
+            cp.customer_status_name,
+            deb.debsalesp,
+            deb.debxxxx,
+            deb.debgrade,
+            cp.nature_business_code,
+            cp.nature_business_name,
+            cp.nature_business_name_en,
+            cp.customer_type_name,
+            cp.customer_type_name_en,
+            deb.debbranch,
+            deb.deblimit, 
+            deb.debgroup,
+            deb.DEBcreditTerm,
+            DATE_DIFF(CURRENT_DATE(), deb.debdate, YEAR) as Total_contact_time_Year
+        FROM ${ref(databuffet.VALIDATED_MAC5, 'deb')} as deb
+        LEFT JOIN `${DebAddressTableRef}` as deb_address
+            ON deb.debcode = deb_address.debcode
+        LEFT JOIN match_customer as mc 
+            ON deb.debcode = mc.customer_mac5
+        LEFT JOIN Customer_360 as cp 
+            ON mc.customer_allkon = cp.customer_code
+    ),
+    -- จัดการรัน CustomerSK ต่อจากของเดิม
+    target_max AS (
+        SELECT IFNULL(MAX(CustomerSK), 0) as max_sk FROM `${DimCustomerTableRef}`
+    ),
+    prepared_source AS (
+        SELECT 
+            S.*,
+            T.CustomerSK as existing_sk,
+            ROW_NUMBER() OVER (
+                PARTITION BY (CASE WHEN T.debcode IS NULL THEN 1 ELSE 0 END) 
+                ORDER BY S.debcode
+            ) as rn_new
+        FROM source_data S
+        LEFT JOIN `${DimCustomerTableRef}` T
+            ON S.debcode = T.debcode
+    )
+
+    SELECT 
+        src.*,
+        CASE 
+            WHEN existing_sk IS NOT NULL THEN existing_sk
+            ELSE (SELECT max_sk FROM target_max) + rn_new
+        END as final_CustomerSK
+    FROM prepared_source src
+
+) S
+ON T.debcode = S.debcode
+
+WHEN MATCHED THEN
+  UPDATE SET 
+    InvoiceProvinceSK = S.InvoiceProvinceSK,
+    InvoiceDistrictSK = S.InvoiceDistrictSK,
+    InvoiceSubDistrictSK = S.InvoiceSubDistrictSK,
+    debdate = S.debdate,
+    customer_code = S.customer_code,
+    prefix_id = S.prefix_id,
+    debnamet = S.debnamet,
+    first_name = S.first_name,
+    last_name = S.last_name,
+    debtaxclass = S.debtaxclass,
+    full_name = S.full_name,
+    customer_status_name = S.customer_status_name,
+    debsalesp = S.debsalesp,
+    debxxxx = S.debxxxx,
+    debgrade = S.debgrade,
+    nature_business_code = S.nature_business_code,
+    nature_business_name = S.nature_business_name,
+    nature_business_name_en = S.nature_business_name_en,
+    customer_type_name = S.customer_type_name,
+    customer_type_name_en = S.customer_type_name_en,
+    debbranch = S.debbranch,
+    deblimit = S.deblimit,
+    debgroup = S.debgroup,
+    DEBcreditTerm = S.DEBcreditTerm,
+    Total_contact_time_Year = S.Total_contact_time_Year
+
+WHEN NOT MATCHED THEN
+  INSERT (
+    CustomerSK, InvoiceProvinceSK, InvoiceDistrictSK, InvoiceSubDistrictSK,
+    debcode, debdate, customer_code, prefix_id, debnamet,
+    first_name, last_name, debtaxclass, full_name, customer_status_name,
+    debsalesp, debxxxx, debgrade, nature_business_code, nature_business_name,
+    nature_business_name_en, customer_type_name, customer_type_name_en,
+    debbranch, deblimit, debgroup, DEBcreditTerm, Total_contact_time_Year
+  )
+  VALUES (
+    S.final_CustomerSK, S.InvoiceProvinceSK, S.InvoiceDistrictSK, S.InvoiceSubDistrictSK,
+    S.debcode, S.debdate, S.customer_code, S.prefix_id, S.debnamet,
+    S.first_name, S.last_name, S.debtaxclass, S.full_name, S.customer_status_name,
+    S.debsalesp, S.debxxxx, S.debgrade, S.nature_business_code, S.nature_business_name,
+    S.nature_business_name_en, S.customer_type_name, S.customer_type_name_en,
+    S.debbranch, S.deblimit, S.debgroup, S.DEBcreditTerm, S.Total_contact_time_Year
+  );

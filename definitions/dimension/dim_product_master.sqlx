@@ -33,9 +33,10 @@ BEGIN
   drop table if exists `${DimProductTableRef}`;
   
   create or replace table `${DimProductTableRef}`
-  cluster by ProductCode, ProductGroupMAC5, ProductGroupACC, ProductGroupMAC5Type
+  cluster by ProductSK, ProductCode, ProductGroupMAC5Type
   as
   select
+  row_number() over(order by a.stkcode) as ProductSK,
   a.stkcode as ProductCode ,
   a.stkcode2 as ProductCode1,
   a.stkdesct1 as ProductMac5Description,
