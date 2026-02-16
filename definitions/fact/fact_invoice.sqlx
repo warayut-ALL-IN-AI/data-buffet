@@ -30,12 +30,13 @@ js {
 }
 
 BEGIN
-  drop table if exists `${FactInvoiceTableRef}`;
+  -- drop table if exists `${FactInvoiceTableRef}`;
   
-  create or replace table `${FactInvoiceTableRef}`
-  partition by asatdate
-  cluster by FactInvoiceSK
-  as  
+  -- create or replace table `${FactInvoiceTableRef}`
+  -- partition by asatdate
+  -- cluster by FactInvoiceSK
+  -- as  
+  create or replace temp table temp_invoice_table as
   with mil as (
     select
       milYear, milMonth, milDay,
@@ -59,11 +60,10 @@ BEGIN
         and t.mihVnos = mil.milVnos
         and t.mihCus = mil.milCus
         and IFNULL(t.milLinkVcno, '') = IFNULL(mil.milLinkVcno, '')
-    -- where t.mihvnos = '6603011218'
+    where mil.asatdate >= current_date('Asia/Bangkok')-1
     group by 1,2,3,4,5,6,7,8,9
 
   )
-
   select 
     row_number() over(order by mil.milVnos, mil.milLinkVcno, mil.milStk) as FactInvoiceSK,
     mil.InvoiceSK,
@@ -80,5 +80,33 @@ BEGIN
     ON IFNULL(mil.milLinkVcno, '') = IFNULL(fact_ord.milVnos, '')
     AND mil.milStk = fact_ord.milStk
   ;
+
+  BEGIN    
+    DELETE FROM `${FactInvoiceTableRef}` AS T
+    WHERE EXISTS (
+        SELECT 1 
+        FROM temp_invoice_table AS S 
+        WHERE T.milYear = S.milYear
+          AND T.milMonth = S.milMonth
+          AND T.milDay = S.milDay
+          AND T.milType = S.milType
+          AND T.milVnos = S.milVnos
+          AND T.milCus = S.milCus
+          AND IFNULL(T.milLinkVcno, '') = IFNULL(S.milLinkVcno, '')
+          AND T.milStk = S.milStk
+    );
+
+    INSERT INTO `${FactInvoiceTableRef}` 
+    SELECT * FROM temp_invoice_table;
+  END;
+
+  BEGIN
+    DROP TABLE IF EXISTS temp_invoice_table;
+  END;
+
+  BEGIN
+    DELETE FROM ${FactInvoiceTableRef}
+    WHERE PARSE_DATE('%Y%m%d', CONCAT(milYear, FORMAT("%02d", milMonth), FORMAT("%02d", milDay))) < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR);
+  END;
 
 END;
