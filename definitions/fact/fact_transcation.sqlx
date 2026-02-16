@@ -132,6 +132,13 @@ js {
     };
     const DebAddressTableRef = `${DebAddressTable.database}.${DebAddressTable.schema}.${DebAddressTable.name}`;
 
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+
 }
 
 BEGIN
@@ -428,6 +435,7 @@ BEGIN
     tg_dayofwork.TargetBySaleDayofworkSK,
     tg_dayofwork.TargetProductGroupSK, 
     tg_dayofwork.RateTargetSK,
+    dim_cust.CustomerSK,
 
     -- DATA
     mix_table.* except(DepartmentID)
@@ -438,16 +446,18 @@ BEGIN
     on mix_table.milStk = stk_mkt.StkCode
   left join `${DimProductMktTableRef}` as product_mkt
     on stk_mkt.MarketingGroupID = product_mkt.MarketingGroupID
-        and stk_mkt.SubMarketingID = product_mkt.SubMarketingID
-        and stk_mkt.SegmentID = product_mkt.SegmentID
+      and stk_mkt.SubMarketingID = product_mkt.SubMarketingID
+      and stk_mkt.SegmentID = product_mkt.SegmentID
   left join `${DimProductGroupBySaleDayofworkTableRef}` as tg_dayofwork
     on mix_table.milyear = tg_dayofwork.year
-        and mix_table.milmonth = tg_dayofwork.month
-        and mix_table.milday = CAST(tg_dayofwork.day AS INT64)
-        and mix_table.DepartmentID = tg_dayofwork.DepartmentID
-        and stk_mkt.MarketingGroupID = tg_dayofwork.MarketingGroupID
-        and stk_mkt.SubMarketingID = tg_dayofwork.SubMarketingID
-        and stk_mkt.SegmentID = tg_dayofwork.SegmentID
+      and mix_table.milmonth = tg_dayofwork.month
+      and mix_table.milday = CAST(tg_dayofwork.day AS INT64)
+      and mix_table.DepartmentID = tg_dayofwork.DepartmentID
+      and stk_mkt.MarketingGroupID = tg_dayofwork.MarketingGroupID
+      and stk_mkt.SubMarketingID = tg_dayofwork.SubMarketingID
+      and stk_mkt.SegmentID = tg_dayofwork.SegmentID
+  LEFT JOIN `${DimCustomerTableRef}` as dim_cust
+    ON mix_table.milCus = dim_cust.debcode
   ;
 
 --   -- 1767567
@@ -456,12 +466,12 @@ BEGIN
   BEGIN    
     DELETE FROM `${FactTranscationTableRef}` AS T
     WHERE EXISTS (
-        SELECT 1 
-        FROM temp_fact_transcation AS S 
-        WHERE T.milVnos = S.milVnos
-          AND T.milType = S.milType
-          AND T.milPer = S.milPer
-          AND T.milListno = S.milListno
+      SELECT 1 
+      FROM temp_fact_transcation AS S 
+      WHERE T.milVnos = S.milVnos
+        AND T.milType = S.milType
+        AND T.milPer = S.milPer
+        AND T.milListno = S.milListno
     )
     ;
   END;

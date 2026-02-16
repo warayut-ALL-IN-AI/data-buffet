@@ -20,6 +20,13 @@ js {
     };
     const DimQuotationTableRef = `${DimQuotationTable.database}.${DimQuotationTable.schema}.${DimQuotationTable.name}`;
 
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+
 }
 
 BEGIN
@@ -51,11 +58,14 @@ BEGIN
     
   )
     select 
-      row_number() over(order by Running, StkCode) as FactQuotationSK,
-      QuotationSK,
-      * except(QuotationSK),
+      row_number() over(order by qtd.Running, qtd.StkCode) as FactQuotationSK,
+      qtd.QuotationSK,
+      dim_cust.CustomerSK,
+      qtd.* except(QuotationSK),
       current_date('Asia/Bangkok') as asatdate
-    from quotation_detail
+    from quotation_detail as qtd
+    LEFT JOIN `${DimCustomerTableRef}` as dim_cust
+      ON qtd.CustomerId = dim_cust.debcode
     ;
 
 END;

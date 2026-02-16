@@ -19,29 +19,26 @@ MERGE `${DimProjectTableRef}` T
 USING (
     WITH source_data AS (
       SELECT
-        projectcode,
-        docno,
-        profilecomp,
-        compname,
-        projectname,
-        typecomp,
-        statuscomp,
-        projectfrom,
-        compgroup,
+        projectcode as projectCode,
+        docno as docNo,
+        compname as companyName,
+        typecomp as companyType,
+        statuscomp as companyStatus,
+        compgroup as companyGroup,
         history,
         place,
         district,
         province,
-        pjstart,
-        pjend,
+        profilecomp as profileComp,
+        projectname as projectName,
+        projectfrom as projectFrom,
+        pjstart as projectStart,
+        pjend as projectEnd,
         (CASE 
-            -- 1. ถ้า pjstart เป็น NULL ให้เป็น 0
-            WHEN SAFE_CAST(pjstart AS DATE) IS NULL THEN 0
-            -- 2. ถ้า pjstart มีค่า แต่ pjend เป็น NULL ให้ใช้ CURRENT_DATE()
-            WHEN SAFE_CAST(pjend AS DATE) IS NULL THEN DATE_DIFF(CURRENT_DATE(), SAFE_CAST(pjstart AS DATE), DAY)
-            -- 3. ถ้ามีค่าทั้งคู่ ให้คำนวณตามปกติ
-            ELSE DATE_DIFF(SAFE_CAST(pjend AS DATE), SAFE_CAST(pjstart AS DATE), DAY)
-        END) AS Project_Day
+          WHEN SAFE_CAST(pjstart AS DATE) IS NULL THEN 0
+          WHEN SAFE_CAST(pjend AS DATE) IS NULL THEN DATE_DIFF(CURRENT_DATE(), SAFE_CAST(pjstart AS DATE), DAY)
+          ELSE DATE_DIFF(SAFE_CAST(pjend AS DATE), SAFE_CAST(pjstart AS DATE), DAY)
+        END) as projectDay
       FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_profilecomp')} -- ปรับ ref ตามโครงสร้างที่คุณใช้
     ),
     -- หา Max ProjectSK จาก Target เดิมเพื่อรันเลขต่อ
@@ -55,12 +52,12 @@ USING (
         T.ProjectSK as existing_sk,
         -- รันลำดับสำหรับแถวที่ยังไม่มีใน Target (New Rows)
         ROW_NUMBER() OVER (            
-            PARTITION BY (CASE WHEN T.projectcode IS NULL THEN 1 ELSE 0 END) 
-            ORDER BY S.projectcode
+            PARTITION BY (CASE WHEN T.projectCode IS NULL THEN 1 ELSE 0 END) 
+            ORDER BY S.projectCode
         ) as rn_new
       FROM source_data S
       LEFT JOIN `${DimProjectTableRef}` T
-          ON S.projectcode = T.projectcode
+          ON S.projectCode = T.projectCode
     )
 
     SELECT 
@@ -72,38 +69,38 @@ USING (
     FROM prepared_source src
 
 ) S
-ON T.projectcode = S.projectcode
+ON T.projectCode = S.projectCode
 
 -- กรณีเจอข้อมูลเดิม (Update)
 WHEN MATCHED THEN
   UPDATE SET 
-    docno = S.docno,
-    profilecomp = S.profilecomp,
-    compname = S.compname,
-    projectname = S.projectname,
-    typecomp = S.typecomp,
-    statuscomp = S.statuscomp,
-    projectfrom = S.projectfrom,
-    compgroup = S.compgroup,
+    docNo = S.docNo,
+    profileComp = S.profileComp,
+    companyName = S.companyName,
+    projectName = S.projectName,
+    companyType = S.companyType,
+    companyStatus = S.companyStatus,
+    projectFrom = S.projectFrom,
+    companyGroup = S.companyGroup,
     history = S.history,
     place = S.place,
     district = S.district,
     province = S.province,
-    pjstart = S.pjstart,
-    pjend = S.pjend,
-    Project_Day = S.Project_Day
+    projectStart = S.projectStart,
+    projectEnd = S.projectEnd,
+    projectDay = S.projectDay
 
 -- กรณีข้อมูลใหม่ (Insert)
 WHEN NOT MATCHED THEN
   INSERT (
     ProjectSK,
-    projectcode, docno, profilecomp, compname, projectname,
-    typecomp, statuscomp, projectfrom, compgroup, history,
-    place, district, province, pjstart, pjend, Project_Day
+    projectCode, docNo, profileComp, companyName, projectName,
+    companyType, companyStatus, projectFrom, companyGroup, history,
+    place, district, province, projectStart, projectEnd, projectDay
   )
   VALUES (
     S.final_ProjectSK,
-    S.projectcode, S.docno, S.profilecomp, S.compname, S.projectname,
-    S.typecomp, S.statuscomp, S.projectfrom, S.compgroup, S.history,
-    S.place, S.district, S.province, S.pjstart, S.pjend, S.Project_Day
+    S.projectCode, S.docNo, S.profileComp, S.companyName, S.projectName,
+    S.companyType, S.companyStatus, S.projectFrom, S.companyGroup, S.history,
+    S.place, S.district, S.province, S.projectStart, S.projectEnd, S.projectDay
   );

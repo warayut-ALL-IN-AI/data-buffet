@@ -27,6 +27,13 @@ js {
     };
     const DimOrderTableRef = `${DimOrderTable.database}.${DimOrderTable.schema}.${DimOrderTable.name}`;
 
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+
 }
 
 BEGIN
@@ -68,6 +75,7 @@ BEGIN
     mil.OrderSK,
     fact_quo.QuotationSK,
     fact_quo.FactQuotationSK,
+    dim_cust.CustomerSK,
 
     PARSE_DATE('%Y%m%d', CONCAT(mil.milYear, FORMAT("%02d", mil.milMonth),  mil.milDay)) as mix_date,
     mil.* except(OrderSK, mihRef1),
@@ -76,6 +84,8 @@ BEGIN
   LEFT JOIN `${FactQuotationTableRef}` AS fact_quo
     ON mil.mihRef1 = fact_quo.Running
     AND mil.milStk = fact_quo.StkCode
+  LEFT JOIN `${DimCustomerTableRef}` as dim_cust
+    ON mil.milCus = dim_cust.debcode
   ;
 
   
