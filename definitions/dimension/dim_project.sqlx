@@ -1,0 +1,106 @@
+config {
+  type: "operations",
+  tags: [databuffet.TAG_DIM_DAILY],
+  hasOutput: true
+}
+
+js {
+    // Define table references
+    const DimProjectTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimProjectTableRef = `${DimProjectTable.database}.${DimProjectTable.schema}.${DimProjectTable.name}`;
+}
+
+-- เริ่มกระบวนการ MERGE
+MERGE `${DimProjectTableRef}` T
+USING (
+    WITH source_data AS (
+      SELECT
+        projectcode,
+        docno,
+        profilecomp,
+        compname,
+        projectname,
+        typecomp,
+        statuscomp,
+        projectfrom,
+        compgroup,
+        history,
+        place,
+        district,
+        province,
+        pjstart,
+        pjend,
+        (CASE 
+            -- 1. ถ้า pjstart เป็น NULL ให้เป็น 0
+            WHEN SAFE_CAST(pjstart AS DATE) IS NULL THEN 0
+            -- 2. ถ้า pjstart มีค่า แต่ pjend เป็น NULL ให้ใช้ CURRENT_DATE()
+            WHEN SAFE_CAST(pjend AS DATE) IS NULL THEN DATE_DIFF(CURRENT_DATE(), SAFE_CAST(pjstart AS DATE), DAY)
+            -- 3. ถ้ามีค่าทั้งคู่ ให้คำนวณตามปกติ
+            ELSE DATE_DIFF(SAFE_CAST(pjend AS DATE), SAFE_CAST(pjstart AS DATE), DAY)
+        END) AS Project_Day
+      FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_profilecomp')} -- ปรับ ref ตามโครงสร้างที่คุณใช้
+    ),
+    -- หา Max ProjectSK จาก Target เดิมเพื่อรันเลขต่อ
+    target_max AS (
+      SELECT IFNULL(MAX(ProjectSK), 0) as max_sk FROM `${DimProjectTableRef}`
+    ),
+    -- เตรียมข้อมูลและ Generate SK สำหรับแถวใหม่
+    prepared_source AS (
+      SELECT 
+        S.*,
+        T.ProjectSK as existing_sk,
+        -- รันลำดับสำหรับแถวที่ยังไม่มีใน Target (New Rows)
+        ROW_NUMBER() OVER (ORDER BY S.projectcode) as rn_new
+      FROM source_data S
+      LEFT JOIN `${DimProjectTableRef}` T
+          ON S.projectcode = T.projectcode
+    )
+
+    SELECT 
+      src.*,
+      CASE 
+          WHEN existing_sk IS NOT NULL THEN existing_sk
+          ELSE (SELECT max_sk FROM target_max) + rn_new
+      END as final_ProjectSK
+    FROM prepared_source src
+
+) S
+ON T.projectcode = S.projectcode
+
+-- กรณีเจอข้อมูลเดิม (Update)
+WHEN MATCHED THEN
+  UPDATE SET 
+    docno = S.docno,
+    profilecomp = S.profilecomp,
+    compname = S.compname,
+    projectname = S.projectname,
+    typecomp = S.typecomp,
+    statuscomp = S.statuscomp,
+    projectfrom = S.projectfrom,
+    compgroup = S.compgroup,
+    history = S.history,
+    place = S.place,
+    district = S.district,
+    province = S.province,
+    pjstart = S.pjstart,
+    pjend = S.pjend,
+    Project_Day = S.Project_Day
+
+-- กรณีข้อมูลใหม่ (Insert)
+WHEN NOT MATCHED THEN
+  INSERT (
+    ProjectSK,
+    projectcode, docno, profilecomp, compname, projectname,
+    typecomp, statuscomp, projectfrom, compgroup, history,
+    place, district, province, pjstart, pjend, Project_Day
+  )
+  VALUES (
+    S.final_ProjectSK,
+    S.projectcode, S.docno, S.profilecomp, S.compname, S.projectname,
+    S.typecomp, S.statuscomp, S.projectfrom, S.compgroup, S.history,
+    S.place, S.district, S.province, S.pjstart, S.pjend, S.Project_Day
+  );

@@ -105,10 +105,7 @@ USING (
             S.*,
             T.OrderSK as existing_sk,
             -- คำนวณ Row Number เฉพาะกลุ่มที่เป็นข้อมูลใหม่ (Target เป็น Null)
-            ROW_NUMBER() OVER (
-                PARTITION BY (CASE WHEN T.mihVnos IS NULL THEN 1 ELSE 0 END) 
-                ORDER BY S.mihYear, S.mihMonth, S.mihDay, S.mihVnos
-            ) as rn_new
+            ROW_NUMBER() OVER (ORDER BY S.mihYear, S.mihMonth, S.mihDay, S.mihVnos) as rn_new
         FROM source_data S
         LEFT JOIN `${DimOrderTableRef}` T
             ON S.mihYear = T.mihYear 
