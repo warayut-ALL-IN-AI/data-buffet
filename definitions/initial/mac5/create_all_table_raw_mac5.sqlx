@@ -1,6 +1,6 @@
 config {
   type: "operations",
-  dependencies: [],
+  dependencies: ["drop_all_tables_validated_mac5", "drop_all_tables_curated_mac5"],
   tags: [databuffet.TAG_INITIAL],
 }
 

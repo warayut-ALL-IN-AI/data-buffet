@@ -1,6 +1,6 @@
 config {
   type: "operations",
-  dependencies: ["create_all_table_raw_mac5"],
+  dependencies: [],
   tags: [databuffet.TAG_REINITIAL],
 }
 
