@@ -27,8 +27,8 @@ USING (
             ELSE null
           END) as StatusDesc,
           mihCancel,
-        FROM ${databuffet.CURATED_MAC5, ref('curated_mih')}
-        left join ${databuffet.VALIDATED_MAC5, ref('ar_s')} on mihStatus = ar_scode
+        FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')}
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} on mihStatus = ar_scode
         left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} on mihStatus = ap_scode
         WHERE mihType = 'IS'
           and mihRef1 is not null
@@ -44,7 +44,7 @@ USING (
             ELSE null
           END) as StatusDesc,
           mihCancel
-        FROM ${databuffet.CURATED_MAC5, ref('curated_mih')}
+        FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')}
         left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} on mihStatus = ar_scode
         left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} on mihStatus = ap_scode
         WHERE asatdate >= current_date('Asia/Bangkok')-1
@@ -55,7 +55,7 @@ USING (
           CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale1, 
           CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale2,
           row_number() over(partition by mih2vnos, mih2cus order by mih2rev desc) as chk_row
-        FROM ${databuffet.VALIDATED_MAC5, ref('mih2')} as mih2
+        FROM ${ref(databuffet.VALIDATED_MAC5, 'mih2')} as mih2
         WHERE mih2cus is not null
           and mih2per2 is not null
           and mih2per2pc is not null
@@ -103,7 +103,7 @@ USING (
             UNION ALL
             SELECT * FROM includ_mih
         ) t
-        inner join ${ref('curated_mil')} as mil
+        inner join ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
           on t.mihYear = mil.milYear
             and t.mihMonth = mil.milMonth
             and t.mihDay = mil.milDay

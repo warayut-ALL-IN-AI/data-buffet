@@ -51,7 +51,7 @@ BEGIN
       AVG(price) as Price,
       SUM(quantity) as Quantity,
       SUM(total) as Total,
-    from ${ref('tbook_quodetail')} as qt_detail
+    from ${ref(databuffet.VALIDATED_MAC5, 'tbook_quodetail')} as qt_detail
     inner join `${DimQuotationTableRef}` as qt 
       on qt.id = qt_detail.linkid
     group by 1,2,3,4,5,6,7,8,9

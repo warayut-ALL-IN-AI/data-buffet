@@ -58,7 +58,7 @@ BEGIN
       sum(mil.milCog) as milCog,
       sum(mil.milDisca) as milDisca,
       sum(mil.milSum) as milSum,
-    FROM ${ref('curated_mil')} as mil
+    FROM ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
     INNER JOIN `${DimInvoiceTableRef}` as t 
       on t.mihYear = mil.milYear
         and t.mihMonth = mil.milMonth
