@@ -1,6 +1,6 @@
 config {
   type: "operations",
-  dependencies: ["dim_quotation"],
+  dependencies: ["dim_quotation", "dim_customer"],
   tags: [databuffet.TAG_FACT_DAILY],
 }
 

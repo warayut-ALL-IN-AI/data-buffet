@@ -1,6 +1,6 @@
 config {
   type: "operations",
-  dependencies: ["curated_mih", "curated_mil", "dim_product_master"],
+  dependencies: ["curated_mih", "curated_mil", "dim_product_master", "dim_customer"],
   tags: [databuffet.TAG_FACT_DAILY],
 }
 
