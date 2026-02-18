@@ -37,17 +37,17 @@ js {
 }
 
 BEGIN
-  -- drop table if exists `${FactInvoiceTableRef}`;
+  drop table if exists `${FactInvoiceTableRef}`;
   
-  -- create or replace table `${FactInvoiceTableRef}`
-  -- partition by asatdate
-  -- cluster by FactInvoiceSK
-  -- as  
-  create or replace temp table temp_invoice_table as
+  create or replace table `${FactInvoiceTableRef}`
+  partition by asatdate
+  cluster by FactInvoiceSK
+  as  
+  -- create or replace temp table temp_invoice_table as
   with mil as (
     select
-      milYear, milMonth, milDay,
       t.InvoiceSk,
+      milYear, milMonth, milDay,
       mil.milType,
       mil.milvnos,
       mil.milCus,
@@ -72,7 +72,7 @@ BEGIN
 
   )
   select 
-    row_number() over(order by mil.milVnos, mil.milLinkVcno, mil.milStk) as FactInvoiceSK,
+    row_number() over(order by mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milVnos, mil.milCus, mil.milStk, mil.milLinkVcno) as FactInvoiceSK,
     mil.InvoiceSK,
     fact_ord.OrderSK,
     fact_ord.FactOrderSK,
@@ -91,32 +91,32 @@ BEGIN
     ON mil.milCus = dim_cust.debcode
   ;
 
-  BEGIN    
-    DELETE FROM `${FactInvoiceTableRef}` AS T
-    WHERE EXISTS (
-        SELECT 1 
-        FROM temp_invoice_table AS S 
-        WHERE T.milYear = S.milYear
-          AND T.milMonth = S.milMonth
-          AND T.milDay = S.milDay
-          AND T.milType = S.milType
-          AND T.milVnos = S.milVnos
-          AND T.milCus = S.milCus
-          AND IFNULL(T.milLinkVcno, '') = IFNULL(S.milLinkVcno, '')
-          AND T.milStk = S.milStk
-    );
+  -- BEGIN    
+  --   DELETE FROM `${FactInvoiceTableRef}` AS T
+  --   WHERE EXISTS (
+  --       SELECT 1 
+  --       FROM temp_invoice_table AS S 
+  --       WHERE T.milYear = S.milYear
+  --         AND T.milMonth = S.milMonth
+  --         AND T.milDay = S.milDay
+  --         AND T.milType = S.milType
+  --         AND T.milVnos = S.milVnos
+  --         AND T.milCus = S.milCus
+  --         AND T.milStk = S.milStk
+  --         AND IFNULL(T.milLinkVcno, '') = IFNULL(S.milLinkVcno, '')
+  --   );
 
-    INSERT INTO `${FactInvoiceTableRef}` 
-    SELECT * FROM temp_invoice_table;
-  END;
+  --   INSERT INTO `${FactInvoiceTableRef}` 
+  --   SELECT * FROM temp_invoice_table;
+  -- END;
 
-  BEGIN
-    DROP TABLE IF EXISTS temp_invoice_table;
-  END;
+  -- BEGIN
+  --   DROP TABLE IF EXISTS temp_invoice_table;
+  -- END;
 
-  BEGIN
-    DELETE FROM ${FactInvoiceTableRef}
-    WHERE PARSE_DATE('%Y%m%d', CONCAT(milYear, FORMAT("%02d", milMonth), FORMAT("%02d", milDay))) < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR);
-  END;
+  -- BEGIN
+  --   DELETE FROM ${FactInvoiceTableRef}
+  --   WHERE PARSE_DATE('%Y%m%d', CONCAT(milYear, FORMAT("%02d", milMonth), FORMAT("%02d", milDay))) < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR);
+  -- END;
 
 END;

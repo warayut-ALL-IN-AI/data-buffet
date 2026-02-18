@@ -37,13 +37,13 @@ js {
 }
 
 BEGIN
-  -- drop table if exists `${FactOrderTableRef}`;
+  drop table if exists `${FactOrderTableRef}`;
   
-  -- create or replace table `${FactOrderTableRef}`
-  -- partition by asatdate
-  -- cluster by FactOrderSk
-  -- as
-  create or replace temp table temp_order_table as
+  create or replace table `${FactOrderTableRef}`
+  partition by asatdate
+  cluster by FactOrderSk
+  as
+  -- create or replace temp table temp_order_table as
   with mil as (
     select 
       t.OrderSK,
@@ -66,12 +66,12 @@ BEGIN
         and t.mihType = mil.milType
         and t.mihVnos = mil.milVnos
         and t.mihCus = mil.milCus
-    where mil.asatdate >= current_date('Asia/Bangkok')-1
+    -- where mil.asatdate >= current_date('Asia/Bangkok')-1
     group by 1,2,3,4,5,6,7,8,9
 
   )
   SELECT 
-    row_number() over(order by mil.milvnos, mil.milStk) as FactOrderSk,
+    row_number() over(order by mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milVnos, mil.milCus, mil.milStk, mil.mihRef1) as FactOrderSk,
     mil.OrderSK,
     fact_quo.QuotationSK,
     fact_quo.FactQuotationSK,
@@ -88,33 +88,31 @@ BEGIN
     ON mil.milCus = dim_cust.debcode
   ;
 
-  
+  -- BEGIN    
+  --   DELETE FROM `${FactOrderTableRef}` AS T
+  --   WHERE EXISTS (
+  --       SELECT 1 
+  --       FROM temp_order_table AS S 
+  --       WHERE T.milYear = S.milYear
+  --         AND T.milMonth = S.milMonth
+  --         AND T.milDay = S.milDay
+  --         AND T.milType = S.milType
+  --         AND T.milVnos = S.milVnos
+  --         AND T.milCus = S.milCus
+  --         AND T.milStk = S.milStk
+  --   );
 
-  BEGIN    
-    DELETE FROM `${FactOrderTableRef}` AS T
-    WHERE EXISTS (
-        SELECT 1 
-        FROM temp_order_table AS S 
-        WHERE T.milYear = S.milYear
-          AND T.milMonth = S.milMonth
-          AND T.milDay = S.milDay
-          AND T.milType = S.milType
-          AND T.milVnos = S.milVnos
-          AND T.milCus = S.milCus
-          AND T.milStk = S.milStk
-    );
+  --   INSERT INTO `${FactOrderTableRef}` 
+  --   SELECT * FROM temp_order_table;
+  -- END;
 
-    INSERT INTO `${FactOrderTableRef}` 
-    SELECT * FROM temp_order_table;
-  END;
+  -- BEGIN
+  --   DROP TABLE IF EXISTS temp_order_table;
+  -- END;
 
-  BEGIN
-    DROP TABLE IF EXISTS temp_order_table;
-  END;
-
-  BEGIN
-    DELETE FROM ${FactOrderTableRef}
-    WHERE PARSE_DATE('%Y%m%d', CONCAT(milYear, FORMAT("%02d", milMonth), FORMAT("%02d", milDay))) < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR);
-  END;
+  -- BEGIN
+  --   DELETE FROM ${FactOrderTableRef}
+  --   WHERE PARSE_DATE('%Y%m%d', CONCAT(milYear, FORMAT("%02d", milMonth), FORMAT("%02d", milDay))) < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR);
+  -- END;
 
 END;
