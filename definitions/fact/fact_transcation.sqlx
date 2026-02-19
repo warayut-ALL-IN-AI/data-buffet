@@ -234,14 +234,14 @@ BEGIN
   ) as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
       and (CASE 
-            WHEN sale_sk.DepCode IS NOT NULL and sale_sk.CostChannelID IS NOT NULL
+            WHEN IFNULL(TRIM(sale_sk.DepCode), '') != '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and TRIM(trans.milDep) = TRIM(sale_sk.DepCode)
                 and trans.ChannelCostID = sale_sk.CostChannelID
-            WHEN sale_sk.ProvinceID IS NOT NULL
+            WHEN IFNULL(TRIM(sale_sk.ProvinceID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and CAST(trans.OrderProvinceSK as STRING) IN  UNNEST(SPLIT(sale_sk.ProvinceID, '|'))
-            WHEN sale_sk.DepCode IS NULL and sale_sk.CostChannelID IS NOT NULL
+            WHEN IFNULL(TRIM(sale_sk.DepCode), '') = '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and trans.ChannelCostID = sale_sk.CostChannelID
             ELSE TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
@@ -328,7 +328,7 @@ BEGIN
     from `${DimSaleRepGroupTableRef}`
   ) as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
-      and sale_sk.DepCode is null and sale_sk.CostChannelID is null
+      and IFNULL(TRIM(sale_sk.DepCode), '') = '' and IFNULL(TRIM(sale_sk.CostChannelID), '') = ''
       and TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
 
   -- DepartmentSK
