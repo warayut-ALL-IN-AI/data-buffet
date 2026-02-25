@@ -139,6 +139,13 @@ js {
     };
     const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
 
+    const DimChangeDistrictTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_change_district",
+    };
+    const DimChangeDistrictTableRef = `${DimChangeDistrictTable.database}.${DimChangeDistrictTable.schema}.${DimChangeDistrictTable.name}`;
+
 }
 
 BEGIN
@@ -193,6 +200,9 @@ BEGIN
     dir_sk.DirectorSK,
     coststk_sk.CostStkSk,
     costgroup_sk.CostGroupSK,
+
+    change_sec_sk.SectionSK as ChangeSectionSK,
+    change_sec_m_sk.SectionManagerSK as ChangeSectionManagerSK,
 
     trans.ChannelSK,
     trans.ChannelFinanceSK,
@@ -280,6 +290,21 @@ BEGIN
     ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
       and sec_sk.SectionID = sec_m_sk.SectionID
 
+  -- Change district
+  LEFT JOIN `${DimChangeDistrictTableRef}` as dim_change_district
+    ON trans.milCus = dim_change_district.customerCode
+      AND trans.mix_date BETWEEN dim_change_district.StartDate AND dim_change_district.EndDate
+
+  -- ChangeSectionSK
+  LEFT JOIN `${DimSectionTableRef}` as change_sec_sk
+    ON trans.mix_date between change_sec_sk.StartDate and change_sec_sk.EndDate
+      and dim_change_district.newSectionID = change_sec_sk.SectionID
+
+  -- ChangeSectionManagerSK
+  LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
+    ON trans.mix_date between change_sec_m_sk.StartDate and change_sec_m_sk.EndDate
+      and change_sec_sk.SectionID = change_sec_m_sk.SectionID
+
   -- DirectorSK
   LEFT JOIN `${DimDirectorTableRef}` as dir_sk
     ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
@@ -300,6 +325,9 @@ BEGIN
     dir_sk.DirectorSK,
     coststk_sk.CostStkSk,
     costgroup_sk.CostGroupSK,
+
+    change_sec_sk.SectionSK as ChangeSectionSK,
+    change_sec_m_sk.SectionManagerSK as ChangeSectionManagerSK,
 
     trans.ChannelSK,
     trans.ChannelFinanceSK,
@@ -363,6 +391,21 @@ BEGIN
   LEFT JOIN `${DimSectionManagerTableRef}` as sec_m_sk
     ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
       and sec_sk.SectionID = sec_m_sk.SectionID
+      
+  -- Change district
+  LEFT JOIN `${DimChangeDistrictTableRef}` as dim_change_district
+    ON trans.milCus = dim_change_district.customerCode
+      AND trans.mix_date BETWEEN dim_change_district.StartDate AND dim_change_district.EndDate
+
+  -- ChangeSectionSK
+  LEFT JOIN `${DimSectionTableRef}` as change_sec_sk
+    ON trans.mix_date between change_sec_sk.StartDate and change_sec_sk.EndDate
+      and dim_change_district.newSectionID = change_sec_sk.SectionID
+
+  -- ChangeSectionManagerSK
+  LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
+    ON trans.mix_date between change_sec_m_sk.StartDate and change_sec_m_sk.EndDate
+      and change_sec_sk.SectionID = change_sec_m_sk.SectionID
 
   -- DirectorSK
   LEFT JOIN `${DimDirectorTableRef}` as dir_sk
