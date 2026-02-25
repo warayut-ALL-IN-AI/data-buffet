@@ -30,59 +30,174 @@ js {
 }
 
 BEGIN
-  drop table if exists `${DimProductTableRef}`;
-  
-  create or replace table `${DimProductTableRef}`
-  cluster by ProductSK, ProductCode, ProductGroupMAC5Type
-  as
-  select
-  row_number() over(order by a.stkcode) as ProductSK,
-  a.stkcode as ProductCode ,
-  a.stkcode2 as ProductCode1,
-  a.stkdesct1 as ProductMac5Description,
-  g.stgcode as ProductGroupMAC5, 
-  g.stgdesct as ProductGroupMac5Description,
-  g.stgdesce as ProductGroupMAC5Type,
-  g.gacccode as ProductGroupACC,
-  g.gaccname as ProductGroupACCName,
-  pd.pd_product_name as ProductName,
-  p.prd_description as ProductDescription,
-  p.prd_dimension1 as ProductDimension1 ,
-  p.prd_dimension2 as ProductDimension2,
-  p.prd_dimension3 as ProductDimension3,
-  p.prd_dimension4 as ProductDimension4,
-  pd.pd_garantee as ProductGarantee,
-  pd.pd_garantee_detail as ProductGaranteeDetail,
-  (case 
-    when 
-      pd.pd_certificate is not null 
-      and pd.pd_certificate <> '' 
-      and pd.pd_certificate <> 'โปรดระบุ' 
-      and pd.pd_certificate <> '-' 
-      and pd.pd_certificate <> 'None' 
-      and pd.pd_certificate <> 'No'
-    then 'Yes' 
-    else 'No' 
-  end) as ThaiIndustrialStandardFlag,
-  (case
-    when pdr.Rebate is not null then 'Yes'
-    else 'No'
-  end) as ProductFCExcFlag,
-  pd.pd_certificate as ThaiIndustrialSatandardDetail,
-  p.prd_brand_id as BrandID,
-  p.prd_vendor_id as VendorID,
-  a.stksto as WarehouseID,
-  a.STKcode885 as Barcode
+  -- 1. หาค่า Max ของ ProductSK เดิมเพื่อรันเลขต่อสำหรับของใหม่
+  DECLARE max_sk INT64;
+  SET max_sk = (SELECT IFNULL(MAX(ProductSK), 0) FROM `${DimProductTableRef}`);
 
-  from ${ref(databuffet.VALIDATED_MAC5, "stk")} as a  
-  left join ${ref(databuffet.VALIDATED_MAC5, "stg")} as g on a.STKgroup = g.STGcode
-  left join ${ref(databuffet.VALIDATED_MASTERSKU, "product")} as p on a.STKcode885 = p.prd_barcode
-  left join ${ref(databuffet.VALIDATED_MASTERSKU, "product_detail")} as pd on p.prd_id = pd.pd_prd_id
-  left join `${DimProductRebateTableRef}` as pdr on a.stkcode = pdr.Rebate
-  --left join `${databuffet.DATABASE}.validated_mastersku.brand` brand on p.prd_brand_id = brand.bra_id
-  --left join `${databuffet.DATABASE}.validated_mastersku.vendor` vendor on p.prd_vendor_id = vendor.vd_id
-  --where a.STKcode885 is not null and a.STKcode885 <> '' 
-  qualify row_number() over(partition by ProductCode, Barcode order by prd_updated_date desc) = 1
-  ;
-  
+  -- 2. รัน MERGE กระบวนการ Upsert
+  MERGE `${DimProductTableRef}` T
+  USING (
+    WITH raw_data AS (
+      select
+--   row_number() over(order by a.stkcode) as ProductSK,
+        a.stkcode as ProductCode ,
+        a.stkcode2 as ProductCode1,
+        a.stkdesct1 as ProductMac5Description,
+        g.stgcode as ProductGroupMAC5, 
+        g.stgdesct as ProductGroupMac5Description,
+        g.stgdesce as ProductGroupMAC5Type,
+        g.gacccode as ProductGroupACC,
+        g.gaccname as ProductGroupACCName,
+        pd.pd_product_name as ProductName,
+        p.prd_description as ProductDescription,
+        p.prd_dimension1 as ProductDimension1 ,
+        p.prd_dimension2 as ProductDimension2,
+        p.prd_dimension3 as ProductDimension3,
+        p.prd_dimension4 as ProductDimension4,
+        pd.pd_garantee as ProductGarantee,
+        pd.pd_garantee_detail as ProductGaranteeDetail,
+        (case 
+            when 
+            pd.pd_certificate is not null 
+            and pd.pd_certificate <> '' 
+            and pd.pd_certificate <> 'โปรดระบุ' 
+            and pd.pd_certificate <> '-' 
+            and pd.pd_certificate <> 'None' 
+            and pd.pd_certificate <> 'No'
+            then 'Yes' 
+            else 'No' 
+        end) as ThaiIndustrialStandardFlag,
+        (case
+            when pdr.Rebate is not null then 'Yes'
+            else 'No'
+        end) as ProductFCExcFlag,
+        pd.pd_certificate as ThaiIndustrialSatandardDetail,
+        p.prd_brand_id as BrandID,
+        p.prd_vendor_id as VendorID,
+        a.stksto as WarehouseID,
+        a.STKcode885 as Barcode
+
+        from ${ref(databuffet.VALIDATED_MAC5, "stk")} as a  
+        left join ${ref(databuffet.VALIDATED_MAC5, "stg")} as g on a.STKgroup = g.STGcode
+        left join ${ref(databuffet.VALIDATED_MASTERSKU, "product")} as p on a.STKcode885 = p.prd_barcode
+        left join ${ref(databuffet.VALIDATED_MASTERSKU, "product_detail")} as pd on p.prd_id = pd.pd_prd_id
+        left join `${DimProductRebateTableRef}` as pdr on a.stkcode = pdr.Rebate
+        --left join `${databuffet.DATABASE}.validated_mastersku.brand` brand on p.prd_brand_id = brand.bra_id
+        --left join `${databuffet.DATABASE}.validated_mastersku.vendor` vendor on p.prd_vendor_id = vendor.vd_id
+        --where a.STKcode885 is not null and a.STKcode885 <> '' 
+        qualify row_number() over(partition by ProductCode, Barcode order by prd_updated_date desc) = 1
+    )
+    SELECT 
+      *,
+      -- สร้าง row_num เฉพาะกิจเพื่อเอาไปบวกต่อจาก Max SK เดิมสำหรับ Insert
+      ROW_NUMBER() OVER(ORDER BY ProductCode) as row_num
+    FROM raw_data
+  ) S
+  ON T.ProductCode = S.ProductCode 
+    AND IFNULL(T.Barcode, '') = IFNULL(S.Barcode, '')
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.ProductCode1 = S.ProductCode1,
+      T.ProductMac5Description = S.ProductMac5Description,
+      T.ProductGroupMAC5 = S.ProductGroupMAC5,
+      T.ProductGroupMac5Description = S.ProductGroupMac5Description,
+      T.ProductGroupMAC5Type = S.ProductGroupMAC5Type,
+      T.ProductGroupACC = S.ProductGroupACC,
+      T.ProductGroupACCName = S.ProductGroupACCName,
+      T.ProductName = S.ProductName,
+      T.ProductDescription = S.ProductDescription,
+      T.ProductDimension1 = S.ProductDimension1,
+      T.ProductDimension2 = S.ProductDimension2,
+      T.ProductDimension3 = S.ProductDimension3,
+      T.ProductDimension4 = S.ProductDimension4,
+      T.ProductGarantee = S.ProductGarantee,
+      T.ProductGaranteeDetail = S.ProductGaranteeDetail,
+      T.ThaiIndustrialStandardFlag = S.ThaiIndustrialStandardFlag,
+      T.ProductFCExcFlag = S.ProductFCExcFlag,
+      T.ThaiIndustrialSatandardDetail = S.ThaiIndustrialSatandardDetail,
+      T.BrandID = S.BrandID,
+      T.VendorID = S.VendorID,
+      T.WarehouseID = S.WarehouseID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      ProductSK, 
+      ProductCode, ProductCode1, ProductMac5Description, 
+      ProductGroupMAC5, ProductGroupMac5Description, ProductGroupMAC5Type, 
+      ProductGroupACC, ProductGroupACCName, ProductName, ProductDescription, 
+      ProductDimension1, ProductDimension2, ProductDimension3, ProductDimension4, 
+      ProductGarantee, ProductGaranteeDetail, ThaiIndustrialStandardFlag, 
+      ProductFCExcFlag, ThaiIndustrialSatandardDetail, BrandID, VendorID, 
+      WarehouseID, Barcode
+    )
+    VALUES (
+      max_sk + S.row_num, 
+      S.ProductCode, S.ProductCode1, S.ProductMac5Description, 
+      S.ProductGroupMAC5, S.ProductGroupMac5Description, S.ProductGroupMAC5Type, 
+      S.ProductGroupACC, S.ProductGroupACCName, S.ProductName, S.ProductDescription, 
+      S.ProductDimension1, S.ProductDimension2, S.ProductDimension3, S.ProductDimension4, 
+      S.ProductGarantee, S.ProductGaranteeDetail, S.ThaiIndustrialStandardFlag, 
+      S.ProductFCExcFlag, S.ThaiIndustrialSatandardDetail, S.BrandID, S.VendorID, 
+      S.WarehouseID, S.Barcode
+    );
+
 END;
+
+-- BEGIN
+--   drop table if exists `${DimProductTableRef}`;
+  
+--   create or replace table `${DimProductTableRef}`
+--   cluster by ProductSK, ProductCode, ProductGroupMAC5Type
+--   as
+--   select
+--   row_number() over(order by a.stkcode) as ProductSK,
+--   a.stkcode as ProductCode ,
+--   a.stkcode2 as ProductCode1,
+--   a.stkdesct1 as ProductMac5Description,
+--   g.stgcode as ProductGroupMAC5, 
+--   g.stgdesct as ProductGroupMac5Description,
+--   g.stgdesce as ProductGroupMAC5Type,
+--   g.gacccode as ProductGroupACC,
+--   g.gaccname as ProductGroupACCName,
+--   pd.pd_product_name as ProductName,
+--   p.prd_description as ProductDescription,
+--   p.prd_dimension1 as ProductDimension1 ,
+--   p.prd_dimension2 as ProductDimension2,
+--   p.prd_dimension3 as ProductDimension3,
+--   p.prd_dimension4 as ProductDimension4,
+--   pd.pd_garantee as ProductGarantee,
+--   pd.pd_garantee_detail as ProductGaranteeDetail,
+--   (case 
+--     when 
+--       pd.pd_certificate is not null 
+--       and pd.pd_certificate <> '' 
+--       and pd.pd_certificate <> 'โปรดระบุ' 
+--       and pd.pd_certificate <> '-' 
+--       and pd.pd_certificate <> 'None' 
+--       and pd.pd_certificate <> 'No'
+--     then 'Yes' 
+--     else 'No' 
+--   end) as ThaiIndustrialStandardFlag,
+--   (case
+--     when pdr.Rebate is not null then 'Yes'
+--     else 'No'
+--   end) as ProductFCExcFlag,
+--   pd.pd_certificate as ThaiIndustrialSatandardDetail,
+--   p.prd_brand_id as BrandID,
+--   p.prd_vendor_id as VendorID,
+--   a.stksto as WarehouseID,
+--   a.STKcode885 as Barcode
+
+--   from ${ref(databuffet.VALIDATED_MAC5, "stk")} as a  
+--   left join ${ref(databuffet.VALIDATED_MAC5, "stg")} as g on a.STKgroup = g.STGcode
+--   left join ${ref(databuffet.VALIDATED_MASTERSKU, "product")} as p on a.STKcode885 = p.prd_barcode
+--   left join ${ref(databuffet.VALIDATED_MASTERSKU, "product_detail")} as pd on p.prd_id = pd.pd_prd_id
+--   left join `${DimProductRebateTableRef}` as pdr on a.stkcode = pdr.Rebate
+--   --left join `${databuffet.DATABASE}.validated_mastersku.brand` brand on p.prd_brand_id = brand.bra_id
+--   --left join `${databuffet.DATABASE}.validated_mastersku.vendor` vendor on p.prd_vendor_id = vendor.vd_id
+--   --where a.STKcode885 is not null and a.STKcode885 <> '' 
+--   qualify row_number() over(partition by ProductCode, Barcode order by prd_updated_date desc) = 1
+--   ;
+  
+-- END;
