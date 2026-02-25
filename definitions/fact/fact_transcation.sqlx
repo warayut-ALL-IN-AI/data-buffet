@@ -470,8 +470,6 @@ BEGIN
       FROM temp_fact_transcation AS S 
       WHERE T.milVnos = S.milVnos
         AND T.milType = S.milType
-        AND T.milPer = S.milPer
-        AND T.milListno = S.milListno
     )
     ;
   END;
