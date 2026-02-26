@@ -64,6 +64,7 @@ with mil as (
         and t.mihType = mil.milType
         and t.mihVnos = mil.milVnos
         and t.mihCus = mil.milCus
+    WHERE mil.milType = 'PS'
     group by 1,2,3,4,5,6,7,8,9
 
   )
