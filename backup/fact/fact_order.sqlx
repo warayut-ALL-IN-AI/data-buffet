@@ -1,0 +1,131 @@
+config {
+  type: "operations",
+  dependencies: ["dim_order", "dim_customer", "fact_quotation"],
+  tags: [databuffet.TAG_FACT_DAILY],
+}
+
+js {
+    // Define table references
+    const FactOrderTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: name(),
+    };
+    const FactOrderTableRef = `${FactOrderTable.database}.${FactOrderTable.schema}.${FactOrderTable.name}`;
+
+    const FactQuotationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: "fact_quotation",
+    };
+    const FactQuotationTableRef = `${FactQuotationTable.database}.${FactQuotationTable.schema}.${FactQuotationTable.name}`;
+
+    const DimOrderTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_order",
+    };
+    const DimOrderTableRef = `${DimOrderTable.database}.${DimOrderTable.schema}.${DimOrderTable.name}`;
+
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+
+}
+
+BEGIN
+  -- 1. เตรียมค่า Max SK สำหรับการ Insert ข้อมูลใหม่
+  DECLARE max_sk INT64;
+  SET max_sk = (SELECT IFNULL(MAX(FactOrderSk), 0) FROM `${FactOrderTableRef}`);
+
+  -- 2. เริ่มกระบวนการ MERGE
+  MERGE `${FactOrderTableRef}` T
+  USING (
+    WITH mil_source AS (
+      SELECT 
+        t.OrderSK,
+        mil.milYear, mil.milMonth, mil.milDay,
+        mil.milType,
+        mil.milvnos,
+        mil.milStk,
+        mil.milCus,
+        t.mihRef1,
+        SUM(mil.milQuan) AS milQuan,
+        SUM(mil.milAdisc) AS milAdisc,
+        SUM(mil.milCog) AS milCog,
+        SUM(mil.milDisca) AS milDisca,
+        SUM(mil.milSum) AS milSum
+      FROM ${ref(databuffet.CURATED_MAC5, 'curated_mil')} AS mil
+      INNER JOIN `${DimOrderTableRef}` AS t 
+        ON t.mihYear = mil.milYear
+        AND t.mihMonth = mil.milMonth
+        AND t.mihDay = mil.milDay
+        AND t.mihType = mil.milType
+        AND t.mihVnos = mil.milVnos
+        AND t.mihCus = mil.milCus
+      WHERE mil.asatdate >= CURRENT_DATE('Asia/Bangkok')-1
+      GROUP BY 1,2,3,4,5,6,7,8,9
+    )
+    SELECT 
+      mil.OrderSK,
+      fact_quo.QuotationSK,
+      fact_quo.FactQuotationSK,
+      dim_cust.CustomerSK,
+      PARSE_DATE('%Y%m%d', CONCAT(mil.milYear, FORMAT("%02d", mil.milMonth), mil.milDay)) AS mix_date,
+      mil.* EXCEPT(OrderSK, mihRef1),
+      CURRENT_DATE('Asia/Bangkok') AS asatdate,
+      -- สร้าง row_number สำหรับรัน SK ต่อจากค่าสูงสุดเดิม
+      ROW_NUMBER() OVER(ORDER BY mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milvnos, mil.milCus, mil.milStk) AS row_num
+    FROM mil_source AS mil
+    LEFT JOIN `${FactQuotationTableRef}` AS fact_quo
+      ON mil.mihRef1 = fact_quo.Running
+      AND mil.milStk = fact_quo.StkCode
+    LEFT JOIN `${DimCustomerTableRef}` AS dim_cust
+      ON mil.milCus = dim_cust.debcode
+  ) S
+  ON T.milYear = S.milYear 
+    AND T.milMonth = S.milMonth 
+    AND T.milDay = S.milDay 
+    AND T.milType = S.milType 
+    AND T.milVnos = S.milVnos 
+    AND T.milCus = S.milCus 
+    AND T.milStk = S.milStk
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.OrderSK = S.OrderSK,
+      T.QuotationSK = S.QuotationSK,
+      T.FactQuotationSK = S.FactQuotationSK,
+      T.CustomerSK = S.CustomerSK,
+      T.mix_date = S.mix_date,
+      T.milQuan = S.milQuan,
+      T.milAdisc = S.milAdisc,
+      T.milCog = S.milCog,
+      T.milDisca = S.milDisca,
+      T.milSum = S.milSum,
+      T.asatdate = S.asatdate
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      FactOrderSk, 
+      OrderSK, QuotationSK, FactQuotationSK, CustomerSK,
+      mix_date, milYear, milMonth, milDay, milType, milvnos, milCus, milStk,
+      milQuan, milAdisc, milCog, milDisca, milSum, asatdate
+    )
+    VALUES (
+      max_sk + S.row_num, 
+      S.OrderSK, S.QuotationSK, S.FactQuotationSK, S.CustomerSK,
+      S.mix_date, S.milYear, S.milMonth, S.milDay, S.milType, S.milvnos, S.milCus, S.milStk,
+      S.milQuan, S.milAdisc, S.milCog, S.milDisca, S.milSum, S.asatdate
+    );
+
+  -- 3. ลบข้อมูลเก่าที่เกิน 4 ปี (Retention Policy)
+  BEGIN
+    DELETE FROM `${FactOrderTableRef}`
+    WHERE mix_date < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR);
+  END;
+
+END;
