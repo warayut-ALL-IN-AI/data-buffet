@@ -26,7 +26,7 @@ USING (
             WHEN mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
             ELSE null
           END) as StatusDesc,
-          mihCancel,
+          mihCancel,mihDep,mihJob
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')}
         left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} on mihStatus = ar_scode
         left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} on mihStatus = ap_scode
@@ -43,7 +43,7 @@ USING (
             WHEN mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
             ELSE null
           END) as StatusDesc,
-          mihCancel
+          mihCancel,mihDep,mihJob
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')}
         left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} on mihStatus = ar_scode
         left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} on mihStatus = ap_scode
@@ -70,7 +70,8 @@ USING (
     includ_mih as (
         SELECT 
           mihDay, mihMonth, mihYear, mihType, mihCus, mih.mihVnos, mihPer,
-          per_sale1, mih2per2, per_sale2, mihStatus, StatusDesc, mihCancel, mihRef1
+          per_sale1, mih2per2, per_sale2, mihStatus, StatusDesc, mihCancel, mihRef1,
+          mihDep,mihJob
         FROM mih_raw as mih
         INNER JOIN filter_mih2 as mih2
           ON mih.mihref1 = mih2.mih2vnos
@@ -83,7 +84,8 @@ USING (
           100 as per_sale1,
           '0' as mih2per2,
           0 as per_sale2,
-          mihStatus, StatusDesc, mihCancel, mihRef1
+          mihStatus, StatusDesc, mihCancel, mihRef1,
+          mihDep,mihJob
         FROM mih_raw2 as mih2
         WHERE NOT EXISTS (
           SELECT 1 
@@ -153,16 +155,18 @@ ON S.mihType = T.mihType
 -- กรณีเจอข้อมูลเดิม (Update)
 WHEN MATCHED THEN
   UPDATE SET 
-    mix_date = S.mix_date,
-    mihPer = S.mihPer,
-    per_sale1 = S.per_sale1,
-    mih2per2 = S.mih2per2,
-    per_sale2 = S.per_sale2,
-    mihStatus = S.mihStatus,
-    StatusDesc = S.StatusDesc,
-    mihCancel = S.mihCancel,
-    mihRef1 = S.mihRef1,
-    InvoiceSalesFlag = S.InvoiceSalesFlag
+    T.mix_date = S.mix_date,
+    T.mihPer = S.mihPer,
+    T.per_sale1 = S.per_sale1,
+    T.mih2per2 = S.mih2per2,
+    T.per_sale2 = S.per_sale2,
+    T.mihStatus = S.mihStatus,
+    T.StatusDesc = S.StatusDesc,
+    T.mihCancel = S.mihCancel,
+    T.mihRef1 = S.mihRef1,
+    T.mihDep = S.mihDep,
+    T.mihJob = S.mihJob,
+    T.InvoiceSalesFlag = S.InvoiceSalesFlag
     -- ยกเว้น: OrderSK, InvoiceSK, QuotationSK ไม่ถูก update
 
 -- กรณีไม่เจอข้อมูล (Insert)
@@ -172,12 +176,14 @@ WHEN NOT MATCHED THEN
     mix_date, mihDay, mihMonth, mihYear, 
     mihType, mihVnos, mihCus, milLinkVcno,
     mihRef1, mihPer, mihStatus, StatusDesc, mihCancel,
-    per_sale1, mih2per2, per_sale2, InvoiceSalesFlag
+    per_sale1, mih2per2, per_sale2, mihDep, mihJob,
+    InvoiceSalesFlag
   )
   VALUES (
     S.final_InvoiceSK, -- ใช้ SK ที่คำนวณใหม่
     S.mix_date, S.mihDay, S.mihMonth, S.mihYear, 
     S.mihType, S.mihVnos, S.mihCus, S.milLinkVcno,
     S.mihRef1, S.mihPer, S.mihStatus, S.StatusDesc, S.mihCancel,
-    S.per_sale1, S.mih2per2, S.per_sale2, S.InvoiceSalesFlag
+    S.per_sale1, S.mih2per2, S.per_sale2, S.mihDep, S.mihJob,
+    S.InvoiceSalesFlag
   );
