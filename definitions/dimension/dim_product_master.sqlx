@@ -23,9 +23,23 @@ js {
     const DimProductRebateTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
-        name: "dim_product_rebate",
+        name: "dim_rebate",
     };
     const DimProductRebateTableRef = `${DimProductRebateTable.database}.${DimProductRebateTable.schema}.${DimProductRebateTable.name}`;
+
+    const DimStkMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_stk_mkt",
+    };
+    const DimStkMktTableRef = `${DimStkMktTable.database}.${DimStkMktTable.schema}.${DimStkMktTable.name}`;
+
+    const DimProductMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_mkt",
+    };
+    const DimProductMktTableRef = `${DimProductMktTable.database}.${DimProductMktTable.schema}.${DimProductMktTable.name}`;
 
 }
 
@@ -40,6 +54,8 @@ BEGIN
     WITH raw_data AS (
       select
 --   row_number() over(order by a.stkcode) as ProductSK,
+        stk_mkt_sk.StkMktSK,
+        product_mk_sk.ProductMktSK,
         a.stkcode as ProductCode ,
         a.stkcode2 as ProductCode1,
         a.stkdesct1 as ProductMac5Description,
@@ -67,10 +83,14 @@ BEGIN
             then 'Yes' 
             else 'No' 
         end) as ThaiIndustrialStandardFlag,
-        (case
-            when pdr.Rebate is not null then 'Yes'
-            else 'No'
-        end) as ProductFCExcFlag,
+        -- (case
+        --     when pdr.salesExc is not null then pdr.salesExc
+        --     else 'No'
+        -- end) as ProductSaleExcFlag,
+        -- (case
+        --     when pdr.accExc is not null then pdr.accExc
+        --     else 'No'
+        -- end) as ProductFCExcFlag,
         pd.pd_certificate as ThaiIndustrialSatandardDetail,
         p.prd_brand_id as BrandID,
         p.prd_vendor_id as VendorID,
@@ -81,23 +101,35 @@ BEGIN
         left join ${ref(databuffet.VALIDATED_MAC5, "stg")} as g on a.STKgroup = g.STGcode
         left join ${ref(databuffet.VALIDATED_MASTERSKU, "product")} as p on a.STKcode885 = p.prd_barcode
         left join ${ref(databuffet.VALIDATED_MASTERSKU, "product_detail")} as pd on p.prd_id = pd.pd_prd_id
-        left join `${DimProductRebateTableRef}` as pdr on a.stkcode = pdr.Rebate
+        -- left join `${DimProductRebateTableRef}` as pdr on a.stkcode = pdr.rebate and pdr.status = 'Product'
         --left join `${databuffet.DATABASE}.validated_mastersku.brand` brand on p.prd_brand_id = brand.bra_id
         --left join `${databuffet.DATABASE}.validated_mastersku.vendor` vendor on p.prd_vendor_id = vendor.vd_id
+        
+        left join `${DimStkMktTableRef}` as stk_mkt_sk
+          on a.stkcode = stk_mkt_sk.StkCode
+        left join `${DimProductMktTableRef}` as product_mk_sk
+          on stk_mkt_sk.MarketingGroupID = product_mk_sk.MarketingGroupID
+            and stk_mkt_sk.SubMarketingID = product_mk_sk.SubMarketingID
+            and stk_mkt_sk.SegmentID = product_mk_sk.SegmentID
         --where a.STKcode885 is not null and a.STKcode885 <> '' 
         qualify row_number() over(partition by ProductCode, Barcode order by prd_updated_date desc) = 1
     )
     SELECT 
-      *,
-      -- สร้าง row_num เฉพาะกิจเพื่อเอาไปบวกต่อจาก Max SK เดิมสำหรับ Insert
-      ROW_NUMBER() OVER(ORDER BY ProductCode) as row_num
-    FROM raw_data
+      S.*,
+      -- เช็คว่ามีอยู่แล้วในตาราง Target หรือไม่
+      ROW_NUMBER() OVER(PARTITION BY T.ProductSK IS NULL ORDER BY S.ProductCode) as ProductSK
+    FROM raw_data S
+    LEFT JOIN `${DimProductTableRef}` T 
+      ON S.ProductCode = T.ProductCode 
+      AND IFNULL(S.Barcode, '') = IFNULL(T.Barcode, '')
   ) S
   ON T.ProductCode = S.ProductCode 
     AND IFNULL(T.Barcode, '') = IFNULL(S.Barcode, '')
 
   WHEN MATCHED THEN
     UPDATE SET
+      T.StkMktSK = S.StkMktSK,
+      T.ProductMktSK = S.ProductMktSK,
       T.ProductCode1 = S.ProductCode1,
       T.ProductMac5Description = S.ProductMac5Description,
       T.ProductGroupMAC5 = S.ProductGroupMAC5,
@@ -114,7 +146,6 @@ BEGIN
       T.ProductGarantee = S.ProductGarantee,
       T.ProductGaranteeDetail = S.ProductGaranteeDetail,
       T.ThaiIndustrialStandardFlag = S.ThaiIndustrialStandardFlag,
-      T.ProductFCExcFlag = S.ProductFCExcFlag,
       T.ThaiIndustrialSatandardDetail = S.ThaiIndustrialSatandardDetail,
       T.BrandID = S.BrandID,
       T.VendorID = S.VendorID,
@@ -122,23 +153,23 @@ BEGIN
 
   WHEN NOT MATCHED THEN
     INSERT (
-      ProductSK, 
+      ProductSK, StkMktSK, ProductMktSK,
       ProductCode, ProductCode1, ProductMac5Description, 
       ProductGroupMAC5, ProductGroupMac5Description, ProductGroupMAC5Type, 
       ProductGroupACC, ProductGroupACCName, ProductName, ProductDescription, 
       ProductDimension1, ProductDimension2, ProductDimension3, ProductDimension4, 
       ProductGarantee, ProductGaranteeDetail, ThaiIndustrialStandardFlag, 
-      ProductFCExcFlag, ThaiIndustrialSatandardDetail, BrandID, VendorID, 
+      ThaiIndustrialSatandardDetail, BrandID, VendorID, 
       WarehouseID, Barcode
     )
     VALUES (
-      max_sk + S.row_num, 
+      max_sk + ProductSK, S.StkMktSK, S.ProductMktSK,
       S.ProductCode, S.ProductCode1, S.ProductMac5Description, 
       S.ProductGroupMAC5, S.ProductGroupMac5Description, S.ProductGroupMAC5Type, 
       S.ProductGroupACC, S.ProductGroupACCName, S.ProductName, S.ProductDescription, 
       S.ProductDimension1, S.ProductDimension2, S.ProductDimension3, S.ProductDimension4, 
       S.ProductGarantee, S.ProductGaranteeDetail, S.ThaiIndustrialStandardFlag, 
-      S.ProductFCExcFlag, S.ThaiIndustrialSatandardDetail, S.BrandID, S.VendorID, 
+      S.ThaiIndustrialSatandardDetail, S.BrandID, S.VendorID, 
       S.WarehouseID, S.Barcode
     );
 
