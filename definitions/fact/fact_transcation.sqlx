@@ -292,7 +292,7 @@ BEGIN
 
   -- Change district
   LEFT JOIN `${DimChangeDistrictTableRef}` as dim_change_district
-    ON trans.milCus = dim_change_district.customerCode
+    ON trans.milCus = TRIM(dim_change_district.customerCode)
       AND trans.mix_date BETWEEN dim_change_district.StartDate AND dim_change_district.EndDate
 
   -- ChangeSectionSK
