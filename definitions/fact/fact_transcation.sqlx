@@ -168,6 +168,7 @@ BEGIN
       
       -- productmaster.ProductCode,
       productmaster.ProductGroupACC,
+      deb.debgroup,
       IF(channel_sk.DummyChannel <> 'not calculated', channel_sk.DummyChannel, CAST(NULL AS STRING)) as DummyChannel,
       trans.* except(OrderProvinceSK, OrderDistrictSK, OrderSubDistrictSK)
     FROM ${databuffet.DATABASE}.onetime.Transaction_Data_Mart as trans
@@ -183,6 +184,10 @@ BEGIN
     -- ChannelSK
     LEFT JOIN `${DimChannelTableRef}` AS channel_sk
       ON IFNULL(trans.milDep, 'N/A') = channel_sk.DepCode
+    
+    -- DEB
+    LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'deb')} as deb
+      ON trans.milCus = deb.debCode
       
     WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1
       -- AND milVnos = '6901003086'
@@ -356,8 +361,28 @@ BEGIN
     from `${DimSaleRepGroupTableRef}`
   ) as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
-      and IFNULL(TRIM(sale_sk.DepCode), '') = '' and IFNULL(TRIM(sale_sk.CostChannelID), '') = ''
-      and TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+      and (CASE 
+            WHEN IFNULL(TRIM(sale_sk.DepCode), '') != '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and TRIM(trans.milDep) = TRIM(sale_sk.DepCode)
+                and trans.ChannelCostID = sale_sk.CostChannelID
+            WHEN IFNULL(TRIM(sale_sk.DepCode), '') = '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and ((trans.ChannelCostID = sale_sk.CostChannelID)
+                  or (CASE
+                        WHEN trans.debgroup in ('HP', 'HPEXPO') THEN lower(sale_sk.DepartmentID) like 'hp_%'
+                        WHEN trans.debgroup in ('TW', 'TWEXPO') THEN lower(sale_sk.DepartmentID) like 'tw_%'
+                        WHEN trans.debgroup in ('BT', 'BT.C') THEN lower(sale_sk.DepartmentID) like 'bt_%'
+                        WHEN trans.debgroup in ('GB') THEN lower(sale_sk.DepartmentID) like 'gb_%'
+                        WHEN trans.debgroup in ('MH') THEN lower(sale_sk.DepartmentID) like 'mh_%'
+                        WHEN trans.debgroup in ('DOHOME') THEN lower(sale_sk.DepartmentID) like 'dh_%'
+                      END)
+                )
+            WHEN IFNULL(TRIM(sale_sk.ProvinceID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and CAST(trans.OrderProvinceSK as STRING) IN  UNNEST(SPLIT(sale_sk.ProvinceID, '|'))
+            ELSE TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+          END)
 
   -- DepartmentSK
   LEFT JOIN `${DimDepartmentTableRef}` as dep_sk
@@ -427,8 +452,28 @@ BEGIN
     from `${DimSaleRepGroupTableRef}`
   ) as sale_addon
     ON trans.mix_date between sale_addon.StartDate and sale_addon.EndDate
-      and sale_addon.DepCode is null and sale_addon.CostChannelID is null
-      and TRIM(IFNULL(trans.DummyChannel, trans.milPer_raw)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
+      and (CASE 
+            WHEN IFNULL(TRIM(sale_addon.DepCode), '') != '' and IFNULL(TRIM(sale_addon.CostChannelID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
+                and TRIM(trans.milDep) = TRIM(sale_addon.DepCode)
+                and trans.ChannelCostID = sale_addon.CostChannelID
+            WHEN IFNULL(TRIM(sale_addon.DepCode), '') = '' and IFNULL(TRIM(sale_addon.CostChannelID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
+                and ((trans.ChannelCostID = sale_addon.CostChannelID)
+                  or (CASE
+                        WHEN trans.debgroup in ('HP', 'HPEXPO') THEN lower(sale_addon.DepartmentID) like 'hp_%'
+                        WHEN trans.debgroup in ('TW', 'TWEXPO') THEN lower(sale_addon.DepartmentID) like 'tw_%'
+                        WHEN trans.debgroup in ('BT', 'BT.C') THEN lower(sale_addon.DepartmentID) like 'bt_%'
+                        WHEN trans.debgroup in ('GB') THEN lower(sale_addon.DepartmentID) like 'gb_%'
+                        WHEN trans.debgroup in ('MH') THEN lower(sale_addon.DepartmentID) like 'mh_%'
+                        WHEN trans.debgroup in ('DOHOME') THEN lower(sale_addon.DepartmentID) like 'dh_%'
+                      END)
+                )
+            WHEN IFNULL(TRIM(sale_addon.ProvinceID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
+                and CAST(trans.OrderProvinceSK as STRING) IN  UNNEST(SPLIT(sale_addon.ProvinceID, '|'))
+            ELSE TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
+          END)
 
   -- Department Add-on
   LEFT JOIN `${DimDepartmentTableRef}` as dep_addon
@@ -460,11 +505,11 @@ BEGIN
   qualify row_number() over(partition by trans.milType,trans.milVnos,trans.milCus,trans.milStk,trans.milPer,trans.milListno order by sale_sk.seq_condition) = 1
 
 ), mix_table as (
-  select * except(ProductGroupACC)
+  select * except(ProductGroupACC, debgroup)
   from final_part1
   -- where mildep is null
   union all
-  select * except(ProductGroupACC)
+  select * except(ProductGroupACC, debgroup)
   from final_part2
   -- where mildep is null
 )
