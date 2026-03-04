@@ -279,11 +279,13 @@ BEGIN
   -- RegionManagerSK
   LEFT JOIN `${DimRegionManagerTableRef}` as reg_m_sk
     ON trans.mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
-      and (CASE 
-        WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
-          THEN reg_sk.RegionID = reg_m_sk.RegionID and dep_sk.SectionID = reg_m_sk.SubRegionID
-        ELSE reg_sk.RegionID = reg_m_sk.RegionID
-      END)
+      and reg_sk.RegionID = reg_m_sk.RegionID
+      and reg_sk.SubRegionID = reg_m_sk.SubRegionID
+      -- and (CASE 
+      --   WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
+      --     THEN reg_sk.RegionID = reg_m_sk.RegionID and dep_sk.SectionID = reg_m_sk.SubRegionID
+      --   ELSE reg_sk.RegionID = reg_m_sk.RegionID
+      -- END)
 
   -- SectionSK
   LEFT JOIN `${DimSectionTableRef}` as sec_sk
@@ -401,11 +403,13 @@ BEGIN
   -- RegionManagerSK
   LEFT JOIN `${DimRegionManagerTableRef}` as reg_m_sk
     ON trans.mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
-      and (CASE 
-        WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
-          THEN reg_sk.RegionID = reg_m_sk.RegionID and dep_sk.SectionID = reg_m_sk.SubRegionID
-        ELSE reg_sk.RegionID = reg_m_sk.RegionID
-      END)
+      and reg_sk.RegionID = reg_m_sk.RegionID
+      and reg_sk.SubRegionID = reg_m_sk.SubRegionID
+      -- and (CASE 
+      --   WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
+      --     THEN reg_sk.RegionID = reg_m_sk.RegionID and dep_sk.SectionID = reg_m_sk.SubRegionID
+      --   ELSE reg_sk.RegionID = reg_m_sk.RegionID
+      -- END)
 
   -- SectionSK
   LEFT JOIN `${DimSectionTableRef}` as sec_sk
