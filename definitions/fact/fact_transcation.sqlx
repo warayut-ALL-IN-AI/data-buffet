@@ -1,6 +1,6 @@
 config {
   type: "operations",
-  dependencies: ["curated_mih", "curated_mil", "dim_product_master", "dim_customer"],
+  dependencies: ["curated_mih", "curated_mil", "dim_product_master", "dim_customer", "dim_sale_representative", "dim_sale_representative_last"],
   tags: [databuffet.TAG_FACT_DAILY],
 }
 
@@ -50,8 +50,8 @@ js {
     
     const DimSaleRepGroupTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_VIEW,
-        name: "view_dim_sale_representative",
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative",
     };
     const DimSaleRepGroupTableRef = `${DimSaleRepGroupTable.database}.${DimSaleRepGroupTable.schema}.${DimSaleRepGroupTable.name}`;
     

@@ -1,0 +1,94 @@
+config {
+  type: "operations",
+  dependencies: [],
+  tags: [databuffet.TAG_DIM_DAILY],
+  hasOutput: true
+}
+
+js {
+    // Define table references
+    const DimSaleRepLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimSaleRepLastTableRef = `${DimSaleRepLastTable.database}.${DimSaleRepLastTable.schema}.${DimSaleRepLastTable.name}`;
+}
+
+MERGE `${DimSaleRepLastTableRef}` T
+USING (
+    WITH raw_per AS (
+        SELECT DISTINCT 
+            percode as EmployeeID, 
+            TRIM(REGEXP_REPLACE(pernamet, r'\s+', ' ')) as pernamet
+        FROM ${ref(databuffet.VALIDATED_MAC5, 'per')}
+
+    ),
+    source_combined AS (
+        SELECT 
+            EmployeeID,
+            REGEXP_EXTRACT(pernamet, r'^([^\s]+)') AS EmployeeName,
+            REGEXP_EXTRACT(pernamet, r'\s([^\s(]+)') AS EmployeeSurname,
+            REGEXP_EXTRACT(pernamet, r'\((.*?)\)') AS EmployeeNickname,
+            CAST(NULL AS STRING) AS DepartmentID,
+            CAST(NULL AS STRING) AS DepCode,
+            CAST(NULL AS STRING) AS CostChannelID,
+            CAST(NULL AS STRING) AS ProvinceID,
+            CAST(NULL AS STRING) AS ChangeSectionFlag
+        FROM raw_per
+
+    ),
+    target_max AS (
+        SELECT IFNULL(MAX(SaleRepSK), 0) as max_sk 
+        FROM `${DimSaleRepLastTableRef}`
+
+    ),
+    prepared_source AS (
+        SELECT 
+            S.*,
+            T.SaleRepSK as existing_sk,
+            (CASE 
+                WHEN T.EmployeeID IS NULL THEN 
+                    ROW_NUMBER() OVER (
+                        PARTITION BY (CASE WHEN T.EmployeeID IS NULL THEN 1 ELSE 0 END) 
+                        ORDER BY S.EmployeeID
+                    )
+                ELSE NULL 
+            END) as rn_new
+        FROM source_combined S
+        LEFT JOIN `${DimSaleRepLastTableRef}` T
+            ON S.EmployeeID = T.EmployeeID 
+              AND T.DepartmentID is null
+    )
+
+    SELECT 
+        src.*,
+        CASE 
+            WHEN existing_sk IS NOT NULL THEN existing_sk
+            ELSE (SELECT max_sk FROM target_max) + rn_new
+        END as final_SaleRepSK
+    FROM prepared_source src
+
+) S
+ON T.EmployeeID = S.EmployeeID 
+   AND T.DepartmentID is null
+
+WHEN MATCHED THEN
+  UPDATE SET 
+    T.EmployeeName = S.EmployeeName,
+    T.EmployeeSurname = S.EmployeeSurname,
+    T.EmployeeNickname = S.EmployeeNickname
+
+WHEN NOT MATCHED THEN
+  INSERT (
+    SaleRepSK, DepartmentSK, SectionSK, SectionManagerSK, RegionSK, 
+    RegionManagerSK, DirectorSK, DepartmentID, EmployeeID, EmployeeName, 
+    EmployeeSurname, EmployeeNickname, DepCode, CostChannelID, 
+    ProvinceID, ChangeSectionFlag
+  )
+  VALUES (
+    S.final_SaleRepSK, NULL, NULL, NULL, NULL, 
+    NULL, NULL, S.DepartmentID, S.EmployeeID, S.EmployeeName, 
+    S.EmployeeSurname, S.EmployeeNickname, S.DepCode, S.CostChannelID, 
+    S.ProvinceID, S.ChangeSectionFlag
+  );
