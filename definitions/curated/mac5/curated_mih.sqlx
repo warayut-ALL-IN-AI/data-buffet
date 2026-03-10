@@ -7,7 +7,6 @@ config {
     bigquery: {
         partitionBy: "asatdate",
         clusterBy: ["mihVnos", "mihType", "mihYear"],
-        updatePartitionFilter: "asatdate >= CURRENT_DATE('Asia/Bangkok')-7"
     }
 }
 
