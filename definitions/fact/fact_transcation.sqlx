@@ -207,7 +207,7 @@ BEGIN
     costgroup_sk.CostGroupSK,
 
     change_sec_sk.SectionSK as ChangeSectionSK,
-    change_sec_m_sk.SectionManagerSK as ChangeSectionManagerSK,
+    -- change_sec_m_sk.SectionManagerSK as ChangeSectionManagerSK,
 
     trans.ChannelSK,
     trans.ChannelFinanceSK,
@@ -307,10 +307,10 @@ BEGIN
     ON trans.mix_date between change_sec_sk.StartDate and change_sec_sk.EndDate
       and dim_change_district.newSectionID = change_sec_sk.SectionID
 
-  -- ChangeSectionManagerSK
-  LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
-    ON trans.mix_date between change_sec_m_sk.StartDate and change_sec_m_sk.EndDate
-      and change_sec_sk.SectionID = change_sec_m_sk.SectionID
+  -- -- ChangeSectionManagerSK
+  -- LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
+  --   ON trans.mix_date between change_sec_m_sk.StartDate and change_sec_m_sk.EndDate
+  --     and change_sec_sk.SectionID = change_sec_m_sk.SectionID
 
   -- DirectorSK
   LEFT JOIN `${DimDirectorTableRef}` as dir_sk
@@ -334,7 +334,7 @@ BEGIN
     costgroup_sk.CostGroupSK,
 
     change_sec_sk.SectionSK as ChangeSectionSK,
-    change_sec_m_sk.SectionManagerSK as ChangeSectionManagerSK,
+    -- change_sec_m_sk.SectionManagerSK as ChangeSectionManagerSK,
 
     trans.ChannelSK,
     trans.ChannelFinanceSK,
@@ -431,10 +431,10 @@ BEGIN
     ON trans.mix_date between change_sec_sk.StartDate and change_sec_sk.EndDate
       and dim_change_district.newSectionID = change_sec_sk.SectionID
 
-  -- ChangeSectionManagerSK
-  LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
-    ON trans.mix_date between change_sec_m_sk.StartDate and change_sec_m_sk.EndDate
-      and change_sec_sk.SectionID = change_sec_m_sk.SectionID
+  -- -- ChangeSectionManagerSK
+  -- LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
+  --   ON trans.mix_date between change_sec_m_sk.StartDate and change_sec_m_sk.EndDate
+  --     and change_sec_sk.SectionID = change_sec_m_sk.SectionID
 
   -- DirectorSK
   LEFT JOIN `${DimDirectorTableRef}` as dir_sk
