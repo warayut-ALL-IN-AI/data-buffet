@@ -136,17 +136,21 @@ ON T.mihType = S.mihType
 -- กรณีเจอข้อมูลเดิม (Update)
 WHEN MATCHED THEN
   UPDATE SET 
-    mix_date = S.mix_date,
-    mihJob = S.mihJob,
-    mihRef1 = S.mihRef1,
-    mihRef2 = S.mihRef2,
-    mihRef3 = S.mihRef3,
-    mihCancel = S.mihCancel,
-    mihStatus = S.mihStatus,
-    StatusName = S.StatusName,
-    memoExtract = S.memoExtract,
-    mihMemoNew = S.mihMemoNew,
-    mihStatusDesc = S.mihStatusDesc
+    T.mix_date = S.mix_date,
+    T.mihYear = S.mihYear, 
+    T.mihMonth = S.mihMonth, 
+    T.mihDay = S.mihDay, 
+    T.mihCus = S.mihCus,
+    T.mihJob = S.mihJob,
+    T.mihRef1 = S.mihRef1,
+    T.mihRef2 = S.mihRef2,
+    T.mihRef3 = S.mihRef3,
+    T.mihCancel = S.mihCancel,
+    T.mihStatus = S.mihStatus,
+    T.StatusName = S.StatusName,
+    T.memoExtract = S.memoExtract,
+    T.mihMemoNew = S.mihMemoNew,
+    T.mihStatusDesc = S.mihStatusDesc
     -- ไม่ Update OrderSK, InvoiceSK, QuotationSK ตามเงื่อนไข
 
 -- กรณีไม่เจอข้อมูล (Insert)

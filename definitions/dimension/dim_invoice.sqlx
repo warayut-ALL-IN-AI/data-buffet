@@ -156,6 +156,10 @@ ON S.mihType = T.mihType
 WHEN MATCHED THEN
   UPDATE SET 
     T.mix_date = S.mix_date,
+    T.mihDay = S.mihDay, 
+    T.mihMonth = S.mihMonth, 
+    T.mihYear = S.mihYear,
+    T.mihCus = S.mihCus,
     T.mihPer = S.mihPer,
     T.per_sale1 = S.per_sale1,
     T.mih2per2 = S.mih2per2,
