@@ -237,13 +237,17 @@ BEGIN
   LEFT JOIN (
     select *,
       (CASE 
-        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and TRIM(DepCode) is not null and CostChannelID is not null 
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null 
+          and NULLIF(TRIM(CAST(DepCode as STRING)), '') is not null 
+          and NULLIF(TRIM(CAST(CostChannelID as STRING)), '') is not null 
           THEN 1
-        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and ProvinceID is not null
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(ProvinceID as STRING)), '') is not null
           THEN 2
-        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and CostChannelID is not null 
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(CostChannelID as STRING)), '') is not null 
           THEN 3
-        ELSE 4
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(DepartmentID as STRING)), '') is not null
+          THEN 4
+        ELSE 5
       END) as seq_condition
     from `${DimSaleRepGroupTableRef}`
   ) as sale_sk
@@ -352,13 +356,17 @@ BEGIN
   LEFT JOIN (
     select *,
       (CASE 
-        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and TRIM(DepCode) is not null and CostChannelID is not null 
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null 
+          and NULLIF(TRIM(CAST(DepCode as STRING)), '') is not null 
+          and NULLIF(TRIM(CAST(CostChannelID as STRING)), '') is not null 
           THEN 1
-        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and ProvinceID is not null
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(ProvinceID as STRING)), '') is not null
           THEN 2
-        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and CostChannelID is not null 
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(CostChannelID as STRING)), '') is not null 
           THEN 3
-        ELSE 4
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(DepartmentID as STRING)), '') is not null
+          THEN 4
+        ELSE 5
       END) as seq_condition
     from `${DimSaleRepGroupTableRef}`
   ) as sale_sk
@@ -445,13 +453,17 @@ BEGIN
   LEFT JOIN (
     select *,
       (CASE 
-        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and TRIM(DepCode) is not null and CostChannelID is not null 
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null 
+          and NULLIF(TRIM(CAST(DepCode as STRING)), '') is not null 
+          and NULLIF(TRIM(CAST(CostChannelID as STRING)), '') is not null 
           THEN 1
-        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and ProvinceID is not null
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(ProvinceID as STRING)), '') is not null
           THEN 2
-        WHEN TRIM(CAST(EmployeeID as STRING)) is not null and CostChannelID is not null 
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(CostChannelID as STRING)), '') is not null 
           THEN 3
-        ELSE 4
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(DepartmentID as STRING)), '') is not null
+          THEN 4
+        ELSE 5
       END) as seq_condition
     from `${DimSaleRepGroupTableRef}`
   ) as sale_addon
