@@ -1,0 +1,48 @@
+config {
+  type: "operations",
+  dependencies: [],
+  tags: [],
+}
+
+-- MAC5
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5}` OPTIONS(location="${databuffet.REGION}");
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}` OPTIONS(location="${databuffet.REGION}");
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}` OPTIONS(location="${databuffet.REGION}");
+
+
+-- CIS360
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_CIS360}` OPTIONS(location="${databuffet.REGION}");
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}` OPTIONS(location="${databuffet.REGION}");
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_CIS360}` OPTIONS(location="${databuffet.REGION}");
+
+
+-- MASTERSKU
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}` OPTIONS(location="${databuffet.REGION}");
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}` OPTIONS(location="${databuffet.REGION}");
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_MASTERSKU}` OPTIONS(location="${databuffet.REGION}");
+
+
+-- DIMENSION
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}` OPTIONS(location="${databuffet.REGION}");
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.DIMENSION_VIEW}` OPTIONS(location="${databuffet.REGION}");
+
+
+-- FACT
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.FACT_TABLE}` OPTIONS(location="${databuffet.REGION}");
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.FACT_VIEW}` OPTIONS(location="${databuffet.REGION}");
+
+
+-- PROCESS_DATASET
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}` OPTIONS(location="${databuffet.REGION}");
+
+
+-- CDC_DATESET
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.CDC_DATESET}` OPTIONS(location="${databuffet.REGION}");
+
+
+-- FUNCTION_DATASET
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}` OPTIONS(location="${databuffet.REGION}");
+
+
+-- ONETIME
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.ONETIME}` OPTIONS(location="${databuffet.REGION}");

@@ -1,0 +1,28 @@
+config {
+  type: "operations",
+  dependencies: [],
+  tags: [],
+}
+
+CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_flag_exc`(mihcancel INT64, mihstatus INT64, FlagExc STRING) AS (
+CASE 
+    WHEN FlagExc = 'Yes' THEN 'Yes'
+    WHEN mihcancel = -1 OR mihstatus IN (33, 32) THEN 'Yes'
+    ELSE FlagExc
+  END
+);
+
+CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_flag_sales_kpi`(mihcancel INT64, mihstatus INT64, rebate STRING) AS (
+CASE 
+    WHEN mihcancel <> -1 AND mihstatus NOT IN (33, 32) AND rebate IS NULL THEN 'Yes'
+    ELSE 'No' 
+  END
+);
+
+CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_flag_scg`(milvnos STRING, milcus STRING) AS (
+(CASE 
+  WHEN UPPER(left(milvnos,3)) = 'CRC' and milcus not in ('111000262','111009320','111017384') THEN 'ซื้อตรง'
+  WHEN UPPER(left(milvnos,3)) = 'CRC' and milcus in ('111000262','111009320','111017384') THEN 'ซื้อผ่านร้าน'
+  ELSE CAST(NULL AS STRING)
+END)
+);

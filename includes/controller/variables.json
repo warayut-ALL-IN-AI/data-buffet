@@ -17,7 +17,6 @@
     "TAG_CURATED_INCREMENTAL": "curated_incremental",
     "TAG_CURATED_FULL": "curated_full",
 
-    "CDC_DATESET" : "cdc_dataset",
     "TAG_CDC": "cdc",
     "TAG_CDC_INCREMENTAL": "cdc_incremental",
 
@@ -36,7 +35,12 @@
     "DIMENSION_TABLE" : "dimension_table",
     "DIMENSION_VIEW" : "dimension_view",
     "FACT_TABLE" : "fact_table",
+    "FACT_VIEW" : "fact_view",
+
+    "ONETIME": "onetime",
+    "CDC_DATESET" : "cdc_dataset",
     "PROCESS_DATASET": "process_dataset",
+    "FUNCTION_DATASET": "function_dataset",
 
     "GCS_MAC5": "mac5_ag01",
     "GCS_MAC5_REPORT": "mac5_report",
