@@ -2,7 +2,7 @@ config {
     type: "incremental",
     schema: databuffet.PROCESS_DATASET,
     dependencies: [],
-    tags: [databuffet.TAG_FACT_DAILY],
+    tags: [databuffet.TAG_PROCESS],
     uniqueKey: ["debcode"],
     bigquery: {
         // partitionBy: "asatdate",
