@@ -57,7 +57,11 @@ SELECT
     NULLIF(CAST(TRIM(uinsert) AS STRING), '') as uinsert,
     NULLIF(CAST(TRIM(uupdate) AS STRING), '') as uupdate,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19)) as dinsert,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19)) as dupdate,
+    COALESCE(
+        PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19)),
+        PARSE_DATETIME('%b %d %Y %I:%M%p', TRIM(dupdate))
+    ) as dupdate,
+    --PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19)) as dupdate,
     NULLIF(CAST(TRIM(atten) AS STRING), '') as atten,
     NULLIF(CAST(TRIM(lat) AS STRING), '') as lat,
     NULLIF(CAST(TRIM(long) AS STRING), '') as long,

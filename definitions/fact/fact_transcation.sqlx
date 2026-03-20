@@ -257,12 +257,32 @@ BEGIN
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and TRIM(trans.milDep) = TRIM(sale_sk.DepCode)
                 and trans.ChannelCostID = sale_sk.CostChannelID
-            WHEN IFNULL(TRIM(sale_sk.ProvinceID), '') != ''
-              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
-                and CAST(trans.OrderProvinceSK as STRING) IN  UNNEST(SPLIT(sale_sk.ProvinceID, '|'))
             WHEN IFNULL(TRIM(sale_sk.DepCode), '') = '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
-                and trans.ChannelCostID = sale_sk.CostChannelID
+                and ((trans.ChannelCostID = sale_sk.CostChannelID)
+                  or (CASE
+                        WHEN trans.debgroup in ('HP', 'HPEXPO') THEN lower(sale_sk.DepartmentID) like 'hp_%'
+                        WHEN trans.debgroup in ('TW', 'TWEXPO') THEN lower(sale_sk.DepartmentID) like 'tw_%'
+                        WHEN trans.debgroup in ('BT', 'BT.C') THEN lower(sale_sk.DepartmentID) like 'bt_%'
+                        WHEN trans.debgroup in ('GB') THEN lower(sale_sk.DepartmentID) like 'gb_%'
+                        WHEN trans.debgroup in ('MH') THEN lower(sale_sk.DepartmentID) like 'mh_%'
+                        WHEN trans.debgroup in ('DOHOME') THEN lower(sale_sk.DepartmentID) like 'dh_%'
+                      END)
+                )
+            WHEN IFNULL(TRIM(sale_sk.ProvinceID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and (CASE 
+                      -- 1. เช็ค Province ก่อน
+                      WHEN CAST(trans.OrderProvinceSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      -- 2. ถ้าไม่เจอ Province ให้เช็ค District
+                      WHEN CAST(trans.OrderDistrictSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      -- 3. ถ้าไม่เจอ District ให้เช็ค SubDistrict
+                      WHEN CAST(trans.OrderSubDistrictSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      ELSE FALSE
+                    END)
+            WHEN IFNULL(TRIM(sale_sk.CustomerFlag), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and TRIM(trans.milCus) IN UNNEST(SPLIT(TRIM(sale_sk.CustomerFlag), '|'))
             ELSE TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
           END)
 
@@ -390,7 +410,18 @@ BEGIN
                 )
             WHEN IFNULL(TRIM(sale_sk.ProvinceID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
-                and CAST(trans.OrderProvinceSK as STRING) IN  UNNEST(SPLIT(sale_sk.ProvinceID, '|'))
+                and (CASE 
+                      -- 1. เช็ค Province ก่อน
+                      WHEN CAST(trans.OrderProvinceSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      -- 2. ถ้าไม่เจอ Province ให้เช็ค District
+                      WHEN CAST(trans.OrderDistrictSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      -- 3. ถ้าไม่เจอ District ให้เช็ค SubDistrict
+                      WHEN CAST(trans.OrderSubDistrictSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      ELSE FALSE
+                    END)
+            WHEN IFNULL(TRIM(sale_sk.CustomerFlag), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and TRIM(trans.milCus) IN UNNEST(SPLIT(TRIM(sale_sk.CustomerFlag), '|'))
             ELSE TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
           END)
 
@@ -487,7 +518,18 @@ BEGIN
                 )
             WHEN IFNULL(TRIM(sale_addon.ProvinceID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
-                and CAST(trans.OrderProvinceSK as STRING) IN  UNNEST(SPLIT(sale_addon.ProvinceID, '|'))
+                and (CASE 
+                      -- 1. เช็ค Province ก่อน
+                      WHEN CAST(trans.OrderProvinceSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      -- 2. ถ้าไม่เจอ Province ให้เช็ค District
+                      WHEN CAST(trans.OrderDistrictSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      -- 3. ถ้าไม่เจอ District ให้เช็ค SubDistrict
+                      WHEN CAST(trans.OrderSubDistrictSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      ELSE FALSE
+                    END)
+            WHEN IFNULL(TRIM(sale_addon.CustomerFlag), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
+                and TRIM(trans.milCus) IN UNNEST(SPLIT(TRIM(sale_addon.CustomerFlag), '|'))
             ELSE TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
           END)
 
