@@ -56,9 +56,13 @@ SELECT
     NULLIF(CAST(TRIM(qtid) AS STRING), '') as qtid,
     NULLIF(CAST(TRIM(uinsert) AS STRING), '') as uinsert,
     NULLIF(CAST(TRIM(uupdate) AS STRING), '') as uupdate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19)) as dinsert,
     COALESCE(
-        PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19)),
+        SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19)),
+        PARSE_DATETIME('%b %d %Y %I:%M%p', TRIM(dinsert))
+    ) as dinsert,
+    --PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19)) as dinsert,
+    COALESCE(
+        SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19)),
         PARSE_DATETIME('%b %d %Y %I:%M%p', TRIM(dupdate))
     ) as dupdate,
     --PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19)) as dupdate,
@@ -84,7 +88,11 @@ SELECT
     NULLIF(CAST(TRIM(textnote) AS STRING), '') as textnote,
     NULLIF(CAST(TRIM(status) AS STRING), '') as status,
     NULLIF(CAST(TRIM(editnote) AS STRING), '') as editnote,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(editnotedate, 1, 19)) AS editnotedate,
+    COALESCE(
+        SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(editnotedate, 1, 19)),
+        PARSE_DATETIME('%b %d %Y %I:%M%p', TRIM(editnotedate))
+    ) as editnotedate,
+    --PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(editnotedate, 1, 19)) AS editnotedate,
     NULLIF(CAST(TRIM(delvdate) AS STRING), '') as delvdate,
     NULLIF(CAST(TRIM(transferfg) AS STRING), '') as transferfg,
     NULLIF(CAST(TRIM(meccode) AS STRING), '') as meccode,
