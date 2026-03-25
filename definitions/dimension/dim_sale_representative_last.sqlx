@@ -21,8 +21,8 @@ USING (
         SELECT DISTINCT
             percode as EmployeeID,
             TRIM(REGEXP_REPLACE(pernamet, r'\s+', ' ')) as pernamet
-        FROM ${ref(databuffet.VALIDATED_MAC5, 'per')}
-        WHERE company_id = 'ag01'
+        FROM ${ref(databuffet.VALIDATED_MAC5, 'per')} as per
+        WHERE per.company_id = 'ag01'
 
     ),
     source_combined AS (

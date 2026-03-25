@@ -21,10 +21,10 @@ MERGE `${DimOrderTableRef}` T
 USING (
     WITH mil as (
         select miltype, milvnos, milstk, milQuan, milSum, millinkvcno
-        from ${ref(databuffet.CURATED_MAC5, 'curated_mil')}
-        where miltype in ('PS', 'IS')
-            and asatdate >= current_date('Asia/Bangkok')-1
-            and company_id = 'ag01'
+        from ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
+        where mil.miltype in ('PS', 'IS')
+            and mil.asatdate >= current_date('Asia/Bangkok')-1
+            and mil.company_id = 'ag01'
     ), 
     main_table as (
         select milvnos, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
@@ -91,7 +91,7 @@ USING (
             mih.mihCus
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
         LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar
-            on mih.mihStatus = ar.ar_scode AND ar.company_id = 'ag01'
+            on mih.mihStatus = ar.ar_scode AND mih.company_id = ar.company_id
         LEFT JOIN order_status as order_status
             on order_status.milvnos = mih.mihVnos
         WHERE mihType = 'PS'

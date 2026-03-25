@@ -98,7 +98,7 @@ BEGIN
         a.STKcode885 as Barcode
 
         from ${ref(databuffet.VALIDATED_MAC5, "stk")} as a
-        left join ${ref(databuffet.VALIDATED_MAC5, "stg")} as g on a.STKgroup = g.STGcode AND g.company_id = 'ag01'
+        left join ${ref(databuffet.VALIDATED_MAC5, "stg")} as g on a.STKgroup = g.STGcode AND a.company_id = g.company_id
         left join ${ref(databuffet.VALIDATED_MASTERSKU, "product")} as p on a.STKcode885 = p.prd_barcode
         left join ${ref(databuffet.VALIDATED_MASTERSKU, "product_detail")} as pd on p.prd_id = pd.pd_prd_id
         -- left join `${DimProductRebateTableRef}` as pdr on a.stkcode = pdr.rebate and pdr.status = 'Product'

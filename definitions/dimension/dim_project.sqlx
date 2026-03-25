@@ -39,8 +39,8 @@ USING (
           WHEN SAFE_CAST(pjend AS DATE) IS NULL THEN DATE_DIFF(CURRENT_DATE(), SAFE_CAST(pjstart AS DATE), DAY)
           ELSE DATE_DIFF(SAFE_CAST(pjend AS DATE), SAFE_CAST(pjstart AS DATE), DAY)
         END) as projectDay
-      FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_profilecomp')} -- ปรับ ref ตามโครงสร้างที่คุณใช้
-      WHERE company_id = 'ag01'
+      FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_profilecomp')} as pj -- ปรับ ref ตามโครงสร้างที่คุณใช้
+      WHERE pj.company_id = 'ag01'
     ),
     -- หา Max ProjectSK จาก Target เดิมเพื่อรันเลขต่อ
     target_max AS (

@@ -27,29 +27,29 @@ USING (
             ELSE null
           END) as StatusDesc,
           mihCancel,mihDep,mihJob
-        FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')}
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} on mihStatus = ar_scode AND ar_s.company_id = 'ag01'
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} on mihStatus = ap_scode AND ap_s.company_id = 'ag01'
-        WHERE company_id = 'ag01'
-          and mihType = 'IS'
-          and mihRef1 is not null
-          and mihCancel <> -1
-          and asatdate >= current_date('Asia/Bangkok')-1
+        FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar_s on mih.mihStatus = ar_s.ar_scode AND mih.company_id = ar_s.company_id
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s on mih.mihStatus = ap_s.ap_scode AND mih.company_id = ap_s.company_id
+        WHERE mih.company_id = 'ag01'
+          and mih.mihType = 'IS'
+          and mih.mihRef1 is not null
+          and mih.mihCancel <> -1
+          and mih.asatdate >= current_date('Asia/Bangkok')-1
     ),
     mih_raw2 as (
         SELECT
-          mihDay, mihMonth, mihYear, mihType, mihVnos, mihCus, mihRef1, mihPer, mihStatus,
+          mih.mihDay, mih.mihMonth, mih.mihYear, mih.mihType, mih.mihVnos, mih.mihCus, mih.mihRef1, mih.mihPer, mih.mihStatus,
           (CASE
-            WHEN mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
-            WHEN mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
+            WHEN mih.mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_s.ar_snamet
+            WHEN mih.mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_s.ap_snamet
             ELSE null
           END) as StatusDesc,
-          mihCancel,mihDep,mihJob
-        FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')}
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} on mihStatus = ar_scode AND ar_s.company_id = 'ag01'
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} on mihStatus = ap_scode AND ap_s.company_id = 'ag01'
-        WHERE company_id = 'ag01'
-          and asatdate >= current_date('Asia/Bangkok')-1
+          mih.mihCancel, mih.mihDep, mih.mihJob
+        FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar_s on mih.mihStatus = ar_s.ar_scode AND mih.company_id = ar_s.company_id
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s on mih.mihStatus = ap_s.ap_scode AND mih.company_id = ap_s.company_id
+        WHERE mih.company_id = 'ag01'
+          and mih.asatdate >= current_date('Asia/Bangkok')-1
     ), 
     filter_mih2 as (
         SELECT DISTINCT
