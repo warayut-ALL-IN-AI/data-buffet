@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["cfsvnosid","cfsdateid","cfscusid","cfstypeid"],
+    uniqueKey: ["company_id", "cfsvnosid","cfsdateid","cfscusid","cfstypeid"],
     bigquery: {
-        clusterBy: ["cfsvnosid"]
+        clusterBy: ["company_id", "cfsvnosid"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -21,12 +21,12 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["cfsvnosid","cfsdateid","cfscusid","cfstypeid"]
+    const pk_key = ["company_id", "cfsvnosid","cfsdateid","cfscusid","cfstypeid"]
 
     let partition_statement, post_operations_statement;
 
     if (pk_key && pk_key.length > 0) {
-        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY cfsdateid desc) = 1`;
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY company_id, cfsvnosid,cfsdateid,cfscusid,cfstypeid ORDER BY cfsdateid desc) = 1`;
         post_operations_statement = `
 BEGIN
     DECLARE retry_count INT64 DEFAULT 0;
@@ -50,7 +50,8 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19)) AS cfsdateid,
     NULLIF(CAST(TRIM(cfscusid) AS STRING), '') as cfscusid,
@@ -72,9 +73,11 @@ SELECT
     CAST(cfsbillclr AS INT64) as cfsbillclr,
     NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
 
-FROM
-  `${sourceTableRef}`
-${partition_statement}
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
+QUALIFY ROW_NUMBER() OVER(PARTITION BY company_id, cfsvnosid,cfsdateid,cfscusid,cfstypeid ORDER BY cfsdateid desc) = 1
 
 pre_operations {
 }

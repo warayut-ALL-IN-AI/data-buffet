@@ -26,7 +26,7 @@ js {
 MERGE `${DimQuotationTableRef}` T
 USING (
     WITH raw_quotation_table as (
-        SELECT  
+        SELECT
             quo.ID,
             quo.Running,
             quo.SDate,
@@ -41,6 +41,7 @@ USING (
             quo.TermPayment,
             IF(CONTAINS_SUBSTR(quo.Project, '\\'), TRIM(SPLIT(quo.Project, '\\')[SAFE_OFFSET(0)]), NULL) as p_split
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_tbook_quotation')} as quo
+        WHERE quo.company_id = 'ag01'
 
     ), LogicTable as (
         SELECT 
@@ -66,6 +67,7 @@ USING (
         FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_quodetail')} as qt_detail
         inner join quotation_table as qt
             on qt_detail.linkid = qt.id
+        WHERE qt_detail.company_id = 'ag01'
 
     ), sec_table as (
         SELECT mih.mihref1, mil.milstk, sum(mil.milQuan) as milQuan, sum(mil.milSum) as milSum
@@ -74,6 +76,7 @@ USING (
             on mih.mihvnos = mil.milvnos
             and mih.mihtype = mil.miltype
         WHERE mih.mihtype = 'PS'
+            and mih.company_id = 'ag01'
             and exists (SELECT 1 FROM quotation_table as qt WHERE mih.mihref1 = qt.Running)
         group by 1, 2
 
@@ -128,10 +131,10 @@ USING (
             ON S.Running = T.Running
 
     )
-    SELECT 
+    SELECT
         src.*,
         dim_project.ProjectSK,
-        (CASE 
+        (CASE
             WHEN src.existing_sk IS NOT NULL THEN src.existing_sk
             ELSE (SELECT max_sk FROM target_max) + src.rn_new
         END) as final_QuotationSK
@@ -167,12 +170,12 @@ WHEN NOT MATCHED THEN
   INSERT (
     QuotationSK, ProjectSK,
     ID, Running, SDate, Year, Month, Day,
-    Atten, Project, UInsert, PriceValidity, 
+    Atten, Project, UInsert, PriceValidity,
     TermDelivery, TermPayment, CustomerID, ProjectCode, OrderStatus
   )
   VALUES (
     S.final_QuotationSK, S.ProjectSK,
     S.ID, S.Running, S.SDate, S.Year, S.Month, S.Day,
-    S.Atten, S.Project, S.UInsert, S.PriceValidity, 
+    S.Atten, S.Project, S.UInsert, S.PriceValidity,
     S.TermDelivery, S.TermPayment, S.CustomerID, S.ProjectCode, S.OrderStatus
   );

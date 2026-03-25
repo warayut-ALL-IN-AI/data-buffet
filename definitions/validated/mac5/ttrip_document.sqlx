@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["frun", "fdocument", "fserial_no"],
+    uniqueKey: ["company_id", "frun", "fdocument", "fserial_no"],
     bigquery: {
-        clusterBy: ["frun", "fdocument", "fserial_no"]
+        clusterBy: ["company_id", "frun", "fdocument", "fserial_no"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -21,7 +21,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["frun", "fdocument", "fserial_no"]
+    const pk_key = ["company_id", "frun", "fdocument", "fserial_no"]
 
     let partition_statement, post_operations_statement;
 
@@ -51,7 +51,8 @@ END;`;
 
 }
 
-SELECT    
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     NULLIF(CAST(TRIM(frun) AS STRING), '') as frun,
     NULLIF(CAST(TRIM(fmaster) AS STRING), '') as fmaster,
     NULLIF(CAST(TRIM(fdocument) AS STRING), '') as fdocument,
@@ -74,9 +75,11 @@ SELECT
     CAST(fprice AS FLOAT64) as fprice,
     CAST(fin365 AS INT64) as fin365,
     NULLIF(CAST(TRIM(im_mac) AS STRING), '') as im_mac,
-    NULLIF(CAST(TRIM(post) AS STRING), '') as post,
-FROM
-  `${sourceTableRef}`
+    NULLIF(CAST(TRIM(post) AS STRING), '') as post
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 
 ${partition_statement}
 

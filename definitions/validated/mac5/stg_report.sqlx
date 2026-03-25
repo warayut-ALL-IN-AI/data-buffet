@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["stgcode"],
+    uniqueKey: ["company_id", "stgcode"],
     bigquery: {
-        clusterBy: ["stgcode"]
+        clusterBy: ["company_id", "stgcode"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -21,7 +21,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["stgcode"]
+    const pk_key = ["company_id", "stgcode"]
 
     let partition_statement, post_operations_statement;
 
@@ -50,14 +50,17 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     NULLIF(CAST(TRIM(REGEXP_REPLACE(STGcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
     NULLIF(CAST(TRIM(STGdescT) AS STRING), '') as stgdesct,
     NULLIF(CAST(TRIM(STGdescE) AS STRING), '') as stgdesce,
     NULLIF(CAST(TRIM(stgacccode) AS STRING), '') as stgacccode
 
-FROM
-  `${sourceTableRef}`
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

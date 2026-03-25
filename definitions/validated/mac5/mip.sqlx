@@ -5,7 +5,7 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
     uniqueKey: [],
     bigquery: {
-        clusterBy: ["mipvnos"]
+        clusterBy: ["company_id", "mipvnos"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -50,16 +50,19 @@ END;`;
     }
 }
 
-SELECT
-  NULLIF(CAST(TRIM(MIPvnos) AS STRING), '') AS mipvnos,
-  CAST(MIPfileno AS INT64) AS mipfileno,
-  CAST(MIPrev AS INT64) AS miprev,
-  NULLIF(CAST(TRIM(MIPpath) AS STRING), '') AS mippath,
-  NULLIF(CAST(TRIM(MIPtype) AS STRING), '') AS miptype,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIPcrdate, 1, 19)) AS mipcrdate,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIPupdatedate, 1, 19)) AS mipupdatedate
-FROM
-  `${sourceTableRef}`
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
+    NULLIF(CAST(TRIM(MIPvnos) AS STRING), '') AS mipvnos,
+    CAST(MIPfileno AS INT64) AS mipfileno,
+    CAST(MIPrev AS INT64) AS miprev,
+    NULLIF(CAST(TRIM(MIPpath) AS STRING), '') AS mippath,
+    NULLIF(CAST(TRIM(MIPtype) AS STRING), '') AS miptype,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIPcrdate, 1, 19)) AS mipcrdate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIPupdatedate, 1, 19)) AS mipupdatedate
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

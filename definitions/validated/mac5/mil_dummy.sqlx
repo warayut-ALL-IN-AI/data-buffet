@@ -3,10 +3,10 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
-    uniqueKey: ["MILday","MILmonth","MILyear","MILtype","MILvnos","MILcus","MILlistNo"],
+    uniqueKey: ["company_id", "MILday","MILmonth","MILyear","MILtype","MILvnos","MILcus","MILlistNo"],
     bigquery: {
         partitionBy: "asatdate",
-        clusterBy: ["miltype", "milvnos", "milcus", "millistno"]
+        clusterBy: ["company_id", "miltype", "milvnos", "milcus"]
     },
 }
 
@@ -14,7 +14,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -22,7 +22,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["MILday","MILmonth","MILyear","MILtype","MILvnos","MILcus","MILlistNo"]
+    const pk_key = ["company_id", "MILday","MILmonth","MILyear","MILtype","MILvnos","MILcus","MILlistNo"]
 
     let partition_statement, post_operations_statement;
 
@@ -51,69 +51,72 @@ END;`;
     }
 }
 
-SELECT
-  CAST(MILday AS INT64) AS milday,
-  CAST(MILmonth AS INT64) AS milmonth,
-  CAST(MILyear AS INT64) AS milyear,
-  NULLIF(CAST(TRIM(MILtype) AS STRING), '') AS miltype,
-  NULLIF(CAST(TRIM(MILvnos) AS STRING), '') AS milvnos,
-  NULLIF(CAST(TRIM(MILcus) AS STRING), '') AS milcus,
-  NULLIF(CAST(TRIM(REGEXP_REPLACE(MILstk, r'[\n\r\t]', '')) AS STRING), '') AS milstk,
-  NULLIF(CAST(TRIM(MILjob) AS STRING), '') AS miljob,
-  NULLIF(CAST(TRIM(MILdep) AS STRING), '') AS mildep,
-  NULLIF(CAST(TRIM(MILper) AS STRING), '') AS milper,
-  NULLIF(CAST(TRIM(MILdoc) AS STRING), '') AS mildoc,
-  NULLIF(CAST(TRIM(MILmec) AS STRING), '') AS milmec,
-  NULLIF(CAST(TRIM(MILsto) AS STRING), '') AS milsto,
-  NULLIF(CAST(TRIM(MILstoMT) AS STRING), '') AS milstomt,
-  CAST(MILlistNo AS INT64) AS millistno,
-  CAST(MILquan AS FLOAT64) AS milquan,
-  CAST(MILquanP2 AS FLOAT64) AS milquanp2,
-  CAST(MILadisc AS FLOAT64) AS miladisc,
-  CAST(MILcog AS FLOAT64) AS milcog,
-  CAST(MILconv AS FLOAT64) AS milconv,
-  CAST(MILdiscA AS FLOAT64) AS mildisca,
-  NULLIF(CAST(TRIM(MILdiscT) AS STRING), '') AS mildisct,
-  CAST(MILvat AS FLOAT64) AS milvat,
-  CAST(MILsum AS FLOAT64) AS milsum,
-  CAST(MILcut AS INT64) AS milcut,
-  CAST(MILstype AS INT64) AS milstype,
-  NULLIF(CAST(TRIM(MILuname) AS STRING), '') AS miluname,
-  NULLIF(CAST(TRIM(MILdesc) AS STRING), '') AS mildesc,
-  NULLIF(CAST(TRIM(MILvCol1) AS STRING), '') AS milvcol1,
-  NULLIF(CAST(TRIM(MILvCol2) AS STRING), '') AS milvcol2,
-  NULLIF(CAST(TRIM(MILvCol3) AS STRING), '') AS milvcol3,
-  NULLIF(CAST(TRIM(MILvCol4) AS STRING), '') AS milvcol4,
-  CAST(MILcurC AS INT64) AS milcurc,
-  CAST(MILexchg AS FLOAT64) AS milexchg,
-  CAST(MILacost AS FLOAT64) AS milacost,
-  CAST(MILpqm AS INT64) AS milpqm,
-  CAST(MILpmFrom AS INT64) AS milpmfrom,
-  CAST(MILpmTo AS INT64) AS milpmto,
-  CAST(MILtag AS INT64) AS miltag,
-  NULLIF(CAST(TRIM(MILlinkVCno) AS STRING), '') AS millinkvcno,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILlinkVCdate, 1, 19)) AS millinkvcdate,
-  NULLIF(CAST(TRIM(MILlinkVCtype) AS STRING), '') AS millinkvctype,
-  NULLIF(CAST(TRIM(MILlinkVCdeposit) AS STRING), '') AS millinkvcdeposit,
-  CAST(MILlinkVCid AS INT64) AS millinkvcid,
-  CAST(MILclearUM AS INT64) AS milclearum,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILexpDATE, 1, 19)) AS milexpdate,
-  NULLIF(CAST(TRIM(MILnotes) AS STRING), '') AS milnotes,
-  CAST(MILnotKL AS INT64) AS milnotkl,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILdelvDT, 1, 19)) AS mildelvdt,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILdateSP, 1, 19)) AS mildatesp,
-  CAST(MILnumCSP AS FLOAT64) AS milnumcsp,
-  CAST(MILnumISP AS INT64) AS milnumisp,
-  CAST(MILcost AS FLOAT64) AS milcost,
-  CAST(MILucost AS FLOAT64) AS milucost,
-  CAST(MILuprice AS FLOAT64) AS miluprice,
-  CAST(MILuseQuanP AS INT64) AS milusequanp,
-  NULLIF(CAST(TRIM(MILvCol5) AS STRING), '') AS milvcol5,
-  CAST(MILfitem AS INT64) AS milfitem,
-  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
-FROM
-  `${sourceTableRef}`
-${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
+    CAST(MILday AS INT64) AS milday,
+    CAST(MILmonth AS INT64) AS milmonth,
+    CAST(MILyear AS INT64) AS milyear,
+    NULLIF(CAST(TRIM(MILtype) AS STRING), '') AS miltype,
+    NULLIF(CAST(TRIM(MILvnos) AS STRING), '') AS milvnos,
+    NULLIF(CAST(TRIM(MILcus) AS STRING), '') AS milcus,
+    NULLIF(CAST(TRIM(REGEXP_REPLACE(MILstk, r'[\n\r\t]', '')) AS STRING), '') AS milstk,
+    NULLIF(CAST(TRIM(MILjob) AS STRING), '') AS miljob,
+    NULLIF(CAST(TRIM(MILdep) AS STRING), '') AS mildep,
+    NULLIF(CAST(TRIM(MILper) AS STRING), '') AS milper,
+    NULLIF(CAST(TRIM(MILdoc) AS STRING), '') AS mildoc,
+    NULLIF(CAST(TRIM(MILmec) AS STRING), '') AS milmec,
+    NULLIF(CAST(TRIM(MILsto) AS STRING), '') AS milsto,
+    NULLIF(CAST(TRIM(MILstoMT) AS STRING), '') AS milstomt,
+    CAST(MILlistNo AS INT64) AS millistno,
+    CAST(MILquan AS FLOAT64) AS milquan,
+    CAST(MILquanP2 AS FLOAT64) AS milquanp2,
+    CAST(MILadisc AS FLOAT64) AS miladisc,
+    CAST(MILcog AS FLOAT64) AS milcog,
+    CAST(MILconv AS FLOAT64) AS milconv,
+    CAST(MILdiscA AS FLOAT64) AS mildisca,
+    NULLIF(CAST(TRIM(MILdiscT) AS STRING), '') AS mildisct,
+    CAST(MILvat AS FLOAT64) AS milvat,
+    CAST(MILsum AS FLOAT64) AS milsum,
+    CAST(MILcut AS INT64) AS milcut,
+    CAST(MILstype AS INT64) AS milstype,
+    NULLIF(CAST(TRIM(MILuname) AS STRING), '') AS miluname,
+    NULLIF(CAST(TRIM(MILdesc) AS STRING), '') AS mildesc,
+    NULLIF(CAST(TRIM(MILvCol1) AS STRING), '') AS milvcol1,
+    NULLIF(CAST(TRIM(MILvCol2) AS STRING), '') AS milvcol2,
+    NULLIF(CAST(TRIM(MILvCol3) AS STRING), '') AS milvcol3,
+    NULLIF(CAST(TRIM(MILvCol4) AS STRING), '') AS milvcol4,
+    CAST(MILcurC AS INT64) AS milcurc,
+    CAST(MILexchg AS FLOAT64) AS milexchg,
+    CAST(MILacost AS FLOAT64) AS milacost,
+    CAST(MILpqm AS INT64) AS milpqm,
+    CAST(MILpmFrom AS INT64) AS milpmfrom,
+    CAST(MILpmTo AS INT64) AS milpmto,
+    CAST(MILtag AS INT64) AS miltag,
+    NULLIF(CAST(TRIM(MILlinkVCno) AS STRING), '') AS millinkvcno,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILlinkVCdate, 1, 19)) AS millinkvcdate,
+    NULLIF(CAST(TRIM(MILlinkVCtype) AS STRING), '') AS millinkvctype,
+    NULLIF(CAST(TRIM(MILlinkVCdeposit) AS STRING), '') AS millinkvcdeposit,
+    CAST(MILlinkVCid AS INT64) AS millinkvcid,
+    CAST(MILclearUM AS INT64) AS milclearum,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILexpDATE, 1, 19)) AS milexpdate,
+    NULLIF(CAST(TRIM(MILnotes) AS STRING), '') AS milnotes,
+    CAST(MILnotKL AS INT64) AS milnotkl,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILdelvDT, 1, 19)) AS mildelvdt,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILdateSP, 1, 19)) AS mildatesp,
+    CAST(MILnumCSP AS FLOAT64) AS milnumcsp,
+    CAST(MILnumISP AS INT64) AS milnumisp,
+    CAST(MILcost AS FLOAT64) AS milcost,
+    CAST(MILucost AS FLOAT64) AS milucost,
+    CAST(MILuprice AS FLOAT64) AS miluprice,
+    CAST(MILuseQuanP AS INT64) AS milusequanp,
+    NULLIF(CAST(TRIM(MILvCol5) AS STRING), '') AS milvcol5,
+    CAST(MILfitem AS INT64) AS milfitem,
+    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
+  FROM
+    `${sourceTableRef}`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

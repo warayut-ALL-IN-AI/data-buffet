@@ -6,7 +6,7 @@ config {
     uniqueKey: [],
     bigquery: {
         partitionBy: "asatdate",
-        clusterBy: ["cpsstkid"]
+        clusterBy: ["company_id", "cpsstkid"]
     },
 }
 
@@ -14,7 +14,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -51,38 +51,41 @@ END;`;
     }
 }
 
-SELECT
-  NULLIF(CAST(TRIM(CPSstkID) AS STRING), '') AS cpsstkid,
-  CAST(CPSlinkID AS INT64) AS cpslinkid,
-  NULLIF(CAST(TRIM(CPSvnosID) AS STRING), '') AS cpsvnosid,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CPSdateID, 1, 19)) AS cpsdateid,
-  NULLIF(CAST(TRIM(CPScusID) AS STRING), '') AS cpscusid,
-  NULLIF(CAST(TRIM(CPSjob) AS STRING), '') AS cpsjob,
-  NULLIF(CAST(TRIM(CPSdep) AS STRING), '') AS cpsdep,
-  NULLIF(CAST(TRIM(CPSper) AS STRING), '') AS cpsper,
-  NULLIF(CAST(TRIM(CPSdoc) AS STRING), '') AS cpsdoc,
-  NULLIF(CAST(TRIM(CPSmec) AS STRING), '') AS cpsmec,
-  NULLIF(CAST(TRIM(CPSsto) AS STRING), '') AS cpssto,
-  CAST(CPSstkREQ AS FLOAT64) AS cpsstkreq,
-  CAST(CPSstkCUT1 AS FLOAT64) AS cpsstkcut1,
-  CAST(CPSstkCUT2 AS FLOAT64) AS cpsstkcut2,
-  CAST(CPSsumREQ AS FLOAT64) AS cpssumreq,
-  CAST(CPSsumCUT1 AS FLOAT64) AS cpssumcut1,
-  CAST(CPSsumCUT2 AS FLOAT64) AS cpssumcut2,
-  CAST(CPSclearSTK AS INT64) AS cpsclearstk,
-  CAST(CPSclearSUM AS INT64) AS cpsclearsum,
-  CAST(CPSclearUSER AS INT64) AS cpsclearuser,
-  CAST(CPSclearALL AS INT64) AS cpsclearall,
-  CAST(CPScurC AS INT64) AS cpscurc,
-  CAST(CPSexchg AS FLOAT64) AS cpsexchg,
-  CAST(CPScut AS INT64) AS cpscut,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CPSdelvDate, 1, 19)) AS cpsdelvdate,
-  CAST(CPSlistNo AS INT64) AS cpslistno,
-  NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
-  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
-FROM
-  `${sourceTableRef}`
-${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
+    NULLIF(CAST(TRIM(CPSstkID) AS STRING), '') AS cpsstkid,
+    CAST(CPSlinkID AS INT64) AS cpslinkid,
+    NULLIF(CAST(TRIM(CPSvnosID) AS STRING), '') AS cpsvnosid,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CPSdateID, 1, 19)) AS cpsdateid,
+    NULLIF(CAST(TRIM(CPScusID) AS STRING), '') AS cpscusid,
+    NULLIF(CAST(TRIM(CPSjob) AS STRING), '') AS cpsjob,
+    NULLIF(CAST(TRIM(CPSdep) AS STRING), '') AS cpsdep,
+    NULLIF(CAST(TRIM(CPSper) AS STRING), '') AS cpsper,
+    NULLIF(CAST(TRIM(CPSdoc) AS STRING), '') AS cpsdoc,
+    NULLIF(CAST(TRIM(CPSmec) AS STRING), '') AS cpsmec,
+    NULLIF(CAST(TRIM(CPSsto) AS STRING), '') AS cpssto,
+    CAST(CPSstkREQ AS FLOAT64) AS cpsstkreq,
+    CAST(CPSstkCUT1 AS FLOAT64) AS cpsstkcut1,
+    CAST(CPSstkCUT2 AS FLOAT64) AS cpsstkcut2,
+    CAST(CPSsumREQ AS FLOAT64) AS cpssumreq,
+    CAST(CPSsumCUT1 AS FLOAT64) AS cpssumcut1,
+    CAST(CPSsumCUT2 AS FLOAT64) AS cpssumcut2,
+    CAST(CPSclearSTK AS INT64) AS cpsclearstk,
+    CAST(CPSclearSUM AS INT64) AS cpsclearsum,
+    CAST(CPSclearUSER AS INT64) AS cpsclearuser,
+    CAST(CPSclearALL AS INT64) AS cpsclearall,
+    CAST(CPScurC AS INT64) AS cpscurc,
+    CAST(CPSexchg AS FLOAT64) AS cpsexchg,
+    CAST(CPScut AS INT64) AS cpscut,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CPSdelvDate, 1, 19)) AS cpsdelvdate,
+    CAST(CPSlistNo AS INT64) AS cpslistno,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
+    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
+  FROM
+    `${sourceTableRef}`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

@@ -3,10 +3,10 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
-    uniqueKey: ["MIEday","MIEmonth","MIEyear","MIEtype","MIEvnos","MIEcus"],
+    uniqueKey: ["company_id", "MIEday","MIEmonth","MIEyear","MIEtype","MIEvnos","MIEcus"],
     bigquery: {
         partitionBy: "asatdate",
-        clusterBy: ["mietype", "mievnos", "miecus"]
+        clusterBy: ["company_id", "mietype", "mievnos", "miecus"]
     },
 }
 
@@ -14,7 +14,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -22,7 +22,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["MIEday","MIEmonth","MIEyear","MIEtype","MIEvnos","MIEcus"]
+    const pk_key = ["company_id", "MIEday","MIEmonth","MIEyear","MIEtype","MIEvnos","MIEcus"]
 
     let partition_statement, post_operations_statement;
 
@@ -51,51 +51,54 @@ END;`;
     }
 }
 
-SELECT
-  CAST(MIEday AS INT64) AS mieday,
-  CAST(MIEmonth AS INT64) AS miemonth,
-  CAST(MIEyear AS INT64) AS mieyear,
-  NULLIF(CAST(TRIM(MIEtype) AS STRING), '') AS mietype,
-  NULLIF(CAST(TRIM(MIEvnos) AS STRING), '') AS mievnos,
-  NULLIF(CAST(TRIM(MIEcus) AS STRING), '') AS miecus,
-  CAST(MIErecDT3 AS FLOAT64) AS mierecdt3,
-  CAST(MIErecDT53 AS FLOAT64) AS mierecdt53,
-  CAST(MIErecDRND AS FLOAT64) AS mierecdrnd,
-  CAST(MIErecDEXG AS FLOAT64) AS mierecdexg,
-  CAST(MIErecDCSH AS FLOAT64) AS mierecdcsh,
-  CAST(MIErecDOTH AS FLOAT64) AS mierecdoth,
-  CAST(MIErecPLUS AS FLOAT64) AS mierecplus,
-  CAST(MIErecCASH AS FLOAT64) AS miereccash,
-  CAST(MIErecCQRD AS FLOAT64) AS miereccqrd,
-  NULLIF(CAST(TRIM(MIEctermCX) AS STRING), '') AS miectermcx,
-  NULLIF(CAST(TRIM(MIEctermPX) AS STRING), '') AS miectermpx,
-  NULLIF(CAST(TRIM(MIEctermAX) AS STRING), '') AS miectermax,
-  NULLIF(CAST(TRIM(MIEctermDX) AS STRING), '') AS miectermdx,
-  CAST(MIEtag AS INT64) AS mietag,
-  CAST(MIEbaseDT3 AS FLOAT64) AS miebasedt3,
-  CAST(MIEbaseDT53 AS FLOAT64) AS miebasedt53,
-  NULLIF(CAST(TRIM(MIEdescDT3) AS STRING), '') AS miedescdt3,
-  NULLIF(CAST(TRIM(MIEdescDT53) AS STRING), '') AS miedescdt53,
-  CAST(MIEconDT3 AS INT64) AS miecondt3,
-  CAST(MIEconDT53 AS INT64) AS miecondt53,
-  NULLIF(CAST(TRIM(MIErecFC) AS STRING), '') AS mierecfc,
-  CAST(MIErecDT32 AS FLOAT64) AS mierecdt32,
-  CAST(MIErecDT532 AS FLOAT64) AS mierecdt532,
-  CAST(MIEbaseDT32 AS FLOAT64) AS miebasedt32,
-  CAST(MIEbaseDT532 AS FLOAT64) AS miebasedt532,
-  NULLIF(CAST(TRIM(MIEdescDT32) AS STRING), '') AS miedescdt32,
-  NULLIF(CAST(TRIM(MIEdescDT532) AS STRING), '') AS miedescdt532,
-  CAST(MIEconDT32 AS INT64) AS miecondt32,
-  CAST(MIEconDT532 AS INT64) AS miecondt532,
-  CAST(MIEperDT3 AS FLOAT64) AS mieperdt3,
-  CAST(MIEperDT32 AS FLOAT64) AS mieperdt32,
-  CAST(MIEperDT53 AS FLOAT64) AS mieperdt53,
-  CAST(MIEperDT532 AS FLOAT64) AS mieperdt532,
-  NULLIF(CAST(TRIM(MIEtaxpayNo) AS STRING), '') AS mietaxpayno,
-  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
-FROM
-  `${sourceTableRef}`
-${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
+    CAST(MIEday AS INT64) AS mieday,
+    CAST(MIEmonth AS INT64) AS miemonth,
+    CAST(MIEyear AS INT64) AS mieyear,
+    NULLIF(CAST(TRIM(MIEtype) AS STRING), '') AS mietype,
+    NULLIF(CAST(TRIM(MIEvnos) AS STRING), '') AS mievnos,
+    NULLIF(CAST(TRIM(MIEcus) AS STRING), '') AS miecus,
+    CAST(MIErecDT3 AS FLOAT64) AS mierecdt3,
+    CAST(MIErecDT53 AS FLOAT64) AS mierecdt53,
+    CAST(MIErecDRND AS FLOAT64) AS mierecdrnd,
+    CAST(MIErecDEXG AS FLOAT64) AS mierecdexg,
+    CAST(MIErecDCSH AS FLOAT64) AS mierecdcsh,
+    CAST(MIErecDOTH AS FLOAT64) AS mierecdoth,
+    CAST(MIErecPLUS AS FLOAT64) AS mierecplus,
+    CAST(MIErecCASH AS FLOAT64) AS miereccash,
+    CAST(MIErecCQRD AS FLOAT64) AS miereccqrd,
+    NULLIF(CAST(TRIM(MIEctermCX) AS STRING), '') AS miectermcx,
+    NULLIF(CAST(TRIM(MIEctermPX) AS STRING), '') AS miectermpx,
+    NULLIF(CAST(TRIM(MIEctermAX) AS STRING), '') AS miectermax,
+    NULLIF(CAST(TRIM(MIEctermDX) AS STRING), '') AS miectermdx,
+    CAST(MIEtag AS INT64) AS mietag,
+    CAST(MIEbaseDT3 AS FLOAT64) AS miebasedt3,
+    CAST(MIEbaseDT53 AS FLOAT64) AS miebasedt53,
+    NULLIF(CAST(TRIM(MIEdescDT3) AS STRING), '') AS miedescdt3,
+    NULLIF(CAST(TRIM(MIEdescDT53) AS STRING), '') AS miedescdt53,
+    CAST(MIEconDT3 AS INT64) AS miecondt3,
+    CAST(MIEconDT53 AS INT64) AS miecondt53,
+    NULLIF(CAST(TRIM(MIErecFC) AS STRING), '') AS mierecfc,
+    CAST(MIErecDT32 AS FLOAT64) AS mierecdt32,
+    CAST(MIErecDT532 AS FLOAT64) AS mierecdt532,
+    CAST(MIEbaseDT32 AS FLOAT64) AS miebasedt32,
+    CAST(MIEbaseDT532 AS FLOAT64) AS miebasedt532,
+    NULLIF(CAST(TRIM(MIEdescDT32) AS STRING), '') AS miedescdt32,
+    NULLIF(CAST(TRIM(MIEdescDT532) AS STRING), '') AS miedescdt532,
+    CAST(MIEconDT32 AS INT64) AS miecondt32,
+    CAST(MIEconDT532 AS INT64) AS miecondt532,
+    CAST(MIEperDT3 AS FLOAT64) AS mieperdt3,
+    CAST(MIEperDT32 AS FLOAT64) AS mieperdt32,
+    CAST(MIEperDT53 AS FLOAT64) AS mieperdt53,
+    CAST(MIEperDT532 AS FLOAT64) AS mieperdt532,
+    NULLIF(CAST(TRIM(MIEtaxpayNo) AS STRING), '') AS mietaxpayno,
+    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
+  FROM
+    `${sourceTableRef}`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

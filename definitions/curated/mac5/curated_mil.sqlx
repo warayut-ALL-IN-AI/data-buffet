@@ -3,14 +3,15 @@ config {
     schema: databuffet.CURATED_MAC5,
     dependencies: ["curated_schema_mac5"],
     tags: [databuffet.TAG_CURATED],
-    uniqueKey: ["milType", "milVnos", "milListno"],
+    uniqueKey: ["company_id", "milType", "milVnos", "milListno"],
     bigquery: {
         partitionBy: "asatdate",
-        clusterBy: ["milVnos", "milType", "milYear"],
+        clusterBy: ["company_id", "milVnos", "milType"],
     }
 }
 
 SELECT
+  company_id as company_id,
   milday as milDay,
   milmonth as milMonth,
   milyear as milYear,
@@ -73,7 +74,8 @@ SELECT
   asatdate as asatdate,
   '100.00%' as percent_sale
 FROM ${ref(databuffet.VALIDATED_MAC5, "mil")}
-${ when(incremental(), `WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+WHERE company_id = 'ag01'
+${ when(incremental(), `AND asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
 
 post_operations {
   -------- CREATE TEMP TABLE --------
@@ -83,19 +85,21 @@ post_operations {
       SELECT
         mil.*, mil.milPer as milPer_raw
       FROM ${ref(databuffet.VALIDATED_MAC5, "mil")} AS mil
-      QUALIFY row_number() over(partition by mil.milType, mil.milVnos, mil.milListno order by mil.asatdate desc) = 1
+      WHERE mil.company_id = 'ag01'
+      QUALIFY row_number() over(partition by mil.company_id, mil.milType, mil.milVnos, mil.milListno order by mil.asatdate desc) = 1
 
     ), filter_mih2 AS (
-      SELECT mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
+      SELECT company_id, mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
         IF(per_sale1 > 100.00, 100.00, per_sale1) as per_sale1,
         IF(per_sale2 > 100.00, 100.00, per_sale2) as per_sale2,
       FROM (
         SELECT DISTINCT
-          mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
+          company_id, mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
           ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale1,
           ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale2,
         FROM ${ref(databuffet.VALIDATED_MAC5, "mih2")}
-        WHERE mih2cus IS NOT NULL
+        WHERE mih2.company_id = 'ag01'
+          AND mih2cus IS NOT NULL
           AND mih2per2 IS NOT NULL
           AND mih2per2pc IS NOT NULL
         --   AND mih2type = 'PS'
@@ -103,13 +107,15 @@ post_operations {
             SELECT 1 FROM mil_raw AS mil
             WHERE mih2vnos = mil.milLinkvcno
               AND mih2cus = mil.milCus
+              AND mih2.company_id = mil.company_id
           )
-        QUALIFY ROW_NUMBER() OVER(PARTITION BY mih2vnos, mih2cus ORDER BY mih2rev DESC) = 1
+        QUALIFY ROW_NUMBER() OVER(PARTITION BY company_id, mih2vnos, mih2cus ORDER BY mih2rev DESC) = 1
       )
       WHERE (mih2perpc <> '100%' AND mih2perpc <> '00%')
 
     ), includ_mil AS (
       SELECT
+        mil.company_id,
         mil.milDay,
         mil.milMonth,
         mil.milYear,
@@ -176,6 +182,7 @@ post_operations {
       INNER JOIN filter_mih2 AS mih2
         ON mil.milLinkvcno = mih2.mih2vnos
           AND mil.milCus = mih2.mih2cus
+          AND mil.company_id = mih2.company_id
       CROSS JOIN (
         SELECT 1 AS split_sale
         UNION ALL
@@ -184,6 +191,7 @@ post_operations {
 
     ), exclude_mil AS (
       SELECT
+        mil.company_id,
         mil.milDay,
         mil.milMonth,
         mil.milYear,
@@ -250,7 +258,8 @@ post_operations {
       WHERE NOT EXISTS (
         SELECT 1
         FROM includ_mil AS mil2
-        WHERE mil.milType = mil2.milType
+        WHERE mil.company_id = mil2.company_id
+          AND mil.milType = mil2.milType
           AND mil.milVnos = mil2.milVnos
           AND mil.milListno = mil2.milListno
       )
@@ -263,7 +272,7 @@ post_operations {
 
     SELECT *
     FROM final
-    ORDER BY milType, milVnos, milListno, milPer
+    ORDER BY company_id, milType, milVnos, milListno, milPer
     ;
   -------- CREATE TEMP TABLE --------
 
@@ -271,7 +280,8 @@ post_operations {
     DELETE FROM ${self()} AS old_data
     WHERE EXISTS (
       SELECT 1 FROM new_data_curated_mil AS new_data
-      WHERE old_data.milType = new_data.milType
+      WHERE old_data.company_id = new_data.company_id
+        AND old_data.milType = new_data.milType
         AND old_data.milVnos = new_data.milVnos
         AND old_data.milListno = new_data.milListno
     )

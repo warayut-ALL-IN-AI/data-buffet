@@ -58,7 +58,7 @@ js {
       sum(mil.milDisca) as milDisca,
       sum(mil.milSum) as milSum,
     FROM ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
-    INNER JOIN `${DimInvoiceTableRef}` as t 
+    INNER JOIN `${DimInvoiceTableRef}` as t
       on t.mihYear = mil.milYear
         and t.mihMonth = mil.milMonth
         and t.mihDay = mil.milDay
@@ -72,8 +72,8 @@ js {
 
   )
 
-  select 
-    row_number() over(order by mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milVnos, mil.milCus, mil.milStk) as FactInvoiceSK, --, mil.milListno) 
+  select
+    row_number() over(order by mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milVnos, mil.milCus, mil.milStk) as FactInvoiceSK, --, mil.milListno)
     mil.InvoiceSK,
     fact_ord.OrderSK,
     fact_ord.FactOrderSK,

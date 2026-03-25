@@ -1,27 +1,16 @@
 config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
-    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
+    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "create_all_table_raw_mac5_aa05", "create_all_table_raw_mac5_ab01", "create_all_table_raw_mac5_ac02", "create_all_table_raw_mac5_ak02"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["percode"],
+    uniqueKey: ["company_id", "percode"],
     bigquery: {
-        clusterBy: ["percode"]
+        clusterBy: ["company_id", "percode"]
     },
 }
 
 js {
-    // Define table references
-    const sourceTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
-        name: name(),
-    };
-
-    // Build source table reference
-    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
-
-    // Keep existing logic
-    const pk_key = ["percode"]
+    const pk_key = ["company_id", "percode"]
 
     let partition_statement, post_operations_statement;
 
@@ -50,7 +39,9 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT
+    'ag01' AS company_id,
     NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
     NULLIF(CAST(TRIM(perdep) AS STRING), '') as perdep,
     NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
@@ -78,9 +69,142 @@ SELECT
     NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
     NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid,
     NULLIF(CAST(TRIM(perzone) AS STRING), '') as perzone
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.per`
 
-FROM
-  `${sourceTableRef}`
+  UNION ALL
+
+  SELECT
+    'aa05' AS company_id,
+    NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
+    NULLIF(CAST(TRIM(perdep) AS STRING), '') as perdep,
+    NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
+    NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
+    NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19)) AS perbdate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19)) AS perworks,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19)) AS perworkf,
+    NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
+    NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
+    NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
+    NULLIF(CAST(TRIM(pertel) AS STRING), '') as pertel,
+    NULLIF(CAST(TRIM(perpositn) AS STRING), '') as perpositn,
+    CAST(perstatus AS INT64) as perstatus,
+    CAST(pernchild AS INT64) as pernchild,
+    CAST(percisstudy AS INT64) as percisstudy,
+    CAST(pernotstudy AS INT64) as pernotstudy,
+    CAST(persalary AS FLOAT64) as persalary,
+    CAST(perhide AS INT64) as perhide,
+    CAST(perlock AS INT64) as perlock,
+    NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19)) AS pereditlk,
+    NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
+    NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid,
+    NULLIF(CAST(TRIM(perzone) AS STRING), '') as perzone
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.per`
+
+  UNION ALL
+
+  SELECT
+    'ab01' AS company_id,
+    NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
+    NULLIF(CAST(TRIM(perdep) AS STRING), '') as perdep,
+    NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
+    NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
+    NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19)) AS perbdate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19)) AS perworks,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19)) AS perworkf,
+    NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
+    NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
+    NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
+    NULLIF(CAST(TRIM(pertel) AS STRING), '') as pertel,
+    NULLIF(CAST(TRIM(perpositn) AS STRING), '') as perpositn,
+    CAST(perstatus AS INT64) as perstatus,
+    CAST(pernchild AS INT64) as pernchild,
+    CAST(percisstudy AS INT64) as percisstudy,
+    CAST(pernotstudy AS INT64) as pernotstudy,
+    CAST(persalary AS FLOAT64) as persalary,
+    CAST(perhide AS INT64) as perhide,
+    CAST(perlock AS INT64) as perlock,
+    NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19)) AS pereditlk,
+    NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
+    NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid,
+    NULLIF(CAST(TRIM(perzone) AS STRING), '') as perzone
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.per`
+
+  UNION ALL
+
+  SELECT
+    'ac02' AS company_id,
+    NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
+    NULLIF(CAST(TRIM(perdep) AS STRING), '') as perdep,
+    NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
+    NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
+    NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19)) AS perbdate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19)) AS perworks,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19)) AS perworkf,
+    NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
+    NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
+    NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
+    NULLIF(CAST(TRIM(pertel) AS STRING), '') as pertel,
+    NULLIF(CAST(TRIM(perpositn) AS STRING), '') as perpositn,
+    CAST(perstatus AS INT64) as perstatus,
+    CAST(pernchild AS INT64) as pernchild,
+    CAST(percisstudy AS INT64) as percisstudy,
+    CAST(pernotstudy AS INT64) as pernotstudy,
+    CAST(persalary AS FLOAT64) as persalary,
+    CAST(perhide AS INT64) as perhide,
+    CAST(perlock AS INT64) as perlock,
+    NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19)) AS pereditlk,
+    NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
+    NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid,
+    NULLIF(CAST(TRIM(perzone) AS STRING), '') as perzone
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.per`
+
+  UNION ALL
+
+  SELECT
+    'ak02' AS company_id,
+    NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
+    NULLIF(CAST(TRIM(perdep) AS STRING), '') as perdep,
+    NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
+    NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
+    NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19)) AS perbdate,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19)) AS perworks,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19)) AS perworkf,
+    NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
+    NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
+    NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
+    NULLIF(CAST(TRIM(pertel) AS STRING), '') as pertel,
+    NULLIF(CAST(TRIM(perpositn) AS STRING), '') as perpositn,
+    CAST(perstatus AS INT64) as perstatus,
+    CAST(pernchild AS INT64) as pernchild,
+    CAST(percisstudy AS INT64) as percisstudy,
+    CAST(pernotstudy AS INT64) as pernotstudy,
+    CAST(persalary AS FLOAT64) as persalary,
+    CAST(perhide AS INT64) as perhide,
+    CAST(perlock AS INT64) as perlock,
+    NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19)) AS pereditlk,
+    NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
+    NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid,
+    NULLIF(CAST(TRIM(perzone) AS STRING), '') as perzone
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.per`
+)
+
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

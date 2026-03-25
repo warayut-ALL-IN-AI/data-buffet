@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["stkcode"],
+    uniqueKey: ["company_id", "stkcode"],
     bigquery: {
-        clusterBy: ["stkcode"]
+        clusterBy: ["company_id", "stkcode"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -21,7 +21,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["stkcode"]
+    const pk_key = ["company_id", "stkcode"]
 
     let partition_statement, post_operations_statement;
 
@@ -50,7 +50,8 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     NULLIF(CAST(TRIM(stkcode) AS STRING), '') as stkcode,
     NULLIF(CAST(TRIM(stkgroup) AS STRING), '') as stkgroup,
     NULLIF(CAST(TRIM(stkdesct1) AS STRING), '') as stkdesct1,
@@ -63,8 +64,10 @@ SELECT
     NULLIF(CAST(TRIM(zgroup5) AS STRING), '') as zgroup5,
     NULLIF(CAST(TRIM(zgroup6) AS STRING), '') as zgroup6,
     NULLIF(CAST(TRIM(zgroup7) AS STRING), '') as zgroup7
-FROM
-  `${sourceTableRef}`
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

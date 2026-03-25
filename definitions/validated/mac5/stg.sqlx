@@ -1,27 +1,16 @@
 config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
-    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "stgacc", "stg_report"],
+    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "create_all_table_raw_mac5_aa05", "create_all_table_raw_mac5_ab01", "create_all_table_raw_mac5_ac02", "create_all_table_raw_mac5_ak02", "stgacc", "stg_report"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["stgcode"],
+    uniqueKey: ["company_id", "stgcode"],
     bigquery: {
-        clusterBy: ["stgcode"]
+        clusterBy: ["company_id", "stgcode"]
     },
 }
 
 js {
-    // Define table references
-    const sourceTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
-        name: name(),
-    };
-
-    // Build source table reference
-    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
-
-    // Keep existing logic
-    const pk_key = ["stgcode"]
+    const pk_key = ["company_id", "stgcode"]
 
     let partition_statement, post_operations_statement;
 
@@ -56,21 +45,73 @@ WITH stgacc AS (
     LEFT JOIN ${ref("stg_report")} as stg_report
         ON stgacc.gacccode = stg_report.stgacccode
     QUALIFY row_number() over(partition by stgcode order by gacccode desc) = 1
-
-)
-SELECT
+),
+all_sources AS (
+  SELECT
+    'ag01' AS company_id,
     NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
     NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
     NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
     NULLIF(CAST(TRIM(stg.rowguid) AS STRING), '') as rowguid,
     NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
-    NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname,
+    NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.stg` as stg
+  LEFT JOIN stgacc as stgacc ON stg.stgcode = stgacc.stgcode
 
-FROM
-  `${sourceTableRef}` as stg
-LEFT JOIN stgacc as stgacc
-    ON stg.stgcode = stgacc.stgcode
+  UNION ALL
 
+  SELECT
+    'aa05' AS company_id,
+    NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
+    NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
+    NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
+    NULLIF(CAST(TRIM(stg.rowguid) AS STRING), '') as rowguid,
+    NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
+    NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.stg` as stg
+  LEFT JOIN stgacc as stgacc ON stg.stgcode = stgacc.stgcode
+
+  UNION ALL
+
+  SELECT
+    'ab01' AS company_id,
+    NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
+    NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
+    NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
+    NULLIF(CAST(TRIM(stg.rowguid) AS STRING), '') as rowguid,
+    NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
+    NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.stg` as stg
+  LEFT JOIN stgacc as stgacc ON stg.stgcode = stgacc.stgcode
+
+  UNION ALL
+
+  SELECT
+    'ac02' AS company_id,
+    NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
+    NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
+    NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
+    NULLIF(CAST(TRIM(stg.rowguid) AS STRING), '') as rowguid,
+    NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
+    NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.stg` as stg
+  LEFT JOIN stgacc as stgacc ON stg.stgcode = stgacc.stgcode
+
+  UNION ALL
+
+  SELECT
+    'ak02' AS company_id,
+    NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
+    NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
+    NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
+    NULLIF(CAST(TRIM(stg.rowguid) AS STRING), '') as rowguid,
+    NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
+    NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.stg` as stg
+  LEFT JOIN stgacc as stgacc ON stg.stgcode = stgacc.stgcode
+)
+
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

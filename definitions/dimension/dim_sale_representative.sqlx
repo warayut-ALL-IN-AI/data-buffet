@@ -18,10 +18,11 @@ js {
 MERGE `${DimSaleRepTableRef}` T
 USING (
     WITH raw_per AS (
-        SELECT DISTINCT 
-            percode as EmployeeID, 
+        SELECT DISTINCT
+            percode as EmployeeID,
             TRIM(REGEXP_REPLACE(pernamet, r'\s+', ' ')) as pernamet
         FROM ${ref(databuffet.VALIDATED_MAC5, 'per')}
+        WHERE company_id = 'ag01'
 
     ),
     source_combined AS (
@@ -63,9 +64,9 @@ USING (
           AND T.DepartmentID IS NULL
     )
 
-    SELECT 
+    SELECT
         src.*,
-        (CASE 
+        (CASE
             WHEN existing_sk IS NOT NULL THEN existing_sk
             ELSE (SELECT max_sk FROM target_max) + rn_new
         END) as final_SaleRepSK
@@ -82,13 +83,13 @@ WHEN MATCHED THEN
 
 WHEN NOT MATCHED THEN
   INSERT (
-    SaleRepSK, DepartmentID, EmployeeID, EmployeeName, EmployeeSurname, 
-    EmployeeNickname, DepCode, CostChannelID, ProvinceID, 
+    SaleRepSK, DepartmentID, EmployeeID, EmployeeName, EmployeeSurname,
+    EmployeeNickname, DepCode, CostChannelID, ProvinceID,
     ChangeSectionFlag, StartDate, EndDate
   )
   VALUES (
-    S.final_SaleRepSK, 
-    S.DepartmentID, S.EmployeeID, S.EmployeeName, S.EmployeeSurname, 
-    S.EmployeeNickname, S.DepCode, S.CostChannelID, S.ProvinceID, 
+    S.final_SaleRepSK,
+    S.DepartmentID, S.EmployeeID, S.EmployeeName, S.EmployeeSurname,
+    S.EmployeeNickname, S.DepCode, S.CostChannelID, S.ProvinceID,
     S.ChangeSectionFlag, S.StartDate, S.EndDate
   );

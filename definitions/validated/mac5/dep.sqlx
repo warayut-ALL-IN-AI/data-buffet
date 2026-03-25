@@ -1,27 +1,16 @@
 config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
-    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
+    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "create_all_table_raw_mac5_aa05", "create_all_table_raw_mac5_ab01", "create_all_table_raw_mac5_ac02", "create_all_table_raw_mac5_ak02"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["depcode"],
+    uniqueKey: ["company_id", "depcode"],
     bigquery: {
-        clusterBy: ["depcode"]
+        clusterBy: ["company_id", "depcode"]
     },
 }
 
 js {
-    // Define table references
-    const sourceTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
-        name: name(),
-    };
-
-    // Build source table reference
-    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
-
-    // Keep existing logic
-    const pk_key = ["depcode"]
+    const pk_key = ["company_id", "depcode"]
 
     let partition_statement, post_operations_statement;
 
@@ -50,7 +39,9 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT
+    'ag01' AS company_id,
     NULLIF(CAST(TRIM(depcode) AS STRING), '') as depcode,
     NULLIF(CAST(TRIM(depgroup) AS STRING), '') as depgroup,
     NULLIF(CAST(TRIM(depdesct) AS STRING), '') as depdesct,
@@ -60,9 +51,70 @@ SELECT
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(depeditdt, 1, 19)) AS depeditdt,
     NULLIF(CAST(TRIM(depeditmf) AS STRING), '') as depeditmf,
     NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.dep`
 
-FROM
-  `${sourceTableRef}`
+  UNION ALL
+
+  SELECT
+    'aa05' AS company_id,
+    NULLIF(CAST(TRIM(depcode) AS STRING), '') as depcode,
+    NULLIF(CAST(TRIM(depgroup) AS STRING), '') as depgroup,
+    NULLIF(CAST(TRIM(depdesct) AS STRING), '') as depdesct,
+    NULLIF(CAST(TRIM(depdesce) AS STRING), '') as depdesce,
+    CAST(dephide AS INT64) as dephide,
+    CAST(deplock AS INT64) as deplock,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(depeditdt, 1, 19)) AS depeditdt,
+    NULLIF(CAST(TRIM(depeditmf) AS STRING), '') as depeditmf,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.dep`
+
+  UNION ALL
+
+  SELECT
+    'ab01' AS company_id,
+    NULLIF(CAST(TRIM(depcode) AS STRING), '') as depcode,
+    NULLIF(CAST(TRIM(depgroup) AS STRING), '') as depgroup,
+    NULLIF(CAST(TRIM(depdesct) AS STRING), '') as depdesct,
+    NULLIF(CAST(TRIM(depdesce) AS STRING), '') as depdesce,
+    CAST(dephide AS INT64) as dephide,
+    CAST(deplock AS INT64) as deplock,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(depeditdt, 1, 19)) AS depeditdt,
+    NULLIF(CAST(TRIM(depeditmf) AS STRING), '') as depeditmf,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.dep`
+
+  UNION ALL
+
+  SELECT
+    'ac02' AS company_id,
+    NULLIF(CAST(TRIM(depcode) AS STRING), '') as depcode,
+    NULLIF(CAST(TRIM(depgroup) AS STRING), '') as depgroup,
+    NULLIF(CAST(TRIM(depdesct) AS STRING), '') as depdesct,
+    NULLIF(CAST(TRIM(depdesce) AS STRING), '') as depdesce,
+    CAST(dephide AS INT64) as dephide,
+    CAST(deplock AS INT64) as deplock,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(depeditdt, 1, 19)) AS depeditdt,
+    NULLIF(CAST(TRIM(depeditmf) AS STRING), '') as depeditmf,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.dep`
+
+  UNION ALL
+
+  SELECT
+    'ak02' AS company_id,
+    NULLIF(CAST(TRIM(depcode) AS STRING), '') as depcode,
+    NULLIF(CAST(TRIM(depgroup) AS STRING), '') as depgroup,
+    NULLIF(CAST(TRIM(depdesct) AS STRING), '') as depdesct,
+    NULLIF(CAST(TRIM(depdesce) AS STRING), '') as depdesce,
+    CAST(dephide AS INT64) as dephide,
+    CAST(deplock AS INT64) as deplock,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(depeditdt, 1, 19)) AS depeditdt,
+    NULLIF(CAST(TRIM(depeditmf) AS STRING), '') as depeditmf,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.dep`
+)
+
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

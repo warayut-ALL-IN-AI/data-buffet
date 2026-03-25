@@ -1,28 +1,17 @@
 config {
     type: "incremental",
     schema: databuffet.VALIDATED_MAC5,
-    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "mih"],
+    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "create_all_table_raw_mac5_aa05", "create_all_table_raw_mac5_ab01", "create_all_table_raw_mac5_ac02", "create_all_table_raw_mac5_ak02", "mih"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
-    uniqueKey: ["MILtype","MILvnos","MILlistNo"],
+    uniqueKey: ["company_id", "MILtype","MILvnos","MILlistNo"],
     bigquery: {
         partitionBy: "asatdate",
-        clusterBy: ["miltype", "milvnos", "millistno"]
+        clusterBy: ["company_id", "miltype", "milvnos"]
     },
 }
 
 js {
-    // Define table references
-    const sourceTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
-        name: name(),
-    };
-
-    // Build source table reference
-    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
-
-    // Keep existing logic
-    const pk_key = ["MILtype","MILvnos","MILlistNo"]
+    const pk_key = ["company_id", "MILtype","MILvnos","MILlistNo"]
 
     let partition_statement, post_operations_statement;
 
@@ -52,11 +41,32 @@ END;`;
 }
 
 WITH cte_mil as (
-  select * from `${sourceTableRef}`
-  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
+  SELECT 'ag01' AS company_id, * FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.mil`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
+  UNION ALL
+
+  SELECT 'aa05' AS company_id, * FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.mil`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
+  UNION ALL
+
+  SELECT 'ab01' AS company_id, * FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.mil`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
+  UNION ALL
+
+  SELECT 'ac02' AS company_id, * FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.mil`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
+  UNION ALL
+
+  SELECT 'ak02' AS company_id, * FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.mil`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 
 ), cte_mih as (
-  select 
+  select
+    t1.company_id,
     t1.mihyear,
     t1.mihmonth,
     t1.mihday,
@@ -66,8 +76,9 @@ WITH cte_mil as (
     t1.mihdischf1
 
   from ${ref("mih")} as t1
-  where exists (select 1 from cte_mil as t2 
-    where t1.mihyear = t2.milyear
+  where exists (select 1 from cte_mil as t2
+    where t1.company_id = t2.company_id
+      and t1.mihyear = t2.milyear
       and t1.mihmonth = t2.milmonth
       and t1.mihday = t2.milday
       and t1.mihtype = t2.miltype
@@ -77,6 +88,7 @@ WITH cte_mil as (
 
 )
 SELECT
+  mil.company_id,
   CAST(MILday AS INT64) AS milday,
   CAST(MILmonth AS INT64) AS milmonth,
   CAST(MILyear AS INT64) AS milyear,
@@ -93,42 +105,42 @@ SELECT
   NULLIF(CAST(TRIM(MILstoMT) AS STRING), '') AS milstomt,
   CAST(MILlistNo AS INT64) AS millistno,
 
-  (CASE 
+  (CASE
     WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MILquan AS FLOAT64) * -1
-    ELSE CAST(MILquan AS FLOAT64) 
+    ELSE CAST(MILquan AS FLOAT64)
   END) AS milquan,
   CAST(MILquan AS FLOAT64) AS milquan_raw,
 
   CAST(MILquanP2 AS FLOAT64) AS milquanp2,
 
-  (CASE 
+  (CASE
     WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MILadisc AS FLOAT64) * -1
     ELSE CAST(MILadisc AS FLOAT64)
   END) AS miladisc,
   CAST(MILadisc AS FLOAT64) AS miladisc_raw,
 
-  (CASE 
+  (CASE
     WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MILcog AS FLOAT64) * -1
     ELSE CAST(MILcog AS FLOAT64)
   END) AS milcog,
   CAST(MILcog AS FLOAT64) AS milcog_raw,
-  
+
   CAST(MILconv AS FLOAT64) AS milconv,
 
-  (CASE 
+  (CASE
     WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MILdiscA AS FLOAT64) * -1
     ELSE CAST(MILdiscA AS FLOAT64)
   END) AS mildisca,
   CAST(MILdiscA AS FLOAT64) AS mildisca_raw,
 
   NULLIF(CAST(TRIM(MILdiscT) AS STRING), '') AS mildisct,
-  (CASE 
+  (CASE
     WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MILvat AS FLOAT64) * -1
     ELSE CAST(MILvat AS FLOAT64)
   END) AS milvat,
   CAST(MILvat AS FLOAT64) AS milvat_raw,
 
-  (CASE 
+  (CASE
     WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(IF( (MILsum - (mihdischf1*-1)) < 0, 0, CAST((MILsum - MILadisc) AS FLOAT64)) * -1 AS FLOAT64)
     ELSE CAST((MILsum - MILadisc) AS FLOAT64)
   END) AS milsum,
@@ -171,7 +183,8 @@ SELECT
   PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
 FROM cte_mil as mil
 LEFT JOIN cte_mih as mih
-  on mil.milyear = mih.mihyear
+  on mil.company_id = mih.company_id
+  and mil.milyear = mih.mihyear
   and mil.milmonth = mih.mihmonth
   and mil.milday = mih.mihday
   and mil.miltype = mih.mihtype

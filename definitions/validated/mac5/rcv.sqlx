@@ -3,10 +3,10 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
-    uniqueKey: ["serial"],
+    uniqueKey: ["company_id", "serial"],
     bigquery: {
         partitionBy: "asatdate",
-        clusterBy: ["serial"]
+        clusterBy: ["company_id", "serial"]
     },
 }
 
@@ -14,7 +14,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -22,7 +22,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["serial"]
+    const pk_key = ["company_id", "serial"]
 
     let partition_statement, post_operations_statement;
 
@@ -51,44 +51,47 @@ END;`;
     }
 }
 
-SELECT
-  NULLIF(CAST(TRIM(serial) AS STRING), '') AS serial,
-  NULLIF(CAST(TRIM(rcvdate) AS STRING), '') AS rcvdate,
-  CAST(rcvtype AS INT64) AS rcvtype,
-  NULLIF(CAST(TRIM(rcvvnos) AS STRING), '') AS rcvvnos,
-  NULLIF(CAST(TRIM(rcvstk) AS STRING), '') AS rcvstk,
-  NULLIF(CAST(TRIM(descT1) AS STRING), '') AS desct1,
-  NULLIF(CAST(TRIM(qty) AS STRING), '') AS qty,
-  NULLIF(CAST(TRIM(unit) AS STRING), '') AS unit,
-  NULLIF(CAST(TRIM(rcvsto) AS STRING), '') AS rcvsto,
-  NULLIF(CAST(TRIM(username) AS STRING), '') AS username,
-  NULLIF(CAST(TRIM(remark) AS STRING), '') AS remark,
-  NULLIF(CAST(TRIM(rcvtime) AS STRING), '') AS rcvtime,
-  NULLIF(CAST(TRIM(Fdatetime2) AS STRING), '') AS fdatetime2,
-  NULLIF(CAST(TRIM(rcvStatus) AS STRING), '') AS rcvstatus,
-  NULLIF(CAST(TRIM(rcvtypeFG) AS STRING), '') AS rcvtypefg,
-  NULLIF(CAST(TRIM(rcvstatusMR) AS STRING), '') AS rcvstatusmr,
-  NULLIF(CAST(TRIM(rcvzone) AS STRING), '') AS rcvzone,
-  NULLIF(CAST(TRIM(rcvOrder) AS STRING), '') AS rcvorder,
-  NULLIF(CAST(TRIM(rcvCommand) AS STRING), '') AS rcvcommand,
-  NULLIF(CAST(TRIM(rcvExtCode) AS STRING), '') AS rcvextcode,
-  NULLIF(CAST(TRIM(mixVnos) AS STRING), '') AS mixvnos,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mixDate, 1, 19)) AS mixdate,
-  NULLIF(CAST(TRIM(rcvTranCode) AS STRING), '') AS rcvtrancode,
-  CAST(rcvCancel AS INT64) AS rcvcancel,
-  NULLIF(CAST(TRIM(rcvOrder_Pack) AS STRING), '') AS rcvorder_pack,
-  NULLIF(CAST(TRIM(adjVnos) AS STRING), '') AS adjvnos,
-  NULLIF(CAST(TRIM(PackDate) AS STRING), '') AS packdate,
-  NULLIF(CAST(TRIM(PackTime) AS STRING), '') AS packtime,
-  CAST(rcvConvert AS INT64) AS rcvconvert,
-  NULLIF(CAST(TRIM(Odate) AS STRING), '') AS odate,
-  NULLIF(CAST(TRIM(Ouser) AS STRING), '') AS ouser,
-  CAST(FMIL2LISTNO AS INT64) AS fmil2listno,
-  NULLIF(CAST(TRIM(Ostatus) AS STRING), '') AS ostatus,
-  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
-FROM
-  `${sourceTableRef}`
-${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
+    NULLIF(CAST(TRIM(serial) AS STRING), '') AS serial,
+    NULLIF(CAST(TRIM(rcvdate) AS STRING), '') AS rcvdate,
+    CAST(rcvtype AS INT64) AS rcvtype,
+    NULLIF(CAST(TRIM(rcvvnos) AS STRING), '') AS rcvvnos,
+    NULLIF(CAST(TRIM(rcvstk) AS STRING), '') AS rcvstk,
+    NULLIF(CAST(TRIM(descT1) AS STRING), '') AS desct1,
+    NULLIF(CAST(TRIM(qty) AS STRING), '') AS qty,
+    NULLIF(CAST(TRIM(unit) AS STRING), '') AS unit,
+    NULLIF(CAST(TRIM(rcvsto) AS STRING), '') AS rcvsto,
+    NULLIF(CAST(TRIM(username) AS STRING), '') AS username,
+    NULLIF(CAST(TRIM(remark) AS STRING), '') AS remark,
+    NULLIF(CAST(TRIM(rcvtime) AS STRING), '') AS rcvtime,
+    NULLIF(CAST(TRIM(Fdatetime2) AS STRING), '') AS fdatetime2,
+    NULLIF(CAST(TRIM(rcvStatus) AS STRING), '') AS rcvstatus,
+    NULLIF(CAST(TRIM(rcvtypeFG) AS STRING), '') AS rcvtypefg,
+    NULLIF(CAST(TRIM(rcvstatusMR) AS STRING), '') AS rcvstatusmr,
+    NULLIF(CAST(TRIM(rcvzone) AS STRING), '') AS rcvzone,
+    NULLIF(CAST(TRIM(rcvOrder) AS STRING), '') AS rcvorder,
+    NULLIF(CAST(TRIM(rcvCommand) AS STRING), '') AS rcvcommand,
+    NULLIF(CAST(TRIM(rcvExtCode) AS STRING), '') AS rcvextcode,
+    NULLIF(CAST(TRIM(mixVnos) AS STRING), '') AS mixvnos,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mixDate, 1, 19)) AS mixdate,
+    NULLIF(CAST(TRIM(rcvTranCode) AS STRING), '') AS rcvtrancode,
+    CAST(rcvCancel AS INT64) AS rcvcancel,
+    NULLIF(CAST(TRIM(rcvOrder_Pack) AS STRING), '') AS rcvorder_pack,
+    NULLIF(CAST(TRIM(adjVnos) AS STRING), '') AS adjvnos,
+    NULLIF(CAST(TRIM(PackDate) AS STRING), '') AS packdate,
+    NULLIF(CAST(TRIM(PackTime) AS STRING), '') AS packtime,
+    CAST(rcvConvert AS INT64) AS rcvconvert,
+    NULLIF(CAST(TRIM(Odate) AS STRING), '') AS odate,
+    NULLIF(CAST(TRIM(Ouser) AS STRING), '') AS ouser,
+    CAST(FMIL2LISTNO AS INT64) AS fmil2listno,
+    NULLIF(CAST(TRIM(Ostatus) AS STRING), '') AS ostatus,
+    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
+  FROM
+    `${sourceTableRef}`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

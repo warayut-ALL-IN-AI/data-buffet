@@ -96,7 +96,7 @@ BEGIN
 
     FROM CalculateDuration as d
   )
-  SELECT 
+  SELECT
     * except(HolidayNameTH, HolidayNameEN, LongWeekEndFlag),
     (CASE 
       WHEN HolidayFlag = 'Yes' AND HolidayNameTH IS NOT NULL THEN HolidayNameTH

@@ -5,7 +5,7 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
     uniqueKey: [],
     bigquery: {
-        clusterBy: ["mihtype", "mihvnos", "mihcus"]
+        clusterBy: ["company_id", "mihtype", "mihvnos", "mihcus"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -50,7 +50,8 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     CAST(mihday AS INT64) as mihday,
     CAST(mihmonth AS INT64) as mihmonth,
     CAST(mihyear AS INT64) as mihyear,
@@ -129,8 +130,10 @@ SELECT
     NULLIF(CAST(TRIM(mihdebbranch) AS STRING), '') as mihdebbranch,
     NULLIF(CAST(TRIM(mihdebtaxnos) AS STRING), '') as mihdebtaxnos
 
-FROM
-  `${sourceTableRef}`
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

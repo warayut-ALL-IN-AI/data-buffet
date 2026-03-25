@@ -97,8 +97,8 @@ BEGIN
         a.stksto as WarehouseID,
         a.STKcode885 as Barcode
 
-        from ${ref(databuffet.VALIDATED_MAC5, "stk")} as a  
-        left join ${ref(databuffet.VALIDATED_MAC5, "stg")} as g on a.STKgroup = g.STGcode
+        from ${ref(databuffet.VALIDATED_MAC5, "stk")} as a
+        left join ${ref(databuffet.VALIDATED_MAC5, "stg")} as g on a.STKgroup = g.STGcode AND g.company_id = 'ag01'
         left join ${ref(databuffet.VALIDATED_MASTERSKU, "product")} as p on a.STKcode885 = p.prd_barcode
         left join ${ref(databuffet.VALIDATED_MASTERSKU, "product_detail")} as pd on p.prd_id = pd.pd_prd_id
         -- left join `${DimProductRebateTableRef}` as pdr on a.stkcode = pdr.rebate and pdr.status = 'Product'
@@ -111,16 +111,17 @@ BEGIN
           on stk_mkt_sk.MarketingGroupID = product_mk_sk.MarketingGroupID
             and stk_mkt_sk.SubMarketingID = product_mk_sk.SubMarketingID
             and stk_mkt_sk.SegmentID = product_mk_sk.SegmentID
-        --where a.STKcode885 is not null and a.STKcode885 <> '' 
+        where a.company_id = 'ag01'
+        --and a.STKcode885 is not null and a.STKcode885 <> ''
         qualify row_number() over(partition by ProductCode, Barcode order by prd_updated_date desc) = 1
     )
-    SELECT 
+    SELECT
       S.*,
       -- เช็คว่ามีอยู่แล้วในตาราง Target หรือไม่
       ROW_NUMBER() OVER(PARTITION BY T.ProductSK IS NULL ORDER BY S.ProductCode) as ProductSK
     FROM raw_data S
-    LEFT JOIN `${DimProductTableRef}` T 
-      ON S.ProductCode = T.ProductCode 
+    LEFT JOIN `${DimProductTableRef}` T
+      ON S.ProductCode = T.ProductCode
       AND IFNULL(S.Barcode, '') = IFNULL(T.Barcode, '')
   ) S
   ON T.ProductCode = S.ProductCode 
@@ -154,22 +155,22 @@ BEGIN
   WHEN NOT MATCHED THEN
     INSERT (
       ProductSK, StkMktSK, ProductMktSK,
-      ProductCode, ProductCode1, ProductMac5Description, 
-      ProductGroupMAC5, ProductGroupMac5Description, ProductGroupMAC5Type, 
-      ProductGroupACC, ProductGroupACCName, ProductName, ProductDescription, 
-      ProductDimension1, ProductDimension2, ProductDimension3, ProductDimension4, 
-      ProductGarantee, ProductGaranteeDetail, ThaiIndustrialStandardFlag, 
-      ThaiIndustrialSatandardDetail, BrandID, VendorID, 
+      ProductCode, ProductCode1, ProductMac5Description,
+      ProductGroupMAC5, ProductGroupMac5Description, ProductGroupMAC5Type,
+      ProductGroupACC, ProductGroupACCName, ProductName, ProductDescription,
+      ProductDimension1, ProductDimension2, ProductDimension3, ProductDimension4,
+      ProductGarantee, ProductGaranteeDetail, ThaiIndustrialStandardFlag,
+      ThaiIndustrialSatandardDetail, BrandID, VendorID,
       WarehouseID, Barcode
     )
     VALUES (
       max_sk + ProductSK, S.StkMktSK, S.ProductMktSK,
-      S.ProductCode, S.ProductCode1, S.ProductMac5Description, 
-      S.ProductGroupMAC5, S.ProductGroupMac5Description, S.ProductGroupMAC5Type, 
-      S.ProductGroupACC, S.ProductGroupACCName, S.ProductName, S.ProductDescription, 
-      S.ProductDimension1, S.ProductDimension2, S.ProductDimension3, S.ProductDimension4, 
-      S.ProductGarantee, S.ProductGaranteeDetail, S.ThaiIndustrialStandardFlag, 
-      S.ThaiIndustrialSatandardDetail, S.BrandID, S.VendorID, 
+      S.ProductCode, S.ProductCode1, S.ProductMac5Description,
+      S.ProductGroupMAC5, S.ProductGroupMac5Description, S.ProductGroupMAC5Type,
+      S.ProductGroupACC, S.ProductGroupACCName, S.ProductName, S.ProductDescription,
+      S.ProductDimension1, S.ProductDimension2, S.ProductDimension3, S.ProductDimension4,
+      S.ProductGarantee, S.ProductGaranteeDetail, S.ThaiIndustrialStandardFlag,
+      S.ThaiIndustrialSatandardDetail, S.BrandID, S.VendorID,
       S.WarehouseID, S.Barcode
     );
 

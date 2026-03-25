@@ -40,6 +40,7 @@ USING (
           ELSE DATE_DIFF(SAFE_CAST(pjend AS DATE), SAFE_CAST(pjstart AS DATE), DAY)
         END) as projectDay
       FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_profilecomp')} -- ปรับ ref ตามโครงสร้างที่คุณใช้
+      WHERE company_id = 'ag01'
     ),
     -- หา Max ProjectSK จาก Target เดิมเพื่อรันเลขต่อ
     target_max AS (
@@ -60,9 +61,9 @@ USING (
           ON S.projectCode = T.projectCode
     )
 
-    SELECT 
+    SELECT
       src.*,
-      CASE 
+      CASE
           WHEN existing_sk IS NOT NULL THEN existing_sk
           ELSE (SELECT max_sk FROM target_max) + rn_new
       END as final_ProjectSK

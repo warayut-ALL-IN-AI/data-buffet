@@ -1,0 +1,115 @@
+config {
+  type: "operations",
+  dependencies: ["drop_all_tables_validated_mac5", "drop_all_tables_curated_mac5"],
+  tags: [databuffet.TAG_INITIAL],
+}
+
+------------------------------------- SCHEMA --------------------------------------
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}` OPTIONS(location="${databuffet.REGION}");
+------------------------------------- SCHEMA --------------------------------------
+
+
+------------------------------------ INCREMENT ------------------------------------
+-- Table: cql
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.cql`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.cql`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/cql/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/cql/'
+);
+
+-- Table: mih
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.mih`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.mih`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/mih/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/mih/'
+);
+
+-- Table: mil
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.mil`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.mil`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/mil/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/mil/'
+);
+------------------------------------ INCREMENT ------------------------------------
+
+
+-------------------------------------- FULL ---------------------------------------
+-- Table: ap_s
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.ap_s`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.ap_s`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/ap_s/*.avro']
+);
+
+-- Table: ar_s
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.ar_s`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.ar_s`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/ar_s/*.avro']
+);
+
+-- Table: chq
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.chq`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.chq`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/chq/*.avro']
+);
+
+-- Table: deb
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.deb`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.deb`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/deb/*.avro']
+);
+
+-- Table: dep
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.dep`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.dep`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/dep/*.avro']
+);
+
+-- Table: per
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.per`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.per`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/per/*.avro']
+);
+
+-- Table: stg
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.stg`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.stg`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/stg/*.avro']
+);
+
+-- Table: stk
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.stk`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.stk`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AA05}/stk/*.avro']
+);
+-------------------------------------- FULL ---------------------------------------

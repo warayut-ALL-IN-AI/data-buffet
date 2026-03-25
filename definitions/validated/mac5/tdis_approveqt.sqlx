@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["docno","stktype"],
+    uniqueKey: ["company_id", "docno","stktype"],
     bigquery: {
-        clusterBy: ["docno"]
+        clusterBy: ["company_id", "docno"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -21,7 +21,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["docno","stktype"]
+    const pk_key = ["company_id", "docno","stktype"]
 
     let partition_statement, post_operations_statement;
 
@@ -50,7 +50,8 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     NULLIF(CAST(TRIM(docno) AS STRING), '') as docno,
     NULLIF(CAST(TRIM(lv1) AS STRING), '') as lv1,
     NULLIF(CAST(TRIM(lv2) AS STRING), '') as lv2,
@@ -69,8 +70,10 @@ SELECT
     NULLIF(CAST(TRIM(comment) AS STRING), '') as comment,
     NULLIF(CAST(TRIM(stktype) AS STRING), '') as stktype
 
-FROM
-  `${sourceTableRef}`
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

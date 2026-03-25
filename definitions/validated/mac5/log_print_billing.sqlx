@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["id"],
+    uniqueKey: ["company_id", "id"],
     bigquery: {
-        clusterBy: ["id"]
+        clusterBy: ["company_id", "id"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -21,7 +21,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["id"]
+    const pk_key = ["company_id", "id"]
 
     let partition_statement, post_operations_statement;
 
@@ -50,7 +50,8 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     CAST(id AS INT64) as id,
     NULLIF(CAST(TRIM(ref1) AS STRING), '') as ref1,
     NULLIF(CAST(TRIM(ref2) AS STRING), '') as ref2,
@@ -59,8 +60,10 @@ SELECT
     CAST(status AS INT64) as status,
     PARSE_DATE('%Y-%m-%d', SUBSTR(dinsert, 1, 10)) AS dinsert
 
-FROM
-  `${sourceTableRef}`
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

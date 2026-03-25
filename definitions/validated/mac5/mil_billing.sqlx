@@ -5,7 +5,7 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
     uniqueKey: [],
     bigquery: {
-        clusterBy: ["miltype", "milvnos", "milcus", "millistno"]
+        clusterBy: ["company_id", "miltype", "milvnos", "milcus"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -50,7 +50,8 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     CAST(milday AS INT64) as milday,
     CAST(milmonth AS INT64) as milmonth,
     CAST(milyear AS INT64) as milyear,
@@ -110,8 +111,10 @@ SELECT
     NULLIF(CAST(TRIM(milvcol5) AS STRING), '') as milvcol5,
     CAST(milfitem AS INT64) as milfitem
 
-FROM
-  `${sourceTableRef}`
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

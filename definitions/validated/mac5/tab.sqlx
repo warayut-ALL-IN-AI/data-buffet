@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["tabvnosid","tabdateid","tabcusid","tabtypeid","tablistno"],
+    uniqueKey: ["company_id", "tabvnosid","tabdateid","tabcusid","tabtypeid","tablistno"],
     bigquery: {
-        clusterBy: ["tabvnosid","tabdateid","tabcusid"]
+        clusterBy: ["company_id", "tabvnosid","tabdateid","tabcusid"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -21,7 +21,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["tabvnosid","tabdateid","tabcusid","tabtypeid","tablistno"]
+    const pk_key = ["company_id", "tabvnosid","tabdateid","tabcusid","tabtypeid","tablistno"]
 
     let partition_statement, post_operations_statement;
 
@@ -50,7 +50,8 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     NULLIF(CAST(TRIM(tabvnosid) AS STRING), '') as tabvnosid,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tabdateid, 1, 19)) AS tabdateid,
     NULLIF(CAST(TRIM(tabcusid) AS STRING), '') as tabcusid,
@@ -70,8 +71,10 @@ SELECT
     CAST(tablistno AS INT64) as tablistno,
     NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
 
-FROM
-  `${sourceTableRef}`
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

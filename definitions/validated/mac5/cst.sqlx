@@ -3,10 +3,10 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
-    uniqueKey: ["CSTdate","CSTtype","CSTvnos","CSTcus","CSTstk","CSTsto","CSTio","CSTlist"],
+    uniqueKey: ["company_id", "CSTdate","CSTtype","CSTvnos","CSTcus","CSTstk","CSTsto","CSTio","CSTlist"],
     bigquery: {
         partitionBy: "asatdate",
-        clusterBy: ["cstdate", "cstcus", "cststk"]
+        clusterBy: ["company_id", "cstdate", "cstcus", "cststk"]
     },
 }
 
@@ -14,7 +14,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -22,7 +22,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["CSTdate","CSTtype","CSTvnos","CSTcus","CSTstk","CSTsto","CSTio","CSTlist"]
+    const pk_key = ["company_id", "CSTdate","CSTtype","CSTvnos","CSTcus","CSTstk","CSTsto","CSTio","CSTlist"]
 
     let partition_statement, post_operations_statement;
 
@@ -51,35 +51,38 @@ END;`;
     }
 }
 
-SELECT
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CSTdate, 1, 19)) AS cstdate,
-  NULLIF(CAST(TRIM(CSTtype) AS STRING), '') AS csttype,
-  NULLIF(CAST(TRIM(CSTvnos) AS STRING), '') AS cstvnos,
-  NULLIF(CAST(TRIM(CSTcus) AS STRING), '') AS cstcus,
-  NULLIF(CAST(TRIM(CSTstk) AS STRING), '') AS cststk,
-  NULLIF(CAST(TRIM(CSTjob) AS STRING), '') AS cstjob,
-  NULLIF(CAST(TRIM(CSTdep) AS STRING), '') AS cstdep,
-  NULLIF(CAST(TRIM(CSTper) AS STRING), '') AS cstper,
-  NULLIF(CAST(TRIM(CSTdoc) AS STRING), '') AS cstdoc,
-  NULLIF(CAST(TRIM(CSTmec) AS STRING), '') AS cstmec,
-  NULLIF(CAST(TRIM(CSTsto) AS STRING), '') AS cststo,
-  CAST(CSTquan AS FLOAT64) AS cstquan,
-  CAST(CSTquanP2 AS FLOAT64) AS cstquanp2,
-  CAST(CSTcogSP AS FLOAT64) AS cstcogsp,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CSTexpDATE, 1, 19)) AS cstexpdate,
-  NULLIF(CAST(TRIM(CSTlinkVC) AS STRING), '') AS cstlinkvc,
-  CAST(CSTlinkVCid AS INT64) AS cstlinkvcid,
-  CAST(CSTio AS INT64) AS cstio,
-  CAST(CSTioZW AS INT64) AS cstiozw,
-  CAST(CSTlist AS INT64) AS cstlist,
-  CAST(CSTcostA AS FLOAT64) AS cstcosta,
-  CAST(CSTcostF AS FLOAT64) AS cstcostf,
-  CAST(CSTcostL AS FLOAT64) AS cstcostl,
-  NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
-  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
-FROM
-  `${sourceTableRef}`
-${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CSTdate, 1, 19)) AS cstdate,
+    NULLIF(CAST(TRIM(CSTtype) AS STRING), '') AS csttype,
+    NULLIF(CAST(TRIM(CSTvnos) AS STRING), '') AS cstvnos,
+    NULLIF(CAST(TRIM(CSTcus) AS STRING), '') AS cstcus,
+    NULLIF(CAST(TRIM(CSTstk) AS STRING), '') AS cststk,
+    NULLIF(CAST(TRIM(CSTjob) AS STRING), '') AS cstjob,
+    NULLIF(CAST(TRIM(CSTdep) AS STRING), '') AS cstdep,
+    NULLIF(CAST(TRIM(CSTper) AS STRING), '') AS cstper,
+    NULLIF(CAST(TRIM(CSTdoc) AS STRING), '') AS cstdoc,
+    NULLIF(CAST(TRIM(CSTmec) AS STRING), '') AS cstmec,
+    NULLIF(CAST(TRIM(CSTsto) AS STRING), '') AS cststo,
+    CAST(CSTquan AS FLOAT64) AS cstquan,
+    CAST(CSTquanP2 AS FLOAT64) AS cstquanp2,
+    CAST(CSTcogSP AS FLOAT64) AS cstcogsp,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CSTexpDATE, 1, 19)) AS cstexpdate,
+    NULLIF(CAST(TRIM(CSTlinkVC) AS STRING), '') AS cstlinkvc,
+    CAST(CSTlinkVCid AS INT64) AS cstlinkvcid,
+    CAST(CSTio AS INT64) AS cstio,
+    CAST(CSTioZW AS INT64) AS cstiozw,
+    CAST(CSTlist AS INT64) AS cstlist,
+    CAST(CSTcostA AS FLOAT64) AS cstcosta,
+    CAST(CSTcostF AS FLOAT64) AS cstcostf,
+    CAST(CSTcostL AS FLOAT64) AS cstcostl,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
+    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
+  FROM
+    `${sourceTableRef}`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

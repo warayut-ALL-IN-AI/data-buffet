@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["frun", "fcode"],
+    uniqueKey: ["company_id", "frun", "fcode"],
     bigquery: {
-        clusterBy: ["frun", "fcode"]
+        clusterBy: ["company_id", "frun", "fcode"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -21,7 +21,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["frun", "fcode"]
+    const pk_key = ["company_id", "frun", "fcode"]
 
     let partition_statement, post_operations_statement;
 
@@ -51,7 +51,8 @@ END;`;
 
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     NULLIF(CAST(TRIM(frun) AS STRING), '') as frun,
     NULLIF(CAST(TRIM(fmaster) AS STRING), '') as fmaster,
     NULLIF(CAST(TRIM(fcode) AS STRING), '') as fcode,
@@ -74,10 +75,11 @@ SELECT
     NULLIF(CAST(TRIM(fremark) AS STRING), '') as fremark,
     CAST(flitre_price AS FLOAT64) as flitre_price,
     CAST(flitre AS FLOAT64) as flitre,
-    CAST(fcubic AS FLOAT64) as fcubic,
-
-FROM
-  `${sourceTableRef}`
+    CAST(fcubic AS FLOAT64) as fcubic
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 
 ${partition_statement}
 

@@ -19,7 +19,7 @@ js {
 MERGE `${DimInvoiceTableRef}` T
 USING (
     WITH mih_raw as (
-        SELECT  
+        SELECT
           mihDay, mihMonth, mihYear, mihType, mihVnos, mihCus, mihRef1, mihPer, mihStatus,
           (CASE
             WHEN mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
@@ -28,15 +28,16 @@ USING (
           END) as StatusDesc,
           mihCancel,mihDep,mihJob
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')}
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} on mihStatus = ar_scode
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} on mihStatus = ap_scode
-        WHERE mihType = 'IS'
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} on mihStatus = ar_scode AND ar_s.company_id = 'ag01'
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} on mihStatus = ap_scode AND ap_s.company_id = 'ag01'
+        WHERE company_id = 'ag01'
+          and mihType = 'IS'
           and mihRef1 is not null
           and mihCancel <> -1
           and asatdate >= current_date('Asia/Bangkok')-1
-    ), 
+    ),
     mih_raw2 as (
-        SELECT  
+        SELECT
           mihDay, mihMonth, mihYear, mihType, mihVnos, mihCus, mihRef1, mihPer, mihStatus,
           (CASE
             WHEN mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
@@ -45,18 +46,20 @@ USING (
           END) as StatusDesc,
           mihCancel,mihDep,mihJob
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')}
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} on mihStatus = ar_scode
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} on mihStatus = ap_scode
-        WHERE asatdate >= current_date('Asia/Bangkok')-1
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} on mihStatus = ar_scode AND ar_s.company_id = 'ag01'
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} on mihStatus = ap_scode AND ap_s.company_id = 'ag01'
+        WHERE company_id = 'ag01'
+          and asatdate >= current_date('Asia/Bangkok')-1
     ), 
     filter_mih2 as (
         SELECT DISTINCT
           mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,mih2per2pc,
-          CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale1, 
+          CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale1,
           CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale2,
           row_number() over(partition by mih2vnos, mih2cus order by mih2rev desc) as chk_row
         FROM ${ref(databuffet.VALIDATED_MAC5, 'mih2')} as mih2
-        WHERE mih2cus is not null
+        WHERE mih2.company_id = 'ag01'
+          and mih2cus is not null
           and mih2per2 is not null
           and mih2per2pc is not null
           and (mih2perpc <> '100%' and mih2perpc <> '00%')
@@ -68,7 +71,7 @@ USING (
           )
     ), 
     includ_mih as (
-        SELECT 
+        SELECT
           mihDay, mihMonth, mihYear, mihType, mihCus, mih.mihVnos, mihPer,
           per_sale1, mih2per2, per_sale2, mihStatus, StatusDesc, mihCancel, mihRef1,
           mihDep,mihJob
@@ -138,11 +141,11 @@ USING (
             AND S.milLinkVcno = T.milLinkVcno
     )
 
-    SELECT 
+    SELECT
         src.*,
         -- ถ้ามี SK เดิม (Update) ให้ใช้ของเดิม
         -- ถ้าเป็นแถวใหม่ (Insert) ให้เอา Max + Running Number
-        CASE 
+        CASE
             WHEN existing_sk IS NOT NULL THEN existing_sk
             ELSE (SELECT max_sk FROM target_max) + rn_new
         END as final_InvoiceSK
@@ -177,7 +180,7 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
   INSERT (
     InvoiceSK,
-    mix_date, mihDay, mihMonth, mihYear, 
+    mix_date, mihDay, mihMonth, mihYear,
     mihType, mihVnos, mihCus, milLinkVcno,
     mihRef1, mihPer, mihStatus, StatusDesc, mihCancel,
     per_sale1, mih2per2, per_sale2, mihDep, mihJob,
@@ -185,7 +188,7 @@ WHEN NOT MATCHED THEN
   )
   VALUES (
     S.final_InvoiceSK, -- ใช้ SK ที่คำนวณใหม่
-    S.mix_date, S.mihDay, S.mihMonth, S.mihYear, 
+    S.mix_date, S.mihDay, S.mihMonth, S.mihYear,
     S.mihType, S.mihVnos, S.mihCus, S.milLinkVcno,
     S.mihRef1, S.mihPer, S.mihStatus, S.StatusDesc, S.mihCancel,
     S.per_sale1, S.mih2per2, S.per_sale2, S.mihDep, S.mihJob,

@@ -5,7 +5,7 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
     uniqueKey: [],
     bigquery: {
-        clusterBy: ["rnoid"]
+        clusterBy: ["company_id", "rnoid"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -50,7 +50,8 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     CAST(rnoid AS INT64) as rnoid,
     NULLIF(CAST(TRIM(rnoprefix) AS STRING), '') as rnoprefix,
     NULLIF(CAST(TRIM(rnoyear) AS STRING), '') as rnoyear,
@@ -60,8 +61,10 @@ SELECT
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(rnocrdate, 1, 19)) AS rnocrdate,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(rnoupdatedate, 1, 19)) AS rnoupdatedate
 
-FROM
-  `${sourceTableRef}`
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

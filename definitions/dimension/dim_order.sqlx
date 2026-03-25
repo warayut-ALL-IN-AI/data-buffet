@@ -24,6 +24,7 @@ USING (
         from ${ref(databuffet.CURATED_MAC5, 'curated_mil')}
         where miltype in ('PS', 'IS')
             and asatdate >= current_date('Asia/Bangkok')-1
+            and company_id = 'ag01'
     ), 
     main_table as (
         select milvnos, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
@@ -89,11 +90,12 @@ USING (
             mih.mihstatus_desc as mihStatusDesc,
             mih.mihCus
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
-        LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar 
-            on mih.mihStatus = ar.ar_scode
+        LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar
+            on mih.mihStatus = ar.ar_scode AND ar.company_id = 'ag01'
         LEFT JOIN order_status as order_status
             on order_status.milvnos = mih.mihVnos
-        WHERE mihType = 'PS' 
+        WHERE mihType = 'PS'
+            and mih.company_id = 'ag01' 
     ),
     -- ดึงค่า Max OrderSK ปัจจุบันจาก Target
     target_max AS (
@@ -119,11 +121,11 @@ USING (
             AND S.mihCus = T.mihCus
     )
 
-    SELECT 
+    SELECT
         src.*,
         -- ถ้ามี SK เดิม (Update) ให้ใช้ของเดิม
         -- ถ้าเป็นแถวใหม่ (Insert) ให้เอา Max + Running Number
-        CASE 
+        CASE
             WHEN existing_sk IS NOT NULL THEN existing_sk
             ELSE (SELECT max_sk FROM target_max) + rn_new
         END as final_OrderSK
@@ -156,16 +158,16 @@ WHEN MATCHED THEN
 -- กรณีไม่เจอข้อมูล (Insert)
 WHEN NOT MATCHED THEN
   INSERT (
-    OrderSK, 
+    OrderSK,
     mix_date, mihYear, mihMonth, mihDay, mihType, mihVnos, mihCus,
-    mihJob, mihRef1, mihRef2, mihRef3, 
-    mihCancel, mihStatus, StatusName, 
+    mihJob, mihRef1, mihRef2, mihRef3,
+    mihCancel, mihStatus, StatusName,
     memoExtract, mihMemoNew, mihStatusDesc
   )
   VALUES (
     S.final_OrderSK, -- ใช้ SK ที่คำนวณใหม่
     S.mix_date, S.mihYear, S.mihMonth, S.mihDay, S.mihType, S.mihVnos, S.mihCus,
-    S.mihJob, S.mihRef1, S.mihRef2, S.mihRef3, 
-    S.mihCancel, S.mihStatus, S.StatusName, 
+    S.mihJob, S.mihRef1, S.mihRef2, S.mihRef3,
+    S.mihCancel, S.mihStatus, S.StatusName,
     S.memoExtract, S.mihMemoNew, S.mihStatusDesc
   );

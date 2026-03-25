@@ -1,0 +1,166 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_MAC5,
+    dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "create_all_table_raw_mac5_aa05", "create_all_table_raw_mac5_ab01", "create_all_table_raw_mac5_ac02", "create_all_table_raw_mac5_ak02"],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
+    uniqueKey: ["company_id", "cqlbank", "cqlno", "cqlsys", "cqlday", "cqlmonth", "cqlyear", "cqlautono"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: ["company_id", "cqlbank", "cqlyear", "cqlmonth"]
+    },
+}
+
+js {
+    const pk_key = ["company_id", "cqlbank", "cqlno", "cqlsys", "cqlday", "cqlmonth", "cqlyear", "cqlautono"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY asatdate DESC) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+WITH all_sources AS (
+  SELECT
+    'ag01' AS company_id,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19)) AS cqldate,
+    NULLIF(CAST(TRIM(CQLbank) AS STRING), '') AS cqlbank,
+    NULLIF(CAST(TRIM(CQLno) AS STRING), '') AS cqlno,
+    CAST(CQLsys AS INT64) AS cqlsys,
+    CAST(CQLday AS INT64) AS cqlday,
+    CAST(CQLmonth AS INT64) AS cqlmonth,
+    CAST(CQLyear AS INT64) AS cqlyear,
+    CAST(CQLbook AS INT64) AS cqlbook,
+    NULLIF(CAST(TRIM(CQLvnos) AS STRING), '') AS cqlvnos,
+    CAST(CQLsumL AS FLOAT64) AS cqlsuml,
+    NULLIF(CAST(TRIM(CQLmivt) AS STRING), '') AS cqlmivt,
+    NULLIF(CAST(TRIM(CQLcus) AS STRING), '') AS cqlcus,
+    CAST(CQLtag AS INT64) AS cqltag,
+    CAST(CQLAutoNO AS INT64) AS cqlautono,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
+    CAST(ASATDATE AS DATE) AS asatdate
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.cql`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
+  UNION ALL
+
+  SELECT
+    'aa05' AS company_id,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19)) AS cqldate,
+    NULLIF(CAST(TRIM(CQLbank) AS STRING), '') AS cqlbank,
+    NULLIF(CAST(TRIM(CQLno) AS STRING), '') AS cqlno,
+    CAST(CQLsys AS INT64) AS cqlsys,
+    CAST(CQLday AS INT64) AS cqlday,
+    CAST(CQLmonth AS INT64) AS cqlmonth,
+    CAST(CQLyear AS INT64) AS cqlyear,
+    CAST(CQLbook AS INT64) AS cqlbook,
+    NULLIF(CAST(TRIM(CQLvnos) AS STRING), '') AS cqlvnos,
+    CAST(CQLsumL AS FLOAT64) AS cqlsuml,
+    NULLIF(CAST(TRIM(CQLmivt) AS STRING), '') AS cqlmivt,
+    NULLIF(CAST(TRIM(CQLcus) AS STRING), '') AS cqlcus,
+    CAST(CQLtag AS INT64) AS cqltag,
+    CAST(CQLAutoNO AS INT64) AS cqlautono,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
+    CAST(ASATDATE AS DATE) AS asatdate
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.cql`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
+  UNION ALL
+
+  SELECT
+    'ab01' AS company_id,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19)) AS cqldate,
+    NULLIF(CAST(TRIM(CQLbank) AS STRING), '') AS cqlbank,
+    NULLIF(CAST(TRIM(CQLno) AS STRING), '') AS cqlno,
+    CAST(CQLsys AS INT64) AS cqlsys,
+    CAST(CQLday AS INT64) AS cqlday,
+    CAST(CQLmonth AS INT64) AS cqlmonth,
+    CAST(CQLyear AS INT64) AS cqlyear,
+    CAST(CQLbook AS INT64) AS cqlbook,
+    NULLIF(CAST(TRIM(CQLvnos) AS STRING), '') AS cqlvnos,
+    CAST(CQLsumL AS FLOAT64) AS cqlsuml,
+    NULLIF(CAST(TRIM(CQLmivt) AS STRING), '') AS cqlmivt,
+    NULLIF(CAST(TRIM(CQLcus) AS STRING), '') AS cqlcus,
+    CAST(CQLtag AS INT64) AS cqltag,
+    CAST(CQLAutoNO AS INT64) AS cqlautono,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
+    CAST(ASATDATE AS DATE) AS asatdate
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.cql`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
+  UNION ALL
+
+  SELECT
+    'ac02' AS company_id,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19)) AS cqldate,
+    NULLIF(CAST(TRIM(CQLbank) AS STRING), '') AS cqlbank,
+    NULLIF(CAST(TRIM(CQLno) AS STRING), '') AS cqlno,
+    CAST(CQLsys AS INT64) AS cqlsys,
+    CAST(CQLday AS INT64) AS cqlday,
+    CAST(CQLmonth AS INT64) AS cqlmonth,
+    CAST(CQLyear AS INT64) AS cqlyear,
+    CAST(CQLbook AS INT64) AS cqlbook,
+    NULLIF(CAST(TRIM(CQLvnos) AS STRING), '') AS cqlvnos,
+    CAST(CQLsumL AS FLOAT64) AS cqlsuml,
+    NULLIF(CAST(TRIM(CQLmivt) AS STRING), '') AS cqlmivt,
+    NULLIF(CAST(TRIM(CQLcus) AS STRING), '') AS cqlcus,
+    CAST(CQLtag AS INT64) AS cqltag,
+    CAST(CQLAutoNO AS INT64) AS cqlautono,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
+    CAST(ASATDATE AS DATE) AS asatdate
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.cql`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
+  UNION ALL
+
+  SELECT
+    'ak02' AS company_id,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19)) AS cqldate,
+    NULLIF(CAST(TRIM(CQLbank) AS STRING), '') AS cqlbank,
+    NULLIF(CAST(TRIM(CQLno) AS STRING), '') AS cqlno,
+    CAST(CQLsys AS INT64) AS cqlsys,
+    CAST(CQLday AS INT64) AS cqlday,
+    CAST(CQLmonth AS INT64) AS cqlmonth,
+    CAST(CQLyear AS INT64) AS cqlyear,
+    CAST(CQLbook AS INT64) AS cqlbook,
+    NULLIF(CAST(TRIM(CQLvnos) AS STRING), '') AS cqlvnos,
+    CAST(CQLsumL AS FLOAT64) AS cqlsuml,
+    NULLIF(CAST(TRIM(CQLmivt) AS STRING), '') AS cqlmivt,
+    NULLIF(CAST(TRIM(CQLcus) AS STRING), '') AS cqlcus,
+    CAST(CQLtag AS INT64) AS cqltag,
+    CAST(CQLAutoNO AS INT64) AS cqlautono,
+    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
+    CAST(ASATDATE AS DATE) AS asatdate
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.cql`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+)
+
+SELECT * FROM all_sources
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

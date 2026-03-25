@@ -28,16 +28,17 @@ USING (
     WITH match_customer AS (
         SELECT customer_allkon, customer_mac5
         FROM (
-            SELECT 
-                a.customer_allkon, 
+            SELECT
+                a.customer_allkon,
                 a.customer_mac5,
                 ROW_NUMBER() OVER(PARTITION BY a.customer_mac5 ORDER BY a.customer_allkon DESC) as rn
             FROM ${ref(databuffet.VALIDATED_MAC5, 'match_customer')} as a
             INNER JOIN (
-                SELECT DISTINCT customer_code 
+                SELECT DISTINCT customer_code
                 FROM ${ref(databuffet.VALIDATED_CIS360, 'customer_profile')}
-            ) b 
-                ON a.customer_allkon = b.customer_code 
+            ) b
+                ON a.customer_allkon = b.customer_code
+        WHERE a.company_id = 'ag01'
         )
         WHERE rn = 1
     ),
@@ -91,10 +92,11 @@ USING (
         FROM ${ref(databuffet.VALIDATED_MAC5, 'deb')} as deb
         LEFT JOIN `${DebAddressTableRef}` as deb_address
             ON deb.debcode = deb_address.debcode
-        LEFT JOIN match_customer as mc 
+        LEFT JOIN match_customer as mc
             ON deb.debcode = mc.customer_mac5
-        LEFT JOIN Customer_360 as cp 
+        LEFT JOIN Customer_360 as cp
             ON mc.customer_allkon = cp.customer_code
+        WHERE deb.company_id = 'ag01'
     ),
     -- จัดการรัน CustomerSK ต่อจากของเดิม
     target_max AS (
@@ -113,9 +115,9 @@ USING (
             ON S.debcode = T.debcode
     )
 
-    SELECT 
+    SELECT
         src.*,
-        CASE 
+        CASE
             WHEN existing_sk IS NOT NULL THEN existing_sk
             ELSE (SELECT max_sk FROM target_max) + rn_new
         END as final_CustomerSK

@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["mcontractid"],
+    uniqueKey: ["company_id", "mcontractid"],
     bigquery: {
-        clusterBy: ["mcontractid"]
+        clusterBy: ["company_id", "mcontractid"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -21,7 +21,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["mcontractid"]
+    const pk_key = ["company_id", "mcontractid"]
 
     let partition_statement, post_operations_statement;
 
@@ -50,14 +50,17 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     CAST(mcontractid AS INT64) as mcontractid,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dateinsert, 1, 19)) AS dateinsert,
     CAST(status AS INT64) as status,
     NULLIF(CAST(TRIM(uinsert) AS STRING), '') as uinsert
 
-FROM
-  `${sourceTableRef}`
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

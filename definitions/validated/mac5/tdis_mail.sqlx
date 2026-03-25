@@ -5,7 +5,7 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
     uniqueKey: [],
     bigquery: {
-        clusterBy: ["saleid"]
+        clusterBy: ["company_id", "saleid"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -50,7 +50,8 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     NULLIF(CAST(TRIM(saleid) AS STRING), '') as saleid,
     NULLIF(CAST(TRIM(spass) AS STRING), '') as spass,
     NULLIF(CAST(TRIM(salename) AS STRING), '') as salename,
@@ -115,8 +116,10 @@ SELECT
     NULLIF(CAST(TRIM(lv_boq_lyn) AS STRING), '') as lv_boq_lyn,
     CAST(active AS INT64) as active
 
-FROM
-  `${sourceTableRef}`
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

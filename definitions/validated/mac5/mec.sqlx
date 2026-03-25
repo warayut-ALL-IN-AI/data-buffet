@@ -3,9 +3,9 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["meccode"],
+    uniqueKey: ["company_id", "meccode"],
     bigquery: {
-        clusterBy: ["meccode"]
+        clusterBy: ["company_id", "meccode"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -21,7 +21,7 @@ js {
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
     // Keep existing logic
-    const pk_key = ["meccode"]
+    const pk_key = ["company_id", "meccode"]
 
     let partition_statement, post_operations_statement;
 
@@ -50,7 +50,8 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     NULLIF(CAST(TRIM(meccode) AS STRING), '') as meccode,
     CAST(mectpl AS INT64) as mectpl,
     CAST(mectoctype AS INT64) as mectoctype,
@@ -94,8 +95,10 @@ SELECT
     NULLIF(CAST(TRIM(meceditmf) AS STRING), '') as meceditmf,
     NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
 
-FROM
-  `${sourceTableRef}`
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

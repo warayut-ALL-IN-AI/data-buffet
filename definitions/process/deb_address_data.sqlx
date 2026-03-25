@@ -3,30 +3,34 @@ config {
     schema: databuffet.PROCESS_DATASET,
     dependencies: [],
     tags: [databuffet.TAG_PROCESS],
-    uniqueKey: ["debcode"],
+    uniqueKey: ["company_id", "debcode"],
     bigquery: {
         // partitionBy: "asatdate",
-        clusterBy: ["debcode"],
+        clusterBy: ["company_id", "debcode"],
         // updatePartitionFilter: "asatdate >= CURRENT_DATE('Asia/Bangkok')-7"
     }
 }
 
 WITH raw_data AS (
-  SELECT 
+  SELECT
+    d.company_id,
     d.debcode,
     TRIM(CONCAT(IFNULL(d.debadd1at, ''), ' ', IFNULL(d.debadd2at, ''), ' ', IFNULL(d.debadd3at, ''))) AS raw_address
   FROM ${ref(databuffet.VALIDATED_MAC5, 'deb')} AS d
-  WHERE d.debcode IN (
-    SELECT DISTINCT JSON_VALUE(pk_fields, '$.debcode')
-    FROM ${ref(databuffet.CDC_DATESET, 'cdc_change_log')} 
+  WHERE EXISTS (
+    SELECT 1
+    FROM ${ref(databuffet.CDC_DATESET, 'cdc_change_log')}
     WHERE source_system = 'mac5'
       AND source_schema = 'validated_mac5'
       AND source_table = 'deb'
       AND asatdate = CURRENT_DATE('Asia/Bangkok')
+      AND JSON_VALUE(pk_fields, '$.debcode') = d.debcode
+      AND JSON_VALUE(pk_fields, '$.company_id') = d.company_id
   )
   AND TRIM(IFNULL(CONCAT(IFNULL(d.debadd1at, ''), ' ', IFNULL(d.debadd2at, ''), ' ', IFNULL(d.debadd3at, '')), '')) != ''
 )
   SELECT
+    company_id,
     debcode,
     raw_address,
     AI.GENERATE(

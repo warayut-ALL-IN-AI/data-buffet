@@ -5,7 +5,7 @@ config {
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
     uniqueKey: [],
     bigquery: {
-        clusterBy: ["grpstatus", "grpid"]
+        clusterBy: ["company_id", "grpstatus", "grpid"]
     },
 }
 
@@ -13,7 +13,7 @@ js {
     // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5,
+        schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
@@ -50,15 +50,18 @@ END;`;
     }
 }
 
-SELECT
+WITH all_sources AS (
+  SELECT 'ag01' AS company_id,
     CAST(grpid AS INT64) as grpid,
     NULLIF(CAST(TRIM(grpstatus) AS STRING), '') as grpstatus,
     NULLIF(CAST(TRIM(grpname) AS STRING), '') as grpname,
     NULLIF(CAST(TRIM(grpline) AS STRING), '') as grpline,
     NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
 
-FROM
-  `${sourceTableRef}`
+  FROM
+    `${sourceTableRef}`
+)
+SELECT * FROM all_sources
 ${partition_statement}
 
 pre_operations {

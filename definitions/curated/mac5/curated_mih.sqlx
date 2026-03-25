@@ -3,10 +3,10 @@ config {
     schema: databuffet.CURATED_MAC5,
     dependencies: ["curated_schema_mac5"],
     tags: [databuffet.TAG_CURATED],
-    uniqueKey: ["mihType", "mihVnos"],
+    uniqueKey: ["company_id", "mihType", "mihVnos"],
     bigquery: {
         partitionBy: "asatdate",
-        clusterBy: ["mihVnos", "mihType", "mihYear"],
+        clusterBy: ["company_id", "mihVnos", "mihType"],
     }
 }
 
@@ -14,19 +14,21 @@ WITH mih2_raw as (
     SELECT *
     FROM (
         SELECT DISTINCT
-            mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
+            company_id, mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
             ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale1,
             ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale2,
         FROM ${ref(databuffet.VALIDATED_MAC5, "mih2")}
-        WHERE mih2cus IS NOT NULL
+        WHERE company_id = 'ag01'
+            AND mih2cus IS NOT NULL
             AND mih2per2 IS NOT NULL
             AND mih2per2pc IS NOT NULL
-        QUALIFY ROW_NUMBER() OVER(PARTITION BY mih2vnos, mih2cus ORDER BY mih2rev DESC) = 1
+        QUALIFY ROW_NUMBER() OVER(PARTITION BY company_id, mih2vnos, mih2cus ORDER BY mih2rev DESC) = 1
     )
     WHERE (mih2perpc <> '100%' AND mih2perpc <> '00%')
 
 )
 SELECT
+    mih.company_id as company_id,
     mih.mihday as mihDay,
     mih.mihmonth as mihMonth,
     mih.mihyear as mihYear,
@@ -115,11 +117,13 @@ SELECT
     IFNULL(CONCAT(mih2.per_sale2, '%'), '0.00%') as percentSale2,
 FROM ${ref(databuffet.VALIDATED_MAC5, "mih")} as mih
 LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "ar_s")} as ar_s
-    ON mih.mihstatus = ar_s.ar_scode
+    ON mih.company_id = ar_s.company_id AND mih.mihstatus = ar_s.ar_scode
 LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "ap_s")} as ap_s
-    ON mih.mihstatus = ap_s.ap_scode
+    ON mih.company_id = ap_s.company_id AND mih.mihstatus = ap_s.ap_scode
 LEFT JOIN mih2_raw as mih2
     ON mih.mihRef1 = mih2.mih2vnos
         AND mih.mihCus = mih2.mih2cus
+        AND mih.company_id = mih2.company_id
 
-${ when(incremental(), `WHERE mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+WHERE mih.company_id = 'ag01'
+${ when(incremental(), `AND mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }

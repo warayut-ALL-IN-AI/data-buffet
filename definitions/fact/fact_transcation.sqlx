@@ -188,6 +188,7 @@ BEGIN
     -- DEB
     LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'deb')} as deb
       ON trans.milCus = deb.debCode
+      AND deb.company_id = 'ag01'
       
     WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1
       -- AND milVnos = '6901003086'
@@ -571,7 +572,7 @@ BEGIN
   from final_part2
   -- where mildep is null
 )
-  select 
+  select
     -- SK
     DebAddress.ProvinceSK as InvoiceProvinceSK, 
     DebAddress.DistrictSK as InvoiceDistrictSK,
