@@ -4,10 +4,10 @@
       "enabled": true,
       "tables": {
         "mih": {
-          "enabled": true,
+          "enabled": false,
           "primary_keys": ["company_id", "mihtype", "mihvnos"],
           "check_fields": ["mihdesc"],
-          "raw_schema": "raw_mac5",
+          "raw_schema": "raw_mac5_ag01",
           "validated_schema": "validated_mac5",
           "partition_field": "asatdate"
         },
@@ -15,7 +15,7 @@
           "enabled": true,
           "primary_keys": ["company_id", "debcode"],
           "check_fields": ["debadd1at", "debadd2at", "debadd3at"],
-          "raw_schema": "raw_mac5",
+          "raw_schema": "raw_mac5_ag01",
           "validated_schema": "validated_mac5",
           "partition_field": null
         }

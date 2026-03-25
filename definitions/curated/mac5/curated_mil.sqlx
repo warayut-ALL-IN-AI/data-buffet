@@ -97,16 +97,16 @@ post_operations {
           company_id, mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
           ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale1,
           ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale2,
-        FROM ${ref(databuffet.VALIDATED_MAC5, "mih2")}
+        FROM ${ref(databuffet.VALIDATED_MAC5, "mih2")} as mih2
         WHERE mih2.company_id = 'ag01'
-          AND mih2cus IS NOT NULL
-          AND mih2per2 IS NOT NULL
-          AND mih2per2pc IS NOT NULL
+          AND mih2.mih2cus IS NOT NULL
+          AND mih2.mih2per2 IS NOT NULL
+          AND mih2.mih2per2pc IS NOT NULL
         --   AND mih2type = 'PS'
           AND EXISTS (
             SELECT 1 FROM mil_raw AS mil
-            WHERE mih2vnos = mil.milLinkvcno
-              AND mih2cus = mil.milCus
+            WHERE mih2.mih2vnos = mil.milLinkvcno
+              AND mih2.mih2cus = mil.milCus
               AND mih2.company_id = mil.company_id
           )
         QUALIFY ROW_NUMBER() OVER(PARTITION BY company_id, mih2vnos, mih2cus ORDER BY mih2rev DESC) = 1

@@ -7,3 +7,4 @@ config {
 
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih`;
 DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mil`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_tbook_quotation`;
