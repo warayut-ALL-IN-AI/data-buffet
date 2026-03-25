@@ -67,8 +67,7 @@ WITH all_sources AS (
     CAST(cpxclearstk AS INT64) as cpxclearstk,
     CAST(cpxclearuser AS INT64) as cpxclearuser,
     CAST(cpxclearall AS INT64) as cpxclearall,
-    CAST(cpxstatus AS INT64) as cpxstatus,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(cpxstatus AS INT64) as cpxstatus
 
   FROM
     `${sourceTableRef}`

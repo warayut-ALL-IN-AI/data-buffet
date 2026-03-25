@@ -62,8 +62,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(docrefwe) AS STRING), '') as docrefwe,
     CAST(dochide AS INT64) as dochide,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(doceditdt, 1, 19)) AS doceditdt,
-    NULLIF(CAST(TRIM(doceditmf) AS STRING), '') as doceditmf,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    NULLIF(CAST(TRIM(doceditmf) AS STRING), '') as doceditmf
 
   FROM
     `${sourceTableRef}`

@@ -126,7 +126,6 @@ WITH all_sources AS (
     CAST(mihrpv AS INT64) as mihrpv,
     CAST(mihclearcut AS INT64) as mihclearcut,
     CAST(mihsettlecut AS INT64) as mihsettlecut,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid,
     NULLIF(CAST(TRIM(mihdebbranch) AS STRING), '') as mihdebbranch,
     NULLIF(CAST(TRIM(mihdebtaxnos) AS STRING), '') as mihdebtaxnos
 

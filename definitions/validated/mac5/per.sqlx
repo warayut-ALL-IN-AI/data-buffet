@@ -67,7 +67,6 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
     NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid,
     NULLIF(CAST(TRIM(perzone) AS STRING), '') as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.per`
 
@@ -100,7 +99,6 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
     NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid,
     CAST(NULL AS STRING) as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.per`
 
@@ -133,7 +131,6 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
     NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
-    CAST(NULL AS STRING) as rowguid,
     CAST(NULL AS STRING) as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.per`
 
@@ -166,7 +163,6 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
     NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid,
     CAST(NULL AS STRING) as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.per`
 
@@ -199,7 +195,6 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
     NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
-    CAST(NULL AS STRING) as rowguid,
     CAST(NULL AS STRING) as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.per`
 )

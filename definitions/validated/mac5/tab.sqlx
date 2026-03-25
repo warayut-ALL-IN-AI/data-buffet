@@ -68,8 +68,7 @@ WITH all_sources AS (
     CAST(tabsum AS FLOAT64) as tabsum,
     CAST(tabcurc AS INT64) as tabcurc,
     CAST(tabexchg AS FLOAT64) as tabexchg,
-    CAST(tablistno AS INT64) as tablistno,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(tablistno AS INT64) as tablistno
 
   FROM
     `${sourceTableRef}`

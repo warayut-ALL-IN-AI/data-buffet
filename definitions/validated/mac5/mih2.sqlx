@@ -194,7 +194,6 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(MIH2updatenameT) AS STRING), '') AS mih2updatenamet,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2crdate, 1, 19)) AS mih2crdate,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2updatedate, 1, 19)) AS mih2updatedate,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
     CAST(PaymentStatus AS INT64) AS paymentstatus,
     CAST(CondPack AS INT64) AS condpack,
     NULLIF(CAST(TRIM(InstallStatus) AS STRING), '') AS installstatus,

@@ -137,8 +137,7 @@ WITH all_sources AS (
     CAST(vmicpr AS INT64) as vmicpr,
     CAST(vmprtotal AS INT64) as vmprtotal,
     CAST(vmprsalary AS INT64) as vmprsalary,
-    CAST(vmprmemo AS INT64) as vmprmemo,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(vmprmemo AS INT64) as vmprmemo
 
   FROM
     `${sourceTableRef}`

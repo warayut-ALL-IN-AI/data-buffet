@@ -76,7 +76,6 @@ WITH all_sources AS (
     CAST(CSTcostA AS FLOAT64) AS cstcosta,
     CAST(CSTcostF AS FLOAT64) AS cstcostf,
     CAST(CSTcostL AS FLOAT64) AS cstcostl,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM
     `${sourceTableRef}`

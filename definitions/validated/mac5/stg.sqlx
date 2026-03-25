@@ -15,7 +15,7 @@ js {
     let partition_statement, post_operations_statement;
 
     if (pk_key && pk_key.length > 0) {
-        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY stgdesct desc, stgdesce desc, rowguid desc) = 1`;
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY stgdesct desc, stgdesce desc) = 1`;
         post_operations_statement = `
 BEGIN
     DECLARE retry_count INT64 DEFAULT 0;
@@ -52,7 +52,7 @@ all_sources AS (
     NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
     NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
     NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
-    NULLIF(CAST(TRIM(stg.rowguid) AS STRING), '') as rowguid,
+
     NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
     NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.stg` as stg
@@ -65,7 +65,7 @@ all_sources AS (
     NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
     NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
     NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
-    NULLIF(CAST(TRIM(stg.rowguid) AS STRING), '') as rowguid,
+
     NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
     NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.stg` as stg
@@ -78,7 +78,7 @@ all_sources AS (
     NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
     NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
     NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
-    CAST(NULL AS STRING) as rowguid,
+
     NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
     NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.stg` as stg
@@ -91,7 +91,7 @@ all_sources AS (
     NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
     NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
     NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
-    NULLIF(CAST(TRIM(stg.rowguid) AS STRING), '') as rowguid,
+
     NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
     NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.stg` as stg
@@ -104,7 +104,7 @@ all_sources AS (
     NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
     NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
     NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
-    CAST(NULL AS STRING) as rowguid,
+
     NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
     NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.stg` as stg

@@ -79,7 +79,6 @@ WITH all_sources AS (
     CAST(CPScut AS INT64) AS cpscut,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CPSdelvDate, 1, 19)) AS cpsdelvdate,
     CAST(CPSlistNo AS INT64) AS cpslistno,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM
     `${sourceTableRef}`

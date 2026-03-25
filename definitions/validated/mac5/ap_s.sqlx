@@ -46,8 +46,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(ap_snamet) AS STRING), '') as ap_snamet,
     NULLIF(CAST(TRIM(ap_snamee) AS STRING), '') as ap_snamee,
     CAST(ap_scolf AS INT64) as ap_scolf,
-    CAST(ap_scolb AS INT64) as ap_scolb,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(ap_scolb AS INT64) as ap_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.ap_s`
 
   UNION ALL
@@ -58,8 +57,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(ap_snamet) AS STRING), '') as ap_snamet,
     NULLIF(CAST(TRIM(ap_snamee) AS STRING), '') as ap_snamee,
     CAST(ap_scolf AS INT64) as ap_scolf,
-    CAST(ap_scolb AS INT64) as ap_scolb,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(ap_scolb AS INT64) as ap_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.ap_s`
 
   UNION ALL
@@ -70,8 +68,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(ap_snamet) AS STRING), '') as ap_snamet,
     NULLIF(CAST(TRIM(ap_snamee) AS STRING), '') as ap_snamee,
     CAST(ap_scolf AS INT64) as ap_scolf,
-    CAST(ap_scolb AS INT64) as ap_scolb,
-    CAST(NULL AS STRING) as rowguid
+    CAST(ap_scolb AS INT64) as ap_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.ap_s`
 
   UNION ALL
@@ -82,8 +79,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(ap_snamet) AS STRING), '') as ap_snamet,
     NULLIF(CAST(TRIM(ap_snamee) AS STRING), '') as ap_snamee,
     CAST(ap_scolf AS INT64) as ap_scolf,
-    CAST(ap_scolb AS INT64) as ap_scolb,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(ap_scolb AS INT64) as ap_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.ap_s`
 
   UNION ALL
@@ -94,8 +90,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(ap_snamet) AS STRING), '') as ap_snamet,
     NULLIF(CAST(TRIM(ap_snamee) AS STRING), '') as ap_snamee,
     CAST(ap_scolf AS INT64) as ap_scolf,
-    CAST(ap_scolb AS INT64) as ap_scolb,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(ap_scolb AS INT64) as ap_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.ap_s`
 )
 

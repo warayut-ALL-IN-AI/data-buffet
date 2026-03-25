@@ -127,7 +127,6 @@ WITH all_sources AS (
     CAST(MIHrpv AS INT64) AS mihrpv,
     CAST(MIHclearCUT AS INT64) AS mihclearcut,
     CAST(MIHsettleCUT AS INT64) AS mihsettlecut,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM
     `${sourceTableRef}`

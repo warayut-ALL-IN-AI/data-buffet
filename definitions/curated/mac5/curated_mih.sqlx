@@ -103,7 +103,6 @@ SELECT
     mih.mihrpv as mihRpv,
     mih.mihclearcut as mihClearcut,
     mih.mihsettlecut as mihSettlecut,
-    mih.rowguid as rowguid,
     mih.moddate as moddate,
     mih.mihmemo_new as mihMemoNew,
     mih.memo_extract as memoExtract,

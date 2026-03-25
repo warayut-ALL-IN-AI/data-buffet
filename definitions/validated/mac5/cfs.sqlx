@@ -70,8 +70,7 @@ WITH all_sources AS (
     CAST(cfscurc AS INT64) as cfscurc,
     CAST(cfsexchg AS FLOAT64) as cfsexchg,
     CAST(cfsbillcut AS FLOAT64) as cfsbillcut,
-    CAST(cfsbillclr AS INT64) as cfsbillclr,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(cfsbillclr AS INT64) as cfsbillclr
 
   FROM
     `${sourceTableRef}`

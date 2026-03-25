@@ -58,8 +58,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(stdstkcode) AS STRING), '') as stdstkcode,
     NULLIF(CAST(TRIM(stddesct1) AS STRING), '') as stddesct1,
     NULLIF(CAST(TRIM(stddesce1) AS STRING), '') as stddesce1,
-    CAST(stdautono AS INT64) as stdautono,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(stdautono AS INT64) as stdautono
 
   FROM
     `${sourceTableRef}`

@@ -77,8 +77,7 @@ WITH all_sources AS (
     CAST(cppexchg AS FLOAT64) as cppexchg,
     CAST(cppcut AS INT64) as cppcut,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cppdelvdate, 1, 19)) AS cppdelvdate,
-    CAST(cpplistno AS INT64) as cpplistno,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(cpplistno AS INT64) as cpplistno
 
   FROM
     `${sourceTableRef}`

@@ -26,7 +26,7 @@ js {
     let partition_statement, post_operations_statement;
 
     if (pk_key && pk_key.length > 0) {
-        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY rowguid desc) = 1`;
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key}) = 1`;
         post_operations_statement = `
 BEGIN
     DECLARE retry_count INT64 DEFAULT 0;
@@ -55,8 +55,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(sblstk) AS STRING), '') as sblstk,
     NULLIF(CAST(TRIM(sblsto) AS STRING), '') as sblsto,
     CAST(sblquan AS FLOAT64) as sblquan,
-    CAST(sblquanp2 AS FLOAT64) as sblquanp2,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(sblquanp2 AS FLOAT64) as sblquanp2
 
   FROM
     `${sourceTableRef}`

@@ -59,8 +59,7 @@ WITH all_sources AS (
     CAST(stolock AS INT64) as stolock,
     CAST(stohide AS INT64) as stohide,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stoeditdt, 1, 19)) AS stoeditdt,
-    NULLIF(CAST(TRIM(stoeditmf) AS STRING), '') as stoeditmf,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    NULLIF(CAST(TRIM(stoeditmf) AS STRING), '') as stoeditmf
 
   FROM
     `${sourceTableRef}`

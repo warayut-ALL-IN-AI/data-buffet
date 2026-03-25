@@ -26,7 +26,7 @@ js {
     let partition_statement, post_operations_statement;
 
     if (pk_key && pk_key.length > 0) {
-        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY grpname desc, rowguid desc) = 1`;
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY grpname desc) = 1`;
         post_operations_statement = `
 BEGIN
     DECLARE retry_count INT64 DEFAULT 0;
@@ -55,8 +55,7 @@ WITH all_sources AS (
     CAST(grpid AS INT64) as grpid,
     NULLIF(CAST(TRIM(grpstatus) AS STRING), '') as grpstatus,
     NULLIF(CAST(TRIM(grpname) AS STRING), '') as grpname,
-    NULLIF(CAST(TRIM(grpline) AS STRING), '') as grpline,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    NULLIF(CAST(TRIM(grpline) AS STRING), '') as grpline
 
   FROM
     `${sourceTableRef}`

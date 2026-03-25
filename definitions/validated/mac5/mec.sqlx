@@ -92,8 +92,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(mect9) AS STRING), '') as mect9,
     NULLIF(CAST(TRIM(mect10) AS STRING), '') as mect10,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(meceditdt, 1, 19)) AS meceditdt,
-    NULLIF(CAST(TRIM(meceditmf) AS STRING), '') as meceditmf,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    NULLIF(CAST(TRIM(meceditmf) AS STRING), '') as meceditmf
 
   FROM
     `${sourceTableRef}`
