@@ -87,15 +87,17 @@ WITH cte_mil as (
     t1.mihdischf1
 
   from ${ref("mih")} as t1
-  where exists (select 1 from cte_mil as t2
-    where t1.company_id = t2.company_id
-      and t1.mihyear = t2.milyear
-      and t1.mihmonth = t2.milmonth
-      and t1.mihday = t2.milday
-      and t1.mihtype = t2.miltype
-      and t1.mihvnos = t2.milvnos
-      and t1.mihcus = t2.milcus
-  )
+  inner join (
+    select distinct company_id, milyear, milmonth, milday, miltype, milvnos, milcus
+    from cte_mil
+  ) as t2
+    on t1.company_id = t2.company_id
+    and t1.mihyear = t2.milyear
+    and t1.mihmonth = t2.milmonth
+    and t1.mihday = t2.milday
+    and t1.mihtype = t2.miltype
+    and t1.mihvnos = t2.milvnos
+    and t1.mihcus = t2.milcus
 
 )
 SELECT
