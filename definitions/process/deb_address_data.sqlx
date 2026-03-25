@@ -25,7 +25,7 @@ WITH raw_data AS (
       AND source_table = 'deb'
       AND asatdate = CURRENT_DATE('Asia/Bangkok')
       AND JSON_VALUE(pk_fields, '$.debcode') = d.debcode
-      AND JSON_VALUE(pk_fields, '$.company_id') = d.company_id
+      AND IFNULL(JSON_VALUE(pk_fields, '$.company_id'), 'ag01') = d.company_id
   )
   AND TRIM(IFNULL(CONCAT(IFNULL(d.debadd1at, ''), ' ', IFNULL(d.debadd2at, ''), ' ', IFNULL(d.debadd3at, '')), '')) != ''
 )
