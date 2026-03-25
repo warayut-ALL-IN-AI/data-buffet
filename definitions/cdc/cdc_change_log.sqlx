@@ -37,10 +37,30 @@ js {
         return `WHERE ${partitionField} = FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`;
     }
 
-    function buildPkJoinCondition(primaryKeys) {
-        return primaryKeys.map(pk =>
-            `UPPER(TRIM(CAST(raw.${pk} AS STRING))) = UPPER(TRIM(CAST(val.${pk} AS STRING)))`
-        ).join(' AND ');
+    function getCompanyIdFromSchema(rawSchema) {
+        // raw_mac5_ag01 → 'ag01', raw_mac5_aa05 → 'aa05', etc.
+        const match = rawSchema.match(/raw_mac5_(.+)$/);
+        return match ? match[1] : null;
+    }
+
+    function buildRawKeysSelect(primaryKeys, rawSchema) {
+        const companyId = getCompanyIdFromSchema(rawSchema);
+        return primaryKeys.map(pk => {
+            if (pk === 'company_id' && companyId) {
+                return `'${companyId}' AS company_id`;
+            }
+            return pk;
+        }).join(', ');
+    }
+
+    function buildPkJoinCondition(primaryKeys, rawSchema) {
+        const companyId = getCompanyIdFromSchema(rawSchema);
+        return primaryKeys.map(pk => {
+            if (pk === 'company_id' && companyId) {
+                return `val.company_id = '${companyId}'`;
+            }
+            return `UPPER(TRIM(CAST(raw.${pk} AS STRING))) = UPPER(TRIM(CAST(val.${pk} AS STRING)))`;
+        }).join(' AND ');
     }
 
     function buildChangedFieldsChecks(checkFields) {
@@ -49,12 +69,24 @@ js {
         ).join(' OR ');
     }
 
-    function buildPkJsonFields(primaryKeys) {
-        return primaryKeys.map(pk => `'${pk}', CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING)`).join(', ');
+    function buildPkJsonFields(primaryKeys, rawSchema) {
+        const companyId = getCompanyIdFromSchema(rawSchema);
+        return primaryKeys.map(pk => {
+            if (pk === 'company_id' && companyId) {
+                return `'company_id', '${companyId}'`;
+            }
+            return `'${pk}', CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING)`;
+        }).join(', ');
     }
 
-    function buildPkHashConcat(primaryKeys) {
-        return primaryKeys.map(pk => `IFNULL(CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING), '')`).join(", ',', ");
+    function buildPkHashConcat(primaryKeys, rawSchema) {
+        const companyId = getCompanyIdFromSchema(rawSchema);
+        return primaryKeys.map(pk => {
+            if (pk === 'company_id' && companyId) {
+                return `'${companyId}'`;
+            }
+            return `IFNULL(CAST(COALESCE(val.${pk}, raw.${pk}) AS STRING), '')`;
+        }).join(", ',', ");
     }
 
     function buildChangedFieldsJson(checkFields) {
@@ -77,10 +109,11 @@ js {
         const tableType = isIncrementalTable ? 'INCREMENTAL' : 'FULL_DUMP';
 
         const rawWhere = buildRawWhereClause(partitionField);
-        const pkJoinCondition = buildPkJoinCondition(primaryKeys);
+        const pkJoinCondition = buildPkJoinCondition(primaryKeys, rawSchema);
         const changedFieldsChecks = buildChangedFieldsChecks(checkFields);
-        const pkJsonFields = buildPkJsonFields(primaryKeys);
-        const pkHashConcat = buildPkHashConcat(primaryKeys);
+        const pkJsonFields = buildPkJsonFields(primaryKeys, rawSchema);
+        const pkHashConcat = buildPkHashConcat(primaryKeys, rawSchema);
+        const rawKeysSelect = buildRawKeysSelect(primaryKeys, rawSchema);
         const changedFieldsJson = buildChangedFieldsJson(checkFields);
 
         return `
@@ -107,7 +140,7 @@ js {
         ${rawWhere}
     ),
     raw_keys AS (
-        SELECT DISTINCT ${primaryKeys.join(', ')} FROM raw_data
+        SELECT DISTINCT ${rawKeysSelect} FROM raw_data
     ),
     validated_data AS (
         ${isIncrementalTable ? `
