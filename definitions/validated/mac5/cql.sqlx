@@ -57,7 +57,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(CQLcus) AS STRING), '') AS cqlcus,
     CAST(CQLtag AS INT64) AS cqltag,
     CAST(CQLAutoNO AS INT64) AS cqlautono,
-    CAST(ASATDATE AS DATE) AS asatdate
+    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.cql`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 
@@ -79,7 +79,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(CQLcus) AS STRING), '') AS cqlcus,
     CAST(CQLtag AS INT64) AS cqltag,
     CAST(CQLAutoNO AS INT64) AS cqlautono,
-    CAST(ASATDATE AS DATE) AS asatdate
+    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.cql`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 
@@ -101,7 +101,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(CQLcus) AS STRING), '') AS cqlcus,
     CAST(CQLtag AS INT64) AS cqltag,
     CAST(CQLAutoNO AS INT64) AS cqlautono,
-    CAST(ASATDATE AS DATE) AS asatdate
+    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.cql`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 
@@ -123,7 +123,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(CQLcus) AS STRING), '') AS cqlcus,
     CAST(CQLtag AS INT64) AS cqltag,
     CAST(CQLAutoNO AS INT64) AS cqlautono,
-    CAST(ASATDATE AS DATE) AS asatdate
+    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.cql`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 
@@ -145,7 +145,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(CQLcus) AS STRING), '') AS cqlcus,
     CAST(CQLtag AS INT64) AS cqltag,
     CAST(CQLAutoNO AS INT64) AS cqlautono,
-    CAST(ASATDATE AS DATE) AS asatdate
+    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.cql`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 )
