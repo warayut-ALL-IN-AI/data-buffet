@@ -80,7 +80,7 @@ WITH all_sources AS (
     CAST(deplock AS INT64) as deplock,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(depeditdt, 1, 19)) AS depeditdt,
     NULLIF(CAST(TRIM(depeditmf) AS STRING), '') as depeditmf,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(NULL AS STRING) as rowguid
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.dep`
 
   UNION ALL
@@ -110,7 +110,7 @@ WITH all_sources AS (
     CAST(deplock AS INT64) as deplock,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(depeditdt, 1, 19)) AS depeditdt,
     NULLIF(CAST(TRIM(depeditmf) AS STRING), '') as depeditmf,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(NULL AS STRING) as rowguid
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.dep`
 )
 

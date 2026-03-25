@@ -78,7 +78,7 @@ all_sources AS (
     NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
     NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
     NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
-    NULLIF(CAST(TRIM(stg.rowguid) AS STRING), '') as rowguid,
+    CAST(NULL AS STRING) as rowguid,
     NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
     NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.stg` as stg
@@ -104,7 +104,7 @@ all_sources AS (
     NULLIF(CAST(TRIM(REGEXP_REPLACE(stg.stgcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
     NULLIF(CAST(TRIM(stg.stgdesct) AS STRING), '') as stgdesct,
     NULLIF(CAST(TRIM(stg.stgdesce) AS STRING), '') as stgdesce,
-    NULLIF(CAST(TRIM(stg.rowguid) AS STRING), '') as rowguid,
+    CAST(NULL AS STRING) as rowguid,
     NULLIF(CAST(TRIM(stgacc.gacccode) AS STRING), '') as gacccode,
     NULLIF(CAST(TRIM(stgacc.gaccname) AS STRING), '') as gaccname
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.stg` as stg

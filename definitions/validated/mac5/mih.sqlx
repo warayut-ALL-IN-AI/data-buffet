@@ -215,8 +215,8 @@ WITH all_sources AS (
     CAST(MIHrpv AS INT64) AS mihrpv,
     CAST(MIHclearCUT AS INT64) AS mihclearcut,
     CAST(MIHsettleCUT AS INT64) AS mihsettlecut,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(ModDate, 1, 19)) AS moddate,
+    CAST(NULL AS STRING) AS rowguid,
+    CAST(NULL AS DATETIME) AS moddate,
     NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'฿[^฿]*฿', '')), '') AS mihmemo_new,
     IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(฿[^฿]*฿)')), '฿00฿') AS memo_extract,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
@@ -307,8 +307,8 @@ WITH all_sources AS (
     CAST(MIHrpv AS INT64) AS mihrpv,
     CAST(MIHclearCUT AS INT64) AS mihclearcut,
     CAST(MIHsettleCUT AS INT64) AS mihsettlecut,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(ModDate, 1, 19)) AS moddate,
+    CAST(NULL AS STRING) AS rowguid,
+    CAST(NULL AS DATETIME) AS moddate,
     NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'฿[^฿]*฿', '')), '') AS mihmemo_new,
     IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(฿[^฿]*฿)')), '฿00฿') AS memo_extract,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
@@ -399,8 +399,8 @@ WITH all_sources AS (
     CAST(MIHrpv AS INT64) AS mihrpv,
     CAST(MIHclearCUT AS INT64) AS mihclearcut,
     CAST(MIHsettleCUT AS INT64) AS mihsettlecut,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(ModDate, 1, 19)) AS moddate,
+    CAST(NULL AS STRING) AS rowguid,
+    CAST(NULL AS DATETIME) AS moddate,
     NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'฿[^฿]*฿', '')), '') AS mihmemo_new,
     IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(฿[^฿]*฿)')), '฿00฿') AS memo_extract,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
@@ -491,8 +491,8 @@ WITH all_sources AS (
     CAST(MIHrpv AS INT64) AS mihrpv,
     CAST(MIHclearCUT AS INT64) AS mihclearcut,
     CAST(MIHsettleCUT AS INT64) AS mihsettlecut,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') AS rowguid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(ModDate, 1, 19)) AS moddate,
+    CAST(NULL AS STRING) AS rowguid,
+    CAST(NULL AS DATETIME) AS moddate,
     NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'฿[^฿]*฿', '')), '') AS mihmemo_new,
     IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(฿[^฿]*฿)')), '฿00฿') AS memo_extract,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate

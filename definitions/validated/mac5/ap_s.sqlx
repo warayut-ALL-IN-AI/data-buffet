@@ -71,7 +71,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(ap_snamee) AS STRING), '') as ap_snamee,
     CAST(ap_scolf AS INT64) as ap_scolf,
     CAST(ap_scolb AS INT64) as ap_scolb,
-    NULLIF(CAST(TRIM(rowguid) AS STRING), '') as rowguid
+    CAST(NULL AS STRING) as rowguid
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.ap_s`
 
   UNION ALL
