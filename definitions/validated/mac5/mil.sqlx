@@ -61,7 +61,18 @@ WITH cte_mil as (
 
   UNION ALL
 
-  SELECT 'ak02' AS company_id, * FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.mil`
+  SELECT 'ak02' AS company_id,
+    milday, milmonth, milyear, miltype, milvnos, milcus, milstk,
+    miljob, mildep, milper, mildoc, milmec,
+    milsto, milstomt, millistno, milquan, milquanp2, miladisc, milcog, milconv,
+    mildisca, mildisct, milvat, milsum, milcut, milstype, miluname, mildesc,
+    milvcol1, milvcol2, milvcol3, milvcol4,
+    milcurc, milexchg, milacost, milpqm, milpmfrom, milpmto, miltag,
+    millinkvcno, millinkvcdate, millinkvctype, millinkvcdeposit, millinkvcid,
+    milclearum, milexpdate, milnotes, milnotkl, mildelvdt, mildatesp,
+    milnumcsp, milnumisp, milcost, milucost, miluprice, milusequanp,
+    milvcol5, milfitem, ASATDATE
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.mil`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 
 ), cte_mih as (
