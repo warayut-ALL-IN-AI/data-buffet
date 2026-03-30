@@ -13,12 +13,21 @@ js {
         name: name(),
     };
     const DimSaleRepLastTableRef = `${DimSaleRepLastTable.database}.${DimSaleRepLastTable.schema}.${DimSaleRepLastTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+    
 }
 
 MERGE `${DimSaleRepLastTableRef}` T
 USING (
     WITH raw_per AS (
         SELECT DISTINCT
+            company_id,
             percode as EmployeeID,
             TRIM(REGEXP_REPLACE(pernamet, r'\s+', ' ')) as pernamet
         FROM ${ref(databuffet.VALIDATED_MAC5, 'per')} as per
@@ -27,6 +36,8 @@ USING (
     ),
     source_combined AS (
         SELECT 
+            dim_com.CompanySK,
+            dim_com.companyID,
             EmployeeID,
             REGEXP_EXTRACT(pernamet, r'^([^\s]+)') AS EmployeeName,
             REGEXP_EXTRACT(pernamet, r'\s([^\s(]+)') AS EmployeeSurname,
@@ -37,6 +48,8 @@ USING (
             CAST(NULL AS STRING) AS ProvinceID,
             CAST(NULL AS STRING) AS ChangeSectionFlag
         FROM raw_per
+        LEFT JOIN `${DimCompanyTableRef}` as dim_com
+            on raw_per.company_id = dim_com.companyID
 
     ),
     target_max AS (
@@ -52,7 +65,7 @@ USING (
                 WHEN T.EmployeeID IS NULL THEN 
                     ROW_NUMBER() OVER (
                         PARTITION BY (CASE WHEN T.EmployeeID IS NULL THEN 1 ELSE 0 END) 
-                        ORDER BY S.EmployeeID
+                        ORDER BY S.CompanySK, S.EmployeeID
                     )
                 ELSE NULL 
             END) as rn_new
@@ -60,6 +73,7 @@ USING (
         LEFT JOIN `${DimSaleRepLastTableRef}` T
             ON S.EmployeeID = T.EmployeeID 
               AND T.DepartmentID is null
+              AND S.CompanySK = T.CompanySK
     )
 
     SELECT
@@ -73,6 +87,7 @@ USING (
 ) S
 ON T.EmployeeID = S.EmployeeID 
    AND T.DepartmentID is null
+   AND T.CompanySK = S.CompanySK
 
 WHEN MATCHED THEN
   UPDATE SET 
@@ -83,13 +98,13 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
   INSERT (
     SaleRepSK, DepartmentSK, SectionSK, SectionManagerSK, RegionSK,
-    RegionManagerSK, DirectorSK, DepartmentID, EmployeeID, EmployeeName,
+    RegionManagerSK, DirectorSK, CompanySK, companyID, DepartmentID, EmployeeID, EmployeeName,
     EmployeeSurname, EmployeeNickname, DepCode, CostChannelID,
     ProvinceID, ChangeSectionFlag
   )
   VALUES (
     S.final_SaleRepSK, NULL, NULL, NULL, NULL,
-    NULL, NULL, S.DepartmentID, S.EmployeeID, S.EmployeeName,
+    NULL, NULL, S.CompanySK, S.companyID, S.DepartmentID, S.EmployeeID, S.EmployeeName,
     S.EmployeeSurname, S.EmployeeNickname, S.DepCode, S.CostChannelID,
     S.ProvinceID, S.ChangeSectionFlag
   );

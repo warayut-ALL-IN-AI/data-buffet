@@ -20,6 +20,14 @@ js {
         name: "dim_project",
     };
     const DimProjectTableRef = `${DimProjectTable.database}.${DimProjectTable.schema}.${DimProjectTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+    
 }
 
 -- 2. เริ่มกระบวนการ MERGE
@@ -27,6 +35,7 @@ MERGE `${DimQuotationTableRef}` T
 USING (
     WITH raw_quotation_table as (
         SELECT
+            quo.company_id,
             quo.ID,
             quo.Running,
             quo.SDate,
@@ -63,25 +72,29 @@ USING (
 
     ),main_table as (
         SELECT 
-            qt.Running, qt_detail.stkcode, qt_detail.quantity, qt_detail.total
+            qt_detail.company_id, qt.Running, qt_detail.stkcode, qt_detail.quantity, qt_detail.total
         FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_quodetail')} as qt_detail
         inner join quotation_table as qt
             on qt_detail.linkid = qt.id
+            and qt_detail.company_id = qt.company_id
         WHERE qt_detail.company_id = 'ag01'
 
     ), sec_table as (
-        SELECT mih.mihref1, mil.milstk, sum(mil.milQuan) as milQuan, sum(mil.milSum) as milSum
+        SELECT 
+            mih.company_id, mih.mihref1, mil.milstk, sum(mil.milQuan) as milQuan, sum(mil.milSum) as milSum
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
         left join ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
             on mih.mihvnos = mil.milvnos
             and mih.mihtype = mil.miltype
+            and mih.company_id = mil.company_id
         WHERE mih.mihtype = 'PS'
             and mih.company_id = 'ag01'
             and exists (SELECT 1 FROM quotation_table as qt WHERE mih.mihref1 = qt.Running)
-        group by 1, 2
+        group by 1, 2, 3
 
     ), cal_table as (
         SELECT 
+            main.company_id,
             main.Running, main.stkcode,
             main.quantity as main_qty, main.total as main_sum,
             sec.milQuan as sec_qty, sec.milSum as sec_sum,
@@ -94,9 +107,11 @@ USING (
         left join sec_table as sec
             on main.Running = sec.mihref1
             and main.stkcode = sec.milstk
+            and main.company_id = sec.company_id
 
     ), order_status as (
         SELECT 
+            company_id,
             Running,
             (case 
                 when countif(item_status = 'In Process') > 0 then 'In Process'
@@ -104,15 +119,20 @@ USING (
                 else 'Complete'
             end) as OrderStatus
         FROM cal_table
-        group by 1
+        group by 1,2
 
     ), source_data AS (
         SELECT 
-            qt.*,
+            dim_com.CompanySK,
+            dim_com.companyID,
+            qt.* except(company_id),
             order_status.OrderStatus
         FROM quotation_table as qt
         left join order_status as order_status
             on order_status.Running = qt.Running
+            and order_status.company_id = qt.company_id
+        left join `${DimCompanyTableRef}` as dim_com
+            on qt.company_id = dim_com.companyID
 
     ), target_max AS (
         SELECT IFNULL(MAX(QuotationSK), 0) as max_sk FROM `${DimQuotationTableRef}`
@@ -124,11 +144,12 @@ USING (
             -- Run number สำหรับแถวใหม่เท่านั้น
             ROW_NUMBER() OVER (
                 PARTITION BY (CASE WHEN T.Running IS NULL THEN 1 ELSE 0 END) 
-                ORDER BY S.Running
+                ORDER BY S.CompanySK, S.Running
             ) as rn_new
         FROM source_data S
         LEFT JOIN `${DimQuotationTableRef}` T
             ON S.Running = T.Running
+            AND S.CompanySK = T.CompanySK
 
     )
     SELECT
@@ -141,9 +162,11 @@ USING (
     FROM prepared_source as src
     LEFT JOIN `${DimProjectTableRef}` as dim_project
         on src.ProjectCode = dim_project.projectCode
+        and src.CompanySK = dim_project.CompanySK
 
 ) S
 ON T.Running = S.Running
+    and T.CompanySK = S.CompanySK
 
 -- กรณีเจอข้อมูล (Update)
 WHEN MATCHED THEN
@@ -168,13 +191,15 @@ WHEN MATCHED THEN
 -- กรณีไม่เจอข้อมูล (Insert)
 WHEN NOT MATCHED THEN
   INSERT (
-    QuotationSK, ProjectSK,
+    QuotationSK, ProjectSK, CompanySK,
+    companyID,
     ID, Running, SDate, Year, Month, Day,
     Atten, Project, UInsert, PriceValidity,
     TermDelivery, TermPayment, CustomerID, ProjectCode, OrderStatus
   )
   VALUES (
-    S.final_QuotationSK, S.ProjectSK,
+    S.final_QuotationSK, S.ProjectSK, S.CompanySK,
+    S.companyID,
     S.ID, S.Running, S.SDate, S.Year, S.Month, S.Day,
     S.Atten, S.Project, S.UInsert, S.PriceValidity,
     S.TermDelivery, S.TermPayment, S.CustomerID, S.ProjectCode, S.OrderStatus

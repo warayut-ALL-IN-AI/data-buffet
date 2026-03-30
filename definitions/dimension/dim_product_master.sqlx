@@ -41,6 +41,13 @@ js {
     };
     const DimProductMktTableRef = `${DimProductMktTable.database}.${DimProductMktTable.schema}.${DimProductMktTable.name}`;
 
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
 }
 
 BEGIN
@@ -56,6 +63,8 @@ BEGIN
 --   row_number() over(order by a.stkcode) as ProductSK,
         stk_mkt_sk.StkMktSK,
         product_mk_sk.ProductMktSK,
+        dim_com.CompanySK,
+        dim_com.companyID,
         a.stkcode as ProductCode ,
         a.stkcode2 as ProductCode1,
         a.stkdesct1 as ProductMac5Description,
@@ -73,15 +82,15 @@ BEGIN
         pd.pd_garantee as ProductGarantee,
         pd.pd_garantee_detail as ProductGaranteeDetail,
         (case 
-            when 
+          when 
             pd.pd_certificate is not null 
-            and pd.pd_certificate <> '' 
-            and pd.pd_certificate <> 'โปรดระบุ' 
-            and pd.pd_certificate <> '-' 
-            and pd.pd_certificate <> 'None' 
-            and pd.pd_certificate <> 'No'
+              and pd.pd_certificate <> '' 
+              and pd.pd_certificate <> 'โปรดระบุ' 
+              and pd.pd_certificate <> '-' 
+              and pd.pd_certificate <> 'None' 
+              and pd.pd_certificate <> 'No'
             then 'Yes' 
-            else 'No' 
+          else 'No' 
         end) as ThaiIndustrialStandardFlag,
         -- (case
         --     when pdr.salesExc is not null then pdr.salesExc
@@ -98,34 +107,45 @@ BEGIN
         a.STKcode885 as Barcode
 
         from ${ref(databuffet.VALIDATED_MAC5, "stk")} as a
-        left join ${ref(databuffet.VALIDATED_MAC5, "stg")} as g on a.STKgroup = g.STGcode AND a.company_id = g.company_id
-        left join ${ref(databuffet.VALIDATED_MASTERSKU, "product")} as p on a.STKcode885 = p.prd_barcode
-        left join ${ref(databuffet.VALIDATED_MASTERSKU, "product_detail")} as pd on p.prd_id = pd.pd_prd_id
+        left join ${ref(databuffet.VALIDATED_MAC5, "stg")} as g 
+          on a.STKgroup = g.STGcode 
+            and a.company_id = g.company_id
+        left join ${ref(databuffet.VALIDATED_MASTERSKU, "product")} as p 
+          on a.STKcode885 = p.prd_barcode
+        left join ${ref(databuffet.VALIDATED_MASTERSKU, "product_detail")} as pd 
+          on p.prd_id = pd.pd_prd_id
+          
         -- left join `${DimProductRebateTableRef}` as pdr on a.stkcode = pdr.rebate and pdr.status = 'Product'
-        --left join `${databuffet.DATABASE}.validated_mastersku.brand` brand on p.prd_brand_id = brand.bra_id
-        --left join `${databuffet.DATABASE}.validated_mastersku.vendor` vendor on p.prd_vendor_id = vendor.vd_id
+        -- left join `${databuffet.DATABASE}.validated_mastersku.brand` brand on p.prd_brand_id = brand.bra_id
+        -- left join `${databuffet.DATABASE}.validated_mastersku.vendor` vendor on p.prd_vendor_id = vendor.vd_id
         
         left join `${DimStkMktTableRef}` as stk_mkt_sk
           on a.stkcode = stk_mkt_sk.StkCode
+            and a.company_id = stk_mkt_sk.companyID
         left join `${DimProductMktTableRef}` as product_mk_sk
           on stk_mkt_sk.MarketingGroupID = product_mk_sk.MarketingGroupID
             and stk_mkt_sk.SubMarketingID = product_mk_sk.SubMarketingID
             and stk_mkt_sk.SegmentID = product_mk_sk.SegmentID
+            and stk_mkt_sk.companyID = product_mk_sk.companyID
+        left join `${DimCompanyTableRef}` as dim_com
+          on a.company_id = dim_com.companyID
         where a.company_id = 'ag01'
         --and a.STKcode885 is not null and a.STKcode885 <> ''
-        qualify row_number() over(partition by ProductCode, Barcode order by prd_updated_date desc) = 1
+        qualify row_number() over(partition by dim_com.CompanySK, ProductCode, Barcode order by prd_updated_date desc) = 1
     )
     SELECT
       S.*,
       -- เช็คว่ามีอยู่แล้วในตาราง Target หรือไม่
-      ROW_NUMBER() OVER(PARTITION BY T.ProductSK IS NULL ORDER BY S.ProductCode) as ProductSK
+      ROW_NUMBER() OVER(PARTITION BY T.ProductSK IS NULL ORDER BY S.CompanySK, S.ProductCode) as ProductSK
     FROM raw_data S
     LEFT JOIN `${DimProductTableRef}` T
       ON S.ProductCode = T.ProductCode
       AND IFNULL(S.Barcode, '') = IFNULL(T.Barcode, '')
+      AND S.CompanySK = T.CompanySK
   ) S
   ON T.ProductCode = S.ProductCode 
     AND IFNULL(T.Barcode, '') = IFNULL(S.Barcode, '')
+    AND T.CompanySK = S.CompanySK
 
   WHEN MATCHED THEN
     UPDATE SET
@@ -154,7 +174,8 @@ BEGIN
 
   WHEN NOT MATCHED THEN
     INSERT (
-      ProductSK, StkMktSK, ProductMktSK,
+      ProductSK, StkMktSK, ProductMktSK, CompanySK,
+      companyID,
       ProductCode, ProductCode1, ProductMac5Description,
       ProductGroupMAC5, ProductGroupMac5Description, ProductGroupMAC5Type,
       ProductGroupACC, ProductGroupACCName, ProductName, ProductDescription,
@@ -164,7 +185,8 @@ BEGIN
       WarehouseID, Barcode
     )
     VALUES (
-      max_sk + ProductSK, S.StkMktSK, S.ProductMktSK,
+      max_sk + ProductSK, S.StkMktSK, S.ProductMktSK, S.CompanySK,
+      S.companyID,
       S.ProductCode, S.ProductCode1, S.ProductMac5Description,
       S.ProductGroupMAC5, S.ProductGroupMac5Description, S.ProductGroupMAC5Type,
       S.ProductGroupACC, S.ProductGroupACCName, S.ProductName, S.ProductDescription,
@@ -175,61 +197,3 @@ BEGIN
     );
 
 END;
-
--- BEGIN
---   drop table if exists `${DimProductTableRef}`;
-  
---   create or replace table `${DimProductTableRef}`
---   cluster by ProductSK, ProductCode, ProductGroupMAC5Type
---   as
---   select
---   row_number() over(order by a.stkcode) as ProductSK,
---   a.stkcode as ProductCode ,
---   a.stkcode2 as ProductCode1,
---   a.stkdesct1 as ProductMac5Description,
---   g.stgcode as ProductGroupMAC5, 
---   g.stgdesct as ProductGroupMac5Description,
---   g.stgdesce as ProductGroupMAC5Type,
---   g.gacccode as ProductGroupACC,
---   g.gaccname as ProductGroupACCName,
---   pd.pd_product_name as ProductName,
---   p.prd_description as ProductDescription,
---   p.prd_dimension1 as ProductDimension1 ,
---   p.prd_dimension2 as ProductDimension2,
---   p.prd_dimension3 as ProductDimension3,
---   p.prd_dimension4 as ProductDimension4,
---   pd.pd_garantee as ProductGarantee,
---   pd.pd_garantee_detail as ProductGaranteeDetail,
---   (case 
---     when 
---       pd.pd_certificate is not null 
---       and pd.pd_certificate <> '' 
---       and pd.pd_certificate <> 'โปรดระบุ' 
---       and pd.pd_certificate <> '-' 
---       and pd.pd_certificate <> 'None' 
---       and pd.pd_certificate <> 'No'
---     then 'Yes' 
---     else 'No' 
---   end) as ThaiIndustrialStandardFlag,
---   (case
---     when pdr.Rebate is not null then 'Yes'
---     else 'No'
---   end) as ProductFCExcFlag,
---   pd.pd_certificate as ThaiIndustrialSatandardDetail,
---   p.prd_brand_id as BrandID,
---   p.prd_vendor_id as VendorID,
---   a.stksto as WarehouseID,
---   a.STKcode885 as Barcode
-
---   from ${ref(databuffet.VALIDATED_MAC5, "stk")} as a  
---   left join ${ref(databuffet.VALIDATED_MAC5, "stg")} as g on a.STKgroup = g.STGcode
---   left join ${ref(databuffet.VALIDATED_MASTERSKU, "product")} as p on a.STKcode885 = p.prd_barcode
---   left join ${ref(databuffet.VALIDATED_MASTERSKU, "product_detail")} as pd on p.prd_id = pd.pd_prd_id
---   left join `${DimProductRebateTableRef}` as pdr on a.stkcode = pdr.Rebate
---   --left join `${databuffet.DATABASE}.validated_mastersku.brand` brand on p.prd_brand_id = brand.bra_id
---   --left join `${databuffet.DATABASE}.validated_mastersku.vendor` vendor on p.prd_vendor_id = vendor.vd_id
---   --where a.STKcode885 is not null and a.STKcode885 <> '' 
---   qualify row_number() over(partition by ProductCode, Barcode order by prd_updated_date desc) = 1
---   ;
-  
--- END;

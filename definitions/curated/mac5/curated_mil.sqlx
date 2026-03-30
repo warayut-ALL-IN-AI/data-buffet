@@ -74,8 +74,8 @@ SELECT
   asatdate as asatdate,
   '100.00%' as percent_sale
 FROM ${ref(databuffet.VALIDATED_MAC5, "mil")}
-WHERE company_id = 'ag01'
-${ when(incremental(), `AND asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+${ when(incremental(), `WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+
 
 post_operations {
   -------- CREATE TEMP TABLE --------
@@ -290,7 +290,9 @@ post_operations {
 
   -------- INSERT DATA --------
     INSERT INTO ${self()}
-    SELECT * FROM new_data_curated_mil
+    SELECT * 
+    FROM new_data_curated_mil
+    WHERE company_id = 'ag01'
     ;
   -------- INSERT DATA --------
 

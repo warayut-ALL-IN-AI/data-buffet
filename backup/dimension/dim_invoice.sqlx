@@ -13,14 +13,6 @@ js {
         name: name(),
     };
     const DimInvoiceTableRef = `${DimInvoiceTable.database}.${DimInvoiceTable.schema}.${DimInvoiceTable.name}`;
-
-    const DimCompanyTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_company",
-    };
-    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
-    
 }
 
 -- 2. เริ่มกระบวนการ MERGE
@@ -28,7 +20,6 @@ MERGE `${DimInvoiceTableRef}` T
 USING (
     WITH mih_raw as (
         SELECT
-          mih.company_id,
           mihDay, mihMonth, mihYear, mihType, mihVnos, mihCus, mihRef1, mihPer, mihStatus,
           (CASE
             WHEN mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
@@ -51,7 +42,6 @@ USING (
     ),
     mih_raw2 as (
         SELECT
-          mih.company_id,
           mih.mihDay, mih.mihMonth, mih.mihYear, mih.mihType, mih.mihVnos, mih.mihCus, mih.mihRef1, mih.mihPer, mih.mihStatus,
           (CASE
             WHEN mih.mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_s.ar_snamet
@@ -60,18 +50,13 @@ USING (
           END) as StatusDesc,
           mih.mihCancel, mih.mihDep, mih.mihJob
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar_s 
-          on mih.mihStatus = ar_s.ar_scode 
-          AND mih.company_id = ar_s.company_id
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s 
-          on mih.mihStatus = ap_s.ap_scode 
-          AND mih.company_id = ap_s.company_id
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar_s on mih.mihStatus = ar_s.ar_scode AND mih.company_id = ar_s.company_id
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s on mih.mihStatus = ap_s.ap_scode AND mih.company_id = ap_s.company_id
         WHERE mih.company_id = 'ag01'
           and mih.asatdate >= current_date('Asia/Bangkok')-1
     ), 
     filter_mih2 as (
         SELECT DISTINCT
-          mih2.company_id,
           mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,mih2per2pc,
           CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale1,
           CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale2,
@@ -87,12 +72,10 @@ USING (
             WHERE mih2.mih2type = 'PS'
               and mih2.mih2vnos = mih.mihref1
               and mih2.mih2cus = mih.mihcus
-              and mih2.company_id = mih.company_id
           )
     ), 
     includ_mih as (
         SELECT
-          mih.company_id,
           mihDay, mihMonth, mihYear, mihType, mihCus, mih.mihVnos, mihPer,
           per_sale1, mih2per2, per_sale2, mihStatus, StatusDesc, mihCancel, mihRef1,
           mihDep,mihJob
@@ -100,12 +83,10 @@ USING (
         INNER JOIN filter_mih2 as mih2
           ON mih.mihref1 = mih2.mih2vnos
             and mih.mihcus = mih2.mih2cus
-            and mih.company_id = mih2.company_id
             and chk_row = 1
     ), 
     exclude_mil as (
         SELECT
-          mih2.company_id,
           mih2.mihDay, mih2.mihMonth, mih2.mihYear, mih2.mihType, mih2.mihCus, mih2.mihVnos, mih2.mihPer,  
           100 as per_sale1,
           '0' as mih2per2,
@@ -118,15 +99,12 @@ USING (
           FROM includ_mih as mil2
           WHERE mih2.mihType = mil2.mihType
             and mih2.mihVnos = mil2.mihVnos
-            and mih2.company_id = mil2.company_id
         )
     ),
     source_combined as (
         select distinct
           PARSE_DATE('%Y%m%d', CONCAT(mihYear, FORMAT("%02d", mihMonth),  mihDay)) as mix_date,
-          dim_com.CompanySK,
-          dim_com.companyID,
-          t.* except(company_id),
+          t.*,
           (case when t.per_sale1 <> 100 then 'Yes' else 'No' end) as InvoiceSalesFlag,
           mil.milLinkVcno
         from (
@@ -141,10 +119,7 @@ USING (
             and t.mihType = mil.milType
             and t.mihVnos = mil.milVnos
             and t.mihCus = mil.milCus
-            and t.company_id = mil.company_id
-        left join `${DimCompanyTableRef}` as dim_com
-            on t.company_id = dim_com.companyID 
-        WHERE t.mihtype in ('IS', 'BS', 'AS', 'QS')
+        WHERE mihtype in ('IS', 'BS', 'AS', 'QS')
     ),
     -- ดึงค่า Max InvoiceSK ปัจจุบันจาก Target
     target_max AS (
@@ -158,7 +133,7 @@ USING (
             -- คำนวณ Row Number เฉพาะกลุ่มที่เป็นข้อมูลใหม่ (Target เป็น Null)
             ROW_NUMBER() OVER (
               PARTITION BY (CASE WHEN T.mihVnos IS NULL THEN 1 ELSE 0 END) 
-              ORDER BY S.CompanySK, S.mihYear, S.mihMonth, S.mihDay, S.mihVnos, S.mihCus, S.milLinkVcno
+              ORDER BY S.mihYear, S.mihMonth, S.mihDay, S.mihVnos, S.mihCus, S.milLinkVcno
             ) as rn_new
         FROM source_combined S
         LEFT JOIN `${DimInvoiceTableRef}` T
@@ -168,7 +143,6 @@ USING (
             AND S.mihVnos = T.mihVnos 
             AND S.mihCus = T.mihCus
             AND S.milLinkVcno = T.milLinkVcno
-            AND S.CompanySK = T.CompanySK
     )
 
     SELECT
@@ -184,7 +158,6 @@ USING (
 ON S.mihType = T.mihType
   AND S.mihVnos = T.mihVnos 
   AND IFNULL(S.milLinkVcno, '') = IFNULL(T.milLinkVcno, '')
-  AND S.CompanySk = T.CompanySK
 
 -- กรณีเจอข้อมูลเดิม (Update)
 WHEN MATCHED THEN
@@ -210,8 +183,7 @@ WHEN MATCHED THEN
 -- กรณีไม่เจอข้อมูล (Insert)
 WHEN NOT MATCHED THEN
   INSERT (
-    InvoiceSK, CompanySK,
-    companyID,
+    InvoiceSK,
     mix_date, mihDay, mihMonth, mihYear,
     mihType, mihVnos, mihCus, milLinkVcno,
     mihRef1, mihPer, mihStatus, StatusDesc, mihCancel,
@@ -219,8 +191,7 @@ WHEN NOT MATCHED THEN
     InvoiceSalesFlag
   )
   VALUES (
-    S.final_InvoiceSK, S.CompanySK,
-    S.companyID,
+    S.final_InvoiceSK, -- ใช้ SK ที่คำนวณใหม่
     S.mix_date, S.mihDay, S.mihMonth, S.mihYear,
     S.mihType, S.mihVnos, S.mihCus, S.milLinkVcno,
     S.mihRef1, S.mihPer, S.mihStatus, S.StatusDesc, S.mihCancel,

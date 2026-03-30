@@ -12,6 +12,14 @@ js {
         name: name(),
     };
     const DimProjectTableRef = `${DimProjectTable.database}.${DimProjectTable.schema}.${DimProjectTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
 }
 
 -- เริ่มกระบวนการ MERGE
@@ -19,6 +27,8 @@ MERGE `${DimProjectTableRef}` T
 USING (
     WITH source_data AS (
       SELECT
+        dim_com.CompanySK,
+        dim_com.companyID,
         projectcode as projectCode,
         docno as docNo,
         compname as companyName,
@@ -39,7 +49,9 @@ USING (
           WHEN SAFE_CAST(pjend AS DATE) IS NULL THEN DATE_DIFF(CURRENT_DATE(), SAFE_CAST(pjstart AS DATE), DAY)
           ELSE DATE_DIFF(SAFE_CAST(pjend AS DATE), SAFE_CAST(pjstart AS DATE), DAY)
         END) as projectDay
-      FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_profilecomp')} as pj -- ปรับ ref ตามโครงสร้างที่คุณใช้
+      FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_profilecomp')} as pj
+      left join `${DimCompanyTableRef}` as dim_com
+        on pj.company_id = dim_com.companyID
       WHERE pj.company_id = 'ag01'
     ),
     -- หา Max ProjectSK จาก Target เดิมเพื่อรันเลขต่อ
@@ -54,11 +66,12 @@ USING (
         -- รันลำดับสำหรับแถวที่ยังไม่มีใน Target (New Rows)
         ROW_NUMBER() OVER (            
             PARTITION BY (CASE WHEN T.projectCode IS NULL THEN 1 ELSE 0 END) 
-            ORDER BY S.projectCode
+            ORDER BY S.CompanySK, S.projectCode
         ) as rn_new
       FROM source_data S
       LEFT JOIN `${DimProjectTableRef}` T
           ON S.projectCode = T.projectCode
+          and S.CompanySK = T.CompanySK
     )
 
     SELECT
@@ -71,6 +84,7 @@ USING (
 
 ) S
 ON T.projectCode = S.projectCode
+  and T.CompanySK = S.CompanySK
 
 -- กรณีเจอข้อมูลเดิม (Update)
 WHEN MATCHED THEN
@@ -94,13 +108,15 @@ WHEN MATCHED THEN
 -- กรณีข้อมูลใหม่ (Insert)
 WHEN NOT MATCHED THEN
   INSERT (
-    ProjectSK,
+    ProjectSK, CompanySK, 
+    companyID,
     projectCode, docNo, profileComp, companyName, projectName,
     companyType, companyStatus, projectFrom, companyGroup, history,
     place, district, province, projectStart, projectEnd, projectDay
   )
   VALUES (
-    S.final_ProjectSK,
+    S.final_ProjectSK, S.CompanySK,
+    S.companyID,
     S.projectCode, S.docNo, S.profileComp, S.companyName, S.projectName,
     S.companyType, S.companyStatus, S.projectFrom, S.companyGroup, S.history,
     S.place, S.district, S.province, S.projectStart, S.projectEnd, S.projectDay

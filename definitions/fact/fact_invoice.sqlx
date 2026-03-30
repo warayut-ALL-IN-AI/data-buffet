@@ -39,11 +39,20 @@ js {
         name: "dim_customer",
     };
     const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+    
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
 
 }
 
   with mil as (
     select
+      dim_com.CompanySK,
+      dim_com.companyID,
       milYear, milMonth, milDay,
       t.InvoiceSk,
       mil.milType,
@@ -66,27 +75,35 @@ js {
         and t.mihVnos = mil.milVnos
         and t.mihCus = mil.milCus
         and IFNULL(t.milLinkVcno, '') = IFNULL(mil.milLinkVcno, '')
+        and t.companyID = mil.company_id
     -- where t.mihvnos = '6603011218'
+    LEFT JOIN `${DimCompanyTableRef}` as dim_com
+      on mil.company_id = dim_com.companyID
     WHERE mil.milType in ('IS', 'BS', 'AS', 'QS')
-    group by 1,2,3,4,5,6,7,8,9 --,10
+      and mil.company_id = 'ag01'
+    group by 1,2,3,4,5,6,7,8,9,10,11
 
   )
 
   select
-    row_number() over(order by mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milVnos, mil.milCus, mil.milStk) as FactInvoiceSK, --, mil.milListno)
+    row_number() over(order by mil.CompanySK, mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milVnos, mil.milCus, mil.milStk) as FactInvoiceSK, --, mil.milListno)
     mil.InvoiceSK,
     fact_ord.OrderSK,
     fact_ord.FactOrderSK,
     fact_ord.QuotationSK,
     fact_ord.FactQuotationSK,
     dim_cust.CustomerSK,
+    mil.CompanySK,
+    mil.companyID,
     
     PARSE_DATE('%Y%m%d', CONCAT(mil.milYear, FORMAT("%02d", mil.milMonth),  mil.milDay)) as mix_date,
-    mil.* except(InvoiceSk),
+    mil.* except(InvoiceSk, CompanySK, companyID),
     current_date('Asia/Bangkok') as asatdate
   from mil as mil
   LEFT JOIN `${FactOrderTableRef}` AS fact_ord
     ON IFNULL(mil.milLinkVcno, '') = IFNULL(fact_ord.milVnos, '')
     AND mil.milStk = fact_ord.milStk
+    AND mil.CompanySK = fact_ord.CompanySK
   LEFT JOIN `${DimCustomerTableRef}` as dim_cust
     ON mil.milCus = dim_cust.debcode
+    AND mil.CompanySK = dim_cust.CompanySK

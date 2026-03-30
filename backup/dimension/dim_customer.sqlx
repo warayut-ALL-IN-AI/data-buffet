@@ -20,13 +20,6 @@ js {
     };
     const DebAddressTableRef = `${DebAddressTable.database}.${DebAddressTable.schema}.${DebAddressTable.name}`;
 
-    const DimCompanyTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_company",
-    };
-    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
-
 }
 
 -- เริ่มกระบวนการ MERGE
@@ -73,8 +66,6 @@ USING (
             deb_address.ProvinceSK as InvoiceProvinceSK,
             deb_address.DistrictSK as InvoiceDistrictSK,
             deb_address.SubDistrictSK as InvoiceSubDistrictSK,
-            dim_com.CompanySK,
-            dim_com.companyID,
             deb.debcode,
             deb.debdate,
             cp.customer_code,
@@ -101,13 +92,10 @@ USING (
         FROM ${ref(databuffet.VALIDATED_MAC5, 'deb')} as deb
         LEFT JOIN `${DebAddressTableRef}` as deb_address
             ON deb.debcode = deb_address.debcode
-            and deb.company_id = deb_address.company_id
         LEFT JOIN match_customer as mc
             ON deb.debcode = mc.customer_mac5
         LEFT JOIN Customer_360 as cp
             ON mc.customer_allkon = cp.customer_code
-        LEFT JOIN `${DimCompanyTableRef}` as dim_com
-            ON deb.company_id = dim_com.companyID
         WHERE deb.company_id = 'ag01'
     ),
     -- จัดการรัน CustomerSK ต่อจากของเดิม
@@ -120,12 +108,11 @@ USING (
             T.CustomerSK as existing_sk,
             ROW_NUMBER() OVER (
                 PARTITION BY (CASE WHEN T.debcode IS NULL THEN 1 ELSE 0 END) 
-                ORDER BY S.CompanySK, S.debcode
+                ORDER BY S.debcode
             ) as rn_new
         FROM source_data S
         LEFT JOIN `${DimCustomerTableRef}` T
             ON S.debcode = T.debcode
-            and S.CompanySK = T.CompanySK
     )
 
     SELECT
@@ -138,7 +125,6 @@ USING (
 
 ) S
 ON T.debcode = S.debcode
-    and T.CompanySK = T.CompanySK
 
 WHEN MATCHED THEN
   UPDATE SET 
@@ -170,16 +156,16 @@ WHEN MATCHED THEN
 
 WHEN NOT MATCHED THEN
   INSERT (
-    CustomerSK, InvoiceProvinceSK, InvoiceDistrictSK, InvoiceSubDistrictSK, CompanySK,
-    companyID, debcode, debdate, customer_code, prefix_id, debnamet,
+    CustomerSK, InvoiceProvinceSK, InvoiceDistrictSK, InvoiceSubDistrictSK,
+    debcode, debdate, customer_code, prefix_id, debnamet,
     first_name, last_name, debtaxclass, full_name, customer_status_name,
     debsalesp, debxxxx, debgrade, nature_business_code, nature_business_name,
     nature_business_name_en, customer_type_name, customer_type_name_en,
     debbranch, deblimit, debgroup, DEBcreditTerm, Total_contact_time_Year
   )
   VALUES (
-    S.final_CustomerSK, S.InvoiceProvinceSK, S.InvoiceDistrictSK, S.InvoiceSubDistrictSK, S.CompanySK,
-    S.companyID, S.debcode, S.debdate, S.customer_code, S.prefix_id, S.debnamet,
+    S.final_CustomerSK, S.InvoiceProvinceSK, S.InvoiceDistrictSK, S.InvoiceSubDistrictSK,
+    S.debcode, S.debdate, S.customer_code, S.prefix_id, S.debnamet,
     S.first_name, S.last_name, S.debtaxclass, S.full_name, S.customer_status_name,
     S.debsalesp, S.debxxxx, S.debgrade, S.nature_business_code, S.nature_business_name,
     S.nature_business_name_en, S.customer_type_name, S.customer_type_name_en,

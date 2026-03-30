@@ -26,6 +26,13 @@ js {
         name: "dim_customer",
     };
     const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+    
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
 
 }
 
@@ -38,6 +45,8 @@ BEGIN
   as
   with quotation_detail as (
     select 
+      dim_com.CompanySK,
+      dim_com.companyID,
       qt.QuotationSK,
       qt.SDate,
       qt.Year,
@@ -54,19 +63,26 @@ BEGIN
     from ${ref(databuffet.VALIDATED_MAC5, 'tbook_quodetail')} as qt_detail
     inner join `${DimQuotationTableRef}` as qt
       on qt.id = qt_detail.linkid
+      and qt.companyID = qt_detail.company_id
+    LEFT JOIN `${DimCompanyTableRef}` as dim_com
+      on qt_detail.company_id = dim_com.companyID
     WHERE qt_detail.company_id = 'ag01'
-    group by 1,2,3,4,5,6,7,8,9
+    group by 1,2,3,4,5,6,7,8,9,10,11
     
   )
     select
-      row_number() over(order by qtd.Running, qtd.StkCode) as FactQuotationSK,
+      row_number() over(order by qtd.CompanySK, qtd.Running, qtd.StkCode) as FactQuotationSK,
       qtd.QuotationSK,
       dim_cust.CustomerSK,
-      qtd.* except(QuotationSK),
+      qtd.CompanySK,
+      qtd.companyID,
+
+      qtd.* except(QuotationSK, CompanySK, companyID),
       current_date('Asia/Bangkok') as asatdate
     from quotation_detail as qtd
     LEFT JOIN `${DimCustomerTableRef}` as dim_cust
       ON qtd.CustomerId = dim_cust.debcode
+      AND qtd.CompanySK = dim_cust.CompanySK
     ;
 
 END;

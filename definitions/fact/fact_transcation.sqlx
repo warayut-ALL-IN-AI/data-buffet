@@ -145,6 +145,13 @@ js {
         name: "dim_change_district",
     };
     const DimChangeDistrictTableRef = `${DimChangeDistrictTable.database}.${DimChangeDistrictTable.schema}.${DimChangeDistrictTable.name}`;
+    
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
 
 }
 
@@ -176,21 +183,25 @@ BEGIN
     -- Product Master
     LEFT JOIN `${DimProductTableRef}` AS productmaster
       ON trans.milstk = productmaster.ProductCode
+      AND trans.CompanySK = productmaster.CompanySK
 
     -- PaymentSK
     LEFT JOIN `${DimPaymentTableRef}` as payment_sk
       ON trans.memoextract = payment_sk.CodeMemo
+      AND trans.CompanySK = payment_sk.CompanySK
 
     -- ChannelSK
     LEFT JOIN `${DimChannelTableRef}` AS channel_sk
       ON IFNULL(trans.milDep, 'N/A') = channel_sk.DepCode
+      AND trans.CompanySK = channel_sk.CompanySK
     
     -- DEB
     LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'deb')} as deb
       ON trans.milCus = deb.debCode
-      AND deb.company_id = 'ag01'
+      AND trans.companyID = deb.company_id
       
     WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1
+      and trans.companyID = 'ag01'
       -- AND milVnos = '6901003086'
       -- AND trans.milPer = '1065043'
 
@@ -227,12 +238,14 @@ BEGIN
       ON trans.milStk = coststk_sk.MilStk
       AND trans.ChannelCostID = coststk_sk.ChannelCostID
       AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
+      AND trans.CompanySK = coststk_sk.CompanySK
 
   -- CostGroupSK
   LEFT JOIN `${DimCostGroupTableRef}` AS costgroup_sk
       ON trans.ProductGroupACC = costgroup_sk.GAccID
       AND trans.ChannelCostID = costgroup_sk.ChannelCostID 
       AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
+      AND trans.CompanySK = costgroup_sk.CompanySK
 
   -- SaleRepSK
   LEFT JOIN (
@@ -253,6 +266,7 @@ BEGIN
     from `${DimSaleRepGroupTableRef}`
   ) as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
+      and trans.CompanySK = sale_sk.CompanySK
       and (CASE 
             WHEN IFNULL(TRIM(sale_sk.DepCode), '') != '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
@@ -291,6 +305,7 @@ BEGIN
   LEFT JOIN `${DimDepartmentTableRef}` as dep_sk
     ON trans.mix_date between dep_sk.StartDate and dep_sk.EndDate
       and sale_sk.DepartmentID = dep_sk.DepartmentID
+      and trans.CompanySK = dep_sk.CompanySK
 
   -- RegionSK
   LEFT JOIN `${DimRegionTableRef}` as reg_sk
@@ -300,12 +315,14 @@ BEGIN
           THEN dep_sk.RegionID = reg_sk.RegionID and dep_sk.SectionID = reg_sk.SubRegionID
         ELSE dep_sk.RegionID = reg_sk.RegionID
       END)
+      and trans.CompanySK = reg_sk.CompanySK
 
   -- RegionManagerSK
   LEFT JOIN `${DimRegionManagerTableRef}` as reg_m_sk
     ON trans.mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
       and reg_sk.RegionID = reg_m_sk.RegionID
       and reg_sk.SubRegionID = reg_m_sk.SubRegionID
+      and trans.CompanySK = reg_m_sk.CompanySK
       -- and (CASE 
       --   WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
       --     THEN reg_sk.RegionID = reg_m_sk.RegionID and dep_sk.SectionID = reg_m_sk.SubRegionID
@@ -316,21 +333,25 @@ BEGIN
   LEFT JOIN `${DimSectionTableRef}` as sec_sk
     ON trans.mix_date between sec_sk.StartDate and sec_sk.EndDate
       and dep_sk.SectionID = sec_sk.SectionID
+      and trans.CompanySK = sec_sk.CompanySK
 
   -- SectionManagerSK
   LEFT JOIN `${DimSectionManagerTableRef}` as sec_m_sk
     ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
       and sec_sk.SectionID = sec_m_sk.SectionID
+      and trans.CompanySK = sec_m_sk.CompanySK
 
   -- Change district
   LEFT JOIN `${DimChangeDistrictTableRef}` as dim_change_district
     ON trans.milCus = TRIM(dim_change_district.customerCode)
       AND trans.mix_date BETWEEN dim_change_district.StartDate AND dim_change_district.EndDate
+      and trans.CompanySK = dim_change_district.CompanySK
 
   -- ChangeSectionSK
   LEFT JOIN `${DimSectionTableRef}` as change_sec_sk
     ON trans.mix_date between change_sec_sk.StartDate and change_sec_sk.EndDate
       and dim_change_district.newSectionID = change_sec_sk.SectionID
+      and trans.CompanySK = change_sec_sk.CompanySK
 
   -- -- ChangeSectionManagerSK
   -- LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
@@ -341,6 +362,7 @@ BEGIN
   LEFT JOIN `${DimDirectorTableRef}` as dir_sk
     ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
       and reg_sk.DirectorID = dir_sk.DirectorID
+      and trans.CompanySK = dir_sk.CompanySK
 
   WHERE IFNULL(trans.ChannelCostID, '') != 'COST99999'
   qualify row_number() over(partition by trans.milType,trans.milVnos,trans.milCus,trans.milStk,trans.milPer,trans.milListno order by sale_sk.seq_condition) = 1
@@ -392,6 +414,7 @@ BEGIN
     from `${DimSaleRepGroupTableRef}`
   ) as sale_sk
     ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
+      and trans.CompanySK = sale_sk.CompanySK
       and (CASE 
             WHEN IFNULL(TRIM(sale_sk.DepCode), '') != '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
@@ -430,6 +453,7 @@ BEGIN
   LEFT JOIN `${DimDepartmentTableRef}` as dep_sk
     ON trans.mix_date between dep_sk.StartDate and dep_sk.EndDate
       and sale_sk.DepartmentID = dep_sk.DepartmentID
+      and trans.CompanySK = dep_sk.CompanySK
 
   -- RegionSK
   LEFT JOIN `${DimRegionTableRef}` as reg_sk
@@ -439,12 +463,14 @@ BEGIN
           THEN dep_sk.RegionID = reg_sk.RegionID and dep_sk.SectionID = reg_sk.SubRegionID
         ELSE dep_sk.RegionID = reg_sk.RegionID
       END)
+      and trans.CompanySK = reg_sk.CompanySK
 
   -- RegionManagerSK
   LEFT JOIN `${DimRegionManagerTableRef}` as reg_m_sk
     ON trans.mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
       and reg_sk.RegionID = reg_m_sk.RegionID
       and reg_sk.SubRegionID = reg_m_sk.SubRegionID
+      and trans.CompanySK = reg_m_sk.CompanySK
       -- and (CASE 
       --   WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
       --     THEN reg_sk.RegionID = reg_m_sk.RegionID and dep_sk.SectionID = reg_m_sk.SubRegionID
@@ -455,21 +481,25 @@ BEGIN
   LEFT JOIN `${DimSectionTableRef}` as sec_sk
     ON trans.mix_date between sec_sk.StartDate and sec_sk.EndDate
       and dep_sk.SectionID = sec_sk.SectionID
+      and trans.CompanySK = sec_sk.CompanySK
 
   -- SectionManagerSK
   LEFT JOIN `${DimSectionManagerTableRef}` as sec_m_sk
     ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
       and sec_sk.SectionID = sec_m_sk.SectionID
+      and trans.CompanySK = sec_m_sk.CompanySK
       
   -- Change district
   LEFT JOIN `${DimChangeDistrictTableRef}` as dim_change_district
     ON trans.milCus = dim_change_district.customerCode
       AND trans.mix_date BETWEEN dim_change_district.StartDate AND dim_change_district.EndDate
+      and trans.CompanySK = dim_change_district.CompanySK
 
   -- ChangeSectionSK
   LEFT JOIN `${DimSectionTableRef}` as change_sec_sk
     ON trans.mix_date between change_sec_sk.StartDate and change_sec_sk.EndDate
       and dim_change_district.newSectionID = change_sec_sk.SectionID
+      and trans.CompanySK = change_sec_sk.CompanySK
 
   -- -- ChangeSectionManagerSK
   -- LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
@@ -480,6 +510,7 @@ BEGIN
   LEFT JOIN `${DimDirectorTableRef}` as dir_sk
     ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
       and reg_sk.DirectorID = dir_sk.DirectorID
+      and trans.CompanySK = dir_sk.CompanySK
   
   -- Sale Add-on
   LEFT JOIN (
@@ -500,6 +531,7 @@ BEGIN
     from `${DimSaleRepGroupTableRef}`
   ) as sale_addon
     ON trans.mix_date between sale_addon.StartDate and sale_addon.EndDate
+      and trans.CompanySK = sale_addon.CompanySK
       and (CASE 
             WHEN IFNULL(TRIM(sale_addon.DepCode), '') != '' and IFNULL(TRIM(sale_addon.CostChannelID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
@@ -538,27 +570,32 @@ BEGIN
   LEFT JOIN `${DimDepartmentTableRef}` as dep_addon
     ON trans.mix_date between dep_addon.StartDate and dep_addon.EndDate
       and sale_addon.DepartmentID = dep_addon.DepartmentID
+      and trans.CompanySK = dep_addon.CompanySK
 
   -- Section Add-on
   LEFT JOIN `${DimSectionTableRef}` as sec_addon
     ON trans.mix_date between sec_addon.StartDate and sec_addon.EndDate
       and dep_addon.SectionID = sec_addon.SectionID
+      and trans.CompanySK = sec_addon.CompanySK
 
   -- Join เพื่อหา ChannelCostID ใหม่ในกรณีที่เป็น COST99999
   LEFT JOIN `${DimChannelCostTableRef}` AS channel_cost
     ON sec_addon.SectionID = channel_cost.ChannelCostName
+      and trans.CompanySK = channel_cost.CompanySK
 
   -- CostStkSk
   LEFT JOIN `${DimCostStkTableRef}` AS coststk_sk
     ON trans.milStk = coststk_sk.MilStk
       AND coststk_sk.ChannelCostID = channel_cost.ChannelCostID
       AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
+      and trans.CompanySK = coststk_sk.CompanySK
 
   -- CostGroupSK
   LEFT JOIN `${DimCostGroupTableRef}` AS costgroup_sk
     ON trans.ProductGroupACC = costgroup_sk.GAccID
       AND costgroup_sk.ChannelCostID = channel_cost.ChannelCostID
       AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
+      and trans.CompanySK = costgroup_sk.CompanySK
 
   WHERE trans.ChannelCostID = 'COST99999'
   qualify row_number() over(partition by trans.milType,trans.milVnos,trans.milCus,trans.milStk,trans.milPer,trans.milListno order by sale_sk.seq_condition) = 1
@@ -573,6 +610,7 @@ BEGIN
   -- where mildep is null
 )
   select
+    mix_table.CompanySK, mix_table.companyID, 
     -- SK
     DebAddress.ProvinceSK as InvoiceProvinceSK, 
     DebAddress.DistrictSK as InvoiceDistrictSK,
@@ -585,16 +623,19 @@ BEGIN
     dim_cust.CustomerSK,
 
     -- DATA
-    mix_table.* except(DepartmentID)
+    mix_table.* except(DepartmentID, CompanySK, companyID)
   from mix_table
   left join `${DebAddressTableRef}` as DebAddress
     on mix_table.milCus = DebAddress.DebCode
+    and mix_table.companyID = DebAddress.company_id
   left join `${DimStkMktTableRef}` as stk_mkt
     on mix_table.milStk = stk_mkt.StkCode
+      and mix_table.CompanySK = stk_mkt.CompanySK
   left join `${DimProductMktTableRef}` as product_mkt
     on stk_mkt.MarketingGroupID = product_mkt.MarketingGroupID
       and stk_mkt.SubMarketingID = product_mkt.SubMarketingID
       and stk_mkt.SegmentID = product_mkt.SegmentID
+      and mix_table.CompanySK = product_mkt.CompanySK
   left join `${DimProductGroupBySaleDayofworkTableRef}` as tg_dayofwork
     on mix_table.milyear = tg_dayofwork.year
       and mix_table.milmonth = tg_dayofwork.month
@@ -603,8 +644,10 @@ BEGIN
       and stk_mkt.MarketingGroupID = tg_dayofwork.MarketingGroupID
       and stk_mkt.SubMarketingID = tg_dayofwork.SubMarketingID
       and stk_mkt.SegmentID = tg_dayofwork.SegmentID
+      and mix_table.CompanySK = tg_dayofwork.CompanySK
   LEFT JOIN `${DimCustomerTableRef}` as dim_cust
     ON mix_table.milCus = dim_cust.debcode
+      and mix_table.CompanySK = dim_cust.CompanySK
   ;
 
 --   -- 1767567
@@ -617,6 +660,7 @@ BEGIN
       FROM temp_fact_transcation AS S 
       WHERE T.milVnos = S.milVnos
         AND T.milType = S.milType
+        AND T.CompanySK = S.CompanySK
     )
     ;
   END;

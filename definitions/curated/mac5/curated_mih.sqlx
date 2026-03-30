@@ -10,7 +10,103 @@ config {
     }
 }
 
-WITH mih2_raw as (
+WITH mih_raw as (
+    select 
+        mih.company_id as company_id,
+        mih.mihday as mihDay,
+        mih.mihmonth as mihMonth,
+        mih.mihyear as mihYear,
+        mih.mihtype as mihType,
+        mih.mihvnos as mihVnos,
+        mih.mihcus as mihCus,
+        mih.mihjob as mihJob,
+        mih.mihdep as mihDep,
+        mih.mihper as mihPer,
+        mih.mihdoc as mihDoc,
+        mih.mihmec as mihMec,
+        mih.mihvatno as mihVatno,
+        mih.mihdesc as mihDesc,
+        mih.mihmemo as mihMemo,
+        mih.mihnotes as mihNotes,
+        mih.mihref1 as mihRef1,
+        mih.mihref2 as mihRef2,
+        mih.mihref3 as mihRef3,
+        mih.mihdischt1 as mihDischt1,
+        mih.mihdischt2 as mihDischt2,
+        mih.mihdelvsite as mihDelvsite,
+        mih.mihdelvdate as mihDelvdate,
+        mih.mihstanding as mihStanding,
+        mih.mihlinkgl as mihLinkgl,
+        mih.mihnouplink as mihNouplink,
+        mih.mihnolist as mihNolist,
+        mih.mihcurc as mihCurc,
+        mih.mihvatinlist as mihVatinlist,
+        mih.mihlock as mihLock,
+        mih.mihprintn as mihPrintn,
+        mih.mihcheque as mihCheque,
+        mih.mihcancel as mihCancel,
+        mih.mihstatus as mihStatus,
+        mih.mihclearum as mihClearum,
+        mih.mihctermno as mihCtermno,
+        mih.mihcog as mihCog,
+        mih.mihvatsum as mihVatsum,
+        mih.mihnetsum as mihNetsum,
+        mih.mihdisclst as mihDisclst,
+        mih.mihdischf1 as mihDischf1,
+        mih.mihdischf2 as mihDischf2,
+        mih.mihexchg as mihExchg,
+        mih.mihextrasum as mihExtrasum,
+        mih.mihextravat as mihExtravat,
+        mih.mihextracut as mihExtracut,
+        mih.mihextramem as mihExtramem,
+        mih.mihrecno as mihRecno,
+        mih.mihrecdate as mihRecdate,
+        mih.mihsavetag as mihSavetag,
+        mih.mihkeyuser as mihKeyuser,
+        mih.mihkeydate as mihKeydate,
+        mih.mihdocrunno as mihDocrunno,
+        mih.mihdategl as mihDategl,
+        mih.mihduepo as mihDuepo,
+        mih.miheditlk as mihEditlk,
+        mih.mihiscf as mihIscf,
+        mih.mihissp as mihIssp,
+        mih.mihdates1 as mihDates1,
+        mih.mihdates2 as mihDates2,
+        mih.mihnumsi as mihNumsi,
+        mih.mihnumsc as mihNumsc,
+        mih.mihvatpc as mihVatpc,
+        mih.mihincluded as mihIncluded,
+        mih.mihtaxvnos as mihTaxvnos,
+        mih.mihtaxdate as mihTaxdate,
+        mih.mihtaxsum as mihTaxsum,
+        mih.mihload as mihLoad,
+        mih.mihpaiddate as mihPaiddate,
+        mih.mihbookordernum as mihBookordernum,
+        mih.mihsenddate as mihSenddate,
+        mih.mihbl as mihBl,
+        mih.mihrpv as mihRpv,
+        mih.mihclearcut as mihClearcut,
+        mih.mihsettlecut as mihSettlecut,
+        mih.moddate as moddate,
+        mih.mihmemo_new as mihMemoNew,
+        mih.memo_extract as memoExtract,
+        mih.asatdate as asatdate,
+        (CASE
+            WHEN mih.mihtype in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_s.ar_snamet
+            WHEN mih.mihtype in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_s.ap_snamet
+            ELSE null
+        END) as mihstatus_desc,
+        '100.00%' as percentSale1,
+        '0.00%' as percentSale2,
+    FROM ${ref(databuffet.VALIDATED_MAC5, "mih")} as mih
+    LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "ar_s")} as ar_s
+        ON mih.company_id = ar_s.company_id 
+        AND mih.mihstatus = ar_s.ar_scode
+    LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "ap_s")} as ap_s
+        ON mih.company_id = ap_s.company_id 
+        AND mih.mihstatus = ap_s.ap_scode
+
+), mih2_raw as (
     SELECT *
     FROM (
         SELECT DISTINCT
@@ -28,101 +124,22 @@ WITH mih2_raw as (
 
 )
 SELECT
-    mih.company_id as company_id,
-    mih.mihday as mihDay,
-    mih.mihmonth as mihMonth,
-    mih.mihyear as mihYear,
-    mih.mihtype as mihType,
-    mih.mihvnos as mihVnos,
-    mih.mihcus as mihCus,
-    mih.mihjob as mihJob,
-    mih.mihdep as mihDep,
-    mih.mihper as mihPer,
-    mih.mihdoc as mihDoc,
-    mih.mihmec as mihMec,
-    mih.mihvatno as mihVatno,
-    mih.mihdesc as mihDesc,
-    mih.mihmemo as mihMemo,
-    mih.mihnotes as mihNotes,
-    mih.mihref1 as mihRef1,
-    mih.mihref2 as mihRef2,
-    mih.mihref3 as mihRef3,
-    mih.mihdischt1 as mihDischt1,
-    mih.mihdischt2 as mihDischt2,
-    mih.mihdelvsite as mihDelvsite,
-    mih.mihdelvdate as mihDelvdate,
-    mih.mihstanding as mihStanding,
-    mih.mihlinkgl as mihLinkgl,
-    mih.mihnouplink as mihNouplink,
-    mih.mihnolist as mihNolist,
-    mih.mihcurc as mihCurc,
-    mih.mihvatinlist as mihVatinlist,
-    mih.mihlock as mihLock,
-    mih.mihprintn as mihPrintn,
-    mih.mihcheque as mihCheque,
-    mih.mihcancel as mihCancel,
-    mih.mihstatus as mihStatus,
-    mih.mihclearum as mihClearum,
-    mih.mihctermno as mihCtermno,
-    mih.mihcog as mihCog,
-    mih.mihvatsum as mihVatsum,
-    mih.mihnetsum as mihNetsum,
-    mih.mihdisclst as mihDisclst,
-    mih.mihdischf1 as mihDischf1,
-    mih.mihdischf2 as mihDischf2,
-    mih.mihexchg as mihExchg,
-    mih.mihextrasum as mihExtrasum,
-    mih.mihextravat as mihExtravat,
-    mih.mihextracut as mihExtracut,
-    mih.mihextramem as mihExtramem,
-    mih.mihrecno as mihRecno,
-    mih.mihrecdate as mihRecdate,
-    mih.mihsavetag as mihSavetag,
-    mih.mihkeyuser as mihKeyuser,
-    mih.mihkeydate as mihKeydate,
-    mih.mihdocrunno as mihDocrunno,
-    mih.mihdategl as mihDategl,
-    mih.mihduepo as mihDuepo,
-    mih.miheditlk as mihEditlk,
-    mih.mihiscf as mihIscf,
-    mih.mihissp as mihIssp,
-    mih.mihdates1 as mihDates1,
-    mih.mihdates2 as mihDates2,
-    mih.mihnumsi as mihNumsi,
-    mih.mihnumsc as mihNumsc,
-    mih.mihvatpc as mihVatpc,
-    mih.mihincluded as mihIncluded,
-    mih.mihtaxvnos as mihTaxvnos,
-    mih.mihtaxdate as mihTaxdate,
-    mih.mihtaxsum as mihTaxsum,
-    mih.mihload as mihLoad,
-    mih.mihpaiddate as mihPaiddate,
-    mih.mihbookordernum as mihBookordernum,
-    mih.mihsenddate as mihSenddate,
-    mih.mihbl as mihBl,
-    mih.mihrpv as mihRpv,
-    mih.mihclearcut as mihClearcut,
-    mih.mihsettlecut as mihSettlecut,
-    mih.moddate as moddate,
-    mih.mihmemo_new as mihMemoNew,
-    mih.memo_extract as memoExtract,
-    mih.asatdate as asatdate,
-    (CASE
-      WHEN mih.mihtype in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_s.ar_snamet
-      WHEN mih.mihtype in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_s.ap_snamet
-      ELSE null
-    END) as mihstatus_desc,
+    mih.* except(percentSale1, percentSale2),
     IFNULL(CONCAT(mih2.per_sale1, '%'), '100.00%') as percentSale1,
     IFNULL(CONCAT(mih2.per_sale2, '%'), '0.00%') as percentSale2,
-FROM ${ref(databuffet.VALIDATED_MAC5, "mih")} as mih
-LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "ar_s")} as ar_s
-    ON mih.company_id = ar_s.company_id AND mih.mihstatus = ar_s.ar_scode
-LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "ap_s")} as ap_s
-    ON mih.company_id = ap_s.company_id AND mih.mihstatus = ap_s.ap_scode
+FROM mih_raw as mih
 LEFT JOIN mih2_raw as mih2
     ON mih.mihRef1 = mih2.mih2vnos
         AND mih.mihCus = mih2.mih2cus
         AND mih.company_id = mih2.company_id
 
 WHERE mih.company_id = 'ag01'
+${ when(incremental(), `AND mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+
+UNION ALL
+
+SELECT 
+    mih.*
+FROM mih_raw as mih
+WHERE mih.company_id != 'ag01'
 ${ when(incremental(), `AND mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }

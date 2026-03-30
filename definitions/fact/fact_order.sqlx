@@ -39,11 +39,20 @@ js {
         name: "dim_customer",
     };
     const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+    
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
 
 }
 
 with mil as (
     select
+      dim_com.CompanySK,
+      dim_com.companyID,
       t.OrderSK,
       mil.milYear, mil.milMonth, mil.milDay,
       mil.milType,
@@ -64,23 +73,30 @@ with mil as (
         and t.mihType = mil.milType
         and t.mihVnos = mil.milVnos
         and t.mihCus = mil.milCus
+        and t.companyID = mil.company_id
+    LEFT JOIN `${DimCompanyTableRef}` as dim_com
+      on mil.company_id = dim_com.companyID
     WHERE mil.milType = 'PS'
-    group by 1,2,3,4,5,6,7,8,9
+    group by 1,2,3,4,5,6,7,8,9,10,11
 
   )
   SELECT
-    row_number() over(order by mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milVnos, mil.milCus, mil.milStk) as FactOrderSk,
+    row_number() over(order by mil.CompanySK, mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milVnos, mil.milCus, mil.milStk) as FactOrderSk,
     mil.OrderSK,
     fact_quo.QuotationSK,
     fact_quo.FactQuotationSK,
     dim_cust.CustomerSK,
+    mil.CompanySK,
+    mil.companyID,
 
     PARSE_DATE('%Y%m%d', CONCAT(mil.milYear, FORMAT("%02d", mil.milMonth),  mil.milDay)) as mix_date,
-    mil.* except(OrderSK, mihRef1),
+    mil.* except(OrderSK, mihRef1, CompanySK, companyID),
     current_date('Asia/Bangkok') as asatdate
   FROM mil as mil
   LEFT JOIN `${FactQuotationTableRef}` AS fact_quo
     ON mil.mihRef1 = fact_quo.Running
     AND mil.milStk = fact_quo.StkCode
+    AND mil.CompanySK = fact_quo.CompanySK
   LEFT JOIN `${DimCustomerTableRef}` as dim_cust
     ON mil.milCus = dim_cust.debcode
+    AND mil.CompanySK = dim_cust.CompanySK

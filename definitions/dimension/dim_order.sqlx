@@ -13,6 +13,14 @@ js {
         name: name(), // ใช้ชื่อไฟล์เป็นชื่อตาราง
     };
     const DimOrderTableRef = `${DimOrderTable.database}.${DimOrderTable.schema}.${DimOrderTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+    
 }
 
 
@@ -20,20 +28,23 @@ js {
 MERGE `${DimOrderTableRef}` T
 USING (
     WITH mil as (
-        select miltype, milvnos, milstk, milQuan, milSum, millinkvcno
+        select 
+            company_id, miltype, milvnos, milstk, milQuan, milSum, millinkvcno
         from ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
         where mil.miltype in ('PS', 'IS')
             and mil.asatdate >= current_date('Asia/Bangkok')-1
             and mil.company_id = 'ag01'
     ), 
     main_table as (
-        select milvnos, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
+        select 
+            company_id, milvnos, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
         from mil
         where miltype = 'PS'
-        group by 1, 2
+        group by 1, 2, 3
     ), 
     sec_table as (
-        select millinkvcno, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
+        select 
+            company_id, millinkvcno, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
         from mil
         where miltype = 'IS'
         and exists (
@@ -41,11 +52,13 @@ USING (
             from main_table as main 
             where mil.millinkvcno = main.milvnos
             and mil.milstk = main.milstk
+            and mil.company_id = main.company_id
         )
-        group by 1, 2
+        group by 1, 2, 3
     ), 
     cal_table as (
         select 
+            main.company_id,
             main.milvnos, main.milstk,
             main.milQuan as main_qty, main.milSum as main_sum,
             sec.milQuan as sec_qty, sec.milSum as sec_sum,
@@ -58,9 +71,11 @@ USING (
         left join sec_table as sec
             on main.milvnos = sec.millinkvcno
             and main.milstk = sec.milstk
+            and main.company_id = sec.company_id
     ), 
     order_status as (
         select 
+            company_id,
             milvnos,
             (case 
                 when countif(item_status = 'In Process') > 0 then 'In Process'
@@ -68,10 +83,12 @@ USING (
                 else 'Complete'
             end) as OrderStatus
         from cal_table
-        group by 1
+        group by 1, 2
     ),
     source_data AS (
         SELECT  
+            dim_com.CompanySK,
+            dim_com.companyID,
             PARSE_DATE('%Y%m%d', CONCAT(mihYear, FORMAT("%02d", mihMonth),  mihDay)) as mix_date,
             mih.mihYear, 
             mih.mihMonth, 
@@ -91,10 +108,14 @@ USING (
             mih.mihCus
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
         LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar
-            on mih.mihStatus = ar.ar_scode AND mih.company_id = ar.company_id
+            on mih.mihStatus = ar.ar_scode 
+            AND mih.company_id = ar.company_id
         LEFT JOIN order_status as order_status
             on order_status.milvnos = mih.mihVnos
-        WHERE mihType = 'PS'
+            and order_status.company_id = mih.company_id
+        left join `${DimCompanyTableRef}` as dim_com
+            on mih.company_id = dim_com.companyID
+        WHERE mih.mihType = 'PS'
             and mih.company_id = 'ag01' 
     ),
     -- ดึงค่า Max OrderSK ปัจจุบันจาก Target
@@ -109,7 +130,7 @@ USING (
             -- คำนวณ Row Number เฉพาะกลุ่มที่เป็นข้อมูลใหม่ (Target เป็น Null)
             ROW_NUMBER() OVER (                
                 PARTITION BY (CASE WHEN T.mihVnos IS NULL THEN 1 ELSE 0 END) 
-                ORDER BY S.mihYear, S.mihMonth, S.mihDay, S.mihVnos
+                ORDER BY S.CompanySK, S.mihYear, S.mihMonth, S.mihDay, S.mihVnos
             ) as rn_new
         FROM source_data S
         LEFT JOIN `${DimOrderTableRef}` T
@@ -119,21 +140,23 @@ USING (
             AND S.mihType = T.mihType
             AND S.mihVnos = T.mihVnos 
             AND S.mihCus = T.mihCus
+            AND S.CompanySK = T.CompanySK
     )
 
     SELECT
         src.*,
         -- ถ้ามี SK เดิม (Update) ให้ใช้ของเดิม
         -- ถ้าเป็นแถวใหม่ (Insert) ให้เอา Max + Running Number
-        CASE
+        (CASE
             WHEN existing_sk IS NOT NULL THEN existing_sk
             ELSE (SELECT max_sk FROM target_max) + rn_new
-        END as final_OrderSK
+        END) as final_OrderSK
     FROM prepared_source src
 
 ) S
 ON T.mihType = S.mihType
     and T.mihVnos = S.mihVnos
+    and T.CompanySK = S.CompanySK
 
 -- กรณีเจอข้อมูลเดิม (Update)
 WHEN MATCHED THEN
@@ -153,19 +176,20 @@ WHEN MATCHED THEN
     T.memoExtract = S.memoExtract,
     T.mihMemoNew = S.mihMemoNew,
     T.mihStatusDesc = S.mihStatusDesc
-    -- ไม่ Update OrderSK, InvoiceSK, QuotationSK ตามเงื่อนไข
 
 -- กรณีไม่เจอข้อมูล (Insert)
 WHEN NOT MATCHED THEN
   INSERT (
-    OrderSK,
+    OrderSK, CompanySK,
+    companyID,
     mix_date, mihYear, mihMonth, mihDay, mihType, mihVnos, mihCus,
     mihJob, mihRef1, mihRef2, mihRef3,
     mihCancel, mihStatus, StatusName,
     memoExtract, mihMemoNew, mihStatusDesc
   )
   VALUES (
-    S.final_OrderSK, -- ใช้ SK ที่คำนวณใหม่
+    S.final_OrderSK, S.CompanySK,
+    S.companyID,
     S.mix_date, S.mihYear, S.mihMonth, S.mihDay, S.mihType, S.mihVnos, S.mihCus,
     S.mihJob, S.mihRef1, S.mihRef2, S.mihRef3,
     S.mihCancel, S.mihStatus, S.StatusName,
