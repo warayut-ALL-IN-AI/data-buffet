@@ -1,0 +1,634 @@
+config {
+  type: "operations",
+  dependencies: ["curated_mih", "curated_mil", "dim_product_master", "dim_customer", "dim_sale_representative", "dim_sale_representative_last"],
+  tags: [databuffet.TAG_FACT_DAILY],
+}
+
+js {
+    // Define table references
+    const FactTranscationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: name(),
+    };
+    const FactTranscationTableRef = `${FactTranscationTable.database}.${FactTranscationTable.schema}.${FactTranscationTable.name}`;
+
+    const DimProductTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_master",
+    };
+    const DimProductTableRef = `${DimProductTable.database}.${DimProductTable.schema}.${DimProductTable.name}`;
+    
+    const DimPaymentTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_payment",
+    };
+    const DimPaymentTableRef = `${DimPaymentTable.database}.${DimPaymentTable.schema}.${DimPaymentTable.name}`;
+    
+    const DimChannelTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_channel",
+    };
+    const DimChannelTableRef = `${DimChannelTable.database}.${DimChannelTable.schema}.${DimChannelTable.name}`;
+    
+    const DimCostStkTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_cost_stk",
+    };
+    const DimCostStkTableRef = `${DimCostStkTable.database}.${DimCostStkTable.schema}.${DimCostStkTable.name}`;
+    
+    const DimCostGroupTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_cost_group",
+    };
+    const DimCostGroupTableRef = `${DimCostGroupTable.database}.${DimCostGroupTable.schema}.${DimCostGroupTable.name}`;
+    
+    const DimSaleRepGroupTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative",
+    };
+    const DimSaleRepGroupTableRef = `${DimSaleRepGroupTable.database}.${DimSaleRepGroupTable.schema}.${DimSaleRepGroupTable.name}`;
+    
+    const DimDepartmentTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_department",
+    };
+    const DimDepartmentTableRef = `${DimDepartmentTable.database}.${DimDepartmentTable.schema}.${DimDepartmentTable.name}`;
+    
+    const DimRegionTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region",
+    };
+    const DimRegionTableRef = `${DimRegionTable.database}.${DimRegionTable.schema}.${DimRegionTable.name}`;
+    
+    const DimRegionManagerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region_manager",
+    };
+    const DimRegionManagerTableRef = `${DimRegionManagerTable.database}.${DimRegionManagerTable.schema}.${DimRegionManagerTable.name}`;
+
+    const DimSectionTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section",
+    };
+    const DimSectionTableRef = `${DimSectionTable.database}.${DimSectionTable.schema}.${DimSectionTable.name}`;
+
+    const DimSectionManagerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_manager",
+    };
+    const DimSectionManagerTableRef = `${DimSectionManagerTable.database}.${DimSectionManagerTable.schema}.${DimSectionManagerTable.name}`;
+
+    const DimDirectorTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_director",
+    };
+    const DimDirectorTableRef = `${DimDirectorTable.database}.${DimDirectorTable.schema}.${DimDirectorTable.name}`;
+
+    const DimChannelCostTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_channel_cost",
+    };
+    const DimChannelCostTableRef = `${DimChannelCostTable.database}.${DimChannelCostTable.schema}.${DimChannelCostTable.name}`;
+
+    const DimStkMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_stk_mkt",
+    };
+    const DimStkMktTableRef = `${DimStkMktTable.database}.${DimStkMktTable.schema}.${DimStkMktTable.name}`;
+
+    const DimProductGroupBySaleDayofworkTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_target_product_group_by_sale_dayofwork",
+    };
+    const DimProductGroupBySaleDayofworkTableRef = `${DimProductGroupBySaleDayofworkTable.database}.${DimProductGroupBySaleDayofworkTable.schema}.${DimProductGroupBySaleDayofworkTable.name}`;
+    
+    const DimProductMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_mkt",
+    };
+    const DimProductMktTableRef = `${DimProductMktTable.database}.${DimProductMktTable.schema}.${DimProductMktTable.name}`;
+
+    const DebAddressTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.PROCESS_DATASET,
+        name: "view_deb_address_data",
+    };
+    const DebAddressTableRef = `${DebAddressTable.database}.${DebAddressTable.schema}.${DebAddressTable.name}`;
+
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+
+    const DimChangeDistrictTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_change_district",
+    };
+    const DimChangeDistrictTableRef = `${DimChangeDistrictTable.database}.${DimChangeDistrictTable.schema}.${DimChangeDistrictTable.name}`;
+
+}
+
+BEGIN
+  CREATE OR REPLACE TEMP TABLE temp_fact_transcation 
+  AS
+  WITH raw_transction as (
+    SELECT 
+      channel_sk.ChannelSK,
+      channel_sk.ChannelCostID,
+      channel_sk.ChannelFinanceSK,
+      channel_sk.ChannelSaleSK,
+      channel_sk.ChannelCostSK,
+      payment_sk.PaymentSK,
+      
+      trans.OrderProvinceSK, 
+      trans.OrderDistrictSK, 
+      trans.OrderSubDistrictSK,
+
+      PARSE_DATE('%Y%m%d', CONCAT(trans.milYear, FORMAT("%02d", trans.milMonth), FORMAT("%02d", trans.milDay))) as mix_date,
+      
+      -- productmaster.ProductCode,
+      productmaster.ProductGroupACC,
+      deb.debgroup,
+      IF(channel_sk.DummyChannel <> 'not calculated', channel_sk.DummyChannel, CAST(NULL AS STRING)) as DummyChannel,
+      trans.* except(OrderProvinceSK, OrderDistrictSK, OrderSubDistrictSK)
+    FROM ${databuffet.DATABASE}.onetime.Transaction_Data_Mart as trans
+    
+    -- Product Master
+    LEFT JOIN `${DimProductTableRef}` AS productmaster
+      ON trans.milstk = productmaster.ProductCode
+
+    -- PaymentSK
+    LEFT JOIN `${DimPaymentTableRef}` as payment_sk
+      ON trans.memoextract = payment_sk.CodeMemo
+
+    -- ChannelSK
+    LEFT JOIN `${DimChannelTableRef}` AS channel_sk
+      ON IFNULL(trans.milDep, 'N/A') = channel_sk.DepCode
+    
+    -- DEB
+    LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'deb')} as deb
+      ON trans.milCus = deb.debCode
+      AND deb.company_id = 'ag01'
+      
+    WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1
+      -- AND milVnos = '6901003086'
+      -- AND trans.milPer = '1065043'
+
+), final_part1 as (
+  SELECT 
+    -- Surrogate Key
+    sale_sk.SaleRepSK,
+    dep_sk.DepartmentSK,
+    reg_sk.RegionSK,
+    reg_m_sk.RegionManagerSK,
+    sec_sk.SectionSK,
+    sec_m_sk.SectionManagerSK,
+    dir_sk.DirectorSK,
+    coststk_sk.CostStkSk,
+    costgroup_sk.CostGroupSK,
+
+    change_sec_sk.SectionSK as ChangeSectionSK,
+    -- change_sec_m_sk.SectionManagerSK as ChangeSectionManagerSK,
+
+    trans.ChannelSK,
+    trans.ChannelFinanceSK,
+    trans.ChannelSaleSK,
+    trans.ChannelCostSK,
+
+    -- DATA
+    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK),
+
+    -- FOR USE THIS PROCESS
+    dep_sk.DepartmentID
+  FROM raw_transction as trans
+
+  -- CostStkSk
+  LEFT JOIN `${DimCostStkTableRef}` AS coststk_sk
+      ON trans.milStk = coststk_sk.MilStk
+      AND trans.ChannelCostID = coststk_sk.ChannelCostID
+      AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
+
+  -- CostGroupSK
+  LEFT JOIN `${DimCostGroupTableRef}` AS costgroup_sk
+      ON trans.ProductGroupACC = costgroup_sk.GAccID
+      AND trans.ChannelCostID = costgroup_sk.ChannelCostID 
+      AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
+
+  -- SaleRepSK
+  LEFT JOIN (
+    select *,
+      (CASE 
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null 
+          and NULLIF(TRIM(CAST(DepCode as STRING)), '') is not null 
+          and NULLIF(TRIM(CAST(CostChannelID as STRING)), '') is not null 
+          THEN 1
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(ProvinceID as STRING)), '') is not null
+          THEN 2
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(CostChannelID as STRING)), '') is not null 
+          THEN 3
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(DepartmentID as STRING)), '') is not null
+          THEN 4
+        ELSE 5
+      END) as seq_condition
+    from `${DimSaleRepGroupTableRef}`
+  ) as sale_sk
+    ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
+      and (CASE 
+            WHEN IFNULL(TRIM(sale_sk.DepCode), '') != '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and TRIM(trans.milDep) = TRIM(sale_sk.DepCode)
+                and trans.ChannelCostID = sale_sk.CostChannelID
+            WHEN IFNULL(TRIM(sale_sk.DepCode), '') = '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and ((trans.ChannelCostID = sale_sk.CostChannelID)
+                  or (CASE
+                        WHEN trans.debgroup in ('HP', 'HPEXPO') THEN lower(sale_sk.DepartmentID) like 'hp_%'
+                        WHEN trans.debgroup in ('TW', 'TWEXPO') THEN lower(sale_sk.DepartmentID) like 'tw_%'
+                        WHEN trans.debgroup in ('BT', 'BT.C') THEN lower(sale_sk.DepartmentID) like 'bt_%'
+                        WHEN trans.debgroup in ('GB') THEN lower(sale_sk.DepartmentID) like 'gb_%'
+                        WHEN trans.debgroup in ('MH') THEN lower(sale_sk.DepartmentID) like 'mh_%'
+                        WHEN trans.debgroup in ('DOHOME') THEN lower(sale_sk.DepartmentID) like 'dh_%'
+                      END)
+                )
+            WHEN IFNULL(TRIM(sale_sk.ProvinceID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and (CASE 
+                      -- 1. เช็ค Province ก่อน
+                      WHEN CAST(trans.OrderProvinceSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      -- 2. ถ้าไม่เจอ Province ให้เช็ค District
+                      WHEN CAST(trans.OrderDistrictSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      -- 3. ถ้าไม่เจอ District ให้เช็ค SubDistrict
+                      WHEN CAST(trans.OrderSubDistrictSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      ELSE FALSE
+                    END)
+            WHEN IFNULL(TRIM(sale_sk.CustomerFlag), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and TRIM(trans.milCus) IN UNNEST(SPLIT(TRIM(sale_sk.CustomerFlag), '|'))
+            ELSE TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+          END)
+
+  -- DepartmentSK
+  LEFT JOIN `${DimDepartmentTableRef}` as dep_sk
+    ON trans.mix_date between dep_sk.StartDate and dep_sk.EndDate
+      and sale_sk.DepartmentID = dep_sk.DepartmentID
+
+  -- RegionSK
+  LEFT JOIN `${DimRegionTableRef}` as reg_sk
+    ON trans.mix_date between reg_sk.StartDate and reg_sk.EndDate
+      and (CASE 
+        WHEN reg_sk.RegionID != reg_sk.SubRegionID
+          THEN dep_sk.RegionID = reg_sk.RegionID and dep_sk.SectionID = reg_sk.SubRegionID
+        ELSE dep_sk.RegionID = reg_sk.RegionID
+      END)
+
+  -- RegionManagerSK
+  LEFT JOIN `${DimRegionManagerTableRef}` as reg_m_sk
+    ON trans.mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
+      and reg_sk.RegionID = reg_m_sk.RegionID
+      and reg_sk.SubRegionID = reg_m_sk.SubRegionID
+      -- and (CASE 
+      --   WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
+      --     THEN reg_sk.RegionID = reg_m_sk.RegionID and dep_sk.SectionID = reg_m_sk.SubRegionID
+      --   ELSE reg_sk.RegionID = reg_m_sk.RegionID
+      -- END)
+
+  -- SectionSK
+  LEFT JOIN `${DimSectionTableRef}` as sec_sk
+    ON trans.mix_date between sec_sk.StartDate and sec_sk.EndDate
+      and dep_sk.SectionID = sec_sk.SectionID
+
+  -- SectionManagerSK
+  LEFT JOIN `${DimSectionManagerTableRef}` as sec_m_sk
+    ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
+      and sec_sk.SectionID = sec_m_sk.SectionID
+
+  -- Change district
+  LEFT JOIN `${DimChangeDistrictTableRef}` as dim_change_district
+    ON trans.milCus = TRIM(dim_change_district.customerCode)
+      AND trans.mix_date BETWEEN dim_change_district.StartDate AND dim_change_district.EndDate
+
+  -- ChangeSectionSK
+  LEFT JOIN `${DimSectionTableRef}` as change_sec_sk
+    ON trans.mix_date between change_sec_sk.StartDate and change_sec_sk.EndDate
+      and dim_change_district.newSectionID = change_sec_sk.SectionID
+
+  -- -- ChangeSectionManagerSK
+  -- LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
+  --   ON trans.mix_date between change_sec_m_sk.StartDate and change_sec_m_sk.EndDate
+  --     and change_sec_sk.SectionID = change_sec_m_sk.SectionID
+
+  -- DirectorSK
+  LEFT JOIN `${DimDirectorTableRef}` as dir_sk
+    ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
+      and reg_sk.DirectorID = dir_sk.DirectorID
+
+  WHERE IFNULL(trans.ChannelCostID, '') != 'COST99999'
+  qualify row_number() over(partition by trans.milType,trans.milVnos,trans.milCus,trans.milStk,trans.milPer,trans.milListno order by sale_sk.seq_condition) = 1
+  
+), final_part2 as (
+  SELECT 
+    -- Surrogate Key
+    sale_sk.SaleRepSK,
+    dep_sk.DepartmentSK,
+    reg_sk.RegionSK,
+    reg_m_sk.RegionManagerSK,
+    sec_sk.SectionSK,
+    sec_m_sk.SectionManagerSK,
+    dir_sk.DirectorSK,
+    coststk_sk.CostStkSk,
+    costgroup_sk.CostGroupSK,
+
+    change_sec_sk.SectionSK as ChangeSectionSK,
+    -- change_sec_m_sk.SectionManagerSK as ChangeSectionManagerSK,
+
+    trans.ChannelSK,
+    trans.ChannelFinanceSK,
+    trans.ChannelSaleSK,
+    channel_cost.ChannelCostSK,
+
+    -- DATA
+    trans.* except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK),
+
+    -- FOR USE THIS PROCESS
+    dep_sk.DepartmentID
+  FROM raw_transction as trans
+
+  -- SaleRepSK
+  LEFT JOIN (
+    select *,
+      (CASE 
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null 
+          and NULLIF(TRIM(CAST(DepCode as STRING)), '') is not null 
+          and NULLIF(TRIM(CAST(CostChannelID as STRING)), '') is not null 
+          THEN 1
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(ProvinceID as STRING)), '') is not null
+          THEN 2
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(CostChannelID as STRING)), '') is not null 
+          THEN 3
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(DepartmentID as STRING)), '') is not null
+          THEN 4
+        ELSE 5
+      END) as seq_condition
+    from `${DimSaleRepGroupTableRef}`
+  ) as sale_sk
+    ON trans.mix_date between sale_sk.StartDate and sale_sk.EndDate
+      and (CASE 
+            WHEN IFNULL(TRIM(sale_sk.DepCode), '') != '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and TRIM(trans.milDep) = TRIM(sale_sk.DepCode)
+                and trans.ChannelCostID = sale_sk.CostChannelID
+            WHEN IFNULL(TRIM(sale_sk.DepCode), '') = '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and ((trans.ChannelCostID = sale_sk.CostChannelID)
+                  or (CASE
+                        WHEN trans.debgroup in ('HP', 'HPEXPO') THEN lower(sale_sk.DepartmentID) like 'hp_%'
+                        WHEN trans.debgroup in ('TW', 'TWEXPO') THEN lower(sale_sk.DepartmentID) like 'tw_%'
+                        WHEN trans.debgroup in ('BT', 'BT.C') THEN lower(sale_sk.DepartmentID) like 'bt_%'
+                        WHEN trans.debgroup in ('GB') THEN lower(sale_sk.DepartmentID) like 'gb_%'
+                        WHEN trans.debgroup in ('MH') THEN lower(sale_sk.DepartmentID) like 'mh_%'
+                        WHEN trans.debgroup in ('DOHOME') THEN lower(sale_sk.DepartmentID) like 'dh_%'
+                      END)
+                )
+            WHEN IFNULL(TRIM(sale_sk.ProvinceID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and (CASE 
+                      -- 1. เช็ค Province ก่อน
+                      WHEN CAST(trans.OrderProvinceSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      -- 2. ถ้าไม่เจอ Province ให้เช็ค District
+                      WHEN CAST(trans.OrderDistrictSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      -- 3. ถ้าไม่เจอ District ให้เช็ค SubDistrict
+                      WHEN CAST(trans.OrderSubDistrictSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      ELSE FALSE
+                    END)
+            WHEN IFNULL(TRIM(sale_sk.CustomerFlag), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+                and TRIM(trans.milCus) IN UNNEST(SPLIT(TRIM(sale_sk.CustomerFlag), '|'))
+            ELSE TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
+          END)
+
+  -- DepartmentSK
+  LEFT JOIN `${DimDepartmentTableRef}` as dep_sk
+    ON trans.mix_date between dep_sk.StartDate and dep_sk.EndDate
+      and sale_sk.DepartmentID = dep_sk.DepartmentID
+
+  -- RegionSK
+  LEFT JOIN `${DimRegionTableRef}` as reg_sk
+    ON trans.mix_date between reg_sk.StartDate and reg_sk.EndDate
+      and (CASE 
+        WHEN reg_sk.RegionID != reg_sk.SubRegionID
+          THEN dep_sk.RegionID = reg_sk.RegionID and dep_sk.SectionID = reg_sk.SubRegionID
+        ELSE dep_sk.RegionID = reg_sk.RegionID
+      END)
+
+  -- RegionManagerSK
+  LEFT JOIN `${DimRegionManagerTableRef}` as reg_m_sk
+    ON trans.mix_date between reg_m_sk.StartDate and reg_m_sk.EndDate
+      and reg_sk.RegionID = reg_m_sk.RegionID
+      and reg_sk.SubRegionID = reg_m_sk.SubRegionID
+      -- and (CASE 
+      --   WHEN reg_m_sk.RegionID != reg_m_sk.SubRegionID
+      --     THEN reg_sk.RegionID = reg_m_sk.RegionID and dep_sk.SectionID = reg_m_sk.SubRegionID
+      --   ELSE reg_sk.RegionID = reg_m_sk.RegionID
+      -- END)
+
+  -- SectionSK
+  LEFT JOIN `${DimSectionTableRef}` as sec_sk
+    ON trans.mix_date between sec_sk.StartDate and sec_sk.EndDate
+      and dep_sk.SectionID = sec_sk.SectionID
+
+  -- SectionManagerSK
+  LEFT JOIN `${DimSectionManagerTableRef}` as sec_m_sk
+    ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
+      and sec_sk.SectionID = sec_m_sk.SectionID
+      
+  -- Change district
+  LEFT JOIN `${DimChangeDistrictTableRef}` as dim_change_district
+    ON trans.milCus = dim_change_district.customerCode
+      AND trans.mix_date BETWEEN dim_change_district.StartDate AND dim_change_district.EndDate
+
+  -- ChangeSectionSK
+  LEFT JOIN `${DimSectionTableRef}` as change_sec_sk
+    ON trans.mix_date between change_sec_sk.StartDate and change_sec_sk.EndDate
+      and dim_change_district.newSectionID = change_sec_sk.SectionID
+
+  -- -- ChangeSectionManagerSK
+  -- LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
+  --   ON trans.mix_date between change_sec_m_sk.StartDate and change_sec_m_sk.EndDate
+  --     and change_sec_sk.SectionID = change_sec_m_sk.SectionID
+
+  -- DirectorSK
+  LEFT JOIN `${DimDirectorTableRef}` as dir_sk
+    ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
+      and reg_sk.DirectorID = dir_sk.DirectorID
+  
+  -- Sale Add-on
+  LEFT JOIN (
+    select *,
+      (CASE 
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null 
+          and NULLIF(TRIM(CAST(DepCode as STRING)), '') is not null 
+          and NULLIF(TRIM(CAST(CostChannelID as STRING)), '') is not null 
+          THEN 1
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(ProvinceID as STRING)), '') is not null
+          THEN 2
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(CostChannelID as STRING)), '') is not null 
+          THEN 3
+        WHEN NULLIF(TRIM(CAST(EmployeeID as STRING)), '') is not null and NULLIF(TRIM(CAST(DepartmentID as STRING)), '') is not null
+          THEN 4
+        ELSE 5
+      END) as seq_condition
+    from `${DimSaleRepGroupTableRef}`
+  ) as sale_addon
+    ON trans.mix_date between sale_addon.StartDate and sale_addon.EndDate
+      and (CASE 
+            WHEN IFNULL(TRIM(sale_addon.DepCode), '') != '' and IFNULL(TRIM(sale_addon.CostChannelID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
+                and TRIM(trans.milDep) = TRIM(sale_addon.DepCode)
+                and trans.ChannelCostID = sale_addon.CostChannelID
+            WHEN IFNULL(TRIM(sale_addon.DepCode), '') = '' and IFNULL(TRIM(sale_addon.CostChannelID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
+                and ((trans.ChannelCostID = sale_addon.CostChannelID)
+                  or (CASE
+                        WHEN trans.debgroup in ('HP', 'HPEXPO') THEN lower(sale_addon.DepartmentID) like 'hp_%'
+                        WHEN trans.debgroup in ('TW', 'TWEXPO') THEN lower(sale_addon.DepartmentID) like 'tw_%'
+                        WHEN trans.debgroup in ('BT', 'BT.C') THEN lower(sale_addon.DepartmentID) like 'bt_%'
+                        WHEN trans.debgroup in ('GB') THEN lower(sale_addon.DepartmentID) like 'gb_%'
+                        WHEN trans.debgroup in ('MH') THEN lower(sale_addon.DepartmentID) like 'mh_%'
+                        WHEN trans.debgroup in ('DOHOME') THEN lower(sale_addon.DepartmentID) like 'dh_%'
+                      END)
+                )
+            WHEN IFNULL(TRIM(sale_addon.ProvinceID), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
+                and (CASE 
+                      -- 1. เช็ค Province ก่อน
+                      WHEN CAST(trans.OrderProvinceSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      -- 2. ถ้าไม่เจอ Province ให้เช็ค District
+                      WHEN CAST(trans.OrderDistrictSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      -- 3. ถ้าไม่เจอ District ให้เช็ค SubDistrict
+                      WHEN CAST(trans.OrderSubDistrictSK as STRING) IN UNNEST(SPLIT(sale_sk.ProvinceID, '|')) THEN TRUE
+                      ELSE FALSE
+                    END)
+            WHEN IFNULL(TRIM(sale_addon.CustomerFlag), '') != ''
+              THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
+                and TRIM(trans.milCus) IN UNNEST(SPLIT(TRIM(sale_addon.CustomerFlag), '|'))
+            ELSE TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
+          END)
+
+  -- Department Add-on
+  LEFT JOIN `${DimDepartmentTableRef}` as dep_addon
+    ON trans.mix_date between dep_addon.StartDate and dep_addon.EndDate
+      and sale_addon.DepartmentID = dep_addon.DepartmentID
+
+  -- Section Add-on
+  LEFT JOIN `${DimSectionTableRef}` as sec_addon
+    ON trans.mix_date between sec_addon.StartDate and sec_addon.EndDate
+      and dep_addon.SectionID = sec_addon.SectionID
+
+  -- Join เพื่อหา ChannelCostID ใหม่ในกรณีที่เป็น COST99999
+  LEFT JOIN `${DimChannelCostTableRef}` AS channel_cost
+    ON sec_addon.SectionID = channel_cost.ChannelCostName
+
+  -- CostStkSk
+  LEFT JOIN `${DimCostStkTableRef}` AS coststk_sk
+    ON trans.milStk = coststk_sk.MilStk
+      AND coststk_sk.ChannelCostID = channel_cost.ChannelCostID
+      AND trans.mix_date BETWEEN coststk_sk.StartDate AND coststk_sk.EndDate
+
+  -- CostGroupSK
+  LEFT JOIN `${DimCostGroupTableRef}` AS costgroup_sk
+    ON trans.ProductGroupACC = costgroup_sk.GAccID
+      AND costgroup_sk.ChannelCostID = channel_cost.ChannelCostID
+      AND trans.mix_date BETWEEN costgroup_sk.StartDate AND costgroup_sk.EndDate
+
+  WHERE trans.ChannelCostID = 'COST99999'
+  qualify row_number() over(partition by trans.milType,trans.milVnos,trans.milCus,trans.milStk,trans.milPer,trans.milListno order by sale_sk.seq_condition) = 1
+
+), mix_table as (
+  select * except(ProductGroupACC, debgroup)
+  from final_part1
+  -- where mildep is null
+  union all
+  select * except(ProductGroupACC, debgroup)
+  from final_part2
+  -- where mildep is null
+)
+  select
+    -- SK
+    DebAddress.ProvinceSK as InvoiceProvinceSK, 
+    DebAddress.DistrictSK as InvoiceDistrictSK,
+    DebAddress.SubDistrictSK as InvoiceSubDistrictSK,
+    stk_mkt.StkMktSK,
+    product_mkt.ProductMktSK,
+    tg_dayofwork.TargetBySaleDayofworkSK,
+    tg_dayofwork.TargetProductGroupSK, 
+    tg_dayofwork.RateTargetSK,
+    dim_cust.CustomerSK,
+
+    -- DATA
+    mix_table.* except(DepartmentID)
+  from mix_table
+  left join `${DebAddressTableRef}` as DebAddress
+    on mix_table.milCus = DebAddress.DebCode
+  left join `${DimStkMktTableRef}` as stk_mkt
+    on mix_table.milStk = stk_mkt.StkCode
+  left join `${DimProductMktTableRef}` as product_mkt
+    on stk_mkt.MarketingGroupID = product_mkt.MarketingGroupID
+      and stk_mkt.SubMarketingID = product_mkt.SubMarketingID
+      and stk_mkt.SegmentID = product_mkt.SegmentID
+  left join `${DimProductGroupBySaleDayofworkTableRef}` as tg_dayofwork
+    on mix_table.milyear = tg_dayofwork.year
+      and mix_table.milmonth = tg_dayofwork.month
+      and mix_table.milday = CAST(tg_dayofwork.day AS INT64)
+      and mix_table.DepartmentID = tg_dayofwork.DepartmentID
+      and stk_mkt.MarketingGroupID = tg_dayofwork.MarketingGroupID
+      and stk_mkt.SubMarketingID = tg_dayofwork.SubMarketingID
+      and stk_mkt.SegmentID = tg_dayofwork.SegmentID
+  LEFT JOIN `${DimCustomerTableRef}` as dim_cust
+    ON mix_table.milCus = dim_cust.debcode
+  ;
+
+--   -- 1767567
+--   -- ALL : 2388305
+
+  BEGIN    
+    DELETE FROM `${FactTranscationTableRef}` AS T
+    WHERE EXISTS (
+      SELECT 1 
+      FROM temp_fact_transcation AS S 
+      WHERE T.milVnos = S.milVnos
+        AND T.milType = S.milType
+    )
+    ;
+  END;
+
+  BEGIN
+    INSERT INTO `${FactTranscationTableRef}` 
+    SELECT * FROM temp_fact_transcation;
+  END;
+
+END;
+
+BEGIN
+  DELETE FROM ${FactTranscationTableRef}
+  WHERE mix_date < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR);
+END;

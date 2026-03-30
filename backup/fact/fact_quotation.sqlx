@@ -1,0 +1,72 @@
+config {
+  type: "operations",
+  dependencies: ["dim_quotation", "dim_customer"],
+  tags: [databuffet.TAG_FACT_DAILY],
+}
+
+js {
+    // Define table references
+    const FactQuotationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: name(),
+    };
+    const FactQuotationTableRef = `${FactQuotationTable.database}.${FactQuotationTable.schema}.${FactQuotationTable.name}`;
+
+    const DimQuotationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_quotation",
+    };
+    const DimQuotationTableRef = `${DimQuotationTable.database}.${DimQuotationTable.schema}.${DimQuotationTable.name}`;
+
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+
+}
+
+BEGIN
+  drop table if exists `${FactQuotationTableRef}`;
+  
+  create or replace table `${FactQuotationTableRef}`
+  partition by asatdate
+  cluster by FactQuotationSK
+  as
+  with quotation_detail as (
+    select 
+      qt.QuotationSK,
+      qt.SDate,
+      qt.Year,
+      qt.Month,
+      qt.Day,
+      qt.Running, 
+      stkcode as StkCode,
+      qt.CustomerId,
+      qt.ProjectCode,
+      MAX(stkdesc) as StkDesc,
+      AVG(price) as Price,
+      SUM(quantity) as Quantity,
+      SUM(total) as Total,
+    from ${ref(databuffet.VALIDATED_MAC5, 'tbook_quodetail')} as qt_detail
+    inner join `${DimQuotationTableRef}` as qt
+      on qt.id = qt_detail.linkid
+    WHERE qt_detail.company_id = 'ag01'
+    group by 1,2,3,4,5,6,7,8,9
+    
+  )
+    select
+      row_number() over(order by qtd.Running, qtd.StkCode) as FactQuotationSK,
+      qtd.QuotationSK,
+      dim_cust.CustomerSK,
+      qtd.* except(QuotationSK),
+      current_date('Asia/Bangkok') as asatdate
+    from quotation_detail as qtd
+    LEFT JOIN `${DimCustomerTableRef}` as dim_cust
+      ON qtd.CustomerId = dim_cust.debcode
+    ;
+
+END;

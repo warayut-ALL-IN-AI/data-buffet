@@ -28,12 +28,8 @@ USING (
           END) as StatusDesc,
           mihCancel,mihDep,mihJob
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar_s 
-          on mih.mihStatus = ar_s.ar_scode 
-          AND mih.company_id = ar_s.company_id
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s 
-          on mih.mihStatus = ap_s.ap_scode 
-          AND mih.company_id = ap_s.company_id
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar_s on mih.mihStatus = ar_s.ar_scode AND mih.company_id = ar_s.company_id
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s on mih.mihStatus = ap_s.ap_scode AND mih.company_id = ap_s.company_id
         WHERE mih.company_id = 'ag01'
           and mih.mihType = 'IS'
           and mih.mihRef1 is not null

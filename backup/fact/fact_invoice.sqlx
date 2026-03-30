@@ -1,7 +1,13 @@
 config {
-  type: "operations",
-  dependencies: ["dim_invoice", "dim_customer", "fact_order"],
-  tags: [databuffet.TAG_FACT_DAILY],
+    type: "table",
+    schema: databuffet.FACT_TABLE,
+    dependencies: ["dim_invoice", "dim_customer", "fact_order"],
+    tags: [databuffet.TAG_FACT_DAILY],
+    uniqueKey: ["FactInvoiceSK"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: ["FactInvoiceSK"]
+    },
 }
 
 js {
@@ -36,102 +42,51 @@ js {
 
 }
 
-BEGIN
-  DECLARE max_sk INT64;
-  SET max_sk = (SELECT IFNULL(MAX(FactInvoiceSK), 0) FROM `${FactInvoiceTableRef}`);
+  with mil as (
+    select
+      milYear, milMonth, milDay,
+      t.InvoiceSk,
+      mil.milType,
+      mil.milvnos,
+      mil.milCus,
+      mil.milStk,
+      -- mil.milListno,
+      mil.milLinkVcno,
+      sum(mil.milQuan) as milQuan,
+      sum(mil.milAdisc) as milAdisc,
+      sum(mil.milCog) as milCog,
+      sum(mil.milDisca) as milDisca,
+      sum(mil.milSum) as milSum,
+    FROM ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
+    INNER JOIN `${DimInvoiceTableRef}` as t
+      on t.mihYear = mil.milYear
+        and t.mihMonth = mil.milMonth
+        and t.mihDay = mil.milDay
+        and t.mihType = mil.milType
+        and t.mihVnos = mil.milVnos
+        and t.mihCus = mil.milCus
+        and IFNULL(t.milLinkVcno, '') = IFNULL(mil.milLinkVcno, '')
+    -- where t.mihvnos = '6603011218'
+    WHERE mil.milType in ('IS', 'BS', 'AS', 'QS')
+    group by 1,2,3,4,5,6,7,8,9 --,10
 
-  MERGE `${FactInvoiceTableRef}` T
-  USING (
-    WITH mil_source AS (
-      SELECT
-        t.InvoiceSk,
-        mil.milYear, mil.milMonth, mil.milDay,
-        mil.milType,
-        mil.milvnos,
-        mil.milCus,
-        mil.milLinkVcno,
-        -- mil.milListno,
-        mil.milStk,
-        SUM(mil.milQuan) AS milQuan,
-        SUM(mil.milAdisc) AS milAdisc,
-        SUM(mil.milCog) AS milCog,
-        SUM(mil.milDisca) AS milDisca,
-        SUM(mil.milSum) AS milSum
-      FROM ${ref(databuffet.CURATED_MAC5, 'curated_mil')} AS mil
-      INNER JOIN `${DimInvoiceTableRef}` AS t 
-        ON t.mihYear = mil.milYear
-        AND t.mihMonth = mil.milMonth
-        AND t.mihDay = mil.milDay
-        AND t.mihType = mil.milType
-        AND t.mihVnos = mil.milVnos
-        AND t.mihCus = mil.milCus
-        AND IFNULL(t.milLinkVcno, '') = IFNULL(mil.milLinkVcno, '')
-      WHERE mil.asatdate >= CURRENT_DATE('Asia/Bangkok')-1
-      GROUP BY 1,2,3,4,5,6,7,8,9 --,10
+  )
 
-    )
-      SELECT 
-        mil.InvoiceSK,
-        fact_ord.OrderSK,
-        fact_ord.FactOrderSK,
-        fact_ord.QuotationSK,
-        fact_ord.FactQuotationSK,
-        dim_cust.CustomerSK,
-        PARSE_DATE('%Y%m%d', CONCAT(mil.milYear, FORMAT("%02d", mil.milMonth), mil.milDay)) AS mix_date,
-        mil.* EXCEPT(InvoiceSk),
-        CURRENT_DATE('Asia/Bangkok') AS asatdate,
-        ROW_NUMBER() OVER(ORDER BY mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milvnos, mil.milStk, IFNULL(mil.milLinkVcno, '')) as row_num
-      FROM mil_source AS mil
-      LEFT JOIN `${FactOrderTableRef}` AS fact_ord
-        ON IFNULL(mil.milLinkVcno, '') = IFNULL(fact_ord.milVnos, '')
-        AND mil.milStk = fact_ord.milStk
-      LEFT JOIN `${DimCustomerTableRef}` AS dim_cust
-        ON mil.milCus = dim_cust.debcode
-
-  ) S
-  ON T.milYear = S.milYear 
-    AND T.milMonth = S.milMonth 
-    AND T.milDay = S.milDay 
-    AND T.milType = S.milType 
-    AND T.milVnos = S.milVnos 
-    AND T.milCus = S.milCus 
-    AND T.milStk = S.milStk
-    -- AND T.milListno = S.milListno
-    AND IFNULL(T.milLinkVcno, '') = IFNULL(S.milLinkVcno, '')
-
-  WHEN MATCHED THEN
-    UPDATE SET
-      T.InvoiceSK = S.InvoiceSK,
-      T.OrderSK = S.OrderSK,
-      T.FactOrderSK = S.FactOrderSK,
-      T.QuotationSK = S.QuotationSK,
-      T.FactQuotationSK = S.FactQuotationSK,
-      T.CustomerSK = S.CustomerSK,
-      T.mix_date = S.mix_date,
-      T.milQuan = S.milQuan,
-      T.milAdisc = S.milAdisc,
-      T.milCog = S.milCog,
-      T.milDisca = S.milDisca,
-      T.milSum = S.milSum,
-      T.asatdate = S.asatdate
-
-  WHEN NOT MATCHED THEN
-    INSERT (
-      FactInvoiceSK, 
-      InvoiceSK, OrderSK, FactOrderSK, QuotationSK, FactQuotationSK, CustomerSK,
-      mix_date, milYear, milMonth, milDay, milType, milvnos, milCus, milStk, milLinkVcno,
-      milQuan, milAdisc, milCog, milDisca, milSum, asatdate
-    )
-    VALUES (
-      max_sk + S.row_num, 
-      S.InvoiceSK, S.OrderSK, S.FactOrderSK, S.QuotationSK, S.FactQuotationSK, S.CustomerSK,
-      S.mix_date, S.milYear, S.milMonth, S.milDay, S.milType, S.milvnos, S.milCus, S.milStk, S.milLinkVcno,
-      S.milQuan, S.milAdisc, S.milCog, S.milDisca, S.milSum, S.asatdate
-    );
-
-  BEGIN
-    DELETE FROM `${FactInvoiceTableRef}`
-    WHERE mix_date < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR);
-  END;
-
-END;
+  select
+    row_number() over(order by mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milVnos, mil.milCus, mil.milStk) as FactInvoiceSK, --, mil.milListno)
+    mil.InvoiceSK,
+    fact_ord.OrderSK,
+    fact_ord.FactOrderSK,
+    fact_ord.QuotationSK,
+    fact_ord.FactQuotationSK,
+    dim_cust.CustomerSK,
+    
+    PARSE_DATE('%Y%m%d', CONCAT(mil.milYear, FORMAT("%02d", mil.milMonth),  mil.milDay)) as mix_date,
+    mil.* except(InvoiceSk),
+    current_date('Asia/Bangkok') as asatdate
+  from mil as mil
+  LEFT JOIN `${FactOrderTableRef}` AS fact_ord
+    ON IFNULL(mil.milLinkVcno, '') = IFNULL(fact_ord.milVnos, '')
+    AND mil.milStk = fact_ord.milStk
+  LEFT JOIN `${DimCustomerTableRef}` as dim_cust
+    ON mil.milCus = dim_cust.debcode

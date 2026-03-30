@@ -1,0 +1,7 @@
+config {
+    type: "operations",
+    dependencies: ["validated_schema_mac5"],
+    tags: [databuffet.TAG_CURATED],
+}
+
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}` OPTIONS(location="${databuffet.REGION}") ;

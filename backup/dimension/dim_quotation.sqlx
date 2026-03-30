@@ -1,0 +1,181 @@
+config {
+  type: "operations",
+  dependencies: ["dim_project"],
+  tags: [databuffet.TAG_DIM_DAILY],
+  hasOutput: true
+}
+
+js {
+    // Define table references
+    const DimQuotationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimQuotationTableRef = `${DimQuotationTable.database}.${DimQuotationTable.schema}.${DimQuotationTable.name}`;
+    
+    const DimProjectTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_project",
+    };
+    const DimProjectTableRef = `${DimProjectTable.database}.${DimProjectTable.schema}.${DimProjectTable.name}`;
+}
+
+-- 2. เริ่มกระบวนการ MERGE
+MERGE `${DimQuotationTableRef}` T
+USING (
+    WITH raw_quotation_table as (
+        SELECT
+            quo.ID,
+            quo.Running,
+            quo.SDate,
+            EXTRACT(YEAR FROM CAST(quo.SDate AS DATE)) Year,
+            EXTRACT(MONTH FROM CAST(quo.SDate AS DATE)) Month,
+            EXTRACT(DAY FROM CAST(quo.SDate AS DATE)) Day,
+            quo.Atten,
+            quo.Project,
+            quo.UInsert,
+            quo.PriceValidity,
+            quo.TermDelivery,
+            quo.TermPayment,
+            IF(CONTAINS_SUBSTR(quo.Project, '\\'), TRIM(SPLIT(quo.Project, '\\')[SAFE_OFFSET(0)]), NULL) as p_split
+        FROM ${ref(databuffet.CURATED_MAC5, 'curated_tbook_quotation')} as quo
+        WHERE quo.company_id = 'ag01'
+
+    ), LogicTable as (
+        SELECT 
+            *,
+            IF(CONTAINS_SUBSTR(Atten, '\\'), REGEXP_EXTRACT(TRIM(SPLIT(Atten, '\\')[SAFE_OFFSET(0)]), r'^[a-zA-Z0-9\s]{5,}$'), NULL) as original_cust,
+            REGEXP_EXTRACT(p_split, r'^[a-zA-Z0-9\s]{7,}$') as extracted_cust,
+            CAST(REGEXP_EXTRACT(p_split, r'^[0-9]{2,}$') AS INT64) as extracted_proj
+        FROM raw_quotation_table
+
+    ), quotation_table as (
+        SELECT 
+            * EXCEPT(original_cust, extracted_cust, extracted_proj, p_split),
+            COALESCE(original_cust, extracted_cust) AS CustomerID,
+            (CASE 
+                WHEN extracted_cust IS NOT NULL THEN NULL 
+                ELSE extracted_proj
+            END) AS ProjectCode
+        FROM LogicTable
+
+    ),main_table as (
+        SELECT 
+            qt.Running, qt_detail.stkcode, qt_detail.quantity, qt_detail.total
+        FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_quodetail')} as qt_detail
+        inner join quotation_table as qt
+            on qt_detail.linkid = qt.id
+        WHERE qt_detail.company_id = 'ag01'
+
+    ), sec_table as (
+        SELECT mih.mihref1, mil.milstk, sum(mil.milQuan) as milQuan, sum(mil.milSum) as milSum
+        FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
+        left join ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
+            on mih.mihvnos = mil.milvnos
+            and mih.mihtype = mil.miltype
+        WHERE mih.mihtype = 'PS'
+            and mih.company_id = 'ag01'
+            and exists (SELECT 1 FROM quotation_table as qt WHERE mih.mihref1 = qt.Running)
+        group by 1, 2
+
+    ), cal_table as (
+        SELECT 
+            main.Running, main.stkcode,
+            main.quantity as main_qty, main.total as main_sum,
+            sec.milQuan as sec_qty, sec.milSum as sec_sum,
+            (case 
+                when sec.mihref1 is null and sec.milstk is null then 'On Order'
+                when sec.milQuan >= main.quantity and sec.milSum >= main.total  then 'Complete'
+                else 'In Process'
+            end) as item_status
+        FROM main_table as main
+        left join sec_table as sec
+            on main.Running = sec.mihref1
+            and main.stkcode = sec.milstk
+
+    ), order_status as (
+        SELECT 
+            Running,
+            (case 
+                when countif(item_status = 'In Process') > 0 then 'In Process'
+                when countif(item_status = 'On Order') > 0 then 'On Order'
+                else 'Complete'
+            end) as OrderStatus
+        FROM cal_table
+        group by 1
+
+    ), source_data AS (
+        SELECT 
+            qt.*,
+            order_status.OrderStatus
+        FROM quotation_table as qt
+        left join order_status as order_status
+            on order_status.Running = qt.Running
+
+    ), target_max AS (
+        SELECT IFNULL(MAX(QuotationSK), 0) as max_sk FROM `${DimQuotationTableRef}`
+
+    ), prepared_source AS (
+        SELECT 
+            S.*,
+            T.QuotationSK as existing_sk,
+            -- Run number สำหรับแถวใหม่เท่านั้น
+            ROW_NUMBER() OVER (
+                PARTITION BY (CASE WHEN T.Running IS NULL THEN 1 ELSE 0 END) 
+                ORDER BY S.Running
+            ) as rn_new
+        FROM source_data S
+        LEFT JOIN `${DimQuotationTableRef}` T
+            ON S.Running = T.Running
+
+    )
+    SELECT
+        src.*,
+        dim_project.ProjectSK,
+        (CASE
+            WHEN src.existing_sk IS NOT NULL THEN src.existing_sk
+            ELSE (SELECT max_sk FROM target_max) + src.rn_new
+        END) as final_QuotationSK
+    FROM prepared_source as src
+    LEFT JOIN `${DimProjectTableRef}` as dim_project
+        on src.ProjectCode = dim_project.projectCode
+
+) S
+ON T.Running = S.Running
+
+-- กรณีเจอข้อมูล (Update)
+WHEN MATCHED THEN
+  UPDATE SET 
+    ProjectSK = S.ProjectSK,
+    ID = S.ID,
+    SDate = S.SDate,
+    Year = S.Year,
+    Month = S.Month,
+    Day = S.Day,
+    Atten = S.Atten,
+    Project = S.Project,
+    UInsert = S.UInsert,
+    PriceValidity = S.PriceValidity,
+    TermDelivery = S.TermDelivery,
+    TermPayment = S.TermPayment,
+    CustomerID = S.CustomerID,
+    ProjectCode = S.ProjectCode,
+    OrderStatus = S.OrderStatus
+    -- ยกเว้น: QuotationSK, OrderSK, InvoiceSK
+
+-- กรณีไม่เจอข้อมูล (Insert)
+WHEN NOT MATCHED THEN
+  INSERT (
+    QuotationSK, ProjectSK,
+    ID, Running, SDate, Year, Month, Day,
+    Atten, Project, UInsert, PriceValidity,
+    TermDelivery, TermPayment, CustomerID, ProjectCode, OrderStatus
+  )
+  VALUES (
+    S.final_QuotationSK, S.ProjectSK,
+    S.ID, S.Running, S.SDate, S.Year, S.Month, S.Day,
+    S.Atten, S.Project, S.UInsert, S.PriceValidity,
+    S.TermDelivery, S.TermPayment, S.CustomerID, S.ProjectCode, S.OrderStatus
+  );

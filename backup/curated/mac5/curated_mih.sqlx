@@ -1,0 +1,128 @@
+config {
+    type: "incremental",
+    schema: databuffet.CURATED_MAC5,
+    dependencies: ["curated_schema_mac5"],
+    tags: [databuffet.TAG_CURATED],
+    uniqueKey: ["company_id", "mihType", "mihVnos"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: ["company_id", "mihVnos", "mihType"],
+    }
+}
+
+WITH mih2_raw as (
+    SELECT *
+    FROM (
+        SELECT DISTINCT
+            company_id, mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
+            ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale1,
+            ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale2,
+        FROM ${ref(databuffet.VALIDATED_MAC5, "mih2")}
+        WHERE company_id = 'ag01'
+            AND mih2cus IS NOT NULL
+            AND mih2per2 IS NOT NULL
+            AND mih2per2pc IS NOT NULL
+        QUALIFY ROW_NUMBER() OVER(PARTITION BY company_id, mih2vnos, mih2cus ORDER BY mih2rev DESC) = 1
+    )
+    WHERE (mih2perpc <> '100%' AND mih2perpc <> '00%')
+
+)
+SELECT
+    mih.company_id as company_id,
+    mih.mihday as mihDay,
+    mih.mihmonth as mihMonth,
+    mih.mihyear as mihYear,
+    mih.mihtype as mihType,
+    mih.mihvnos as mihVnos,
+    mih.mihcus as mihCus,
+    mih.mihjob as mihJob,
+    mih.mihdep as mihDep,
+    mih.mihper as mihPer,
+    mih.mihdoc as mihDoc,
+    mih.mihmec as mihMec,
+    mih.mihvatno as mihVatno,
+    mih.mihdesc as mihDesc,
+    mih.mihmemo as mihMemo,
+    mih.mihnotes as mihNotes,
+    mih.mihref1 as mihRef1,
+    mih.mihref2 as mihRef2,
+    mih.mihref3 as mihRef3,
+    mih.mihdischt1 as mihDischt1,
+    mih.mihdischt2 as mihDischt2,
+    mih.mihdelvsite as mihDelvsite,
+    mih.mihdelvdate as mihDelvdate,
+    mih.mihstanding as mihStanding,
+    mih.mihlinkgl as mihLinkgl,
+    mih.mihnouplink as mihNouplink,
+    mih.mihnolist as mihNolist,
+    mih.mihcurc as mihCurc,
+    mih.mihvatinlist as mihVatinlist,
+    mih.mihlock as mihLock,
+    mih.mihprintn as mihPrintn,
+    mih.mihcheque as mihCheque,
+    mih.mihcancel as mihCancel,
+    mih.mihstatus as mihStatus,
+    mih.mihclearum as mihClearum,
+    mih.mihctermno as mihCtermno,
+    mih.mihcog as mihCog,
+    mih.mihvatsum as mihVatsum,
+    mih.mihnetsum as mihNetsum,
+    mih.mihdisclst as mihDisclst,
+    mih.mihdischf1 as mihDischf1,
+    mih.mihdischf2 as mihDischf2,
+    mih.mihexchg as mihExchg,
+    mih.mihextrasum as mihExtrasum,
+    mih.mihextravat as mihExtravat,
+    mih.mihextracut as mihExtracut,
+    mih.mihextramem as mihExtramem,
+    mih.mihrecno as mihRecno,
+    mih.mihrecdate as mihRecdate,
+    mih.mihsavetag as mihSavetag,
+    mih.mihkeyuser as mihKeyuser,
+    mih.mihkeydate as mihKeydate,
+    mih.mihdocrunno as mihDocrunno,
+    mih.mihdategl as mihDategl,
+    mih.mihduepo as mihDuepo,
+    mih.miheditlk as mihEditlk,
+    mih.mihiscf as mihIscf,
+    mih.mihissp as mihIssp,
+    mih.mihdates1 as mihDates1,
+    mih.mihdates2 as mihDates2,
+    mih.mihnumsi as mihNumsi,
+    mih.mihnumsc as mihNumsc,
+    mih.mihvatpc as mihVatpc,
+    mih.mihincluded as mihIncluded,
+    mih.mihtaxvnos as mihTaxvnos,
+    mih.mihtaxdate as mihTaxdate,
+    mih.mihtaxsum as mihTaxsum,
+    mih.mihload as mihLoad,
+    mih.mihpaiddate as mihPaiddate,
+    mih.mihbookordernum as mihBookordernum,
+    mih.mihsenddate as mihSenddate,
+    mih.mihbl as mihBl,
+    mih.mihrpv as mihRpv,
+    mih.mihclearcut as mihClearcut,
+    mih.mihsettlecut as mihSettlecut,
+    mih.moddate as moddate,
+    mih.mihmemo_new as mihMemoNew,
+    mih.memo_extract as memoExtract,
+    mih.asatdate as asatdate,
+    (CASE
+      WHEN mih.mihtype in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_s.ar_snamet
+      WHEN mih.mihtype in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_s.ap_snamet
+      ELSE null
+    END) as mihstatus_desc,
+    IFNULL(CONCAT(mih2.per_sale1, '%'), '100.00%') as percentSale1,
+    IFNULL(CONCAT(mih2.per_sale2, '%'), '0.00%') as percentSale2,
+FROM ${ref(databuffet.VALIDATED_MAC5, "mih")} as mih
+LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "ar_s")} as ar_s
+    ON mih.company_id = ar_s.company_id AND mih.mihstatus = ar_s.ar_scode
+LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "ap_s")} as ap_s
+    ON mih.company_id = ap_s.company_id AND mih.mihstatus = ap_s.ap_scode
+LEFT JOIN mih2_raw as mih2
+    ON mih.mihRef1 = mih2.mih2vnos
+        AND mih.mihCus = mih2.mih2cus
+        AND mih.company_id = mih2.company_id
+
+WHERE mih.company_id = 'ag01'
+${ when(incremental(), `AND mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }

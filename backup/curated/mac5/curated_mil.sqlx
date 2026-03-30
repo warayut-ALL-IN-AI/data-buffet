@@ -1,0 +1,298 @@
+config {
+    type: "incremental",
+    schema: databuffet.CURATED_MAC5,
+    dependencies: ["curated_schema_mac5"],
+    tags: [databuffet.TAG_CURATED],
+    uniqueKey: ["company_id", "milType", "milVnos", "milListno"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: ["company_id", "milVnos", "milType"],
+    }
+}
+
+SELECT
+  company_id as company_id,
+  milday as milDay,
+  milmonth as milMonth,
+  milyear as milYear,
+  miltype as milType,
+  milvnos as milVnos,
+  milcus as milCus,
+  milstk as milStk,
+  miljob as milJob,
+  mildep as milDep,
+  milper as milPer,
+  milper as milPer_raw,
+  mildoc as milDoc,
+  milmec as milMec,
+  milsto as milSto,
+  milstomt as milStomt,
+  millistno as milListno,
+  milquan as milQuan,
+  milquanp2 as milQuanp2,
+  miladisc as milAdisc,
+  milcog as milCog,
+  milconv as milConv,
+  mildisca as milDisca,
+  mildisct as milDisct,
+  milvat as milVat,
+  milsum as milSum,
+  milcut as milCut,
+  milstype as milStype,
+  miluname as milUname,
+  mildesc as milDesc,
+  milvcol1 as milVcol1,
+  milvcol2 as milVcol2,
+  milvcol3 as milVcol3,
+  milvcol4 as milVcol4,
+  milcurc as milCurc,
+  milexchg as milExchg,
+  milacost as milAcost,
+  milpqm as milPqm,
+  milpmfrom as milPmfrom,
+  milpmto as milPmto,
+  miltag as milTag,
+  millinkvcno as milLinkvcno,
+  millinkvcdate as milLinkvcdate,
+  millinkvctype as milLinkvctype,
+  millinkvcdeposit as milLinkvcdeposit,
+  millinkvcid as milLinkvcid,
+  milclearum as milClearum,
+  milexpdate as milExpdate,
+  milnotes as milNotes,
+  milnotkl as milNotkl,
+  mildelvdt as milDelvdt,
+  mildatesp as milDatesp,
+  milnumcsp as milNumcsp,
+  milnumisp as milNumisp,
+  milcost as milCost,
+  milucost as milUcost,
+  miluprice as milUprice,
+  milusequanp as milUsequanp,
+  milvcol5 as milVcol5,
+  milfitem as milFitem,
+  asatdate as asatdate,
+  '100.00%' as percent_sale
+FROM ${ref(databuffet.VALIDATED_MAC5, "mil")}
+WHERE company_id = 'ag01'
+${ when(incremental(), `AND asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+
+post_operations {
+  -------- CREATE TEMP TABLE --------
+  BEGIN
+    CREATE OR REPLACE TEMP TABLE new_data_curated_mil AS
+    WITH mil_raw AS (
+      SELECT
+        mil.*, mil.milPer as milPer_raw
+      FROM ${ref(databuffet.VALIDATED_MAC5, "mil")} AS mil
+      WHERE mil.company_id = 'ag01'
+      QUALIFY row_number() over(partition by mil.company_id, mil.milType, mil.milVnos, mil.milListno order by mil.asatdate desc) = 1
+
+    ), filter_mih2 AS (
+      SELECT company_id, mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
+        IF(per_sale1 > 100.00, 100.00, per_sale1) as per_sale1,
+        IF(per_sale2 > 100.00, 100.00, per_sale2) as per_sale2,
+      FROM (
+        SELECT DISTINCT
+          company_id, mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,
+          ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale1,
+          ROUND(CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64), 2) AS per_sale2,
+        FROM ${ref(databuffet.VALIDATED_MAC5, "mih2")} as mih2
+        WHERE mih2.company_id = 'ag01'
+          AND mih2.mih2cus IS NOT NULL
+          AND mih2.mih2per2 IS NOT NULL
+          AND mih2.mih2per2pc IS NOT NULL
+        --   AND mih2type = 'PS'
+          AND EXISTS (
+            SELECT 1 FROM mil_raw AS mil
+            WHERE mih2.mih2vnos = mil.milLinkvcno
+              AND mih2.mih2cus = mil.milCus
+              AND mih2.company_id = mil.company_id
+          )
+        QUALIFY ROW_NUMBER() OVER(PARTITION BY company_id, mih2vnos, mih2cus ORDER BY mih2rev DESC) = 1
+      )
+      WHERE (mih2perpc <> '100%' AND mih2perpc <> '00%')
+
+    ), includ_mil AS (
+      SELECT
+        mil.company_id,
+        mil.milDay,
+        mil.milMonth,
+        mil.milYear,
+        mil.milType,
+        mil.milVnos,
+        mil.milCus,
+        mil.milStk,
+        mil.milJob,
+        mil.milDep,
+        (CASE WHEN split_sale = 1 THEN mil.milPer ELSE mih2.mih2per2 END) AS milPer,
+        mil.milPer_raw,
+        mil.milDoc,
+        mil.milMec,
+        mil.milSto,
+        mil.milStomt,
+        mil.milListno,
+        (CASE WHEN split_sale = 1 THEN mil.milQuan * (mih2.per_sale1/100) ELSE mil.milQuan * (mih2.per_sale2/100) END) AS milQuan,
+        mil.milQuanp2,
+        (CASE WHEN split_sale = 1 THEN mil.milAdisc * (mih2.per_sale1/100) ELSE mil.milAdisc * (mih2.per_sale2/100) END) AS milAdisc,
+        (CASE WHEN split_sale = 1 THEN mil.milCog * (mih2.per_sale1/100) ELSE mil.milCog * (mih2.per_sale2/100) END) AS milCog,
+        mil.milConv,
+        (CASE WHEN split_sale = 1 THEN mil.milDisca * (mih2.per_sale1/100) ELSE mil.milDisca * (mih2.per_sale2/100) END) AS milDisca,
+        mil.milDisct,
+        (CASE WHEN split_sale = 1 THEN mil.milVat * (mih2.per_sale1/100) ELSE mil.milVat * (mih2.per_sale2/100) END) AS milVat,
+        (CASE WHEN split_sale = 1 THEN mil.milSum * (mih2.per_sale1/100) ELSE mil.milSum * (mih2.per_sale2/100) END) AS milSum,
+        mil.milCut,
+        mil.milStype,
+        mil.milUname,
+        mil.milDesc,
+        mil.milVcol1,
+        mil.milVcol2,
+        mil.milVcol3,
+        mil.milVcol4,
+        mil.milCurc,
+        mil.milExchg,
+        mil.milAcost,
+        mil.milPqm,
+        mil.milPmfrom,
+        mil.milPmto,
+        mil.milTag,
+        mil.milLinkvcno,
+        mil.milLinkvcdate,
+        mil.milLinkvctype,
+        mil.milLinkvcdeposit,
+        mil.milLinkvcid,
+        mil.milClearum,
+        mil.milExpdate,
+        mil.milNotes,
+        mil.milNotkl,
+        mil.milDelvdt,
+        mil.milDatesp,
+        mil.milNumcsp,
+        mil.milNumisp,
+        mil.milCost,
+        mil.milUcost,
+        mil.milUprice,
+        mil.milUsequanp,
+        mil.milVcol5,
+        mil.milFitem,
+        -- mil.mihRef1,
+        mil.asatdate,
+        (CASE WHEN split_sale = 1 THEN CONCAT(mih2.per_sale1, '%') ELSE CONCAT(mih2.per_sale2, '%') END) AS percent_sale,
+      FROM mil_raw AS mil
+      INNER JOIN filter_mih2 AS mih2
+        ON mil.milLinkvcno = mih2.mih2vnos
+          AND mil.milCus = mih2.mih2cus
+          AND mil.company_id = mih2.company_id
+      CROSS JOIN (
+        SELECT 1 AS split_sale
+        UNION ALL
+        SELECT 2 AS split_sale
+      )
+
+    ), exclude_mil AS (
+      SELECT
+        mil.company_id,
+        mil.milDay,
+        mil.milMonth,
+        mil.milYear,
+        mil.milType,
+        mil.milVnos,
+        mil.milCus,
+        mil.milStk,
+        mil.milJob,
+        mil.milDep,
+        mil.milPer,
+        mil.milPer_raw,
+        mil.milDoc,
+        mil.milMec,
+        mil.milSto,
+        mil.milStomt,
+        mil.milListno,
+        mil.milQuan,
+        mil.milQuanp2,
+        mil.milAdisc,
+        mil.milCog,
+        mil.milConv,
+        mil.milDisca,
+        mil.milDisct,
+        mil.milVat,
+        mil.milSum,
+        mil.milCut,
+        mil.milStype,
+        mil.milUname,
+        mil.milDesc,
+        mil.milVcol1,
+        mil.milVcol2,
+        mil.milVcol3,
+        mil.milVcol4,
+        mil.milCurc,
+        mil.milExchg,
+        mil.milAcost,
+        mil.milPqm,
+        mil.milPmfrom,
+        mil.milPmto,
+        mil.milTag,
+        mil.milLinkvcno,
+        mil.milLinkvcdate,
+        mil.milLinkvctype,
+        mil.milLinkvcdeposit,
+        mil.milLinkvcid,
+        mil.milClearum,
+        mil.milExpdate,
+        mil.milNotes,
+        mil.milNotkl,
+        mil.milDelvdt,
+        mil.milDatesp,
+        mil.milNumcsp,
+        mil.milNumisp,
+        mil.milCost,
+        mil.milUcost,
+        mil.milUprice,
+        mil.milUsequanp,
+        mil.milVcol5,
+        mil.milFitem,
+        -- mil.mihRef1,
+        mil.asatdate,
+        '100.00%' as percent_sale
+      FROM mil_raw AS mil
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM includ_mil AS mil2
+        WHERE mil.company_id = mil2.company_id
+          AND mil.milType = mil2.milType
+          AND mil.milVnos = mil2.milVnos
+          AND mil.milListno = mil2.milListno
+      )
+
+    ), final AS (
+      SELECT * FROM exclude_mil
+      UNION ALL
+      SELECT * FROM includ_mil
+    )
+
+    SELECT *
+    FROM final
+    ORDER BY company_id, milType, milVnos, milListno, milPer
+    ;
+  -------- CREATE TEMP TABLE --------
+
+  -------- DELETE WITH PK KEY --------
+    DELETE FROM ${self()} AS old_data
+    WHERE EXISTS (
+      SELECT 1 FROM new_data_curated_mil AS new_data
+      WHERE old_data.company_id = new_data.company_id
+        AND old_data.milType = new_data.milType
+        AND old_data.milVnos = new_data.milVnos
+        AND old_data.milListno = new_data.milListno
+    )
+    ;
+  -------- DELETE WITH PK KEY --------
+
+  -------- INSERT DATA --------
+    INSERT INTO ${self()}
+    SELECT * FROM new_data_curated_mil
+    ;
+  -------- INSERT DATA --------
+
+  END;
+}
