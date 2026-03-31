@@ -1,0 +1,53 @@
+config {
+  type: "operations",
+  dependencies: [],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    // Define table references
+    const DimStkMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimStkMktTableRef = `${DimStkMktTable.database}.${DimStkMktTable.schema}.${DimStkMktTable.name}`;
+
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  -- 1. หาค่า Surrogate Key (SK) สูงสุดปัจจุบัน
+  SET max_sk = (SELECT IFNULL(MAX(StkMktSK), 0) FROM `${DimStkMktTableRef}`);
+
+  -- 2. ใช้ INSERT INTO พร้อมกับกรองเฉพาะข้อมูลที่ยังไม่เคยมีใน Dim
+  INSERT INTO `${DimStkMktTableRef}` 
+  (StkMktSK, StkCode, Size, Color, MarketingGroupID, MarketingGroup, SubMarketingID, SubMarketing, SegmentID, Segment)
+  
+  SELECT
+    -- คำนวณ SK ใหม่ต่อจากค่าสูงสุดเดิม
+    max_sk + ROW_NUMBER() OVER(ORDER BY t1.stkcode) AS StkMktSK,
+    t1.stkcode AS StkCode,
+    CAST(NULL AS STRING) AS Size,
+    CAST(NULL AS STRING) AS Color,
+    '999' AS MarketingGroupID,
+    'Waiting Master' AS MarketingGroup,
+    '9999' AS SubMarketingID,
+    'Waiting Master' AS SubMarketing,
+    '99999' AS SegmentID,
+    'Waiting Master' AS Segment
+  FROM (
+    -- ดึงรายการ stkcode ทั้งหมดจาก Source
+    SELECT DISTINCT stkcode 
+    FROM ${ref(databuffet.VALIDATED_MAC5, "stk")}
+    WHERE company_id = 'ag01'
+  ) AS t1
+  -- กรองออกเฉพาะรายการที่มีอยู่ใน Dimension Table แล้ว
+  WHERE t1.stkcode NOT IN (
+    SELECT StkCode 
+    FROM `${DimStkMktTableRef}`
+    WHERE StkCode IS NOT NULL
+  );
+
+END;
