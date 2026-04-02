@@ -166,6 +166,7 @@ BEGIN
       channel_sk.ChannelSaleSK,
       channel_sk.ChannelCostSK,
       payment_sk.PaymentSK,
+      productmaster.ProductSK,
       
       trans.OrderProvinceSK, 
       trans.OrderDistrictSK, 
