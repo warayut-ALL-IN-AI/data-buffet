@@ -33,11 +33,12 @@ js {
 MERGE `${DimCustomerTableRef}` T
 USING (
     WITH match_customer AS (
-        SELECT customer_allkon, customer_mac5
+        SELECT company_id, customer_allkon, customer_mac5
         FROM (
             SELECT
                 a.customer_allkon,
                 a.customer_mac5,
+                a.company_id,
                 ROW_NUMBER() OVER(PARTITION BY a.customer_mac5 ORDER BY a.customer_allkon DESC) as rn
             FROM ${ref(databuffet.VALIDATED_MAC5, 'match_customer')} as a
             INNER JOIN (
@@ -104,11 +105,12 @@ USING (
             and deb.company_id = deb_address.company_id
         LEFT JOIN match_customer as mc
             ON deb.debcode = mc.customer_mac5
+            and deb.company_id = mc.company_id
         LEFT JOIN Customer_360 as cp
             ON mc.customer_allkon = cp.customer_code
         LEFT JOIN `${DimCompanyTableRef}` as dim_com
             ON deb.company_id = dim_com.companyID
-        WHERE deb.company_id = 'ag01'
+        -- WHERE deb.company_id = 'ag01'
     ),
     -- จัดการรัน CustomerSK ต่อจากของเดิม
     target_max AS (
@@ -138,7 +140,7 @@ USING (
 
 ) S
 ON T.debcode = S.debcode
-    and T.CompanySK = T.CompanySK
+    and T.CompanySK = S.CompanySK
 
 WHEN MATCHED THEN
   UPDATE SET 

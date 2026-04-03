@@ -52,7 +52,7 @@ USING (
       FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_profilecomp')} as pj
       left join `${DimCompanyTableRef}` as dim_com
         on pj.company_id = dim_com.companyID
-      WHERE pj.company_id = 'ag01'
+      -- WHERE pj.company_id = 'ag01'
     ),
     -- หา Max ProjectSK จาก Target เดิมเพื่อรันเลขต่อ
     target_max AS (

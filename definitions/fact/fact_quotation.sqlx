@@ -66,7 +66,7 @@ BEGIN
       and qt.companyID = qt_detail.company_id
     LEFT JOIN `${DimCompanyTableRef}` as dim_com
       on qt_detail.company_id = dim_com.companyID
-    WHERE qt_detail.company_id = 'ag01'
+    -- WHERE qt_detail.company_id = 'ag01'
     group by 1,2,3,4,5,6,7,8,9,10,11
     
   )

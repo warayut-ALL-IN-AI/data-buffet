@@ -13,6 +13,13 @@ js {
     };
     const DimStkMktTableRef = `${DimStkMktTable.database}.${DimStkMktTable.schema}.${DimStkMktTable.name}`;
 
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: 'dim_company',
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
 }
 
 BEGIN
@@ -23,11 +30,13 @@ BEGIN
 
   -- 2. ใช้ INSERT INTO พร้อมกับกรองเฉพาะข้อมูลที่ยังไม่เคยมีใน Dim
   INSERT INTO `${DimStkMktTableRef}` 
-  (StkMktSK, StkCode, Size, Color, MarketingGroupID, MarketingGroup, SubMarketingID, SubMarketing, SegmentID, Segment)
+  (StkMktSK, CompanySK, companyID, StkCode, Size, Color, MarketingGroupID, MarketingGroup, SubMarketingID, SubMarketing, SegmentID, Segment)
   
   SELECT
     -- คำนวณ SK ใหม่ต่อจากค่าสูงสุดเดิม
     max_sk + ROW_NUMBER() OVER(ORDER BY t1.stkcode) AS StkMktSK,
+    dim_com.CompanySK, 
+    dim_com.companyID,
     t1.stkcode AS StkCode,
     CAST(NULL AS STRING) AS Size,
     CAST(NULL AS STRING) AS Color,
@@ -39,15 +48,19 @@ BEGIN
     'Waiting Master' AS Segment
   FROM (
     -- ดึงรายการ stkcode ทั้งหมดจาก Source
-    SELECT DISTINCT stkcode 
+    SELECT DISTINCT stkcode, company_id
     FROM ${ref(databuffet.VALIDATED_MAC5, "stk")}
-    WHERE company_id = 'ag01'
+    -- WHERE company_id = 'ag01'
   ) AS t1
+  left join `${DimCompanyTableRef}` as dim_com
+    on t1.company_id = dim_com.companyID
   -- กรองออกเฉพาะรายการที่มีอยู่ใน Dimension Table แล้ว
-  WHERE t1.stkcode NOT IN (
-    SELECT StkCode 
-    FROM `${DimStkMktTableRef}`
-    WHERE StkCode IS NOT NULL
-  );
+  WHERE NOT EXISTS (
+    select 1 
+    from `${DimStkMktTableRef}` as t2
+    where t1.stkcode = t2.StkCode
+      and t1.company_id = t2.companyID
+  )
+  ;
 
 END;

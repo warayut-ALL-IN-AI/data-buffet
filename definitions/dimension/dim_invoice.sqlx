@@ -1,6 +1,6 @@
 config {
   type: "operations",
-  dependencies: [],
+  dependencies: ["dim_order"],
   tags: [databuffet.TAG_DIM_DAILY],
   hasOutput: true
 }
@@ -20,6 +20,13 @@ js {
         name: "dim_company",
     };
     const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const DimOrderTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_order",
+    };
+    const DimOrderTableRef = `${DimOrderTable.database}.${DimOrderTable.schema}.${DimOrderTable.name}`;
     
 }
 
@@ -43,11 +50,11 @@ USING (
         left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s 
           on mih.mihStatus = ap_s.ap_scode 
           AND mih.company_id = ap_s.company_id
-        WHERE mih.company_id = 'ag01'
-          and mih.mihType = 'IS'
+        WHERE mih.mihType = 'IS'
           and mih.mihRef1 is not null
           and mih.mihCancel <> -1
           and mih.asatdate >= current_date('Asia/Bangkok')-1
+        --   and mih.company_id = 'ag01'
     ),
     mih_raw2 as (
         SELECT
@@ -66,8 +73,9 @@ USING (
         left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s 
           on mih.mihStatus = ap_s.ap_scode 
           AND mih.company_id = ap_s.company_id
-        WHERE mih.company_id = 'ag01'
-          and mih.asatdate >= current_date('Asia/Bangkok')-1
+        WHERE mih.asatdate >= current_date('Asia/Bangkok')-1
+            -- and mih.company_id = 'ag01'
+
     ), 
     filter_mih2 as (
         SELECT DISTINCT
@@ -155,6 +163,7 @@ USING (
         SELECT 
             S.*,
             T.InvoiceSK as existing_sk,
+            dim_order.OrderSK,
             -- คำนวณ Row Number เฉพาะกลุ่มที่เป็นข้อมูลใหม่ (Target เป็น Null)
             ROW_NUMBER() OVER (
               PARTITION BY (CASE WHEN T.mihVnos IS NULL THEN 1 ELSE 0 END) 
@@ -169,6 +178,12 @@ USING (
             AND S.mihCus = T.mihCus
             AND S.milLinkVcno = T.milLinkVcno
             AND S.CompanySK = T.CompanySK
+        left join (
+            select OrderSK, mihVnos
+            from `${DimOrderTableRef}`
+            qualify row_number() over(partition by mihVnos order by OrderSK) = 1
+        ) as dim_order
+            on S.milLinkVcno = dim_order.mihVnos
     )
 
     SELECT
@@ -189,6 +204,7 @@ ON S.mihType = T.mihType
 -- กรณีเจอข้อมูลเดิม (Update)
 WHEN MATCHED THEN
   UPDATE SET 
+    T.OrderSK = S.OrderSK,
     T.mix_date = S.mix_date,
     T.mihDay = S.mihDay, 
     T.mihMonth = S.mihMonth, 
@@ -210,7 +226,7 @@ WHEN MATCHED THEN
 -- กรณีไม่เจอข้อมูล (Insert)
 WHEN NOT MATCHED THEN
   INSERT (
-    InvoiceSK, CompanySK,
+    InvoiceSK, CompanySK, OrderSK,
     companyID,
     mix_date, mihDay, mihMonth, mihYear,
     mihType, mihVnos, mihCus, milLinkVcno,
@@ -219,7 +235,7 @@ WHEN NOT MATCHED THEN
     InvoiceSalesFlag
   )
   VALUES (
-    S.final_InvoiceSK, S.CompanySK,
+    S.final_InvoiceSK, S.CompanySK, S.OrderSK,
     S.companyID,
     S.mix_date, S.mihDay, S.mihMonth, S.mihYear,
     S.mihType, S.mihVnos, S.mihCus, S.milLinkVcno,

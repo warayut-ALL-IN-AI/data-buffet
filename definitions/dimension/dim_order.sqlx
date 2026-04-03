@@ -33,7 +33,7 @@ USING (
         from ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
         where mil.miltype in ('PS', 'IS')
             and mil.asatdate >= current_date('Asia/Bangkok')-1
-            and mil.company_id = 'ag01'
+            -- and mil.company_id = 'ag01'
     ), 
     main_table as (
         select 
@@ -105,7 +105,8 @@ USING (
             mih.memoExtract,
             mih.mihMemoNew,
             mih.mihstatus_desc as mihStatusDesc,
-            mih.mihCus
+            mih.mihCus,
+            order_status.OrderStatus
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
         LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar
             on mih.mihStatus = ar.ar_scode 
@@ -116,7 +117,7 @@ USING (
         left join `${DimCompanyTableRef}` as dim_com
             on mih.company_id = dim_com.companyID
         WHERE mih.mihType = 'PS'
-            and mih.company_id = 'ag01' 
+            -- and mih.company_id = 'ag01' 
     ),
     -- ดึงค่า Max OrderSK ปัจจุบันจาก Target
     target_max AS (
@@ -185,7 +186,7 @@ WHEN NOT MATCHED THEN
     mix_date, mihYear, mihMonth, mihDay, mihType, mihVnos, mihCus,
     mihJob, mihRef1, mihRef2, mihRef3,
     mihCancel, mihStatus, StatusName,
-    memoExtract, mihMemoNew, mihStatusDesc
+    memoExtract, mihMemoNew, mihStatusDesc, OrderStatus
   )
   VALUES (
     S.final_OrderSK, S.CompanySK,
@@ -193,5 +194,5 @@ WHEN NOT MATCHED THEN
     S.mix_date, S.mihYear, S.mihMonth, S.mihDay, S.mihType, S.mihVnos, S.mihCus,
     S.mihJob, S.mihRef1, S.mihRef2, S.mihRef3,
     S.mihCancel, S.mihStatus, S.StatusName,
-    S.memoExtract, S.mihMemoNew, S.mihStatusDesc
+    S.memoExtract, S.mihMemoNew, S.mihStatusDesc, S.OrderStatus
   );

@@ -50,7 +50,7 @@ USING (
             quo.TermPayment,
             IF(CONTAINS_SUBSTR(quo.Project, '\\'), TRIM(SPLIT(quo.Project, '\\')[SAFE_OFFSET(0)]), NULL) as p_split
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_tbook_quotation')} as quo
-        WHERE quo.company_id = 'ag01'
+        -- WHERE quo.company_id = 'ag01'
 
     ), LogicTable as (
         SELECT 
@@ -77,7 +77,7 @@ USING (
         inner join quotation_table as qt
             on qt_detail.linkid = qt.id
             and qt_detail.company_id = qt.company_id
-        WHERE qt_detail.company_id = 'ag01'
+        -- WHERE qt_detail.company_id = 'ag01'
 
     ), sec_table as (
         SELECT 
@@ -88,7 +88,7 @@ USING (
             and mih.mihtype = mil.miltype
             and mih.company_id = mil.company_id
         WHERE mih.mihtype = 'PS'
-            and mih.company_id = 'ag01'
+            -- and mih.company_id = 'ag01'
             and exists (SELECT 1 FROM quotation_table as qt WHERE mih.mihref1 = qt.Running)
         group by 1, 2, 3
 

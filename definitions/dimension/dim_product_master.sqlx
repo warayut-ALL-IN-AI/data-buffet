@@ -129,7 +129,7 @@ BEGIN
             and stk_mkt_sk.companyID = product_mk_sk.companyID
         left join `${DimCompanyTableRef}` as dim_com
           on a.company_id = dim_com.companyID
-        where a.company_id = 'ag01'
+        -- where a.company_id = 'ag01'
         --and a.STKcode885 is not null and a.STKcode885 <> ''
         qualify row_number() over(partition by dim_com.CompanySK, ProductCode, Barcode order by prd_updated_date desc) = 1
     )

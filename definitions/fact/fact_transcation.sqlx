@@ -202,7 +202,7 @@ BEGIN
       AND trans.companyID = deb.company_id
       
     WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1
-      and trans.companyID = 'ag01'
+      -- and trans.companyID = 'ag01'
       -- AND milVnos = '6901003086'
       -- AND trans.milPer = '1065043'
 
