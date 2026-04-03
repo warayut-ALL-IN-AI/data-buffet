@@ -52,7 +52,7 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(mcontractid AS INT64) as mcontractid,
+    CAST(mcontractid AS STRING) as mcontractid,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dateinsert, 1, 19)) AS dateinsert,
     CAST(status AS INT64) as status,
     NULLIF(CAST(TRIM(uinsert) AS STRING), '') as uinsert
