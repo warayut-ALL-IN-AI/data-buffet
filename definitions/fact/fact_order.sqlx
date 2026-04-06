@@ -1,7 +1,7 @@
 config {
     type: "table",
     schema: databuffet.FACT_TABLE,
-    dependencies: ["dim_order", "dim_customer", "fact_quotation"],
+    dependencies: ["dim_order", "dim_customer", "fact_quotation", "dim_product_master"],
     tags: [databuffet.TAG_FACT_DAILY],
     uniqueKey: ["FactOrderSk"],
     bigquery: {
@@ -46,11 +46,19 @@ js {
         name: "dim_company",
     };
     const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+    
+    const DimProductMasterTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_master",
+    };
+    const DimProductMasterTableRef = `${DimProductMasterTable.database}.${DimProductMasterTable.schema}.${DimProductMasterTable.name}`;
 
 }
 
 with mil as (
     select
+      dim_product.ProductSK,
       dim_com.CompanySK,
       dim_com.companyID,
       t.OrderSK,
@@ -76,14 +84,18 @@ with mil as (
         and t.companyID = mil.company_id
     LEFT JOIN `${DimCompanyTableRef}` as dim_com
       on mil.company_id = dim_com.companyID
+    LEFT JOIN  `${DimProductMasterTableRef}` as dim_product
+      on mil.company_id = dim_product.companyID
+      and mil.milstk = dim_product.ProductCode
     WHERE mil.milType = 'PS'
       -- and mil.company_id = 'ag01'
-    group by 1,2,3,4,5,6,7,8,9,10,11
+    group by 1,2,3,4,5,6,7,8,9,10,11,12
 
   )
   SELECT
     row_number() over(order by mil.CompanySK, mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milVnos, mil.milCus, mil.milStk) as FactOrderSk,
     mil.OrderSK,
+    mil.ProductSK,
     fact_quo.QuotationSK,
     fact_quo.FactQuotationSK,
     dim_cust.CustomerSK,
@@ -91,7 +103,7 @@ with mil as (
     mil.companyID,
 
     PARSE_DATE('%Y%m%d', CONCAT(mil.milYear, FORMAT("%02d", mil.milMonth),  mil.milDay)) as mix_date,
-    mil.* except(OrderSK, mihRef1, CompanySK, companyID),
+    mil.* except(OrderSK, mihRef1, CompanySK, companyID, ProductSK),
     current_date('Asia/Bangkok') as asatdate
   FROM mil as mil
   LEFT JOIN `${FactQuotationTableRef}` AS fact_quo

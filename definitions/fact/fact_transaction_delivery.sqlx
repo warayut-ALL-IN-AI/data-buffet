@@ -1,0 +1,89 @@
+config {
+  type: "operations",
+  dependencies: ["dim_invoice", "dim_product_master"],
+  tags: [databuffet.TAG_FACT_DAILY],
+}
+
+js {
+    // Define table references
+    const FactTransDeliveryTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: name(),
+    };
+    const FactTransDeliveryTableRef = `${FactTransDeliveryTable.database}.${FactTransDeliveryTable.schema}.${FactTransDeliveryTable.name}`;
+    
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const DimInvoiceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_invoice",
+    };
+    const DimInvoiceTableRef = `${DimInvoiceTable.database}.${DimInvoiceTable.schema}.${DimInvoiceTable.name}`;
+    
+    const DimProductMasterTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_master",
+    };
+    const DimProductMasterTableRef = `${DimProductMasterTable.database}.${DimProductMasterTable.schema}.${DimProductMasterTable.name}`;
+
+}
+
+CREATE OR REPLACE TABLE `${FactTransDeliveryTableRef}`
+PARTITION BY mix_date
+CLUSTER BY FactTransDeliverySK
+AS
+WITH mil_source AS (
+  SELECT
+    mil.company_id,
+    dim_product.ProductSK,
+    t.InvoiceSk,
+    mil.milYear, mil.milMonth, mil.milDay,
+    mil.milType,
+    mil.milvnos,
+    mil.milCus,
+    mil.milStk,
+    SUM(mil.milQuan) AS milQuan,
+    SUM(mil.milAdisc) AS milAdisc,
+    SUM(mil.milCog) AS milCog,
+    SUM(mil.milDisca) AS milDisca,
+    SUM(mil.milSum) AS milSum
+  FROM ${ref(databuffet.CURATED_MAC5, 'curated_mil')} AS mil
+  INNER JOIN `${DimInvoiceTableRef}` AS t 
+    ON t.mihYear = mil.milYear
+    AND t.mihMonth = mil.milMonth
+    AND t.mihDay = mil.milDay
+    AND t.mihType = mil.milType
+    AND t.mihVnos = mil.milVnos
+    AND t.mihCus = mil.milCus
+    AND t.mihType = 'IS'
+    AND t.companyID = mil.company_id
+  LEFT JOIN  `${DimProductMasterTableRef}` as dim_product
+    on mil.company_id = dim_product.companyID
+    and mil.milstk = dim_product.ProductCode
+    -- AND IFNULL(t.milLinkVcno, '') = IFNULL(mil.milLinkVcno, '')
+  -- WHERE milType = 'IS'
+    -- and milVnos = 'L6703001189'
+    -- and mil.asatdate >= CURRENT_DATE('Asia/Bangkok')-1
+  GROUP BY 1,2,3,4,5,6,7,8,9,10
+
+)
+  SELECT
+    ROW_NUMBER() OVER(ORDER BY dim_com.CompanySK, mil.milYear, mil.milMonth, mil.milDay, mil.milType, mil.milvnos, mil.milStk) as FactTransDeliverySK,
+    mil.InvoiceSK,
+    mil.ProductSK,
+    dim_com.CompanySK,
+    dim_com.companyID,
+    PARSE_DATE('%Y%m%d', CONCAT(mil.milYear, FORMAT("%02d", mil.milMonth), mil.milDay)) AS mix_date,
+    mil.* EXCEPT(InvoiceSk, ProductSK),
+    CURRENT_DATE('Asia/Bangkok') AS asatdate,
+  FROM mil_source AS mil
+  LEFT JOIN `${DimCompanyTableRef}` as dim_com
+    on mil.company_id = dim_com.companyID
