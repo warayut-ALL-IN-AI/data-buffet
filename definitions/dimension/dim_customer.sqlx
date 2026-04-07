@@ -98,6 +98,8 @@ USING (
             deb.deblimit, 
             deb.debgroup,
             deb.DEBcreditTerm,
+            deb.debmemo,
+            CAST(NULL as STRING) as Customer_CM_Grade,
             DATE_DIFF(CURRENT_DATE(), deb.debdate, YEAR) as Total_contact_time_Year
         FROM ${ref(databuffet.VALIDATED_MAC5, 'deb')} as deb
         LEFT JOIN `${DebAddressTableRef}` as deb_address

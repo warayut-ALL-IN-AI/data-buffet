@@ -36,7 +36,7 @@ USING (
     WITH mih_raw as (
         SELECT
           mih.company_id,
-          mihDay, mihMonth, mihYear, mihType, mihVnos, mihCus, mihRef1, mihPer, mihStatus,
+          mihDay, mihMonth, mihYear, mihType, mihVnos, mihCus, mihRef1, mihRef2, mihPer, mihStatus,
           (CASE
             WHEN mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
             WHEN mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
@@ -59,7 +59,7 @@ USING (
     mih_raw2 as (
         SELECT
           mih.company_id,
-          mih.mihDay, mih.mihMonth, mih.mihYear, mih.mihType, mih.mihVnos, mih.mihCus, mih.mihRef1, mih.mihPer, mih.mihStatus,
+          mih.mihDay, mih.mihMonth, mih.mihYear, mih.mihType, mih.mihVnos, mih.mihCus, mih.mihRef1, mih.mihRef2, mih.mihPer, mih.mihStatus,
           (CASE
             WHEN mih.mihType in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_s.ar_snamet
             WHEN mih.mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_s.ap_snamet
@@ -102,7 +102,8 @@ USING (
         SELECT
           mih.company_id,
           mihDay, mihMonth, mihYear, mihType, mihCus, mih.mihVnos, mihPer,
-          per_sale1, mih2per2, per_sale2, mihStatus, StatusDesc, mihCancel, mihRef1,
+          per_sale1, mih2per2, per_sale2, 
+          mihStatus, StatusDesc, mihCancel, mihRef1, mihRef2,
           mihDep,mihJob
         FROM mih_raw as mih
         INNER JOIN filter_mih2 as mih2
@@ -118,7 +119,7 @@ USING (
           100 as per_sale1,
           '0' as mih2per2,
           0 as per_sale2,
-          mihStatus, StatusDesc, mihCancel, mihRef1,
+          mihStatus, StatusDesc, mihCancel, mihRef1, mihRef2,
           mihDep,mihJob
         FROM mih_raw2 as mih2
         WHERE NOT EXISTS (
@@ -218,6 +219,7 @@ WHEN MATCHED THEN
     T.StatusDesc = S.StatusDesc,
     T.mihCancel = S.mihCancel,
     T.mihRef1 = S.mihRef1,
+    T.mihRef2 = S.mihRef2,
     T.mihDep = S.mihDep,
     T.mihJob = S.mihJob,
     T.InvoiceSalesFlag = S.InvoiceSalesFlag
@@ -230,7 +232,7 @@ WHEN NOT MATCHED THEN
     companyID,
     mix_date, mihDay, mihMonth, mihYear,
     mihType, mihVnos, mihCus, milLinkVcno,
-    mihRef1, mihPer, mihStatus, StatusDesc, mihCancel,
+    mihRef1, mihRef2, mihPer, mihStatus, StatusDesc, mihCancel,
     per_sale1, mih2per2, per_sale2, mihDep, mihJob,
     InvoiceSalesFlag
   )
@@ -239,7 +241,7 @@ WHEN NOT MATCHED THEN
     S.companyID,
     S.mix_date, S.mihDay, S.mihMonth, S.mihYear,
     S.mihType, S.mihVnos, S.mihCus, S.milLinkVcno,
-    S.mihRef1, S.mihPer, S.mihStatus, S.StatusDesc, S.mihCancel,
+    S.mihRef1, S.mihRef2, S.mihPer, S.mihStatus, S.StatusDesc, S.mihCancel,
     S.per_sale1, S.mih2per2, S.per_sale2, S.mihDep, S.mihJob,
     S.InvoiceSalesFlag
   );
