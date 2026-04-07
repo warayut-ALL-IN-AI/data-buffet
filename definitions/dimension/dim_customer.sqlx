@@ -170,6 +170,8 @@ WHEN MATCHED THEN
     deblimit = S.deblimit,
     debgroup = S.debgroup,
     DEBcreditTerm = S.DEBcreditTerm,
+    debmemo = S.debmemo,
+    Customer_CM_Grade = S.Customer_CM_Grade,
     Total_contact_time_Year = S.Total_contact_time_Year
 
 WHEN NOT MATCHED THEN
@@ -179,7 +181,7 @@ WHEN NOT MATCHED THEN
     first_name, last_name, debtaxclass, full_name, customer_status_name,
     debsalesp, debxxxx, debgrade, nature_business_code, nature_business_name,
     nature_business_name_en, customer_type_name, customer_type_name_en,
-    debbranch, deblimit, debgroup, DEBcreditTerm, Total_contact_time_Year
+    debbranch, deblimit, debgroup, DEBcreditTerm, debmemo, Customer_CM_Grade, Total_contact_time_Year
   )
   VALUES (
     S.final_CustomerSK, S.InvoiceProvinceSK, S.InvoiceDistrictSK, S.InvoiceSubDistrictSK, S.CompanySK,
@@ -187,5 +189,5 @@ WHEN NOT MATCHED THEN
     S.first_name, S.last_name, S.debtaxclass, S.full_name, S.customer_status_name,
     S.debsalesp, S.debxxxx, S.debgrade, S.nature_business_code, S.nature_business_name,
     S.nature_business_name_en, S.customer_type_name, S.customer_type_name_en,
-    S.debbranch, S.deblimit, S.debgroup, S.DEBcreditTerm, S.Total_contact_time_Year
+    S.debbranch, S.deblimit, S.debgroup, S.DEBcreditTerm, S.debmemo, S.Customer_CM_Grade, S.Total_contact_time_Year
   );
