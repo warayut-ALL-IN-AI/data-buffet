@@ -160,8 +160,8 @@ BEGIN
             ABS(c.CFSsumCUT2) AS CFSsumCUT2,
             (c.CFSsumCUT1 + ABS(c.CFSsumCUT2)) AS CFSsumTotal,
             (CASE
-                WHEN IFNULL(c.CFSclearSUM, 0) != -1 AND IFNULL(c.CFSclearALL, 0) != -1 THEN 'Non-Completed'
-                ELSE 'Completed'
+                WHEN IFNULL(c.CFSclearSUM, 0) != -1 AND IFNULL(c.CFSclearALL, 0) != -1 THEN 'Completed'
+                ELSE 'Non-Completed'
             END) AS flagComplete
         FROM Cleaned_CFS c
         LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'deb')} d
@@ -232,6 +232,10 @@ BEGIN
             final.duedate,
             final.invdate,
             final.CFSvnosID,
+            final.CFStypeID,
+            final.CFSjob,
+            final.CFSdep,
+            final.CFSper,
             final.debcode,
             final.debnamet,
             final.DEBcreditTerm,
@@ -277,6 +281,10 @@ BEGIN
         t1.duedate AS dueDate,
         t1.invdate AS invoiceDate,
         t1.CFSvnosID AS cfsVnosID,
+        t1.CFStypeID AS cfsTypeID,
+        t1.CFSjob AS cfsJob,
+        t1.CFSdep AS cfsDep,
+        t1.CFSper AS cfsPer,
         t1.debcode AS debCode,
         t1.debnamet AS debName,
         t1.DEBcreditTerm AS debCreditTerm,
@@ -305,6 +313,7 @@ BEGIN
     UPDATE SET
       T.CustomerSK    = S.CustomerSK,
       T.InvoiceSK     = S.InvoiceSK,
+      T.cfsTypeID     = S.cfsTypeID,
       T.dueDate       = S.dueDate,
       T.debName       = S.debName,
       T.debCreditTerm = S.debCreditTerm,
