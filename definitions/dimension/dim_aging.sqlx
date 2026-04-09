@@ -160,7 +160,7 @@ BEGIN
             ABS(c.CFSsumCUT2) AS CFSsumCUT2,
             (c.CFSsumCUT1 + ABS(c.CFSsumCUT2)) AS CFSsumTotal,
             (CASE
-                WHEN IFNULL(c.CFSclearSUM, 0) != -1 AND IFNULL(c.CFSclearALL, 0) != -1 THEN 'Completed'
+                WHEN IFNULL(c.CFSclearSUM, 0) != -1 AND IFNULL(c.CFSclearALL, 0) != -1 THEN 'Non-Completed'
                 ELSE 'Non-Completed'
             END) AS flagComplete
         FROM Cleaned_CFS c
