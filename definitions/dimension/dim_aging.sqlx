@@ -102,7 +102,7 @@ BEGIN
         SELECT
             mil.company_id,
             mil.millinkvcno AS CFSvnosID,
-            (SUM(CAST(mil.milsum AS FLOAT64)) + (SUM(CAST(mil.milsum AS FLOAT64)) * 0.07)) * -1 AS corrected_cut2
+            (SUM(CAST(mil.milsum AS FLOAT64)) + (SUM(CAST(mil.milsum AS FLOAT64)) * 0.07)) AS corrected_cut2
         FROM ${ref(databuffet.VALIDATED_MAC5, 'mil')} mil
         LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'mih')} mih
             ON mih.mihvnos = mil.milvnos
