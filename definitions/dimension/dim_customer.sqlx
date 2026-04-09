@@ -1,6 +1,6 @@
 config {
   type: "operations",
-  dependencies: ["view_deb_address_data"],
+  dependencies: [],
   tags: [databuffet.TAG_DIM_DAILY],
   hasOutput: true
 }
