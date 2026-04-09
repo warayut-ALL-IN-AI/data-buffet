@@ -13,7 +13,7 @@ js {
         name: name(),
     };
     const DimQuotationTableRef = `${DimQuotationTable.database}.${DimQuotationTable.schema}.${DimQuotationTable.name}`;
-    
+
     const DimProjectTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -27,12 +27,16 @@ js {
         name: "dim_company",
     };
     const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
-    
+
 }
 
--- 2. เริ่มกระบวนการ MERGE
-MERGE `${DimQuotationTableRef}` T
-USING (
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+  SET max_sk = (SELECT IFNULL(MAX(QuotationSK), 0) FROM `${DimQuotationTableRef}`);
+
+  -- 2. เริ่มกระบวนการ MERGE
+  MERGE `${DimQuotationTableRef}` AS T
+  USING (
     WITH raw_quotation_table as (
         SELECT
             quo.company_id,
@@ -53,7 +57,7 @@ USING (
         -- WHERE quo.company_id = 'ag01'
 
     ), LogicTable as (
-        SELECT 
+        SELECT
             *,
             IF(CONTAINS_SUBSTR(Atten, '\\'), REGEXP_EXTRACT(TRIM(SPLIT(Atten, '\\')[SAFE_OFFSET(0)]), r'^[a-zA-Z0-9\s]{5,}$'), NULL) as original_cust,
             REGEXP_EXTRACT(p_split, r'^[a-zA-Z0-9\s]{7,}$') as extracted_cust,
@@ -61,17 +65,17 @@ USING (
         FROM raw_quotation_table
 
     ), quotation_table as (
-        SELECT 
+        SELECT
             * EXCEPT(original_cust, extracted_cust, extracted_proj, p_split),
             COALESCE(original_cust, extracted_cust) AS CustomerID,
-            (CASE 
-                WHEN extracted_cust IS NOT NULL THEN NULL 
+            (CASE
+                WHEN extracted_cust IS NOT NULL THEN NULL
                 ELSE extracted_proj
             END) AS ProjectCode
         FROM LogicTable
 
     ),main_table as (
-        SELECT 
+        SELECT
             qt_detail.company_id, qt.Running, qt_detail.stkcode, qt_detail.quantity, qt_detail.total
         FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_quodetail')} as qt_detail
         inner join quotation_table as qt
@@ -80,7 +84,7 @@ USING (
         -- WHERE qt_detail.company_id = 'ag01'
 
     ), sec_table as (
-        SELECT 
+        SELECT
             mih.company_id, mih.mihref1, mil.milstk, sum(mil.milQuan) as milQuan, sum(mil.milSum) as milSum
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
         left join ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
@@ -93,12 +97,12 @@ USING (
         group by 1, 2, 3
 
     ), cal_table as (
-        SELECT 
+        SELECT
             main.company_id,
             main.Running, main.stkcode,
             main.quantity as main_qty, main.total as main_sum,
             sec.milQuan as sec_qty, sec.milSum as sec_sum,
-            (case 
+            (case
                 when sec.mihref1 is null and sec.milstk is null then 'On Order'
                 when sec.milQuan >= main.quantity and sec.milSum >= main.total  then 'Complete'
                 else 'In Process'
@@ -110,10 +114,10 @@ USING (
             and main.company_id = sec.company_id
 
     ), order_status as (
-        SELECT 
+        SELECT
             company_id,
             Running,
-            (case 
+            (case
                 when countif(item_status = 'In Process') > 0 then 'In Process'
                 when countif(item_status = 'On Order') > 0 then 'On Order'
                 else 'Complete'
@@ -122,7 +126,7 @@ USING (
         group by 1,2
 
     ), source_data AS (
-        SELECT 
+        SELECT
             dim_com.CompanySK,
             dim_com.companyID,
             qt.* except(company_id),
@@ -134,73 +138,75 @@ USING (
         left join `${DimCompanyTableRef}` as dim_com
             on qt.company_id = dim_com.companyID
 
-    ), target_max AS (
-        SELECT IFNULL(MAX(QuotationSK), 0) as max_sk FROM `${DimQuotationTableRef}`
-
-    ), prepared_source AS (
-        SELECT 
-            S.*,
-            T.QuotationSK as existing_sk,
-            -- Run number สำหรับแถวใหม่เท่านั้น
-            ROW_NUMBER() OVER (
-                PARTITION BY (CASE WHEN T.Running IS NULL THEN 1 ELSE 0 END) 
-                ORDER BY S.CompanySK, S.Running
-            ) as rn_new
-        FROM source_data S
-        LEFT JOIN `${DimQuotationTableRef}` T
-            ON S.Running = T.Running
-            AND S.CompanySK = T.CompanySK
-
     )
     SELECT
-        src.*,
-        dim_project.ProjectSK,
-        (CASE
-            WHEN src.existing_sk IS NOT NULL THEN src.existing_sk
-            ELSE (SELECT max_sk FROM target_max) + src.rn_new
-        END) as final_QuotationSK
-    FROM prepared_source as src
+      (CASE
+        WHEN t2.QuotationSK IS NOT NULL THEN t2.QuotationSK
+        ELSE max_sk + ROW_NUMBER() OVER(PARTITION BY (CASE WHEN t2.Running IS NULL THEN 1 ELSE 0 END) ORDER BY t1.CompanySK, t1.Running)
+      END) AS QuotationSK,
+      dim_project.ProjectSK,
+      t1.CompanySK,
+      t1.companyID,
+      t1.ID,
+      t1.Running,
+      t1.SDate,
+      t1.Year,
+      t1.Month,
+      t1.Day,
+      t1.Atten,
+      t1.Project,
+      t1.UInsert,
+      t1.PriceValidity,
+      t1.TermDelivery,
+      t1.TermPayment,
+      t1.CustomerID,
+      t1.ProjectCode,
+      t1.OrderStatus
+    FROM source_data AS t1
+    LEFT JOIN `${DimQuotationTableRef}` AS t2
+        ON t1.Running = t2.Running
+        AND t1.CompanySK = t2.CompanySK
     LEFT JOIN `${DimProjectTableRef}` as dim_project
-        on src.ProjectCode = dim_project.projectCode
-        and src.CompanySK = dim_project.CompanySK
+        on t1.ProjectCode = dim_project.projectCode
+        and t1.CompanySK = dim_project.CompanySK
 
-) S
-ON T.Running = S.Running
-    and T.CompanySK = S.CompanySK
+  ) AS S
+  ON T.QuotationSK = S.QuotationSK
 
--- กรณีเจอข้อมูล (Update)
-WHEN MATCHED THEN
-  UPDATE SET 
-    ProjectSK = S.ProjectSK,
-    ID = S.ID,
-    SDate = S.SDate,
-    Year = S.Year,
-    Month = S.Month,
-    Day = S.Day,
-    Atten = S.Atten,
-    Project = S.Project,
-    UInsert = S.UInsert,
-    PriceValidity = S.PriceValidity,
-    TermDelivery = S.TermDelivery,
-    TermPayment = S.TermPayment,
-    CustomerID = S.CustomerID,
-    ProjectCode = S.ProjectCode,
-    OrderStatus = S.OrderStatus
-    -- ยกเว้น: QuotationSK, OrderSK, InvoiceSK
+  -- กรณีเจอข้อมูล (Update)
+  WHEN MATCHED THEN
+    UPDATE SET
+      ProjectSK = S.ProjectSK,
+      ID = S.ID,
+      SDate = S.SDate,
+      Year = S.Year,
+      Month = S.Month,
+      Day = S.Day,
+      Atten = S.Atten,
+      Project = S.Project,
+      UInsert = S.UInsert,
+      PriceValidity = S.PriceValidity,
+      TermDelivery = S.TermDelivery,
+      TermPayment = S.TermPayment,
+      CustomerID = S.CustomerID,
+      ProjectCode = S.ProjectCode,
+      OrderStatus = S.OrderStatus
+      -- ยกเว้น: QuotationSK, OrderSK, InvoiceSK
 
--- กรณีไม่เจอข้อมูล (Insert)
-WHEN NOT MATCHED THEN
-  INSERT (
-    QuotationSK, ProjectSK, CompanySK,
-    companyID,
-    ID, Running, SDate, Year, Month, Day,
-    Atten, Project, UInsert, PriceValidity,
-    TermDelivery, TermPayment, CustomerID, ProjectCode, OrderStatus
-  )
-  VALUES (
-    S.final_QuotationSK, S.ProjectSK, S.CompanySK,
-    S.companyID,
-    S.ID, S.Running, S.SDate, S.Year, S.Month, S.Day,
-    S.Atten, S.Project, S.UInsert, S.PriceValidity,
-    S.TermDelivery, S.TermPayment, S.CustomerID, S.ProjectCode, S.OrderStatus
-  );
+  -- กรณีไม่เจอข้อมูล (Insert)
+  WHEN NOT MATCHED THEN
+    INSERT (
+      QuotationSK, ProjectSK, CompanySK,
+      companyID,
+      ID, Running, SDate, Year, Month, Day,
+      Atten, Project, UInsert, PriceValidity,
+      TermDelivery, TermPayment, CustomerID, ProjectCode, OrderStatus
+    )
+    VALUES (
+      S.QuotationSK, S.ProjectSK, S.CompanySK,
+      S.companyID,
+      S.ID, S.Running, S.SDate, S.Year, S.Month, S.Day,
+      S.Atten, S.Project, S.UInsert, S.PriceValidity,
+      S.TermDelivery, S.TermPayment, S.CustomerID, S.ProjectCode, S.OrderStatus
+    );
+END;

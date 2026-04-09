@@ -20,49 +20,51 @@ js {
         name: "dim_company",
     };
     const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
-    
 }
 
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+  SET max_sk = (SELECT IFNULL(MAX(OrderSK), 0) FROM `${DimOrderTableRef}`);
 
--- 2. เริ่มกระบวนการ MERGE
-MERGE `${DimOrderTableRef}` T
-USING (
+  -- 2. เริ่มกระบวนการ MERGE
+  MERGE `${DimOrderTableRef}` AS T
+  USING (
     WITH mil as (
-        select 
+        select
             company_id, miltype, milvnos, milstk, milQuan, milSum, millinkvcno
         from ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
         where mil.miltype in ('PS', 'IS')
             and mil.asatdate >= current_date('Asia/Bangkok')-1
             -- and mil.company_id = 'ag01'
-    ), 
+    ),
     main_table as (
-        select 
+        select
             company_id, milvnos, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
         from mil
         where miltype = 'PS'
         group by 1, 2, 3
-    ), 
+    ),
     sec_table as (
-        select 
+        select
             company_id, millinkvcno, milstk, sum(milQuan) as milQuan, sum(milSum) as milSum
         from mil
         where miltype = 'IS'
         and exists (
-            select 1 
-            from main_table as main 
+            select 1
+            from main_table as main
             where mil.millinkvcno = main.milvnos
             and mil.milstk = main.milstk
             and mil.company_id = main.company_id
         )
         group by 1, 2, 3
-    ), 
+    ),
     cal_table as (
-        select 
+        select
             main.company_id,
             main.milvnos, main.milstk,
             main.milQuan as main_qty, main.milSum as main_sum,
             sec.milQuan as sec_qty, sec.milSum as sec_sum,
-            (case 
+            (case
                 when sec.millinkvcno is null and sec.milstk is null then 'On Order'
                 when sec.milQuan >= main.milQuan and sec.milSum >= main.milSum  then 'Complete'
                 else 'In Process'
@@ -72,12 +74,12 @@ USING (
             on main.milvnos = sec.millinkvcno
             and main.milstk = sec.milstk
             and main.company_id = sec.company_id
-    ), 
+    ),
     order_status as (
-        select 
+        select
             company_id,
             milvnos,
-            (case 
+            (case
                 when countif(item_status = 'In Process') > 0 then 'In Process'
                 when countif(item_status = 'On Order') > 0 then 'On Order'
                 else 'Complete'
@@ -86,20 +88,20 @@ USING (
         group by 1, 2
     ),
     source_data AS (
-        SELECT  
+        SELECT
             dim_com.CompanySK,
             dim_com.companyID,
             PARSE_DATE('%Y%m%d', CONCAT(mihYear, FORMAT("%02d", mihMonth),  mihDay)) as mix_date,
-            mih.mihYear, 
-            mih.mihMonth, 
+            mih.mihYear,
+            mih.mihMonth,
             mih.mihDay,
             mih.mihType,
-            mih.mihVnos, 
-            mih.mihJob, 
-            mih.mihRef1, 
-            mih.mihRef2, 
-            mih.mihRef3, 
-            mih.mihCancel, 
+            mih.mihVnos,
+            mih.mihJob,
+            mih.mihRef1,
+            mih.mihRef2,
+            mih.mihRef3,
+            mih.mihCancel,
             mih.mihStatus ,
             ar.ar_snamet as StatusName,
             mih.memoExtract,
@@ -109,7 +111,7 @@ USING (
             order_status.OrderStatus
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
         LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar
-            on mih.mihStatus = ar.ar_scode 
+            on mih.mihStatus = ar.ar_scode
             AND mih.company_id = ar.company_id
         LEFT JOIN order_status as order_status
             on order_status.milvnos = mih.mihVnos
@@ -117,82 +119,87 @@ USING (
         left join `${DimCompanyTableRef}` as dim_com
             on mih.company_id = dim_com.companyID
         WHERE mih.mihType = 'PS'
-            -- and mih.company_id = 'ag01' 
-    ),
-    -- ดึงค่า Max OrderSK ปัจจุบันจาก Target
-    target_max AS (
-        SELECT IFNULL(MAX(OrderSK), 0) as max_sk FROM `${DimOrderTableRef}`
-    ),
-    -- Join Source กับ Target เพื่อหาว่าเป็นแถวใหม่หรือไม่ และคำนวณ SK
-    prepared_source AS (
-        SELECT 
-            S.*,
-            T.OrderSK as existing_sk,
-            -- คำนวณ Row Number เฉพาะกลุ่มที่เป็นข้อมูลใหม่ (Target เป็น Null)
-            ROW_NUMBER() OVER (                
-                PARTITION BY (CASE WHEN T.mihVnos IS NULL THEN 1 ELSE 0 END) 
-                ORDER BY S.CompanySK, S.mihYear, S.mihMonth, S.mihDay, S.mihVnos
-            ) as rn_new
-        FROM source_data S
-        LEFT JOIN `${DimOrderTableRef}` T
-            ON S.mihYear = T.mihYear 
-            AND S.mihMonth = T.mihMonth 
-            AND S.mihDay = T.mihDay 
-            AND S.mihType = T.mihType
-            AND S.mihVnos = T.mihVnos 
-            AND S.mihCus = T.mihCus
-            AND S.CompanySK = T.CompanySK
+            -- and mih.company_id = 'ag01'
     )
 
+    -- Join Source กับ Target เพื่อหาว่าเป็นแถวใหม่หรือไม่ และคำนวณ SK
     SELECT
-        src.*,
-        -- ถ้ามี SK เดิม (Update) ให้ใช้ของเดิม
-        -- ถ้าเป็นแถวใหม่ (Insert) ให้เอา Max + Running Number
         (CASE
-            WHEN existing_sk IS NOT NULL THEN existing_sk
-            ELSE (SELECT max_sk FROM target_max) + rn_new
-        END) as final_OrderSK
-    FROM prepared_source src
+            WHEN t2.OrderSK IS NOT NULL THEN t2.OrderSK
+            -- ถ้าเป็นแถวใหม่ (Insert) ให้เอา Max + Running Number
+            ELSE max_sk + ROW_NUMBER() OVER(
+                PARTITION BY (CASE WHEN t2.mihVnos IS NULL THEN 1 ELSE 0 END)
+                ORDER BY t1.CompanySK, t1.mihYear, t1.mihMonth, t1.mihDay, t1.mihVnos
+            )
+        END) AS OrderSK,
+        t1.CompanySK,
+        t1.companyID,
+        t1.mix_date,
+        t1.mihYear,
+        t1.mihMonth,
+        t1.mihDay,
+        t1.mihType,
+        t1.mihVnos,
+        t1.mihCus,
+        t1.mihJob,
+        t1.mihRef1,
+        t1.mihRef2,
+        t1.mihRef3,
+        t1.mihCancel,
+        t1.mihStatus,
+        t1.StatusName,
+        t1.memoExtract,
+        t1.mihMemoNew,
+        t1.mihStatusDesc,
+        t1.OrderStatus
+    FROM source_data AS t1
+    LEFT JOIN `${DimOrderTableRef}` AS t2
+        ON t1.mihYear = t2.mihYear
+        AND t1.mihMonth = t2.mihMonth
+        AND t1.mihDay = t2.mihDay
+        AND t1.mihType = t2.mihType
+        AND t1.mihVnos = t2.mihVnos
+        AND t1.mihCus = t2.mihCus
+        AND t1.CompanySK = t2.CompanySK
 
-) S
-ON T.mihType = S.mihType
-    and T.mihVnos = S.mihVnos
-    and T.CompanySK = S.CompanySK
+  ) AS S
+  ON T.OrderSK = S.OrderSK
 
--- กรณีเจอข้อมูลเดิม (Update)
-WHEN MATCHED THEN
-  UPDATE SET 
-    T.mix_date = S.mix_date,
-    T.mihYear = S.mihYear, 
-    T.mihMonth = S.mihMonth, 
-    T.mihDay = S.mihDay, 
-    T.mihCus = S.mihCus,
-    T.mihJob = S.mihJob,
-    T.mihRef1 = S.mihRef1,
-    T.mihRef2 = S.mihRef2,
-    T.mihRef3 = S.mihRef3,
-    T.mihCancel = S.mihCancel,
-    T.mihStatus = S.mihStatus,
-    T.StatusName = S.StatusName,
-    T.memoExtract = S.memoExtract,
-    T.mihMemoNew = S.mihMemoNew,
-    T.mihStatusDesc = S.mihStatusDesc
+  -- กรณีเจอข้อมูลเดิม (Update)
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.mix_date = S.mix_date,
+      T.mihYear = S.mihYear,
+      T.mihMonth = S.mihMonth,
+      T.mihDay = S.mihDay,
+      T.mihCus = S.mihCus,
+      T.mihJob = S.mihJob,
+      T.mihRef1 = S.mihRef1,
+      T.mihRef2 = S.mihRef2,
+      T.mihRef3 = S.mihRef3,
+      T.mihCancel = S.mihCancel,
+      T.mihStatus = S.mihStatus,
+      T.StatusName = S.StatusName,
+      T.memoExtract = S.memoExtract,
+      T.mihMemoNew = S.mihMemoNew,
+      T.mihStatusDesc = S.mihStatusDesc
 
--- กรณีไม่เจอข้อมูล (Insert)
-WHEN NOT MATCHED THEN
-  INSERT (
-    OrderSK, CompanySK,
-    companyID,
-    mix_date, mihYear, mihMonth, mihDay, mihType, mihVnos, mihCus,
-    mihJob, mihRef1, mihRef2, mihRef3,
-    mihCancel, mihStatus, StatusName,
-    memoExtract, mihMemoNew, mihStatusDesc, OrderStatus
-  )
-  VALUES (
-    S.final_OrderSK, S.CompanySK,
-    S.companyID,
-    S.mix_date, S.mihYear, S.mihMonth, S.mihDay, S.mihType, S.mihVnos, S.mihCus,
-    S.mihJob, S.mihRef1, S.mihRef2, S.mihRef3,
-    S.mihCancel, S.mihStatus, S.StatusName,
-    S.memoExtract, S.mihMemoNew, S.mihStatusDesc, S.OrderStatus
-  );
+  -- กรณีไม่เจอข้อมูล (Insert)
+  WHEN NOT MATCHED THEN
+    INSERT (
+      OrderSK, CompanySK,
+      companyID,
+      mix_date, mihYear, mihMonth, mihDay, mihType, mihVnos, mihCus,
+      mihJob, mihRef1, mihRef2, mihRef3,
+      mihCancel, mihStatus, StatusName,
+      memoExtract, mihMemoNew, mihStatusDesc, OrderStatus
+    )
+    VALUES (
+      S.OrderSK, S.CompanySK,
+      S.companyID,
+      S.mix_date, S.mihYear, S.mihMonth, S.mihDay, S.mihType, S.mihVnos, S.mihCus,
+      S.mihJob, S.mihRef1, S.mihRef2, S.mihRef3,
+      S.mihCancel, S.mihStatus, S.StatusName,
+      S.memoExtract, S.mihMemoNew, S.mihStatusDesc, S.OrderStatus
+    );
+END;

@@ -1,5 +1,6 @@
 config {
   type: "operations",
+  dependencies: ["view_deb_address_data"],
   tags: [databuffet.TAG_DIM_DAILY],
   hasOutput: true
 }
@@ -29,9 +30,13 @@ js {
 
 }
 
--- เริ่มกระบวนการ MERGE
-MERGE `${DimCustomerTableRef}` T
-USING (
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+  SET max_sk = (SELECT IFNULL(MAX(CustomerSK), 0) FROM `${DimCustomerTableRef}`);
+
+  -- เริ่มกระบวนการ MERGE
+  MERGE `${DimCustomerTableRef}` AS T
+  USING (
     WITH match_customer AS (
         SELECT company_id, customer_allkon, customer_mac5
         FROM (
@@ -51,7 +56,7 @@ USING (
         WHERE rn = 1
     ),
     Customer_360 AS (
-        SELECT 
+        SELECT
             cp.*,
             cs.customer_status_name,
             nb.nature_business_code,
@@ -59,18 +64,18 @@ USING (
             nb.nature_business_name_en,
             ct.customer_type_name,
             ct.customer_type_name_en
-        FROM ${ref(databuffet.VALIDATED_CIS360, 'customer_profile')} as cp 
-        LEFT JOIN ${ref(databuffet.VALIDATED_CIS360, 'customer_status')} as cs 
+        FROM ${ref(databuffet.VALIDATED_CIS360, 'customer_profile')} as cp
+        LEFT JOIN ${ref(databuffet.VALIDATED_CIS360, 'customer_status')} as cs
             ON cp.customer_status_id = cs.id
-        LEFT JOIN ${ref(databuffet.VALIDATED_CIS360, 'customer_profile_nature_business')} as cpnb  
-            ON cp.id = cpnb.customer_profile_id 
-        LEFT JOIN ${ref(databuffet.VALIDATED_CIS360, 'nature_business')} as nb  
+        LEFT JOIN ${ref(databuffet.VALIDATED_CIS360, 'customer_profile_nature_business')} as cpnb
+            ON cp.id = cpnb.customer_profile_id
+        LEFT JOIN ${ref(databuffet.VALIDATED_CIS360, 'nature_business')} as nb
             ON cpnb.nature_business_id = nb.id
-        LEFT JOIN ${ref(databuffet.VALIDATED_CIS360, 'customer_type')} as ct 
+        LEFT JOIN ${ref(databuffet.VALIDATED_CIS360, 'customer_type')} as ct
             ON cp.customer_type_id = ct.id
     ),
     source_data AS (
-        SELECT 
+        SELECT
             deb_address.ProvinceSK as InvoiceProvinceSK,
             deb_address.DistrictSK as InvoiceDistrictSK,
             deb_address.SubDistrictSK as InvoiceSubDistrictSK,
@@ -81,10 +86,10 @@ USING (
             cp.customer_code,
             cp.prefix_id,
             deb.debnamet,
-            cp.first_name, 
+            cp.first_name,
             cp.last_name,
             deb.debtaxclass,
-            cp.full_name, 
+            cp.full_name,
             cp.customer_status_name,
             deb.debsalesp,
             deb.debxxxx,
@@ -95,7 +100,7 @@ USING (
             cp.customer_type_name,
             cp.customer_type_name_en,
             deb.debbranch,
-            deb.deblimit, 
+            deb.deblimit,
             deb.debgroup,
             deb.DEBcreditTerm,
             deb.debmemo,
@@ -113,81 +118,97 @@ USING (
         LEFT JOIN `${DimCompanyTableRef}` as dim_com
             ON deb.company_id = dim_com.companyID
         -- WHERE deb.company_id = 'ag01'
-    ),
-    -- จัดการรัน CustomerSK ต่อจากของเดิม
-    target_max AS (
-        SELECT IFNULL(MAX(CustomerSK), 0) as max_sk FROM `${DimCustomerTableRef}`
-    ),
-    prepared_source AS (
-        SELECT 
-            S.*,
-            T.CustomerSK as existing_sk,
-            ROW_NUMBER() OVER (
-                PARTITION BY (CASE WHEN T.debcode IS NULL THEN 1 ELSE 0 END) 
-                ORDER BY S.CompanySK, S.debcode
-            ) as rn_new
-        FROM source_data S
-        LEFT JOIN `${DimCustomerTableRef}` T
-            ON S.debcode = T.debcode
-            and S.CompanySK = T.CompanySK
     )
 
+    -- จัดการรัน CustomerSK ต่อจากของเดิม
     SELECT
-        src.*,
-        CASE
-            WHEN existing_sk IS NOT NULL THEN existing_sk
-            ELSE (SELECT max_sk FROM target_max) + rn_new
-        END as final_CustomerSK
-    FROM prepared_source src
+        (CASE
+            WHEN t2.CustomerSK IS NOT NULL THEN t2.CustomerSK
+            ELSE max_sk + ROW_NUMBER() OVER(PARTITION BY (CASE WHEN t2.debcode IS NULL THEN 1 ELSE 0 END) ORDER BY t1.CompanySK, t1.debcode)
+        END) AS CustomerSK,
+        t1.InvoiceProvinceSK,
+        t1.InvoiceDistrictSK,
+        t1.InvoiceSubDistrictSK,
+        t1.CompanySK,
+        t1.companyID,
+        t1.debcode,
+        t1.debdate,
+        t1.customer_code,
+        t1.prefix_id,
+        t1.debnamet,
+        t1.first_name,
+        t1.last_name,
+        t1.debtaxclass,
+        t1.full_name,
+        t1.customer_status_name,
+        t1.debsalesp,
+        t1.debxxxx,
+        t1.debgrade,
+        t1.nature_business_code,
+        t1.nature_business_name,
+        t1.nature_business_name_en,
+        t1.customer_type_name,
+        t1.customer_type_name_en,
+        t1.debbranch,
+        t1.deblimit,
+        t1.debgroup,
+        t1.DEBcreditTerm,
+        t1.debmemo,
+        t1.Customer_CM_Grade,
+        t1.Total_contact_time_Year
+    FROM source_data AS t1
+    LEFT JOIN `${DimCustomerTableRef}` AS t2
+        ON t1.debcode = t2.debcode
+        AND t1.CompanySK = t2.CompanySK
 
-) S
-ON T.debcode = S.debcode
-    and T.CompanySK = S.CompanySK
+  ) AS S
+  ON T.CustomerSK = S.CustomerSK
 
-WHEN MATCHED THEN
-  UPDATE SET 
-    InvoiceProvinceSK = S.InvoiceProvinceSK,
-    InvoiceDistrictSK = S.InvoiceDistrictSK,
-    InvoiceSubDistrictSK = S.InvoiceSubDistrictSK,
-    debdate = S.debdate,
-    customer_code = S.customer_code,
-    prefix_id = S.prefix_id,
-    debnamet = S.debnamet,
-    first_name = S.first_name,
-    last_name = S.last_name,
-    debtaxclass = S.debtaxclass,
-    full_name = S.full_name,
-    customer_status_name = S.customer_status_name,
-    debsalesp = S.debsalesp,
-    debxxxx = S.debxxxx,
-    debgrade = S.debgrade,
-    nature_business_code = S.nature_business_code,
-    nature_business_name = S.nature_business_name,
-    nature_business_name_en = S.nature_business_name_en,
-    customer_type_name = S.customer_type_name,
-    customer_type_name_en = S.customer_type_name_en,
-    debbranch = S.debbranch,
-    deblimit = S.deblimit,
-    debgroup = S.debgroup,
-    DEBcreditTerm = S.DEBcreditTerm,
-    debmemo = S.debmemo,
-    Customer_CM_Grade = S.Customer_CM_Grade,
-    Total_contact_time_Year = S.Total_contact_time_Year
+  WHEN MATCHED THEN
+    UPDATE SET
+      InvoiceProvinceSK = S.InvoiceProvinceSK,
+      InvoiceDistrictSK = S.InvoiceDistrictSK,
+      InvoiceSubDistrictSK = S.InvoiceSubDistrictSK,
+      debdate = S.debdate,
+      customer_code = S.customer_code,
+      prefix_id = S.prefix_id,
+      debnamet = S.debnamet,
+      first_name = S.first_name,
+      last_name = S.last_name,
+      debtaxclass = S.debtaxclass,
+      full_name = S.full_name,
+      customer_status_name = S.customer_status_name,
+      debsalesp = S.debsalesp,
+      debxxxx = S.debxxxx,
+      debgrade = S.debgrade,
+      nature_business_code = S.nature_business_code,
+      nature_business_name = S.nature_business_name,
+      nature_business_name_en = S.nature_business_name_en,
+      customer_type_name = S.customer_type_name,
+      customer_type_name_en = S.customer_type_name_en,
+      debbranch = S.debbranch,
+      deblimit = S.deblimit,
+      debgroup = S.debgroup,
+      DEBcreditTerm = S.DEBcreditTerm,
+      debmemo = S.debmemo,
+      Customer_CM_Grade = S.Customer_CM_Grade,
+      Total_contact_time_Year = S.Total_contact_time_Year
 
-WHEN NOT MATCHED THEN
-  INSERT (
-    CustomerSK, InvoiceProvinceSK, InvoiceDistrictSK, InvoiceSubDistrictSK, CompanySK,
-    companyID, debcode, debdate, customer_code, prefix_id, debnamet,
-    first_name, last_name, debtaxclass, full_name, customer_status_name,
-    debsalesp, debxxxx, debgrade, nature_business_code, nature_business_name,
-    nature_business_name_en, customer_type_name, customer_type_name_en,
-    debbranch, deblimit, debgroup, DEBcreditTerm, debmemo, Customer_CM_Grade, Total_contact_time_Year
-  )
-  VALUES (
-    S.final_CustomerSK, S.InvoiceProvinceSK, S.InvoiceDistrictSK, S.InvoiceSubDistrictSK, S.CompanySK,
-    S.companyID, S.debcode, S.debdate, S.customer_code, S.prefix_id, S.debnamet,
-    S.first_name, S.last_name, S.debtaxclass, S.full_name, S.customer_status_name,
-    S.debsalesp, S.debxxxx, S.debgrade, S.nature_business_code, S.nature_business_name,
-    S.nature_business_name_en, S.customer_type_name, S.customer_type_name_en,
-    S.debbranch, S.deblimit, S.debgroup, S.DEBcreditTerm, S.debmemo, S.Customer_CM_Grade, S.Total_contact_time_Year
-  );
+  WHEN NOT MATCHED THEN
+    INSERT (
+      CustomerSK, InvoiceProvinceSK, InvoiceDistrictSK, InvoiceSubDistrictSK, CompanySK,
+      companyID, debcode, debdate, customer_code, prefix_id, debnamet,
+      first_name, last_name, debtaxclass, full_name, customer_status_name,
+      debsalesp, debxxxx, debgrade, nature_business_code, nature_business_name,
+      nature_business_name_en, customer_type_name, customer_type_name_en,
+      debbranch, deblimit, debgroup, DEBcreditTerm, debmemo, Customer_CM_Grade, Total_contact_time_Year
+    )
+    VALUES (
+      S.CustomerSK, S.InvoiceProvinceSK, S.InvoiceDistrictSK, S.InvoiceSubDistrictSK, S.CompanySK,
+      S.companyID, S.debcode, S.debdate, S.customer_code, S.prefix_id, S.debnamet,
+      S.first_name, S.last_name, S.debtaxclass, S.full_name, S.customer_status_name,
+      S.debsalesp, S.debxxxx, S.debgrade, S.nature_business_code, S.nature_business_name,
+      S.nature_business_name_en, S.customer_type_name, S.customer_type_name_en,
+      S.debbranch, S.deblimit, S.debgroup, S.DEBcreditTerm, S.debmemo, S.Customer_CM_Grade, S.Total_contact_time_Year
+    );
+END;

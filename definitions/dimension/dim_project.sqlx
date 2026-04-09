@@ -1,5 +1,6 @@
 config {
   type: "operations",
+  dependencies: [],
   tags: [databuffet.TAG_DIM_DAILY],
   hasOutput: true
 }
@@ -22,10 +23,14 @@ js {
 
 }
 
--- เริ่มกระบวนการ MERGE
-MERGE `${DimProjectTableRef}` T
-USING (
-    WITH source_data AS (
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+  SET max_sk = (SELECT IFNULL(MAX(ProjectSK), 0) FROM `${DimProjectTableRef}`);
+
+  -- เริ่มกระบวนการ MERGE
+  MERGE `${DimProjectTableRef}` AS T
+  USING (
+    WITH raw_data AS (
       SELECT
         dim_com.CompanySK,
         dim_com.companyID,
@@ -44,7 +49,7 @@ USING (
         projectfrom as projectFrom,
         pjstart as projectStart,
         pjend as projectEnd,
-        (CASE 
+        (CASE
           WHEN SAFE_CAST(pjstart AS DATE) IS NULL THEN 0
           WHEN SAFE_CAST(pjend AS DATE) IS NULL THEN DATE_DIFF(CURRENT_DATE(), SAFE_CAST(pjstart AS DATE), DAY)
           ELSE DATE_DIFF(SAFE_CAST(pjend AS DATE), SAFE_CAST(pjstart AS DATE), DAY)
@@ -53,71 +58,70 @@ USING (
       left join `${DimCompanyTableRef}` as dim_com
         on pj.company_id = dim_com.companyID
       -- WHERE pj.company_id = 'ag01'
-    ),
-    -- หา Max ProjectSK จาก Target เดิมเพื่อรันเลขต่อ
-    target_max AS (
-      SELECT IFNULL(MAX(ProjectSK), 0) as max_sk FROM `${DimProjectTableRef}`
-    ),
-    -- เตรียมข้อมูลและ Generate SK สำหรับแถวใหม่
-    prepared_source AS (
-      SELECT 
-        S.*,
-        T.ProjectSK as existing_sk,
-        -- รันลำดับสำหรับแถวที่ยังไม่มีใน Target (New Rows)
-        ROW_NUMBER() OVER (            
-            PARTITION BY (CASE WHEN T.projectCode IS NULL THEN 1 ELSE 0 END) 
-            ORDER BY S.CompanySK, S.projectCode
-        ) as rn_new
-      FROM source_data S
-      LEFT JOIN `${DimProjectTableRef}` T
-          ON S.projectCode = T.projectCode
-          and S.CompanySK = T.CompanySK
     )
-
     SELECT
-      src.*,
-      CASE
-          WHEN existing_sk IS NOT NULL THEN existing_sk
-          ELSE (SELECT max_sk FROM target_max) + rn_new
-      END as final_ProjectSK
-    FROM prepared_source src
+      (CASE
+        WHEN t2.ProjectSK IS NOT NULL THEN t2.ProjectSK
+        ELSE max_sk + ROW_NUMBER() OVER(PARTITION BY (CASE WHEN t2.projectCode IS NULL THEN 1 ELSE 0 END) ORDER BY t1.CompanySK, t1.projectCode)
+      END) AS ProjectSK,
+      t1.CompanySK,
+      t1.companyID,
+      t1.projectCode,
+      t1.docNo,
+      t1.companyName,
+      t1.companyType,
+      t1.companyStatus,
+      t1.companyGroup,
+      t1.history,
+      t1.place,
+      t1.district,
+      t1.province,
+      t1.profileComp,
+      t1.projectName,
+      t1.projectFrom,
+      t1.projectStart,
+      t1.projectEnd,
+      t1.projectDay
+    FROM raw_data AS t1
+    LEFT JOIN `${DimProjectTableRef}` AS t2
+      ON t1.projectCode = t2.projectCode
+      AND t1.CompanySK = t2.CompanySK
+  ) AS S
+  ON T.ProjectSK = S.ProjectSK
 
-) S
-ON T.projectCode = S.projectCode
-  and T.CompanySK = S.CompanySK
+  -- กรณีเจอข้อมูลเดิม (Update)
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.docNo = S.docNo,
+      T.profileComp = S.profileComp,
+      T.companyName = S.companyName,
+      T.projectName = S.projectName,
+      T.companyType = S.companyType,
+      T.companyStatus = S.companyStatus,
+      T.projectFrom = S.projectFrom,
+      T.companyGroup = S.companyGroup,
+      T.history = S.history,
+      T.place = S.place,
+      T.district = S.district,
+      T.province = S.province,
+      T.projectStart = S.projectStart,
+      T.projectEnd = S.projectEnd,
+      T.projectDay = S.projectDay
 
--- กรณีเจอข้อมูลเดิม (Update)
-WHEN MATCHED THEN
-  UPDATE SET 
-    docNo = S.docNo,
-    profileComp = S.profileComp,
-    companyName = S.companyName,
-    projectName = S.projectName,
-    companyType = S.companyType,
-    companyStatus = S.companyStatus,
-    projectFrom = S.projectFrom,
-    companyGroup = S.companyGroup,
-    history = S.history,
-    place = S.place,
-    district = S.district,
-    province = S.province,
-    projectStart = S.projectStart,
-    projectEnd = S.projectEnd,
-    projectDay = S.projectDay
-
--- กรณีข้อมูลใหม่ (Insert)
-WHEN NOT MATCHED THEN
-  INSERT (
-    ProjectSK, CompanySK, 
-    companyID,
-    projectCode, docNo, profileComp, companyName, projectName,
-    companyType, companyStatus, projectFrom, companyGroup, history,
-    place, district, province, projectStart, projectEnd, projectDay
-  )
-  VALUES (
-    S.final_ProjectSK, S.CompanySK,
-    S.companyID,
-    S.projectCode, S.docNo, S.profileComp, S.companyName, S.projectName,
-    S.companyType, S.companyStatus, S.projectFrom, S.companyGroup, S.history,
-    S.place, S.district, S.province, S.projectStart, S.projectEnd, S.projectDay
-  );
+  -- กรณีข้อมูลใหม่ (Insert)
+  WHEN NOT MATCHED THEN
+    INSERT (
+      ProjectSK, CompanySK,
+      companyID,
+      projectCode, docNo, profileComp, companyName, projectName,
+      companyType, companyStatus, projectFrom, companyGroup, history,
+      place, district, province, projectStart, projectEnd, projectDay
+    )
+    VALUES (
+      S.ProjectSK, S.CompanySK,
+      S.companyID,
+      S.projectCode, S.docNo, S.profileComp, S.companyName, S.projectName,
+      S.companyType, S.companyStatus, S.projectFrom, S.companyGroup, S.history,
+      S.place, S.district, S.province, S.projectStart, S.projectEnd, S.projectDay
+    );
+END;

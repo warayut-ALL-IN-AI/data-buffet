@@ -27,12 +27,16 @@ js {
         name: "dim_order",
     };
     const DimOrderTableRef = `${DimOrderTable.database}.${DimOrderTable.schema}.${DimOrderTable.name}`;
-    
+
 }
 
--- 2. เริ่มกระบวนการ MERGE
-MERGE `${DimInvoiceTableRef}` T
-USING (
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+  SET max_sk = (SELECT IFNULL(MAX(InvoiceSK), 0) FROM `${DimInvoiceTableRef}`);
+
+  -- 2. เริ่มกระบวนการ MERGE
+  MERGE `${DimInvoiceTableRef}` AS T
+  USING (
     WITH mih_raw as (
         SELECT
           mih.company_id,
@@ -44,11 +48,11 @@ USING (
           END) as StatusDesc,
           mihCancel,mihDep,mihJob
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar_s 
-          on mih.mihStatus = ar_s.ar_scode 
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar_s
+          on mih.mihStatus = ar_s.ar_scode
           AND mih.company_id = ar_s.company_id
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s 
-          on mih.mihStatus = ap_s.ap_scode 
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s
+          on mih.mihStatus = ap_s.ap_scode
           AND mih.company_id = ap_s.company_id
         WHERE mih.mihType = 'IS'
           and mih.mihRef1 is not null
@@ -67,16 +71,16 @@ USING (
           END) as StatusDesc,
           mih.mihCancel, mih.mihDep, mih.mihJob
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar_s 
-          on mih.mihStatus = ar_s.ar_scode 
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar_s
+          on mih.mihStatus = ar_s.ar_scode
           AND mih.company_id = ar_s.company_id
-        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s 
-          on mih.mihStatus = ap_s.ap_scode 
+        left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s
+          on mih.mihStatus = ap_s.ap_scode
           AND mih.company_id = ap_s.company_id
         WHERE mih.asatdate >= current_date('Asia/Bangkok')-1
             -- and mih.company_id = 'ag01'
 
-    ), 
+    ),
     filter_mih2 as (
         SELECT DISTINCT
           mih2.company_id,
@@ -91,18 +95,18 @@ USING (
           and mih2per2pc is not null
           and (mih2perpc <> '100%' and mih2perpc <> '00%')
           and EXISTS (
-            SELECT 1 FROM mih_raw as mih 
+            SELECT 1 FROM mih_raw as mih
             WHERE mih2.mih2type = 'PS'
               and mih2.mih2vnos = mih.mihref1
               and mih2.mih2cus = mih.mihcus
               and mih2.company_id = mih.company_id
           )
-    ), 
+    ),
     includ_mih as (
         SELECT
           mih.company_id,
           mihDay, mihMonth, mihYear, mihType, mihCus, mih.mihVnos, mihPer,
-          per_sale1, mih2per2, per_sale2, 
+          per_sale1, mih2per2, per_sale2,
           mihStatus, StatusDesc, mihCancel, mihRef1, mihRef2,
           mihDep,mihJob
         FROM mih_raw as mih
@@ -111,11 +115,11 @@ USING (
             and mih.mihcus = mih2.mih2cus
             and mih.company_id = mih2.company_id
             and chk_row = 1
-    ), 
+    ),
     exclude_mil as (
         SELECT
           mih2.company_id,
-          mih2.mihDay, mih2.mihMonth, mih2.mihYear, mih2.mihType, mih2.mihCus, mih2.mihVnos, mih2.mihPer,  
+          mih2.mihDay, mih2.mihMonth, mih2.mihYear, mih2.mihType, mih2.mihCus, mih2.mihVnos, mih2.mihPer,
           100 as per_sale1,
           '0' as mih2per2,
           0 as per_sale2,
@@ -123,7 +127,7 @@ USING (
           mihDep,mihJob
         FROM mih_raw2 as mih2
         WHERE NOT EXISTS (
-          SELECT 1 
+          SELECT 1
           FROM includ_mih as mil2
           WHERE mih2.mihType = mil2.mihType
             and mih2.mihVnos = mil2.mihVnos
@@ -152,96 +156,83 @@ USING (
             and t.mihCus = mil.milCus
             and t.company_id = mil.company_id
         left join `${DimCompanyTableRef}` as dim_com
-            on t.company_id = dim_com.companyID 
+            on t.company_id = dim_com.companyID
         WHERE t.mihtype in ('IS', 'BS', 'AS', 'QS')
-    ),
-    -- ดึงค่า Max InvoiceSK ปัจจุบันจาก Target
-    target_max AS (
-        SELECT IFNULL(MAX(InvoiceSK), 0) as max_sk FROM `${DimInvoiceTableRef}`
-    ),
-    -- Join Source กับ Target เพื่อเตรียมข้อมูลสำหรับ Merge และ Gen SK
-    prepared_source AS (
-        SELECT 
-            S.*,
-            T.InvoiceSK as existing_sk,
-            dim_order.OrderSK,
-            -- คำนวณ Row Number เฉพาะกลุ่มที่เป็นข้อมูลใหม่ (Target เป็น Null)
-            ROW_NUMBER() OVER (
-              PARTITION BY (CASE WHEN T.mihVnos IS NULL THEN 1 ELSE 0 END) 
-              ORDER BY S.CompanySK, S.mihYear, S.mihMonth, S.mihDay, S.mihVnos, S.mihCus, S.milLinkVcno
-            ) as rn_new
-        FROM source_combined S
-        LEFT JOIN `${DimInvoiceTableRef}` T
-            ON S.mihYear = T.mihYear 
-            AND S.mihMonth = T.mihMonth 
-            AND S.mihDay = T.mihDay 
-            AND S.mihVnos = T.mihVnos 
-            AND S.mihCus = T.mihCus
-            AND S.milLinkVcno = T.milLinkVcno
-            AND S.CompanySK = T.CompanySK
-        left join (
-            select OrderSK, mihVnos
-            from `${DimOrderTableRef}`
-            qualify row_number() over(partition by mihVnos order by OrderSK) = 1
-        ) as dim_order
-            on S.milLinkVcno = dim_order.mihVnos
     )
 
     SELECT
-        src.*,
-        -- ถ้ามี SK เดิม (Update) ให้ใช้ของเดิม
-        -- ถ้าเป็นแถวใหม่ (Insert) ให้เอา Max + Running Number
-        CASE
-            WHEN existing_sk IS NOT NULL THEN existing_sk
-            ELSE (SELECT max_sk FROM target_max) + rn_new
-        END as final_InvoiceSK
-    FROM prepared_source src
-) S
-ON S.mihType = T.mihType
-  AND S.mihVnos = T.mihVnos 
-  AND IFNULL(S.milLinkVcno, '') = IFNULL(T.milLinkVcno, '')
-  AND S.CompanySk = T.CompanySK
+      (CASE
+        WHEN t2.InvoiceSK IS NOT NULL THEN t2.InvoiceSK
+        ELSE max_sk + ROW_NUMBER() OVER(PARTITION BY (CASE WHEN t2.mihVnos IS NULL THEN 1 ELSE 0 END) ORDER BY t1.CompanySK, t1.mihYear, t1.mihMonth, t1.mihDay, t1.mihVnos, t1.mihCus, t1.milLinkVcno)
+      END) AS InvoiceSK,
+      t1.mix_date,
+      t1.CompanySK,
+      t1.companyID,
+      t1.mihDay, t1.mihMonth, t1.mihYear,
+      t1.mihType, t1.mihVnos, t1.mihCus, t1.milLinkVcno,
+      t1.mihRef1, t1.mihRef2, t1.mihPer, t1.mihStatus, t1.StatusDesc, t1.mihCancel,
+      t1.per_sale1, t1.mih2per2, t1.per_sale2, t1.mihDep, t1.mihJob,
+      t1.InvoiceSalesFlag,
+      dim_order.OrderSK
+    FROM source_combined AS t1
+    LEFT JOIN `${DimInvoiceTableRef}` AS t2
+        ON t1.mihYear = t2.mihYear
+        AND t1.mihMonth = t2.mihMonth
+        AND t1.mihDay = t2.mihDay
+        AND t1.mihVnos = t2.mihVnos
+        AND t1.mihCus = t2.mihCus
+        AND t1.milLinkVcno = t2.milLinkVcno
+        AND t1.CompanySK = t2.CompanySK
+    LEFT JOIN (
+        SELECT OrderSK, mihVnos
+        FROM `${DimOrderTableRef}`
+        QUALIFY ROW_NUMBER() OVER(PARTITION BY mihVnos ORDER BY OrderSK) = 1
+    ) AS dim_order
+        ON t1.milLinkVcno = dim_order.mihVnos
+  ) AS S
+  ON T.InvoiceSK = S.InvoiceSK
 
--- กรณีเจอข้อมูลเดิม (Update)
-WHEN MATCHED THEN
-  UPDATE SET 
-    T.OrderSK = S.OrderSK,
-    T.mix_date = S.mix_date,
-    T.mihDay = S.mihDay, 
-    T.mihMonth = S.mihMonth, 
-    T.mihYear = S.mihYear,
-    T.mihCus = S.mihCus,
-    T.mihPer = S.mihPer,
-    T.per_sale1 = S.per_sale1,
-    T.mih2per2 = S.mih2per2,
-    T.per_sale2 = S.per_sale2,
-    T.mihStatus = S.mihStatus,
-    T.StatusDesc = S.StatusDesc,
-    T.mihCancel = S.mihCancel,
-    T.mihRef1 = S.mihRef1,
-    T.mihRef2 = S.mihRef2,
-    T.mihDep = S.mihDep,
-    T.mihJob = S.mihJob,
-    T.InvoiceSalesFlag = S.InvoiceSalesFlag
-    -- ยกเว้น: OrderSK, InvoiceSK, QuotationSK ไม่ถูก update
+  -- กรณีเจอข้อมูลเดิม (Update)
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.OrderSK = S.OrderSK,
+      T.mix_date = S.mix_date,
+      T.mihDay = S.mihDay,
+      T.mihMonth = S.mihMonth,
+      T.mihYear = S.mihYear,
+      T.mihCus = S.mihCus,
+      T.mihPer = S.mihPer,
+      T.per_sale1 = S.per_sale1,
+      T.mih2per2 = S.mih2per2,
+      T.per_sale2 = S.per_sale2,
+      T.mihStatus = S.mihStatus,
+      T.StatusDesc = S.StatusDesc,
+      T.mihCancel = S.mihCancel,
+      T.mihRef1 = S.mihRef1,
+      T.mihRef2 = S.mihRef2,
+      T.mihDep = S.mihDep,
+      T.mihJob = S.mihJob,
+      T.InvoiceSalesFlag = S.InvoiceSalesFlag
+      -- ยกเว้น: OrderSK, InvoiceSK, QuotationSK ไม่ถูก update
 
--- กรณีไม่เจอข้อมูล (Insert)
-WHEN NOT MATCHED THEN
-  INSERT (
-    InvoiceSK, CompanySK, OrderSK,
-    companyID,
-    mix_date, mihDay, mihMonth, mihYear,
-    mihType, mihVnos, mihCus, milLinkVcno,
-    mihRef1, mihRef2, mihPer, mihStatus, StatusDesc, mihCancel,
-    per_sale1, mih2per2, per_sale2, mihDep, mihJob,
-    InvoiceSalesFlag
-  )
-  VALUES (
-    S.final_InvoiceSK, S.CompanySK, S.OrderSK,
-    S.companyID,
-    S.mix_date, S.mihDay, S.mihMonth, S.mihYear,
-    S.mihType, S.mihVnos, S.mihCus, S.milLinkVcno,
-    S.mihRef1, S.mihRef2, S.mihPer, S.mihStatus, S.StatusDesc, S.mihCancel,
-    S.per_sale1, S.mih2per2, S.per_sale2, S.mihDep, S.mihJob,
-    S.InvoiceSalesFlag
-  );
+  -- กรณีไม่เจอข้อมูล (Insert)
+  WHEN NOT MATCHED THEN
+    INSERT (
+      InvoiceSK, CompanySK, OrderSK,
+      companyID,
+      mix_date, mihDay, mihMonth, mihYear,
+      mihType, mihVnos, mihCus, milLinkVcno,
+      mihRef1, mihRef2, mihPer, mihStatus, StatusDesc, mihCancel,
+      per_sale1, mih2per2, per_sale2, mihDep, mihJob,
+      InvoiceSalesFlag
+    )
+    VALUES (
+      S.InvoiceSK, S.CompanySK, S.OrderSK,
+      S.companyID,
+      S.mix_date, S.mihDay, S.mihMonth, S.mihYear,
+      S.mihType, S.mihVnos, S.mihCus, S.milLinkVcno,
+      S.mihRef1, S.mihRef2, S.mihPer, S.mihStatus, S.StatusDesc, S.mihCancel,
+      S.per_sale1, S.mih2per2, S.per_sale2, S.mihDep, S.mihJob,
+      S.InvoiceSalesFlag
+    );
+END;

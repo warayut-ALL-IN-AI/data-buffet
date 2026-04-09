@@ -13,18 +13,22 @@ js {
         name: name(),
     };
     const DimSaleRepTableRef = `${DimSaleRepTable.database}.${DimSaleRepTable.schema}.${DimSaleRepTable.name}`;
-    
+
     const DimCompanyTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
         name: "dim_company",
     };
     const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
-    
+
 }
 
-MERGE `${DimSaleRepTableRef}` T
-USING (
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+  SET max_sk = (SELECT IFNULL(MAX(SaleRepSK), 0) FROM `${DimSaleRepTableRef}`);
+
+  MERGE `${DimSaleRepTableRef}` AS T
+  USING (
     WITH raw_per AS (
         SELECT DISTINCT
             company_id,
@@ -35,7 +39,7 @@ USING (
 
     ),
     source_combined AS (
-        SELECT 
+        SELECT
             dim_com.CompanySK,
             dim_com.companyID,
             EmployeeID,
@@ -53,58 +57,50 @@ USING (
         LEFT JOIN `${DimCompanyTableRef}` as dim_com
             on raw_per.company_id = dim_com.companyID
 
-    ),
-    target_max AS (
-        SELECT IFNULL(MAX(SaleRepSK), 0) as max_sk 
-        FROM `${DimSaleRepTableRef}`
-
-    ),
-    prepared_source AS (
-        SELECT 
-            S.*,
-            T.SaleRepSK as existing_sk,
-            (CASE 
-                WHEN T.EmployeeID IS NULL THEN 
-                    ROW_NUMBER() OVER (
-                        PARTITION BY (CASE WHEN T.EmployeeID IS NULL THEN 1 ELSE 0 END) 
-                        ORDER BY S.CompanySK, S.EmployeeID
-                    )
-                ELSE NULL 
-            END) as rn_new
-        FROM source_combined S
-        LEFT JOIN `${DimSaleRepTableRef}` T
-          ON S.EmployeeID = T.EmployeeID 
-          AND T.DepartmentID IS NULL
-          AND S.CompanySK = T.CompanySK
     )
 
     SELECT
-        src.*,
         (CASE
-            WHEN existing_sk IS NOT NULL THEN existing_sk
-            ELSE (SELECT max_sk FROM target_max) + rn_new
-        END) as final_SaleRepSK
-    FROM prepared_source src
-) S
-ON T.EmployeeID = S.EmployeeID 
-   AND T.DepartmentID IS NULL
-   AND T.CompanySK = S.CompanySK
+            WHEN t2.SaleRepSK IS NOT NULL THEN t2.SaleRepSK
+            ELSE max_sk + ROW_NUMBER() OVER(PARTITION BY (CASE WHEN t2.EmployeeID IS NULL THEN 1 ELSE 0 END) ORDER BY t1.CompanySK, t1.EmployeeID)
+        END) AS SaleRepSK,
+        t1.CompanySK,
+        t1.companyID,
+        t1.EmployeeID,
+        t1.EmployeeName,
+        t1.EmployeeSurname,
+        t1.EmployeeNickname,
+        t1.DepartmentID,
+        t1.DepCode,
+        t1.CostChannelID,
+        t1.ProvinceID,
+        t1.ChangeSectionFlag,
+        t1.StartDate,
+        t1.EndDate
+    FROM source_combined AS t1
+    LEFT JOIN `${DimSaleRepTableRef}` AS t2
+      ON t1.EmployeeID = t2.EmployeeID
+      AND t2.DepartmentID IS NULL
+      AND t1.CompanySK = t2.CompanySK
+  ) AS S
+  ON T.SaleRepSK = S.SaleRepSK
 
-WHEN MATCHED THEN
-  UPDATE SET 
-    T.EmployeeName = S.EmployeeName,
-    T.EmployeeSurname = S.EmployeeSurname,
-    T.EmployeeNickname = S.EmployeeNickname
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.EmployeeName = S.EmployeeName,
+      T.EmployeeSurname = S.EmployeeSurname,
+      T.EmployeeNickname = S.EmployeeNickname
 
-WHEN NOT MATCHED THEN
-  INSERT (
-    SaleRepSK, CompanySK, companyID, DepartmentID, EmployeeID, EmployeeName, EmployeeSurname,
-    EmployeeNickname, DepCode, CostChannelID, ProvinceID,
-    ChangeSectionFlag, StartDate, EndDate
-  )
-  VALUES (
-    S.final_SaleRepSK, S.CompanySK, S.companyID,
-    S.DepartmentID, S.EmployeeID, S.EmployeeName, S.EmployeeSurname,
-    S.EmployeeNickname, S.DepCode, S.CostChannelID, S.ProvinceID,
-    S.ChangeSectionFlag, S.StartDate, S.EndDate
-  );
+  WHEN NOT MATCHED THEN
+    INSERT (
+      SaleRepSK, CompanySK, companyID, DepartmentID, EmployeeID, EmployeeName, EmployeeSurname,
+      EmployeeNickname, DepCode, CostChannelID, ProvinceID,
+      ChangeSectionFlag, StartDate, EndDate
+    )
+    VALUES (
+      S.SaleRepSK, S.CompanySK, S.companyID,
+      S.DepartmentID, S.EmployeeID, S.EmployeeName, S.EmployeeSurname,
+      S.EmployeeNickname, S.DepCode, S.CostChannelID, S.ProvinceID,
+      S.ChangeSectionFlag, S.StartDate, S.EndDate
+    );
+END;
