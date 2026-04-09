@@ -258,7 +258,7 @@ BEGIN
             AND dim_com.CompanySK = dim_cus.CompanySK
         LEFT JOIN `${DimInvoiceTableRef}` AS inv
             ON final.CFSvnosID = inv.mihVnos
-            AND final.MIHref1 = inv.milLinkVcno
+            AND IFNULL(TRIM(final.mihRef1), '') = IFNULL(TRIM(inv.milLinkVcno), '')
             AND dim_com.CompanySK = inv.CompanySK
     )
 
