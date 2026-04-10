@@ -45,16 +45,16 @@ BEGIN
     -- 1. ดึงข้อมูลตั้งหนี้ตั้งต้น
     Base_CFS AS (
         SELECT
-            c.company_id, c.CFSvnosID, c.CFSdateID, c.CFScusID, c.CFStypeID, c.CFSjob, c.CFSclearSUM, c.CFSclearALL,
+            c.company_id, c.CFSvnosID, c.CFSdateID, c.CFScusID, c.CFStypeID, c.CFSjob, c.CFSdep, c.CFSper, c.CFSclearSUM, c.CFSclearALL,
             CAST(c.CFSsumREQ AS FLOAT64) AS CFSsumREQ,
             CAST(c.CFSsumCUT1 AS FLOAT64) AS CFSsumCUT1,
             CAST(c.CFSsumCUT2 AS FLOAT64) AS CFSsumCUT2
         FROM ${ref(databuffet.VALIDATED_MAC5, 'cfs')} c
-        JOIN ${ref(databuffet.VALIDATED_MAC5, 'mih')} m
+        LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'mih')} m
             ON c.CFSvnosID = m.mihvnos
             AND c.company_id = m.company_id
-        WHERE m.mihstatus != 32
-            AND EXTRACT(YEAR FROM c.cfsdateid) BETWEEN 2000 AND 2030
+            AND m.mihstatus != 32
+        WHERE EXTRACT(YEAR FROM c.cfsdateid) BETWEEN 2000 AND 2030
             AND c.cfstypeid = 'IS'
             AND c.company_id = 'ag01'
     ),
@@ -123,7 +123,7 @@ BEGIN
     Cleaned_CFS AS (
         SELECT
             b.company_id,
-            b.CFSvnosID, b.CFScusID, b.CFSdateID, b.CFStypeID, b.CFSjob, b.CFSclearSUM, b.CFSclearALL,
+            b.CFSvnosID, b.CFScusID, b.CFSdateID, b.CFStypeID, b.CFSjob, b.CFSdep, b.CFSper, b.CFSclearSUM, b.CFSclearALL,
             COALESCE(fr.corrected_req, b.CFSsumREQ) AS CFSsumREQ,
             COALESCE(fc1.corrected_cut1, b.CFSsumCUT1) AS CFSsumCUT1,
             COALESCE(fc2.corrected_cut2, b.CFSsumCUT2) AS CFSsumCUT2
@@ -149,6 +149,10 @@ BEGIN
             c.CFSvnosID,
             c.CFScusID AS debcode,
             c.CFSdateID,
+            c.CFStypeID,
+            c.CFSjob,
+            c.CFSdep,
+            c.CFSper,
             d.DEBcreditTerm,
             d.deblimit,
             SUBSTR(d.debnamet, 1, 200) AS debnamet,
@@ -157,7 +161,7 @@ BEGIN
             (IFNULL(c.CFSsumREQ, 0) - (IFNULL(c.CFSsumCUT1, 0) + ABS(IFNULL(c.CFSsumCUT2, 0)))) AS outstanding_amt,
             c.CFSsumREQ,
             c.CFSsumCUT1,
-            ABS(c.CFSsumCUT2) AS CFSsumCUT2,
+            c.CFSsumCUT2,
             (c.CFSsumCUT1 + ABS(c.CFSsumCUT2)) AS CFSsumTotal,
             (CASE
                 WHEN IFNULL(c.CFSclearSUM, 0) != -1 AND IFNULL(c.CFSclearALL, 0) != -1 THEN 'Non-Completed'
@@ -194,6 +198,10 @@ BEGIN
             PARSE_DATE('%d/%m/%Y', SUBSTR(mie.MIEctermDX, 1, 10)) AS duedate,
             PARSE_DATE('%Y%m%d', CONCAT(mie.mieyear, FORMAT("%02d", mie.miemonth), FORMAT("%02d", mie.mieday))) AS invdate,
             ar.CFSvnosID,
+            ar.CFStypeID,
+            ar.CFSjob,
+            ar.CFSdep,
+            ar.CFSper,
             ar.debcode,
             ar.debnamet,
             ar.DEBcreditTerm,
@@ -223,7 +231,13 @@ BEGIN
                 PARSE_DATE('%Y%m%d', CONCAT(mie.mieyear, FORMAT("%02d", mie.miemonth), FORMAT("%02d", mie.mieday)))
             ORDER BY PARSE_DATE('%d/%m/%Y', SUBSTR(mie.MIEctermDX, 1, 10)) DESC
         ) = 1
-    ),
+    ), 
+    dim_invoice as (
+        select InvoiceSK, CompanySK, mihVnos
+        from `${DimInvoiceTableRef}`
+        qualify row_number() over(partition by CompanySK, mihVnos order by InvoiceSK) = 1
+
+    ), 
 
     -- 9. รวม Dimension SK
     source_combined AS (
@@ -260,9 +274,8 @@ BEGIN
         LEFT JOIN `${DimCustomerTableRef}` AS dim_cus
             ON final.debcode = dim_cus.debcode
             AND dim_com.CompanySK = dim_cus.CompanySK
-        LEFT JOIN `${DimInvoiceTableRef}` AS inv
+        LEFT JOIN dim_invoice AS inv
             ON final.CFSvnosID = inv.mihVnos
-            AND IFNULL(TRIM(final.mihRef1), '') = IFNULL(TRIM(inv.milLinkVcno), '')
             AND dim_com.CompanySK = inv.CompanySK
     )
 
@@ -303,7 +316,7 @@ BEGIN
     FROM source_combined AS t1
     LEFT JOIN `${DimAgingTableRef}` AS t2
         ON t1.CFSvnosID = t2.cfsVnosID
-        AND t1.invdate = t2.invoiceDate
+        AND IFNULL(t1.invdate, '1900-01-01') = IFNULL(t2.invoiceDate, '1900-01-01')
         AND t1.CompanySK = t2.CompanySK
   ) AS S
   ON T.AgingSK = S.AgingSK
@@ -314,6 +327,10 @@ BEGIN
       T.CustomerSK    = S.CustomerSK,
       T.InvoiceSK     = S.InvoiceSK,
       T.cfsTypeID     = S.cfsTypeID,
+      T.cfsJob        = S.cfsJob,
+      T.cfsDep        = S.cfsDep,
+      T.cfsPer        = S.cfsPer,
+      T.debCode       = S.debCode,
       T.dueDate       = S.dueDate,
       T.debName       = S.debName,
       T.debCreditTerm = S.debCreditTerm,
@@ -335,16 +352,16 @@ BEGIN
   WHEN NOT MATCHED THEN
     INSERT (
       AgingSK, CompanySK, CustomerSK, InvoiceSK,
-      companyID, dueDate, invoiceDate, cfsVnosID, debCode,
-      debName, debCreditTerm, debLimit, debMemo, channel,
+      companyID, dueDate, invoiceDate, cfsVnosID, cfsTypeID, CFSjob, CFSdep, CFSper,
+      debCode, debName, debCreditTerm, debLimit, debMemo, channel,
       mihRef2, mihNote, mihRef1,
       outstanding_amt, cfsSumREQ, cfsSumCUT1, cfsSumCUT2, cfsSumTotal,
       flagComplete
     )
     VALUES (
       S.AgingSK, S.CompanySK, S.CustomerSK, S.InvoiceSK,
-      S.companyID, S.dueDate, S.invoiceDate, S.cfsVnosID, S.debCode,
-      S.debName, S.debCreditTerm, S.debLimit, S.debMemo, S.channel,
+      S.companyID, S.dueDate, S.invoiceDate, S.cfsVnosID, S.cfsTypeID, S.cfsJob, S. cfsDep, S.cfsPer,
+      S.debCode, S.debName, S.debCreditTerm, S.debLimit, S.debMemo, S.channel,
       S.mihRef2, S.mihNote, S.mihRef1,
       S.outstanding_amt, S.cfsSumREQ, S.cfsSumCUT1, S.cfsSumCUT2, S.cfsSumTotal,
       S.flagComplete

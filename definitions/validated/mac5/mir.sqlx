@@ -1,10 +1,11 @@
 config {
-    type: "table",
+    type: "incremental",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
     uniqueKey: ["company_id", "mirday","mirmonth","miryear","mirtype","mirvnos","mircus","mirlistno"],
     bigquery: {
+        partitionBy: "asatdate",
         clusterBy: ["company_id", "mirtype", "mirvnos", "mircus"]
     },
 }
@@ -70,10 +71,12 @@ WITH all_sources AS (
     CAST(mirexchg AS FLOAT64) as mirexchg,
     CAST(mirtag AS INT64) as mirtag,
     NULLIF(CAST(TRIM(mirnotes) AS STRING), '') as mirnotes,
-    NULLIF(CAST(TRIM(miraccount) AS STRING), '') as miraccount
+    NULLIF(CAST(TRIM(miraccount) AS STRING), '') as miraccount,
+    PARSE_DATE('%Y%m%d', ASATDATE) as asatdate
 
   FROM
     `${sourceTableRef}`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 )
 SELECT * FROM all_sources
 ${partition_statement}
