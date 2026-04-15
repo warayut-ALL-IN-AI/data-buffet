@@ -10,17 +10,6 @@ config {
 }
 
 js {
-    // Define table references
-    const sourceTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5_AG01,
-        name: name(),
-    };
-
-    // Build source table reference
-    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
-
-    // Keep existing logic
     const pk_key = ["company_id", "cfsvnosid","cfsdateid","cfscusid","cfstypeid"]
 
     let partition_statement, post_operations_statement;
@@ -71,9 +60,96 @@ WITH all_sources AS (
     CAST(cfsexchg AS FLOAT64) as cfsexchg,
     CAST(cfsbillcut AS FLOAT64) as cfsbillcut,
     CAST(cfsbillclr AS INT64) as cfsbillclr
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.cfs`
+  UNION ALL
+  SELECT 'aa05' AS company_id,
+    NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19)) AS cfsdateid,
+    NULLIF(CAST(TRIM(cfscusid) AS STRING), '') as cfscusid,
+    NULLIF(CAST(TRIM(cfstypeid) AS STRING), '') as cfstypeid,
+    NULLIF(CAST(TRIM(cfsjob) AS STRING), '') as cfsjob,
+    NULLIF(CAST(TRIM(cfsdep) AS STRING), '') as cfsdep,
+    NULLIF(CAST(TRIM(cfsper) AS STRING), '') as cfsper,
+    NULLIF(CAST(TRIM(cfsdoc) AS STRING), '') as cfsdoc,
+    NULLIF(CAST(TRIM(cfsmec) AS STRING), '') as cfsmec,
+    CAST(cfssumreq AS FLOAT64) as cfssumreq,
+    CAST(cfssumcut1 AS FLOAT64) as cfssumcut1,
+    CAST(cfssumcut2 AS FLOAT64) as cfssumcut2,
+    CAST(cfsclearsum AS INT64) as cfsclearsum,
+    CAST(cfsclearuser AS INT64) as cfsclearuser,
+    CAST(cfsclearall AS INT64) as cfsclearall,
+    CAST(cfscurc AS INT64) as cfscurc,
+    CAST(cfsexchg AS FLOAT64) as cfsexchg,
+    CAST(cfsbillcut AS FLOAT64) as cfsbillcut,
+    CAST(cfsbillclr AS INT64) as cfsbillclr
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.cfs`
+  UNION ALL
+  SELECT 'ab01' AS company_id,
+    NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19)) AS cfsdateid,
+    NULLIF(CAST(TRIM(cfscusid) AS STRING), '') as cfscusid,
+    NULLIF(CAST(TRIM(cfstypeid) AS STRING), '') as cfstypeid,
+    NULLIF(CAST(TRIM(cfsjob) AS STRING), '') as cfsjob,
+    NULLIF(CAST(TRIM(cfsdep) AS STRING), '') as cfsdep,
+    NULLIF(CAST(TRIM(cfsper) AS STRING), '') as cfsper,
+    NULLIF(CAST(TRIM(cfsdoc) AS STRING), '') as cfsdoc,
+    NULLIF(CAST(TRIM(cfsmec) AS STRING), '') as cfsmec,
+    CAST(cfssumreq AS FLOAT64) as cfssumreq,
+    CAST(cfssumcut1 AS FLOAT64) as cfssumcut1,
+    CAST(cfssumcut2 AS FLOAT64) as cfssumcut2,
+    CAST(cfsclearsum AS INT64) as cfsclearsum,
+    CAST(cfsclearuser AS INT64) as cfsclearuser,
+    CAST(cfsclearall AS INT64) as cfsclearall,
+    CAST(cfscurc AS INT64) as cfscurc,
+    CAST(cfsexchg AS FLOAT64) as cfsexchg,
+    CAST(cfsbillcut AS FLOAT64) as cfsbillcut,
+    CAST(cfsbillclr AS INT64) as cfsbillclr
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.cfs`
+  UNION ALL
+  SELECT 'ac02' AS company_id,
+    NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19)) AS cfsdateid,
+    NULLIF(CAST(TRIM(cfscusid) AS STRING), '') as cfscusid,
+    NULLIF(CAST(TRIM(cfstypeid) AS STRING), '') as cfstypeid,
+    NULLIF(CAST(TRIM(cfsjob) AS STRING), '') as cfsjob,
+    NULLIF(CAST(TRIM(cfsdep) AS STRING), '') as cfsdep,
+    NULLIF(CAST(TRIM(cfsper) AS STRING), '') as cfsper,
+    NULLIF(CAST(TRIM(cfsdoc) AS STRING), '') as cfsdoc,
+    NULLIF(CAST(TRIM(cfsmec) AS STRING), '') as cfsmec,
+    CAST(cfssumreq AS FLOAT64) as cfssumreq,
+    CAST(cfssumcut1 AS FLOAT64) as cfssumcut1,
+    CAST(cfssumcut2 AS FLOAT64) as cfssumcut2,
+    CAST(cfsclearsum AS INT64) as cfsclearsum,
+    CAST(cfsclearuser AS INT64) as cfsclearuser,
+    CAST(cfsclearall AS INT64) as cfsclearall,
+    CAST(cfscurc AS INT64) as cfscurc,
+    CAST(cfsexchg AS FLOAT64) as cfsexchg,
+    CAST(cfsbillcut AS FLOAT64) as cfsbillcut,
+    CAST(cfsbillclr AS INT64) as cfsbillclr
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.cfs`
+  UNION ALL
+  SELECT 'ak02' AS company_id,
+    NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19)) AS cfsdateid,
+    NULLIF(CAST(TRIM(cfscusid) AS STRING), '') as cfscusid,
+    NULLIF(CAST(TRIM(cfstypeid) AS STRING), '') as cfstypeid,
+    NULLIF(CAST(TRIM(cfsjob) AS STRING), '') as cfsjob,
+    NULLIF(CAST(TRIM(cfsdep) AS STRING), '') as cfsdep,
+    NULLIF(CAST(TRIM(cfsper) AS STRING), '') as cfsper,
+    NULLIF(CAST(TRIM(cfsdoc) AS STRING), '') as cfsdoc,
+    NULLIF(CAST(TRIM(cfsmec) AS STRING), '') as cfsmec,
+    CAST(cfssumreq AS FLOAT64) as cfssumreq,
+    CAST(cfssumcut1 AS FLOAT64) as cfssumcut1,
+    CAST(cfssumcut2 AS FLOAT64) as cfssumcut2,
+    CAST(cfsclearsum AS INT64) as cfsclearsum,
+    CAST(cfsclearuser AS INT64) as cfsclearuser,
+    CAST(cfsclearall AS INT64) as cfsclearall,
+    CAST(cfscurc AS INT64) as cfscurc,
+    CAST(cfsexchg AS FLOAT64) as cfsexchg,
+    CAST(cfsbillcut AS FLOAT64) as cfsbillcut,
+    CAST(cfsbillclr AS INT64) as cfsbillclr
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.cfs`
 
-  FROM
-    `${sourceTableRef}`
 )
 SELECT * FROM all_sources
 QUALIFY ROW_NUMBER() OVER(PARTITION BY company_id, cfsvnosid,cfsdateid,cfscusid,cfstypeid ORDER BY cfsdateid desc) = 1

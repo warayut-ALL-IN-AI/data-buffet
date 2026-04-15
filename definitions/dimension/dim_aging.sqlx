@@ -56,7 +56,7 @@ BEGIN
             AND m.mihstatus != 32
         WHERE EXTRACT(YEAR FROM c.cfsdateid) BETWEEN 2000 AND 2030
             AND c.cfstypeid = 'IS'
-            AND c.company_id = 'ag01'
+            -- AND c.company_id = 'ag01'
     ),
 
     -- 2. หาราคาที่ถูกต้องจากหน้าบิล (ซ่อม CFSsumREQ)
@@ -93,7 +93,7 @@ BEGIN
             AND mir.company_id = mih.company_id
         WHERE mir.mirtype = 'RS'
             AND mih.MIHcancel = 0
-            AND mir.company_id = 'ag01'
+            -- AND mir.company_id = 'ag01'
         GROUP BY mir.company_id, mir.MIRbinvNo
     ),
 
@@ -115,7 +115,7 @@ BEGIN
         WHERE mih.mihstatus != 29
             AND mil.miltype = 'BS'
             AND mil.milyear >= 2000
-            AND mil.company_id = 'ag01'
+            -- AND mil.company_id = 'ag01'
         GROUP BY mil.company_id, mil.millinkvcno
     ),
 
@@ -187,7 +187,7 @@ BEGIN
             ANY_VALUE(MIHdesc) AS MIHnote_Desc,
             ANY_VALUE(CASE WHEN MIHtype = 'IS' THEN mihref1 ELSE NULL END) AS MIHref1_IS
         FROM ${ref(databuffet.VALIDATED_MAC5, 'mih')}
-        WHERE company_id = 'ag01'
+        -- WHERE company_id = 'ag01'
         GROUP BY company_id, MIHvnos
     ),
 
@@ -225,7 +225,7 @@ BEGIN
         LEFT JOIN MIH_References ref
             ON ar.CFSvnosID = ref.MIHvnos
             AND ar.company_id = ref.company_id
-        WHERE ar.company_id = 'ag01'
+        -- WHERE ar.company_id = 'ag01'
         QUALIFY ROW_NUMBER() OVER (
             PARTITION BY ar.CFSvnosID,
                 PARSE_DATE('%Y%m%d', CONCAT(mie.mieyear, FORMAT("%02d", mie.miemonth), FORMAT("%02d", mie.mieday)))

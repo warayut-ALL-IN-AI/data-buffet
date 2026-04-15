@@ -11,17 +11,6 @@ config {
 }
 
 js {
-    // Define table references
-    const sourceTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.RAW_MAC5_AG01,
-        name: name(),
-    };
-
-    // Build source table reference
-    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
-
-    // Keep existing logic
     const pk_key = ["company_id", "mirday","mirmonth","miryear","mirtype","mirvnos","mircus","mirlistno"]
 
     let partition_statement, post_operations_statement;
@@ -74,9 +63,113 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(miraccount) AS STRING), '') as miraccount,
     PARSE_DATE('%Y%m%d', ASATDATE) as asatdate
 
-  FROM
-    `${sourceTableRef}`
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.mir`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
+  UNION ALL
+  SELECT 'aa05' AS company_id,
+    CAST(mirday AS INT64) as mirday,
+    CAST(mirmonth AS INT64) as mirmonth,
+    CAST(miryear AS INT64) as miryear,
+    NULLIF(CAST(TRIM(mirtype) AS STRING), '') as mirtype,
+    NULLIF(CAST(TRIM(mirvnos) AS STRING), '') as mirvnos,
+    NULLIF(CAST(TRIM(mircus) AS STRING), '') as mircus,
+    CAST(mirlistno AS INT64) as mirlistno,
+    NULLIF(CAST(TRIM(mirbinvno) AS STRING), '') as mirbinvno,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19)) AS mirbinvdate,
+    NULLIF(CAST(TRIM(mirbinvtype) AS STRING), '') as mirbinvtype,
+    NULLIF(CAST(TRIM(mirdesc) AS STRING), '') as mirdesc,
+    CAST(mircog AS FLOAT64) as mircog,
+    CAST(mirvat AS FLOAT64) as mirvat,
+    CAST(mirsum AS FLOAT64) as mirsum,
+    CAST(mircurc AS INT64) as mircurc,
+    CAST(mirexchg AS FLOAT64) as mirexchg,
+    CAST(mirtag AS INT64) as mirtag,
+    NULLIF(CAST(TRIM(mirnotes) AS STRING), '') as mirnotes,
+    NULLIF(CAST(TRIM(miraccount) AS STRING), '') as miraccount,
+    PARSE_DATE('%Y%m%d', ASATDATE) as asatdate
+
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.mir`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
+  UNION ALL
+  SELECT 'ab01' AS company_id,
+    CAST(mirday AS INT64) as mirday,
+    CAST(mirmonth AS INT64) as mirmonth,
+    CAST(miryear AS INT64) as miryear,
+    NULLIF(CAST(TRIM(mirtype) AS STRING), '') as mirtype,
+    NULLIF(CAST(TRIM(mirvnos) AS STRING), '') as mirvnos,
+    NULLIF(CAST(TRIM(mircus) AS STRING), '') as mircus,
+    CAST(mirlistno AS INT64) as mirlistno,
+    NULLIF(CAST(TRIM(mirbinvno) AS STRING), '') as mirbinvno,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19)) AS mirbinvdate,
+    NULLIF(CAST(TRIM(mirbinvtype) AS STRING), '') as mirbinvtype,
+    NULLIF(CAST(TRIM(mirdesc) AS STRING), '') as mirdesc,
+    CAST(mircog AS FLOAT64) as mircog,
+    CAST(mirvat AS FLOAT64) as mirvat,
+    CAST(mirsum AS FLOAT64) as mirsum,
+    CAST(mircurc AS INT64) as mircurc,
+    CAST(mirexchg AS FLOAT64) as mirexchg,
+    CAST(mirtag AS INT64) as mirtag,
+    NULLIF(CAST(TRIM(mirnotes) AS STRING), '') as mirnotes,
+    NULLIF(CAST(TRIM(miraccount) AS STRING), '') as miraccount,
+    PARSE_DATE('%Y%m%d', ASATDATE) as asatdate
+
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.mir`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
+  UNION ALL
+  SELECT 'ac02' AS company_id,
+    CAST(mirday AS INT64) as mirday,
+    CAST(mirmonth AS INT64) as mirmonth,
+    CAST(miryear AS INT64) as miryear,
+    NULLIF(CAST(TRIM(mirtype) AS STRING), '') as mirtype,
+    NULLIF(CAST(TRIM(mirvnos) AS STRING), '') as mirvnos,
+    NULLIF(CAST(TRIM(mircus) AS STRING), '') as mircus,
+    CAST(mirlistno AS INT64) as mirlistno,
+    NULLIF(CAST(TRIM(mirbinvno) AS STRING), '') as mirbinvno,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19)) AS mirbinvdate,
+    NULLIF(CAST(TRIM(mirbinvtype) AS STRING), '') as mirbinvtype,
+    NULLIF(CAST(TRIM(mirdesc) AS STRING), '') as mirdesc,
+    CAST(mircog AS FLOAT64) as mircog,
+    CAST(mirvat AS FLOAT64) as mirvat,
+    CAST(mirsum AS FLOAT64) as mirsum,
+    CAST(mircurc AS INT64) as mircurc,
+    CAST(mirexchg AS FLOAT64) as mirexchg,
+    CAST(mirtag AS INT64) as mirtag,
+    NULLIF(CAST(TRIM(mirnotes) AS STRING), '') as mirnotes,
+    NULLIF(CAST(TRIM(miraccount) AS STRING), '') as miraccount,
+    PARSE_DATE('%Y%m%d', ASATDATE) as asatdate
+
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.mir`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
+  UNION ALL
+  SELECT 'ak02' AS company_id,
+    CAST(mirday AS INT64) as mirday,
+    CAST(mirmonth AS INT64) as mirmonth,
+    CAST(miryear AS INT64) as miryear,
+    NULLIF(CAST(TRIM(mirtype) AS STRING), '') as mirtype,
+    NULLIF(CAST(TRIM(mirvnos) AS STRING), '') as mirvnos,
+    NULLIF(CAST(TRIM(mircus) AS STRING), '') as mircus,
+    CAST(mirlistno AS INT64) as mirlistno,
+    NULLIF(CAST(TRIM(mirbinvno) AS STRING), '') as mirbinvno,
+    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19)) AS mirbinvdate,
+    NULLIF(CAST(TRIM(mirbinvtype) AS STRING), '') as mirbinvtype,
+    NULLIF(CAST(TRIM(mirdesc) AS STRING), '') as mirdesc,
+    CAST(mircog AS FLOAT64) as mircog,
+    CAST(mirvat AS FLOAT64) as mirvat,
+    CAST(mirsum AS FLOAT64) as mirsum,
+    CAST(mircurc AS INT64) as mircurc,
+    CAST(mirexchg AS FLOAT64) as mirexchg,
+    CAST(mirtag AS INT64) as mirtag,
+    NULLIF(CAST(TRIM(mirnotes) AS STRING), '') as mirnotes,
+    NULLIF(CAST(TRIM(miraccount) AS STRING), '') as miraccount,
+    PARSE_DATE('%Y%m%d', ASATDATE) as asatdate
+
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.mir`
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
 )
 SELECT * FROM all_sources
 ${partition_statement}

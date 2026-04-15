@@ -45,6 +45,30 @@ OPTIONS (
   uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AB01}/mil/*'],
   hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AB01}/mil/'
 );
+
+-- Table: mir
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.mir`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.mir`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AB01}/mir/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AB01}/mir/'
+);
+
+-- Table: mie
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.mie`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.mie`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AB01}/mie/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AB01}/mie/'
+);
 ------------------------------------ INCREMENT ------------------------------------
 
 
@@ -111,5 +135,13 @@ CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_A
 OPTIONS (
   format = 'AVRO',
   uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AB01}/stk/*.avro']
+);
+
+-- Table: cfs
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.cfs`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.cfs`
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_MAC5_AB01}/cfs/*.avro']
 );
 -------------------------------------- FULL ---------------------------------------
