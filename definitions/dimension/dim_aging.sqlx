@@ -33,6 +33,22 @@ js {
         name: "dim_invoice",
     };
     const DimInvoiceTableRef = `${DimInvoiceTable.database}.${DimInvoiceTable.schema}.${DimInvoiceTable.name}`;
+
+    const DimAgingHistoryTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_aging_history",
+    };
+    const DimAgingHistoryTableRef = `${DimAgingHistoryTable.database}.${DimAgingHistoryTable.schema}.${DimAgingHistoryTable.name}`;
+
+    const DimAgingView = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_VIEW,
+        name: "view_dim_aging",
+    };
+    const DimAgingViewRef = `${DimAgingView.database}.${DimAgingView.schema}.${DimAgingView.name}`;
+
+
 }
 
 BEGIN
@@ -367,4 +383,33 @@ BEGIN
       S.flagComplete
     );
 
+END;
+
+
+BEGIN
+    DECLARE run_date DATE DEFAULT CURRENT_DATE('Asia/Bangkok');
+
+    --- delete data before daily process
+    DELETE FROM `${DimAgingHistoryTableRef}`
+    WHERE asatdate = run_date
+    ;
+
+    --- insert data for daily process
+    INSERT INTO `${DimAgingHistoryTableRef}`
+    SELECT run_date as asatdate, *
+    FROM `${DimAgingViewRef}`
+    WHERE IFNULL(flagComplete, '') = 'Non-Completed'
+    ;
+
+    --- delete data for daily process
+    DELETE FROM `${DimAgingHistoryTableRef}`
+    WHERE (
+        DATE_TRUNC(asatdate, MONTH) = DATE_TRUNC(run_date, MONTH)
+        AND asatdate < run_date
+    )
+    OR 
+    (
+        DATE_TRUNC(asatdate, MONTH) < DATE_TRUNC(run_date, MONTH)
+        AND asatdate != LAST_DAY(asatdate)
+    );
 END;
