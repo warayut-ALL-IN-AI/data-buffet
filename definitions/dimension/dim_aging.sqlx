@@ -167,7 +167,7 @@ AR_Calculation AS (
     c.CFSjob, 
     c.CFSdep, 
     c.CFSper,
-    d.DEBcreditTerm,
+    IFNULL(d.DEBcreditTerm, 0) as DEBcreditTerm,
     d.deblimit,
     SUBSTR(d.debnamet, 1, 200) AS debnamet,
     REPLACE(SUBSTR(d.debmemo, 1, 200), CHR(10), '') AS debmemo,
