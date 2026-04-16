@@ -63,7 +63,7 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(miraccount) AS STRING), '') as miraccount,
     PARSE_DATE('%Y%m%d', ASATDATE) as asatdate
 
-  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.mir`
+  FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.mir`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 
   UNION ALL

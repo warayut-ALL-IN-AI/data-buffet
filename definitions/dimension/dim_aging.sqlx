@@ -51,339 +51,266 @@ js {
 
 }
 
-BEGIN
-  DECLARE max_sk INT64 DEFAULT 0;
-  SET max_sk = (SELECT IFNULL(MAX(AgingSK), 0) FROM `${DimAgingTableRef}`);
+CREATE OR REPLACE TABLE `${DimAgingTableRef}`
+CLUSTER BY AgingSK
+AS
+WITH 
+-- 1. ดึงข้อมูลตั้งหนี้ตั้งต้น
+Base_CFS AS (
+  SELECT 
+    c.company_id, c.CFSvnosID, c.CFSdateID, c.CFScusID, c.CFStypeID, c.CFSjob, c.CFSdep, c.CFSper, c.CFSclearSUM, c.CFSclearALL,
+    CAST(c.CFSsumREQ AS FLOAT64) AS CFSsumREQ,
+    CAST(c.CFSsumCUT1 AS FLOAT64) AS CFSsumCUT1,
+    CAST(c.CFSsumCUT2 AS FLOAT64) AS CFSsumCUT2
+  FROM ${ref(databuffet.VALIDATED_MAC5, "cfs")} as c
+  LEFT JOIN ${ref(databuffet.CURATED_MAC5, "curated_mih")} as m 
+    ON c.CFSvnosID = m.mihvnos
+    and c.company_id = m.company_id
+    and m.mihstatus != 32
+  WHERE EXTRACT(YEAR FROM c.cfsdateid) BETWEEN 2000 AND 2030
+    AND c.cfstypeid = 'IS'
+    -- and c.company_id = 'ag01'
+),
 
-  MERGE `${DimAgingTableRef}` AS T
-  USING (
-    WITH
-    -- 1. ดึงข้อมูลตั้งหนี้ตั้งต้น
-    Base_CFS AS (
-        SELECT
-            c.company_id, c.CFSvnosID, c.CFSdateID, c.CFScusID, c.CFStypeID, c.CFSjob, c.CFSdep, c.CFSper, c.CFSclearSUM, c.CFSclearALL,
-            CAST(c.CFSsumREQ AS FLOAT64) AS CFSsumREQ,
-            CAST(c.CFSsumCUT1 AS FLOAT64) AS CFSsumCUT1,
-            CAST(c.CFSsumCUT2 AS FLOAT64) AS CFSsumCUT2
-        FROM ${ref(databuffet.VALIDATED_MAC5, 'cfs')} c
-        LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'mih')} m
-            ON c.CFSvnosID = m.mihvnos
-            AND c.company_id = m.company_id
-            AND m.mihstatus != 32
-        WHERE EXTRACT(YEAR FROM c.cfsdateid) BETWEEN 2000 AND 2030
-            AND c.cfstypeid = 'IS'
-            -- AND c.company_id = 'ag01'
-    ),
+-- 2. หาราคาที่ถูกต้องจากหน้าบิล (ซ่อม CFSsumREQ)
+Fix_Req AS (
+  SELECT 
+    c.company_id,
+    c.CFSvnosID,
+    c.CFScusID,
+    CAST(m.mihnetsum AS FLOAT64) AS corrected_req
+  FROM Base_CFS c
+  LEFT JOIN ${ref(databuffet.CURATED_MAC5, "curated_mih")} m 
+    ON c.CFSvnosID = m.mihvnos 
+    AND c.CFScusID = m.mihcus
+    AND c.company_id = m.company_id
+  WHERE m.mihtype = 'IS' 
+    AND m.MIHcancel = 0 
+    AND CAST(c.CFSsumREQ AS FLOAT64) != CAST(m.mihnetsum AS FLOAT64)
+),
 
-    -- 2. หาราคาที่ถูกต้องจากหน้าบิล (ซ่อม CFSsumREQ)
-    Fix_Req AS (
-        SELECT
-            c.company_id,
-            c.CFSvnosID,
-            c.CFScusID,
-            CAST(m.mihnetsum AS FLOAT64) AS corrected_req
-        FROM Base_CFS c
-        LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'mih')} m
-            ON c.CFSvnosID = m.mihvnos
-            AND c.CFScusID = m.mihcus
-            AND c.company_id = m.company_id
-        WHERE m.mihtype = 'IS'
-            AND m.MIHcancel = 0
-            AND CAST(c.CFSsumREQ AS FLOAT64) != CAST(m.mihnetsum AS FLOAT64)
-    ),
+-- 3. หายอดใบเสร็จที่ถูกต้อง (ซ่อม CFSsumCUT1)
+Fix_Cut1 AS (
+  SELECT 
+    mir.company_id,
+    mir.MIRbinvNo AS CFSvnosID,
+    SUM(CAST(mir.mirsum AS FLOAT64)) AS corrected_cut1
+  FROM ${ref(databuffet.VALIDATED_MAC5, "mir")} as mir
+  LEFT JOIN ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih 
+    ON mih.mihvnos = mir.mirvnos 
+    AND mih.mihtype = mir.mirtype 
+    AND mih.mihcus = mir.mircus 
+    AND mih.mihyear = mir.miryear 
+    AND mih.mihmonth = mir.mirmonth 
+    AND mih.mihday = mir.mirday
+    AND mir.company_id = mih.company_id
+  WHERE mir.mirtype = 'RS' 
+    AND mih.MIHcancel = 0
+    -- and mir.company_id = 'ag01'
+  GROUP BY mir.company_id, mir.MIRbinvNo
+),
 
-    -- 3. หายอดใบเสร็จที่ถูกต้อง (ซ่อม CFSsumCUT1)
-    Fix_Cut1 AS (
-        SELECT
-            mir.company_id,
-            mir.MIRbinvNo AS CFSvnosID,
-            SUM(CAST(mir.mirsum AS FLOAT64)) AS corrected_cut1
-        FROM ${ref(databuffet.VALIDATED_MAC5, 'mir')} mir
-        LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'mih')} mih
-            ON mih.mihvnos = mir.mirvnos
-            AND mih.mihtype = mir.mirtype
-            AND mih.mihcus = mir.mircus
-            AND mih.mihyear = mir.miryear
-            AND mih.mihmonth = mir.mirmonth
-            AND mih.mihday = mir.mirday
-            AND mir.company_id = mih.company_id
-        WHERE mir.mirtype = 'RS'
-            AND mih.MIHcancel = 0
-            -- AND mir.company_id = 'ag01'
-        GROUP BY mir.company_id, mir.MIRbinvNo
-    ),
+-- 4. หายอดใบลดหนี้/เพิ่มหนี้ที่ถูกต้อง + VAT 7% (ซ่อม CFSsumCUT2)
+Fix_Cut2 AS (
+  SELECT 
+    mil.company_id,
+    mil.millinkvcno AS CFSvnosID,
+    (SUM(CAST(mil.milsum AS FLOAT64)) + (SUM(CAST(mil.milsum AS FLOAT64)) * 0.07)) AS corrected_cut2
+  FROM ${ref(databuffet.CURATED_MAC5, "curated_mil")} as mil
+  LEFT JOIN ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih 
+    ON mih.mihvnos = mil.milvnos 
+    AND mih.mihtype = mil.miltype 
+    AND mih.mihcus = mil.milcus 
+    AND mih.mihyear = mil.milyear 
+    AND mih.mihmonth = mil.milmonth 
+    AND mih.mihday = mil.milday
+    and mih.company_id = mil.company_id
+  WHERE mih.mihstatus != 29 
+    AND mil.miltype = 'BS' 
+    AND mil.milyear >= 2000
+    -- and mil.company_id = 'ag01'
+  GROUP BY mil.company_id, mil.millinkvcno
+),
 
-    -- 4. หายอดใบลดหนี้/เพิ่มหนี้ที่ถูกต้อง + VAT 7% (ซ่อม CFSsumCUT2)
-    Fix_Cut2 AS (
-        SELECT
-            mil.company_id,
-            mil.millinkvcno AS CFSvnosID,
-            (SUM(CAST(mil.milsum AS FLOAT64)) + (SUM(CAST(mil.milsum AS FLOAT64)) * 0.07)) AS corrected_cut2
-        FROM ${ref(databuffet.VALIDATED_MAC5, 'mil')} mil
-        LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'mih')} mih
-            ON mih.mihvnos = mil.milvnos
-            AND mih.mihtype = mil.miltype
-            AND mih.mihcus = mil.milcus
-            AND mih.mihyear = mil.milyear
-            AND mih.mihmonth = mil.milmonth
-            AND mih.mihday = mil.milday
-            AND mih.company_id = mil.company_id
-        WHERE mih.mihstatus != 29
-            AND mil.miltype = 'BS'
-            AND mil.milyear >= 2000
-            -- AND mil.company_id = 'ag01'
-        GROUP BY mil.company_id, mil.millinkvcno
-    ),
+-- 5. ประกอบร่างและซ่อมข้อมูลให้เป็นก้อนที่ถูกต้อง
+Cleaned_CFS AS (
+  SELECT 
+    b.company_id,
+    b.CFSvnosID, b.CFScusID, b.CFSdateID, b.CFStypeID, 
+    b.CFSjob, b.CFSdep, b.CFSper, b.CFSclearSUM, b.CFSclearALL,
+    COALESCE(fr.corrected_req, b.CFSsumREQ) AS CFSsumREQ,
+    COALESCE(fc1.corrected_cut1, b.CFSsumCUT1) AS CFSsumCUT1,
+    COALESCE(fc2.corrected_cut2, b.CFSsumCUT2) AS CFSsumCUT2
+  FROM Base_CFS b
+  LEFT JOIN Fix_Req fr 
+    ON b.CFSvnosID = fr.CFSvnosID 
+    AND b.CFScusID = fr.CFScusID
+    and b.company_id = fr.company_id
+  LEFT JOIN Fix_Cut1 fc1 
+    ON b.CFSvnosID = fc1.CFSvnosID 
+    AND CAST(b.CFSsumCUT1 AS FLOAT64) != fc1.corrected_cut1
+    and b.company_id = fc1.company_id
+  LEFT JOIN Fix_Cut2 fc2 
+    ON b.CFSvnosID = fc2.CFSvnosID 
+    AND CAST(b.CFSsumCUT2 AS FLOAT64) != fc2.corrected_cut2
+    and b.company_id = fc2.company_id
+),
 
-    -- 5. ประกอบร่างและซ่อมข้อมูลให้เป็นก้อนที่ถูกต้อง
-    Cleaned_CFS AS (
-        SELECT
-            b.company_id,
-            b.CFSvnosID, b.CFScusID, b.CFSdateID, b.CFStypeID, b.CFSjob, b.CFSdep, b.CFSper, b.CFSclearSUM, b.CFSclearALL,
-            COALESCE(fr.corrected_req, b.CFSsumREQ) AS CFSsumREQ,
-            COALESCE(fc1.corrected_cut1, b.CFSsumCUT1) AS CFSsumCUT1,
-            COALESCE(fc2.corrected_cut2, b.CFSsumCUT2) AS CFSsumCUT2
-        FROM Base_CFS b
-        LEFT JOIN Fix_Req fr
-            ON b.CFSvnosID = fr.CFSvnosID
-            AND b.CFScusID = fr.CFScusID
-            AND b.company_id = fr.company_id
-        LEFT JOIN Fix_Cut1 fc1
-            ON b.CFSvnosID = fc1.CFSvnosID
-            AND CAST(b.CFSsumCUT1 AS FLOAT64) != fc1.corrected_cut1
-            AND b.company_id = fc1.company_id
-        LEFT JOIN Fix_Cut2 fc2
-            ON b.CFSvnosID = fc2.CFSvnosID
-            AND CAST(b.CFSsumCUT2 AS FLOAT64) != fc2.corrected_cut2
-            AND b.company_id = fc2.company_id
-    ),
-
-    -- 6. คำนวณยอดหนี้คงเหลือและหาอายุหนี้
-    AR_Calculation AS (
-        SELECT
-            c.company_id,
-            c.CFSvnosID,
-            c.CFScusID AS debcode,
-            c.CFSdateID,
-            c.CFStypeID,
-            c.CFSjob,
-            c.CFSdep,
-            c.CFSper,
-            d.DEBcreditTerm,
-            d.deblimit,
-            SUBSTR(d.debnamet, 1, 200) AS debnamet,
-            REPLACE(SUBSTR(d.debmemo, 1, 200), CHR(10), '') AS debmemo,
-            SUBSTR(c.CFSjob, 1, 15) AS channel,
-            (IFNULL(c.CFSsumREQ, 0) - (IFNULL(c.CFSsumCUT1, 0) + ABS(IFNULL(c.CFSsumCUT2, 0)))) AS outstanding_amt,
-            c.CFSsumREQ,
-            c.CFSsumCUT1,
-            c.CFSsumCUT2,
-            (c.CFSsumCUT1 + ABS(c.CFSsumCUT2)) AS CFSsumTotal,
-            (CASE
-                WHEN IFNULL(c.CFSclearSUM, 0) != -1 AND IFNULL(c.CFSclearALL, 0) != -1 THEN 'Non-Completed'
-                ELSE 'Non-Completed'
-            END) AS flagComplete
-        FROM Cleaned_CFS c
-        LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'deb')} d
-            ON c.CFScusID = d.DEBcode
-            AND c.company_id = d.company_id
-        WHERE c.CFStypeID != 'PS'
-            AND d.DEBcode IN (
-                SELECT mihcus FROM ${ref(databuffet.VALIDATED_MAC5, 'mih')}
-                WHERE mihtype = 'PS' AND mihyear > 2000
-            )
-    ),
-
-    -- 7. สร้าง CTE จำลองการทำงานของ 3 Functions (ดึง Top 1 ด้วย ANY_VALUE)
-    MIH_References AS (
-        SELECT
-            company_id,
-            MIHvnos,
-            ANY_VALUE(MIHref2) AS MIHref2_PO,
-            ANY_VALUE(MIHdesc) AS MIHnote_Desc,
-            ANY_VALUE(CASE WHEN MIHtype = 'IS' THEN mihref1 ELSE NULL END) AS MIHref1_IS
-        FROM ${ref(databuffet.VALIDATED_MAC5, 'mih')}
-        -- WHERE company_id = 'ag01'
-        GROUP BY company_id, MIHvnos
-    ),
-
-    -- 8. ผลลัพธ์สุดท้าย พร้อมจัด Bucket (Aging) ออก Report
-    final AS (
-        SELECT DISTINCT
-            ar.company_id,
-            PARSE_DATE('%d/%m/%Y', SUBSTR(mie.MIEctermDX, 1, 10)) AS duedate,
-            PARSE_DATE('%Y%m%d', CONCAT(mie.mieyear, FORMAT("%02d", mie.miemonth), FORMAT("%02d", mie.mieday))) AS invdate,
-            ar.CFSvnosID,
-            ar.CFStypeID,
-            ar.CFSjob,
-            ar.CFSdep,
-            ar.CFSper,
-            ar.debcode,
-            ar.debnamet,
-            ar.DEBcreditTerm,
-            ar.deblimit,
-            ar.debmemo,
-            ar.channel,
-            IFNULL(ref.MIHref2_PO, '') AS MIHref2,
-            IFNULL(ref.MIHnote_Desc, '') AS MIHnote,
-            IFNULL(ref.MIHref1_IS, '') AS MIHref1,
-            (CASE WHEN ar.flagComplete = 'Completed' THEN 0 ELSE ar.outstanding_amt END) AS outstanding_amt,
-            ar.CFSsumREQ,
-            (CASE WHEN ar.flagComplete = 'Completed' THEN 0 ELSE ar.CFSsumCUT1 END) AS CFSsumCUT1,
-            (CASE WHEN ar.flagComplete = 'Completed' THEN ar.CFSsumREQ ELSE ar.CFSsumCUT2 END) AS CFSsumCUT2,
-            (CASE WHEN ar.flagComplete = 'Completed' THEN ar.CFSsumREQ ELSE ar.CFSsumTotal END) AS CFSsumTotal,
-            ar.flagComplete
-        FROM AR_Calculation ar
-        LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'mie')} mie
-            ON ar.CFSvnosID = mie.mievnos
-            AND mie.mietype = 'IS'
-            AND ar.company_id = mie.company_id
-        LEFT JOIN MIH_References ref
-            ON ar.CFSvnosID = ref.MIHvnos
-            AND ar.company_id = ref.company_id
-        -- WHERE ar.company_id = 'ag01'
-        QUALIFY ROW_NUMBER() OVER (
-            PARTITION BY ar.CFSvnosID,
-                PARSE_DATE('%Y%m%d', CONCAT(mie.mieyear, FORMAT("%02d", mie.miemonth), FORMAT("%02d", mie.mieday)))
-            ORDER BY PARSE_DATE('%d/%m/%Y', SUBSTR(mie.MIEctermDX, 1, 10)) DESC
-        ) = 1
-    ), 
-    dim_invoice as (
-        select InvoiceSK, CompanySK, mihVnos
-        from `${DimInvoiceTableRef}`
-        qualify row_number() over(partition by CompanySK, mihVnos order by InvoiceSK) = 1
-
-    ), 
-
-    -- 9. รวม Dimension SK
-    source_combined AS (
-        SELECT
-            final.company_id,
-            final.duedate,
-            final.invdate,
-            final.CFSvnosID,
-            final.CFStypeID,
-            final.CFSjob,
-            final.CFSdep,
-            final.CFSper,
-            final.debcode,
-            final.debnamet,
-            final.DEBcreditTerm,
-            final.deblimit,
-            final.debmemo,
-            final.channel,
-            final.MIHref2,
-            final.MIHnote,
-            final.MIHref1,
-            final.outstanding_amt,
-            final.CFSsumREQ,
-            final.CFSsumCUT1,
-            final.CFSsumCUT2,
-            final.CFSsumTotal,
-            final.flagComplete,
-            dim_com.CompanySK,
-            dim_cus.CustomerSK,
-            inv.InvoiceSK
-        FROM final
-        LEFT JOIN `${DimCompanyTableRef}` AS dim_com
-            ON final.company_id = dim_com.companyID
-        LEFT JOIN `${DimCustomerTableRef}` AS dim_cus
-            ON final.debcode = dim_cus.debcode
-            AND dim_com.CompanySK = dim_cus.CompanySK
-        LEFT JOIN dim_invoice AS inv
-            ON final.CFSvnosID = inv.mihVnos
-            AND dim_com.CompanySK = inv.CompanySK
+-- 6. คำนวณยอดหนี้คงเหลือและหาอายุหนี้
+AR_Calculation AS (
+  SELECT 
+    c.company_id,
+    c.CFSvnosID,
+    c.CFScusID AS debcode,
+    c.CFSdateID,
+    c.CFStypeID,
+    c.CFSjob, 
+    c.CFSdep, 
+    c.CFSper,
+    d.DEBcreditTerm,
+    d.deblimit,
+    SUBSTR(d.debnamet, 1, 200) AS debnamet,
+    REPLACE(SUBSTR(d.debmemo, 1, 200), CHR(10), '') AS debmemo,
+    SUBSTR(c.CFSjob, 1, 15) AS channel,
+    -- DATE_DIFF(CURRENT_DATE(), DATE(c.CFSdateID), DAY) AS qty_day,
+    -- CAST(d.DEBcreditTerm AS INT64) AS credit_term_days,
+    (IFNULL(c.CFSsumREQ, 0) - (IFNULL(c.CFSsumCUT1, 0) + ABS(IFNULL(c.CFSsumCUT2, 0)))) AS outstanding_amt,
+    c.CFSsumREQ,
+    c.CFSsumCUT1,
+    c.CFSsumCUT2,
+    (c.CFSsumCUT1 + ABS(c.CFSsumCUT2)) as CFSsumTotal,
+    (CASE 
+      WHEN IFNULL(c.CFSclearSUM, 0) != -1 AND IFNULL(c.CFSclearALL, 0) != -1 THEN 'Non-Completed'
+      ELSE 'Completed'
+    END) as flagComplete
+  FROM Cleaned_CFS c
+  LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "deb")} d 
+  ON c.CFScusID = d.DEBcode
+    and c.company_id = d.company_id
+  WHERE c.CFStypeID != 'PS'
+    -- AND (c.CFSsumREQ - (c.CFSsumCUT1 + ABS(c.CFSsumCUT2))) > 0.01 
+    AND d.DEBcode IN (
+        SELECT mihcus FROM ${ref(databuffet.CURATED_MAC5, "curated_mih")} 
+        WHERE mihtype = 'PS' AND mihyear > 2000
     )
+),
 
-    SELECT
-        (CASE
-            WHEN t2.AgingSK IS NOT NULL THEN t2.AgingSK
-            ELSE max_sk + ROW_NUMBER() OVER (
-                PARTITION BY (CASE WHEN t2.CFSvnosID IS NULL THEN 1 ELSE 0 END)
-                ORDER BY t1.CompanySK, t1.CFSvnosID, t1.invdate
-            )
-        END) AS AgingSK,
-        t1.CompanySK,
-        t1.CustomerSK,
-        t1.InvoiceSK,
-        t1.company_id AS companyID,
-        t1.duedate AS dueDate,
-        t1.invdate AS invoiceDate,
-        t1.CFSvnosID AS cfsVnosID,
-        t1.CFStypeID AS cfsTypeID,
-        t1.CFSjob AS cfsJob,
-        t1.CFSdep AS cfsDep,
-        t1.CFSper AS cfsPer,
-        t1.debcode AS debCode,
-        t1.debnamet AS debName,
-        t1.DEBcreditTerm AS debCreditTerm,
-        t1.deblimit AS debLimit,
-        t1.debmemo AS debMemo,
-        t1.channel,
-        t1.MIHref2 AS mihRef2,
-        t1.MIHnote AS mihNote,
-        t1.MIHref1 AS mihRef1,
-        t1.outstanding_amt,
-        t1.CFSsumREQ AS cfsSumREQ,
-        t1.CFSsumCUT1 AS cfsSumCUT1,
-        t1.CFSsumCUT2 AS cfsSumCUT2,
-        t1.CFSsumTotal AS cfsSumTotal,
-        t1.flagComplete
-    FROM source_combined AS t1
-    LEFT JOIN `${DimAgingTableRef}` AS t2
-        ON t1.CFSvnosID = t2.cfsVnosID
-        AND IFNULL(t1.invdate, '1900-01-01') = IFNULL(t2.invoiceDate, '1900-01-01')
-        AND t1.CompanySK = t2.CompanySK
-  ) AS S
-  ON T.AgingSK = S.AgingSK
+-- 7. สร้าง CTE จำลองการทำงานของ 3 Functions (ดึง Top 1 ด้วย ANY_VALUE)
+MIH_References AS (
+  SELECT 
+    company_id,
+    MIHvnos,
+    ANY_VALUE(MIHref2) AS MIHref2_PO,
+    ANY_VALUE(MIHdesc) AS MIHnote_Desc,
+    ANY_VALUE(CASE WHEN MIHtype = 'IS' THEN mihref1 ELSE NULL END) AS MIHref1_IS
+  FROM ${ref(databuffet.CURATED_MAC5, "curated_mih")}
+  -- where company_id = 'ag01'
+  GROUP BY company_id, MIHvnos
+), 
 
-  -- กรณีเจอข้อมูลเดิม (Update)
-  WHEN MATCHED THEN
-    UPDATE SET
-      T.CustomerSK    = S.CustomerSK,
-      T.InvoiceSK     = S.InvoiceSK,
-      T.cfsTypeID     = S.cfsTypeID,
-      T.cfsJob        = S.cfsJob,
-      T.cfsDep        = S.cfsDep,
-      T.cfsPer        = S.cfsPer,
-      T.debCode       = S.debCode,
-      T.dueDate       = S.dueDate,
-      T.debName       = S.debName,
-      T.debCreditTerm = S.debCreditTerm,
-      T.debLimit      = S.debLimit,
-      T.debMemo       = S.debMemo,
-      T.channel       = S.channel,
-      T.mihRef2       = S.mihRef2,
-      T.mihNote       = S.mihNote,
-      T.mihRef1       = S.mihRef1,
-      T.outstanding_amt = S.outstanding_amt,
-      T.cfsSumREQ     = S.cfsSumREQ,
-      T.cfsSumCUT1    = S.cfsSumCUT1,
-      T.cfsSumCUT2    = S.cfsSumCUT2,
-      T.cfsSumTotal   = S.cfsSumTotal,
-      T.flagComplete  = S.flagComplete
-      -- ยกเว้น: AgingSK, CompanySK, companyID, cfsVnosID, debCode, invoiceDate ไม่ถูก update
+-- 8. ผลลัพธ์สุดท้าย พร้อมจัด Bucket (Aging) ออก Report
+final AS (
+  SELECT DISTINCT
+    -- agingrang_sk.AgingRangSK,
+    ar.company_id,
+    -- agingrang_sk.ReportName,
+    PARSE_DATE('%d/%m/%Y', SUBSTR(mie.MIEctermDX, 1, 10)) AS duedate,
+    PARSE_DATE('%Y%m%d', CONCAT(mie.mieyear, FORMAT("%02d", mie.miemonth), FORMAT("%02d", mie.mieday))) as invdate,
+    ar.CFSvnosID,
+    ar.CFStypeID,
+    ar.CFSjob, 
+    ar.CFSdep, 
+    ar.CFSper,
+    ar.debcode,
+    ar.debnamet,
+    ar.DEBcreditTerm,
+    ar.deblimit,
+    ar.debmemo,
+    -- (ar.qty_day - ar.credit_term_days) as DayRange,
+    -- CASE WHEN (ar.qty_day - ar.credit_term_days) < 0 THEN ar.outstanding_amt ELSE 0 END AS NotToDue,
+    -- CASE WHEN (ar.qty_day - ar.credit_term_days) BETWEEN 0 AND 30 THEN ar.outstanding_amt ELSE 0 END AS Range30,
+    -- CASE WHEN (ar.qty_day - ar.credit_term_days) BETWEEN 31 AND 60 THEN ar.outstanding_amt ELSE 0 END AS Range60,
+    -- CASE WHEN (ar.qty_day - ar.credit_term_days) BETWEEN 61 AND 90 THEN ar.outstanding_amt ELSE 0 END AS Range90,
+    -- CASE WHEN (ar.qty_day - ar.credit_term_days) BETWEEN 91 AND 120 THEN ar.outstanding_amt ELSE 0 END AS Range120,
+    -- CASE WHEN (ar.qty_day - ar.credit_term_days) BETWEEN 121 AND 180 THEN ar.outstanding_amt ELSE 0 END AS Range180,
+    -- CASE WHEN (ar.qty_day - ar.credit_term_days) > 180 THEN ar.outstanding_amt ELSE 0 END AS Over180,
+    
+    -- REPEAT(' ', 200) AS InterDeli,
+    ar.channel,
+    -- 'Your_Company_Name_Here' AS ComName,
+    
+    IFNULL(ref.MIHref2_PO, '') AS MIHref2,
+    IFNULL(ref.MIHnote_Desc, '') AS MIHnote,
+    IFNULL(ref.MIHref1_IS, '') AS MIHref1,
 
-  -- กรณีไม่เจอข้อมูล (Insert)
-  WHEN NOT MATCHED THEN
-    INSERT (
-      AgingSK, CompanySK, CustomerSK, InvoiceSK,
-      companyID, dueDate, invoiceDate, cfsVnosID, cfsTypeID, CFSjob, CFSdep, CFSper,
-      debCode, debName, debCreditTerm, debLimit, debMemo, channel,
-      mihRef2, mihNote, mihRef1,
-      outstanding_amt, cfsSumREQ, cfsSumCUT1, cfsSumCUT2, cfsSumTotal,
-      flagComplete
-    )
-    VALUES (
-      S.AgingSK, S.CompanySK, S.CustomerSK, S.InvoiceSK,
-      S.companyID, S.dueDate, S.invoiceDate, S.cfsVnosID, S.cfsTypeID, S.cfsJob, S. cfsDep, S.cfsPer,
-      S.debCode, S.debName, S.debCreditTerm, S.debLimit, S.debMemo, S.channel,
-      S.mihRef2, S.mihNote, S.mihRef1,
-      S.outstanding_amt, S.cfsSumREQ, S.cfsSumCUT1, S.cfsSumCUT2, S.cfsSumTotal,
-      S.flagComplete
-    );
+    (CASE WHEN ar.flagComplete = 'Completed' THEN 0 ELSE ar.outstanding_amt END) as outstanding_amt,
+    ar.CFSsumREQ,
+    (CASE WHEN ar.flagComplete = 'Completed' THEN 0 ELSE ar.CFSsumCUT1 END) as CFSsumCUT1,
+    (CASE WHEN ar.flagComplete = 'Completed' THEN ar.CFSsumREQ ELSE ar.CFSsumCUT2 END) as CFSsumCUT2,
+    (CASE WHEN ar.flagComplete = 'Completed' THEN ar.CFSsumREQ ELSE ar.CFSsumTotal END) as CFSsumTotal,
+    ar.flagComplete
 
-END;
+  FROM AR_Calculation as ar
+  LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "mie")} as mie 
+    ON ar.CFSvnosID = mie.mievnos 
+    AND mie.mietype = 'IS'
+    AND ar.company_id = mie.company_id
+  LEFT JOIN MIH_References as ref 
+    ON ar.CFSvnosID = ref.MIHvnos
+    and ar.company_id = ref.company_id
+  -- LEFT JOIN databuffet-nonprd.dimension_table.dim_aging_rang as agingrang_sk
+  --   ON IF( (ar.qty_day - ar.credit_term_days) <= 0, 0, (ar.qty_day - ar.credit_term_days)) between agingrang_sk.AgingDayMin and agingrang_sk.AgingDayMax
+  -- WHERE ar.company_id = 'ag01'
+  -- ORDER BY ar.CFSvnosID
+  
+  QUALIFY row_number() over(partition by ar.CFSvnosID, PARSE_DATE('%Y%m%d', CONCAT(mie.mieyear, FORMAT("%02d", mie.miemonth), FORMAT("%02d", mie.mieday))) order by dueDate desc) = 1
+
+), dim_invoice as (
+  select InvoiceSK, CompanySK, mihVnos
+  from `${DimInvoiceTableRef}`
+  qualify row_number() over(partition by CompanySK, mihVnos order by InvoiceSK) = 1
+
+)
+  select 
+    row_number() over(order by dim_com.CompanySK, CFSvnosID, invdate) as AgingSK,
+    -- AgingRangSK,
+    dim_cus.CustomerSK,
+    inv.InvoiceSK,
+    dim_com.CompanySK,
+    dim_com.companyID,
+    final.duedate as dueDate,
+    final.invdate as invoiceDate,
+    final.CFSvnosID as cfsVnosID,
+    final.CFStypeID as cfsTypeID,
+    final.CFSjob as cfsJob,
+    final.CFSdep as cfsDep,
+    final.CFSper as cfsPer,
+    final.debcode as debCode,
+    final.debnamet as debName,
+    final.DEBcreditTerm as debCreditTerm,
+    final.deblimit as debLimit, 
+    final.debmemo as debMemo,
+    -- DayRange as dayRange,
+    final.channel as channel,
+    final.MIHref2 as mihRef2,
+    final.MIHnote as mihNote,
+    final.MIHref1 as mihRef1,
+    final.outstanding_amt,
+    final.CFSsumREQ as cfsSumREQ,
+    final.CFSsumCUT1 as cfsSumCUT1,
+    final.CFSsumCUT2 as cfsSumCUT2,
+    final.CFSsumTotal as cfsSumTotal,
+    final.flagComplete
+  from final
+  left join `${DimCompanyTableRef}` as dim_com
+    on final.company_id = dim_com.companyID
+  left join `${DimCustomerTableRef}` as dim_cus
+    on final.debcode = dim_cus.debcode
+    and dim_com.CompanySK = dim_cus.CompanySK
+  left join dim_invoice as inv
+    on final.cfsVnosID = inv.mihVnos
+    and dim_com.CompanySK = inv.CompanySK
+;
 
 
 BEGIN

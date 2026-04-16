@@ -85,6 +85,7 @@ WITH all_sources AS (
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.mie`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
   UNION ALL
   SELECT 'aa05' AS company_id,
     CAST(MIEday AS INT64) AS mieday,
@@ -130,6 +131,7 @@ WITH all_sources AS (
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.mie`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
   UNION ALL
   SELECT 'ab01' AS company_id,
     CAST(MIEday AS INT64) AS mieday,
@@ -175,6 +177,7 @@ WITH all_sources AS (
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.mie`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+
   UNION ALL
   SELECT 'ac02' AS company_id,
     CAST(MIEday AS INT64) AS mieday,
@@ -220,6 +223,7 @@ WITH all_sources AS (
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.mie`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+  
   UNION ALL
   SELECT 'ak02' AS company_id,
     CAST(MIEday AS INT64) AS mieday,

@@ -61,6 +61,7 @@ WITH all_sources AS (
     CAST(cfsbillcut AS FLOAT64) as cfsbillcut,
     CAST(cfsbillclr AS INT64) as cfsbillclr
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.cfs`
+
   UNION ALL
   SELECT 'aa05' AS company_id,
     NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
@@ -83,6 +84,7 @@ WITH all_sources AS (
     CAST(cfsbillcut AS FLOAT64) as cfsbillcut,
     CAST(cfsbillclr AS INT64) as cfsbillclr
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.cfs`
+
   UNION ALL
   SELECT 'ab01' AS company_id,
     NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
@@ -105,6 +107,7 @@ WITH all_sources AS (
     CAST(cfsbillcut AS FLOAT64) as cfsbillcut,
     CAST(cfsbillclr AS INT64) as cfsbillclr
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.cfs`
+
   UNION ALL
   SELECT 'ac02' AS company_id,
     NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
@@ -127,6 +130,7 @@ WITH all_sources AS (
     CAST(cfsbillcut AS FLOAT64) as cfsbillcut,
     CAST(cfsbillclr AS INT64) as cfsbillclr
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.cfs`
+  
   UNION ALL
   SELECT 'ak02' AS company_id,
     NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
