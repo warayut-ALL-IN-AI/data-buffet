@@ -189,10 +189,13 @@ AR_Calculation AS (
     and c.company_id = d.company_id
   WHERE c.CFStypeID != 'PS'
     -- AND (c.CFSsumREQ - (c.CFSsumCUT1 + ABS(c.CFSsumCUT2))) > 0.01 
-    AND d.DEBcode IN (
-        SELECT mihcus FROM ${ref(databuffet.CURATED_MAC5, "curated_mih")} 
-        WHERE mihtype = 'PS' AND mihyear > 2000
-    )
+    AND (CASE 
+      WHEN c.company_id = 'ag01' THEN d.DEBcode IN (
+          SELECT mihcus FROM ${ref(databuffet.CURATED_MAC5, "curated_mih")} 
+          WHERE mihtype = 'PS' AND mihyear > 2000
+        )
+      ELSE 1=1
+    END)
 ),
 
 -- 7. สร้าง CTE จำลองการทำงานของ 3 Functions (ดึง Top 1 ด้วย ANY_VALUE)
