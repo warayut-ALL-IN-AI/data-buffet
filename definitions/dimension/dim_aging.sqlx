@@ -317,11 +317,11 @@ final AS (
 
 
 BEGIN
-    DECLARE run_date DATE DEFAULT CURRENT_DATE('Asia/Bangkok');
+    DECLARE run_date DATE DEFAULT CURRENT_DATE('Asia/Bangkok')-1;
 
     --- delete data before daily process
     DELETE FROM `${DimAgingHistoryTableRef}`
-    WHERE asatdate = run_date
+    WHERE asatdate >= run_date
     ;
 
     --- insert data for daily process
