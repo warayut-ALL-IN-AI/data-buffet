@@ -48,20 +48,47 @@ js {
     };
     const DimAgingViewRef = `${DimAgingView.database}.${DimAgingView.schema}.${DimAgingView.name}`;
 
+    const FactBillingTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: "fact_mir_vs",
+    };
+    const FactBillingTableRef = `${FactBillingTable.database}.${FactBillingTable.schema}.${FactBillingTable.name}`;
 
 }
 
 CREATE OR REPLACE TABLE `${DimAgingTableRef}`
 CLUSTER BY AgingSK
 AS
-WITH 
+WITH mir_raw_agg AS (
+  SELECT
+    company_id,
+    mirbinvno,
+    MIN(PARSE_DATE('%Y%m%d',
+      CONCAT(CAST(miryear AS STRING), FORMAT('%02d', mirmonth), FORMAT('%02d', mirday))
+    ))                                                            AS min_receipt_date,
+    MAX(PARSE_DATE('%Y%m%d',
+      CONCAT(CAST(miryear AS STRING), FORMAT('%02d', mirmonth), FORMAT('%02d', mirday))
+    ))                                                            AS max_receipt_date
+  FROM ${ref(databuffet.VALIDATED_MAC5, "mir")}
+  WHERE mirtype = 'RS'
+  GROUP BY company_id, mirbinvno
+  
+),
 -- 1. ดึงข้อมูลตั้งหนี้ตั้งต้น
 Base_CFS AS (
   SELECT 
     c.company_id, c.CFSvnosID, c.CFSdateID, c.CFScusID, c.CFStypeID, c.CFSjob, c.CFSdep, c.CFSper, c.CFSclearSUM, c.CFSclearALL,
     CAST(c.CFSsumREQ AS FLOAT64) AS CFSsumREQ,
     CAST(c.CFSsumCUT1 AS FLOAT64) AS CFSsumCUT1,
-    CAST(c.CFSsumCUT2 AS FLOAT64) AS CFSsumCUT2
+    CAST(c.CFSsumCUT2 AS FLOAT64) AS CFSsumCUT2,
+    (
+      SELECT MIHstanding 
+      FROM ${ref(databuffet.CURATED_MAC5, "curated_mih")} as sub1 
+      where sub1.mihvnos = c.cfsvnosid
+        and sub1.mihcus = c.cfscusid
+        and sub1.company_id = c.company_id
+    ) as TransCreditTerm
   FROM ${ref(databuffet.VALIDATED_MAC5, "cfs")} as c
   LEFT JOIN ${ref(databuffet.CURATED_MAC5, "curated_mih")} as m 
     ON c.CFSvnosID = m.mihvnos
@@ -140,7 +167,8 @@ Cleaned_CFS AS (
     b.CFSjob, b.CFSdep, b.CFSper, b.CFSclearSUM, b.CFSclearALL,
     COALESCE(fr.corrected_req, b.CFSsumREQ) AS CFSsumREQ,
     COALESCE(fc1.corrected_cut1, b.CFSsumCUT1) AS CFSsumCUT1,
-    COALESCE(fc2.corrected_cut2, b.CFSsumCUT2) AS CFSsumCUT2
+    COALESCE(fc2.corrected_cut2, b.CFSsumCUT2) AS CFSsumCUT2,
+    b.TransCreditTerm
   FROM Base_CFS b
   LEFT JOIN Fix_Req fr 
     ON b.CFSvnosID = fr.CFSvnosID 
@@ -167,7 +195,9 @@ AR_Calculation AS (
     c.CFSjob, 
     c.CFSdep, 
     c.CFSper,
-    IFNULL(d.DEBcreditTerm, 0) as DEBcreditTerm,
+    IFNULL(d.DEBcreditTerm, 0) as CalCreditTerm,
+    IFNULL(d.DEBcreditTerm, 0) as DebCreditTerm,
+    IFNULL(c.TransCreditTerm, 0) as TransCreditTerm,
     d.deblimit,
     SUBSTR(d.debnamet, 1, 200) AS debnamet,
     REPLACE(SUBSTR(d.debmemo, 1, 200), CHR(10), '') AS debmemo,
@@ -179,23 +209,28 @@ AR_Calculation AS (
     c.CFSsumCUT1,
     c.CFSsumCUT2,
     (c.CFSsumCUT1 + ABS(c.CFSsumCUT2)) as CFSsumTotal,
-    (CASE 
+    (CASE
+      WHEN DATE(mir.max_receipt_date) >= DATE(c.cfsdateid) and DATE(mir.max_receipt_date) <= current_date('Asia/Bangkok') THEN 'Completed' 
+      WHEN current_date('Asia/Bangkok') <= mir.max_receipt_date THEN 'Non-Completed'
       WHEN IFNULL(c.CFSclearSUM, 0) != -1 AND IFNULL(c.CFSclearALL, 0) != -1 THEN 'Non-Completed'
       ELSE 'Completed'
-    END) as flagComplete
+    END)  as flagComplete
   FROM Cleaned_CFS c
   LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "deb")} d 
   ON c.CFScusID = d.DEBcode
     and c.company_id = d.company_id
+  LEFT JOIN mir_raw_agg as mir
+    ON c.cfsVnosid = mir.mirbinvno
+    AND c.company_id = mir.company_id
   WHERE c.CFStypeID != 'PS'
     -- AND (c.CFSsumREQ - (c.CFSsumCUT1 + ABS(c.CFSsumCUT2))) > 0.01 
-    AND (CASE 
-      WHEN c.company_id = 'ag01' THEN d.DEBcode IN (
-          SELECT mihcus FROM ${ref(databuffet.CURATED_MAC5, "curated_mih")} 
-          WHERE mihtype = 'PS' AND mihyear > 2000
-        )
-      ELSE 1=1
-    END)
+    -- AND (CASE 
+    --   WHEN c.company_id = 'ag01' THEN d.DEBcode IN (
+    --       SELECT mihcus FROM ${ref(databuffet.CURATED_MAC5, "curated_mih")} 
+    --       WHERE mihtype = 'PS' AND mihyear > 2000
+    --     )
+    --   ELSE 1=1
+    -- END)
 ),
 
 -- 7. สร้าง CTE จำลองการทำงานของ 3 Functions (ดึง Top 1 ด้วย ANY_VALUE)
@@ -226,7 +261,9 @@ final AS (
     ar.CFSper,
     ar.debcode,
     ar.debnamet,
-    ar.DEBcreditTerm,
+    ar.CalCreditTerm,
+    ar.DebCreditTerm,
+    ar.TransCreditTerm,
     ar.deblimit,
     ar.debmemo,
     -- (ar.qty_day - ar.credit_term_days) as DayRange,
@@ -277,6 +314,7 @@ final AS (
   select 
     row_number() over(order by dim_com.CompanySK, CFSvnosID, invdate) as AgingSK,
     -- AgingRangSK,
+    vs.BillingSK,
     dim_cus.CustomerSK,
     inv.InvoiceSK,
     dim_com.CompanySK,
@@ -290,7 +328,9 @@ final AS (
     final.CFSper as cfsPer,
     final.debcode as debCode,
     final.debnamet as debName,
-    final.DEBcreditTerm as debCreditTerm,
+    final.CalCreditTerm as calCreditTerm,
+    final.DebCreditTerm as debCreditTerm,
+    final.TransCreditTerm as transCreditTerm,
     final.deblimit as debLimit, 
     final.debmemo as debMemo,
     -- DayRange as dayRange,
@@ -313,6 +353,9 @@ final AS (
   left join dim_invoice as inv
     on final.cfsVnosID = inv.mihVnos
     and dim_com.CompanySK = inv.CompanySK
+  left join `${FactBillingTableRef}` as vs
+    on final.cfsvnosid = vs.mirbinvno
+    and final.company_id = vs.company_id
 ;
 
 
