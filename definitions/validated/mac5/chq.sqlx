@@ -13,7 +13,6 @@ js {
     const pk_key = ["company_id", "chqno", "chqbank", "chqdatec", "chqtag"]
 
     let partition_statement, post_operations_statement;
-
     if (pk_key && pk_key.length > 0) {
         partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY chqkeydate desc) = 1`;
         post_operations_statement = `
@@ -222,9 +221,90 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(chqmec) AS STRING), '') as chqmec,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19)) AS chqdatev
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.chq`
+),
+
+find_pos AS (
+  SELECT 
+    *,
+    COALESCE(
+      REGEXP_INSTR(
+        LOWER(chqmemo), 
+        r'โอน(?:เงิน|เข้า|\s*[/.\-]*\s*[a-z]+|\s*กสิกร|\s*กรุง|\s*ไทย|\s*ทหาร|\s*ออม|\s*บัญชี|\s*ธนาคาร|\s*ยูโอบี|\s*ทิสโก้|\s*ธกส|\s*ธอส)'
+      ), 0
+    ) AS transfer_pos
+  FROM all_sources
+),
+
+processed_memo AS (
+  SELECT 
+    * EXCEPT(chqmemo, transfer_pos),
+    chqmemo AS chqmemo_raw,
+
+    CASE
+      WHEN transfer_pos > 1 THEN SUBSTR(chqmemo, 1, transfer_pos - 1)
+      WHEN transfer_pos = 1 THEN ''
+      ELSE chqmemo 
+    END AS chqmemo,
+
+    CASE
+      WHEN transfer_pos > 0 THEN SUBSTR(chqmemo, transfer_pos)
+      ELSE NULL 
+    END AS chqmemo_extract,
+
+    REGEXP_EXTRACT(
+      CASE WHEN transfer_pos > 0 THEN SUBSTR(chqmemo, transfer_pos) ELSE NULL END, 
+      r'(\d{1,2}/\d{1,2}(?:/\d{2,4})?)'
+    ) AS raw_extract_date
+
+  FROM find_pos
+),
+
+date_parsing AS (
+  SELECT 
+    *,
+    CAST(SPLIT(raw_extract_date, '/')[SAFE_OFFSET(0)] AS INT64) AS ext_d,
+    CAST(SPLIT(raw_extract_date, '/')[SAFE_OFFSET(1)] AS INT64) AS ext_m,
+    CAST(SPLIT(raw_extract_date, '/')[SAFE_OFFSET(2)] AS INT64) AS ext_y
+  FROM processed_memo
 )
 
-SELECT * FROM all_sources
+SELECT 
+  * EXCEPT(chqmemo_extract, raw_extract_date, ext_d, ext_m, ext_y), 
+  
+  -- extract_text:
+  TRIM(
+    REGEXP_REPLACE(
+      chqmemo_extract, 
+      r'\s*(?:วันที่|ลว\.|ลว|ล/ว|ยกเลิก|จำนวน|แทน|=|บาท|\d{1,2}/\d{1,2}(?:/\d{2,4})?).*', 
+      ''
+    )
+  ) AS extract_text,
+
+  -- extract_date (Data Type: DATE): สร้างปี ค.ศ. แล้วประกอบร่างใหม่
+  SAFE.PARSE_DATE('%Y-%m-%d', CONCAT(
+    CASE
+      WHEN ext_y IS NULL THEN EXTRACT(YEAR FROM chqdatec)
+      WHEN ext_y > 2400 THEN ext_y - 543
+      WHEN ext_y >= 40 AND ext_y <= 99 THEN ext_y + 1957
+      WHEN ext_y >= 0 AND ext_y < 40 THEN ext_y + 2000
+      ELSE ext_y
+    END, 
+    '-', LPAD(CAST(ext_m AS STRING), 2, '0'), 
+    '-', LPAD(CAST(ext_d AS STRING), 2, '0')
+  )) AS extract_date,
+
+  -- extract_amount: ลบลูกน้ำออก แล้วใช้ SAFE_CAST แปลงเป็น FLOAT64
+  SAFE_CAST(
+    REPLACE(
+      COALESCE(
+        REGEXP_EXTRACT(chqmemo_extract, r'(?:=|จำนวน)\s*([\d,]+(?:\.\d*)?)'),
+        REGEXP_EXTRACT(chqmemo_extract, r'\d{1,2}/\d{1,2}(?:/\d{2,4})?\s+([\d,]+(?:\.\d*)?)')
+      ),
+      ',', '' -- แทนที่ลูกน้ำด้วยค่าว่าง (ลบลูกน้ำทิ้ง)
+    ) AS FLOAT64
+  ) AS extract_amount
+
+FROM date_parsing
 ${partition_statement}
 
 pre_operations {
