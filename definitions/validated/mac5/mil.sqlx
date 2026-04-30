@@ -119,7 +119,7 @@ SELECT
   CAST(MILlistNo AS INT64) AS millistno,
 
   (CASE
-    WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MILquan AS FLOAT64) * -1
+    WHEN NULLIF(CAST(TRIM(MILtype) AS STRING), '') = 'BS' THEN CAST(MILquan AS FLOAT64) * -1
     ELSE CAST(MILquan AS FLOAT64)
   END) AS milquan,
   CAST(MILquan AS FLOAT64) AS milquan_raw,
@@ -127,13 +127,13 @@ SELECT
   CAST(MILquanP2 AS FLOAT64) AS milquanp2,
 
   (CASE
-    WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MILadisc AS FLOAT64) * -1
+    WHEN NULLIF(CAST(TRIM(MILtype) AS STRING), '') = 'BS' THEN CAST(MILadisc AS FLOAT64) * -1
     ELSE CAST(MILadisc AS FLOAT64)
   END) AS miladisc,
   CAST(MILadisc AS FLOAT64) AS miladisc_raw,
 
   (CASE
-    WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MILcog AS FLOAT64) * -1
+    WHEN NULLIF(CAST(TRIM(MILtype) AS STRING), '') = 'BS' THEN CAST(MILcog AS FLOAT64) * -1
     ELSE CAST(MILcog AS FLOAT64)
   END) AS milcog,
   CAST(MILcog AS FLOAT64) AS milcog_raw,
@@ -141,20 +141,20 @@ SELECT
   CAST(MILconv AS FLOAT64) AS milconv,
 
   (CASE
-    WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MILdiscA AS FLOAT64) * -1
+    WHEN NULLIF(CAST(TRIM(MILtype) AS STRING), '') = 'BS' THEN CAST(MILdiscA AS FLOAT64) * -1
     ELSE CAST(MILdiscA AS FLOAT64)
   END) AS mildisca,
   CAST(MILdiscA AS FLOAT64) AS mildisca_raw,
 
   NULLIF(CAST(TRIM(MILdiscT) AS STRING), '') AS mildisct,
   (CASE
-    WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(MILvat AS FLOAT64) * -1
+    WHEN NULLIF(CAST(TRIM(MILtype) AS STRING), '') = 'BS' THEN CAST(MILvat AS FLOAT64) * -1
     ELSE CAST(MILvat AS FLOAT64)
   END) AS milvat,
   CAST(MILvat AS FLOAT64) AS milvat_raw,
 
   (CASE
-    WHEN LEFT(NULLIF(CAST(TRIM(MILvnos) AS STRING), ''), 2) = 'CN' THEN CAST(IF( (MILsum - (mihdischf1*-1)) < 0, 0, CAST((MILsum - MILadisc) AS FLOAT64)) * -1 AS FLOAT64)
+    WHEN NULLIF(CAST(TRIM(MILtype) AS STRING), '') = 'BS' THEN CAST(IF( (MILsum - (mihdischf1*-1)) < 0, 0, CAST((MILsum - MILadisc) AS FLOAT64)) * -1 AS FLOAT64)
     ELSE CAST((MILsum - MILadisc) AS FLOAT64)
   END) AS milsum,
   CAST(MILsum AS FLOAT64) AS milsum_raw,

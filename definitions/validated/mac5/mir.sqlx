@@ -3,7 +3,7 @@ config {
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
     tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
-    uniqueKey: ["company_id", "mirday","mirmonth","miryear","mirtype","mirvnos","mircus","mirlistno"],
+    uniqueKey: ["company_id", "mirtype","mirvnos","mirlistno"],
     bigquery: {
         partitionBy: "asatdate",
         clusterBy: ["company_id", "mirtype", "mirvnos", "mircus"]
@@ -11,7 +11,7 @@ config {
 }
 
 js {
-    const pk_key = ["company_id", "mirday","mirmonth","miryear","mirtype","mirvnos","mircus","mirlistno"]
+    const pk_key = ["company_id", "mirtype","mirvnos","mirlistno"]
 
     let partition_statement, post_operations_statement;
 
