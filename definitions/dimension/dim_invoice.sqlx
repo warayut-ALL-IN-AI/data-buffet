@@ -181,7 +181,7 @@ BEGIN
         AND t1.mihDay = t2.mihDay
         AND t1.mihVnos = t2.mihVnos
         AND t1.mihCus = t2.mihCus
-        AND t1.milLinkVcno = t2.milLinkVcno
+        AND IFNULL(t1.milLinkVcno, '') = IFNULL(t2.milLinkVcno, '')
         AND t1.CompanySK = t2.CompanySK
     LEFT JOIN (
         SELECT OrderSK, mihVnos

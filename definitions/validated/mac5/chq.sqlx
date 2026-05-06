@@ -12,16 +12,24 @@ config {
 js {
     const pk_key = ["company_id", "chqno", "chqbank", "chqdatec", "chqtag"]
 
-    let partition_statement, post_operations_statement;
+    let deduplicate_statement = "";
+    let post_operations_statement = "";
+    
     if (pk_key && pk_key.length > 0) {
-        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY chqkeydate desc) = 1`;
+        deduplicate_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY chqkeydate desc) = 1`;
+        
         post_operations_statement = `
 BEGIN
     DECLARE retry_count INT64 DEFAULT 0;
     DECLARE max_retries INT64 DEFAULT 10;
     DECLARE success BOOL DEFAULT FALSE;
+    DECLARE loop_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP();
 
     WHILE retry_count < max_retries AND NOT success DO
+        IF TIMESTAMP_DIFF(CURRENT_TIMESTAMP(), loop_start, MINUTE) >= 5 THEN
+            BREAK;
+        END IF;
+
         BEGIN
             ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
             ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
@@ -30,15 +38,26 @@ BEGIN
             SET retry_count = retry_count + 1;
         END;
     END WHILE;
-END;`;
 
-    } else {
-        partition_statement = "";
-        post_operations_statement = "";
+    IF NOT success THEN
+        INSERT INTO \`monitoring_dataset.dataform_all_logs\` (
+            process_name, data_layer, action_name, status, start_time, end_time, error_message, executed_by
+        )
+        SELECT 
+            'Dataform Pipeline', 'VALIDATED', '${name()}', 'FAILED', (SELECT start_ts FROM temp_start_${name()}), NULL, 'Timeout 5 Minutes or Max Retries Reached', SESSION_USER();
+
+        RAISE USING MESSAGE = 'Process Failed: Timeout 5 Minutes or Max Retries Reached';
+    END IF;
+END;`;
     }
 }
 
-WITH all_sources AS (
+pre_operations {
+  CREATE TEMP TABLE IF NOT EXISTS temp_start_${name()} AS
+  SELECT CURRENT_TIMESTAMP() AS start_ts;
+}
+
+WITH raw_sources AS (
   SELECT
     'ag01' AS company_id,
     NULLIF(CAST(TRIM(chqno) AS STRING), '') as chqno,
@@ -223,93 +242,235 @@ WITH all_sources AS (
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.chq`
 ),
 
+all_sources AS (
+  SELECT * FROM raw_sources
+  ${deduplicate_statement}
+),
+
+-------------------------------------------------------------------------
+-- 1. ค้นหาจุดตัดข้อความ (Keyword Priority)
+-------------------------------------------------------------------------
 find_pos AS (
   SELECT 
     *,
     COALESCE(
-      REGEXP_INSTR(
-        LOWER(chqmemo), 
-        r'โอน(?:เงิน|เข้า|\s*[/.\-]*\s*[a-z]+|\s*กสิกร|\s*กรุง|\s*ไทย|\s*ทหาร|\s*ออม|\s*บัญชี|\s*ธนาคาร|\s*ยูโอบี|\s*ทิสโก้|\s*ธกส|\s*ธอส)'
-      ), 0
+      NULLIF(
+        REGEXP_INSTR(
+          LOWER(chqmemo), 
+          r'(?:โอน(?:เงิน|เข้า|บางส่วน|ครั้งที่|เช็คเด้ง|\s*\d+\.?|\s*[/.\-]*\s*[a-z]+(?:\s*\+\s*[a-z]+)?|\s*(?:กสิกร|กรุง|ไทย|ทหาร|ออม|บัญชี|ธนาคาร|ยูโอบี|ทิสโก้|ธกส|ธอส|scb|bbl|ktb)(?:\s*\+\s*(?:กสิกร|กรุง|ไทย|ทหาร|ออม|บัญชี|ธนาคาร|ยูโอบี|ทิสโก้|ธกส|ธอส|scb|bbl|ktb|[a-z]+))?)|รับ(?:เงิน)?โอนแทน|\*\*\s*(?:[a-z]+(?:\s*\+\s*[a-z]+)?|(?:กสิกร|กรุง|ไทย|ทหาร|ออม|บัญชี|ธนาคาร|ยูโอบี|ทิสโก้|ธกส|ธอส|scb|bbl|ktb)(?:\s*\+\s*(?:กสิกร|กรุง|ไทย|ทหาร|ออม|บัญชี|ธนาคาร|ยูโอบี|ทิสโก้|ธกส|ธอส|scb|bbl|ktb|[a-z]+))?)|เปลี่ยนเช็ค)'
+        ), 0
+      ),
+      NULLIF(
+        REGEXP_INSTR(
+          LOWER(chqmemo), 
+          r'เช็ค'
+        ), 0
+      ),
+      0
     ) AS transfer_pos
   FROM all_sources
 ),
 
+-------------------------------------------------------------------------
+-- 2. เตรียมข้อความดิบ และลบเครื่องหมาย + ที่ติดกับวันที่ทิ้ง
+-------------------------------------------------------------------------
 processed_memo AS (
   SELECT 
     * EXCEPT(chqmemo, transfer_pos),
     chqmemo AS chqmemo_raw,
 
-    CASE
-      WHEN transfer_pos > 1 THEN SUBSTR(chqmemo, 1, transfer_pos - 1)
-      WHEN transfer_pos = 1 THEN ''
-      ELSE chqmemo 
+    CASE WHEN transfer_pos > 1 THEN SUBSTR(chqmemo, 1, transfer_pos - 1)
+         WHEN transfer_pos = 1 THEN ''
+         ELSE chqmemo 
     END AS chqmemo,
 
-    CASE
-      WHEN transfer_pos > 0 THEN SUBSTR(chqmemo, transfer_pos)
-      ELSE NULL 
-    END AS chqmemo_extract,
-
-    REGEXP_EXTRACT(
-      CASE WHEN transfer_pos > 0 THEN SUBSTR(chqmemo, transfer_pos) ELSE NULL END, 
-      r'(\d{1,2}/\d{1,2}(?:/\d{2,4})?)'
-    ) AS raw_extract_date
+    CASE WHEN transfer_pos > 0 THEN 
+           REGEXP_REPLACE(
+             SUBSTR(chqmemo, transfer_pos), 
+             r'\+\s*(\d{1,2}/\d{1,2}|ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)', 
+             r' \1'
+           )
+         ELSE NULL 
+    END AS chqmemo_extract
 
   FROM find_pos
 ),
 
-date_parsing AS (
+-------------------------------------------------------------------------
+-- 3. สแกนหา "วันที่ + ยอดเงิน" (หรือ เดือน + ยอดเงิน) เฉพาะหลัง Keyword
+-------------------------------------------------------------------------
+extracted_pairs AS (
   SELECT 
     *,
-    CAST(SPLIT(raw_extract_date, '/')[SAFE_OFFSET(0)] AS INT64) AS ext_d,
-    CAST(SPLIT(raw_extract_date, '/')[SAFE_OFFSET(1)] AS INT64) AS ext_m,
-    CAST(SPLIT(raw_extract_date, '/')[SAFE_OFFSET(2)] AS INT64) AS ext_y
+    ARRAY_CONCAT(
+      COALESCE(
+        REGEXP_EXTRACT_ALL(
+          SPLIT(chqmemo_extract, 'ชำระครบ')[SAFE_OFFSET(0)], 
+          r'\d{1,2}/\d{1,2}(?:/\d{2,4})?\s+(?:\d{1,3}(?:,\d{3})+(?:\.\d*)?|\d+\.\d+|\d{3,})(?:\s*\+\s*(?:\d{1,3}(?:,\d{3})+(?:\.\d*)?|\d+\.\d+|\d{3,}))*(?:[^0-9./]|$|บาท|บ\.)'
+        ), []
+      ),
+      COALESCE(
+        REGEXP_EXTRACT_ALL(
+          SPLIT(chqmemo_extract, 'ชำระครบ')[SAFE_OFFSET(0)], 
+          r'(?:ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\s*(?:\d{2,4}\s+)?(?:\d{1,3}(?:,\d{3})+(?:\.\d*)?|\d+\.\d+|\d{3,})(?:\s*\+\s*(?:\d{1,3}(?:,\d{3})+(?:\.\d*)?|\d+\.\d+|\d{3,}))*(?:[^0-9./]|$|บาท|บ\.)'
+        ), []
+      ),
+      COALESCE(
+        REGEXP_EXTRACT_ALL(
+          SPLIT(chqmemo_extract, 'ชำระครบ')[SAFE_OFFSET(0)], 
+          r'(?:ครั้งที่\s*\d+\s*)(?:\d{1,3}(?:,\d{3})+(?:\.\d*)?|\d+\.\d+|\d{3,})(?:[^0-9./]|$|บาท|บ\.)'
+        ), []
+      )
+    ) AS pair_matches,
+
+    COALESCE(
+      REGEXP_EXTRACT(SPLIT(chqmemo_extract, 'ชำระครบ')[SAFE_OFFSET(0)], r'(?:=|จำนวน)\s*([\d,]+(?:\.\d*)?)'),
+      REGEXP_EXTRACT(
+        REGEXP_REPLACE(
+          SPLIT(chqmemo_extract, 'ชำระครบ')[SAFE_OFFSET(0)], 
+          r'(?:เลขที่|ที่|no\.?|No\.?|เช็ค|chq\.?|CHQ\.?)\s*#?\s*[a-zA-Z0-9\-]+|เปลี่ยนเช็ค[^\d]{0,30}\b\d{6,8}\b', 
+          ''
+        ), 
+        r'(?:\s|^|\(|\[)(\d{1,3}(?:,\d{3})+(?:\.\d*)?|\d+\.\d+|\d{3,})(?:\s|$|\+|[)\]])'
+      )
+    ) AS fallback_amount,
+
+    REGEXP_EXTRACT(chqmemo_extract, r'(\d{1,2}/\d{1,2}(?:/\d{2,4})?)') AS fallback_date
+
   FROM processed_memo
 )
 
+-------------------------------------------------------------------------
+-- 4. ผลลัพธ์สุดท้าย: จัดเก็บลง RECORD แบบ ARRAY
+-------------------------------------------------------------------------
 SELECT 
-  * EXCEPT(chqmemo_extract, raw_extract_date, ext_d, ext_m, ext_y), 
+  * EXCEPT(chqmemo_extract, pair_matches, fallback_amount, fallback_date), 
   
-  -- extract_text:
   TRIM(
     REGEXP_REPLACE(
-      chqmemo_extract, 
-      r'\s*(?:วันที่|ลว\.|ลว|ล/ว|ยกเลิก|จำนวน|แทน|=|บาท|\d{1,2}/\d{1,2}(?:/\d{2,4})?).*', 
+      REGEXP_REPLACE(
+        REGEXP_REPLACE(
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(
+              REPLACE(REPLACE(REPLACE(chqmemo_extract, '**', ''), '(', ' '), ')', ' '), 
+              r'[\n\r]+', 
+              ' '
+            ),
+            r'(?i)\b(?:RV|JV)[\s\S]*', 
+            ''
+          ),
+          r'\s*(?:วันที่|ลว\.|ลว|ล/ว|ยกเลิก|จำนวน|=|บาท|(?:ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)(?:\s*\d{2,4})?|ชำระครบ|(?:เลขที่|no\.?|No\.?|NO\.?|chq\.?|CHQ\.?)\s*#?\s*[a-zA-Z0-9\-]+|ยอดคงค้าง|คงค้าง|ค้าง|แทน|และ|\d{1,2}/\d{1,2}(?:/\d{2,4})?(?:\s*(?:จำนวน|ยอด|เป็นเงิน|=)?\s*[\d,]+(?:\.\d*)?(?:\s*\+\s*[\d,]+(?:\.\d*)?)*)?|[\d,]+\.\d*|\d{1,3}(?:,\d{3})+|\b\d{4,15}(?:\.\d*)?\b|,|\*)\s*', 
+          ' '
+        ),
+        r'\s+', 
+        ' '
+      ),
+      r'^[/*\s]+|[/*\s]+$', 
       ''
     )
   ) AS extract_text,
 
-  -- extract_date (Data Type: DATE): สร้างปี ค.ศ. แล้วประกอบร่างใหม่
-  SAFE.PARSE_DATE('%Y-%m-%d', CONCAT(
-    CASE
-      WHEN ext_y IS NULL THEN EXTRACT(YEAR FROM chqdatec)
-      WHEN ext_y > 2400 THEN ext_y - 543
-      WHEN ext_y >= 40 AND ext_y <= 99 THEN ext_y + 1957
-      WHEN ext_y >= 0 AND ext_y < 40 THEN ext_y + 2000
-      ELSE ext_y
-    END, 
-    '-', LPAD(CAST(ext_m AS STRING), 2, '0'), 
-    '-', LPAD(CAST(ext_d AS STRING), 2, '0')
-  )) AS extract_date,
-
-  -- extract_amount: ลบลูกน้ำออก แล้วใช้ SAFE_CAST แปลงเป็น FLOAT64
-  SAFE_CAST(
-    REPLACE(
+  ARRAY(
+    -- **ชุดข้อมูลที่ 1: มาจากการจับคู่ (pair_matches)**
+    SELECT AS STRUCT
       COALESCE(
-        REGEXP_EXTRACT(chqmemo_extract, r'(?:=|จำนวน)\s*([\d,]+(?:\.\d*)?)'),
-        REGEXP_EXTRACT(chqmemo_extract, r'\d{1,2}/\d{1,2}(?:/\d{2,4})?\s+([\d,]+(?:\.\d*)?)')
-      ),
-      ',', '' -- แทนที่ลูกน้ำด้วยค่าว่าง (ลบลูกน้ำทิ้ง)
-    ) AS FLOAT64
-  ) AS extract_amount
+        CASE
+          WHEN is_thai_month_only THEN LAST_DAY(DATE(EXTRACT(YEAR FROM chqdatec), d.m, 1))
+          ELSE SAFE.PARSE_DATE('%Y-%m-%d', CONCAT(
+            CASE
+              WHEN d.y IS NULL THEN EXTRACT(YEAR FROM chqdatec)
+              WHEN d.y > 2400 THEN d.y - 543
+              WHEN d.y >= 40 AND d.y <= 99 THEN d.y + 1957
+              WHEN d.y >= 0 AND d.y < 40 THEN d.y + 2000
+              ELSE d.y
+            END, 
+            '-', LPAD(CAST(d.m AS STRING), 2, '0'), 
+            '-', LPAD(CAST(d.d AS STRING), 2, '0')
+          )) 
+        END,
+        DATE(chqdatec)
+      ) AS extract_date,
+      
+      (
+        SELECT SUM(SAFE_CAST(REPLACE(v, ',', '') AS FLOAT64))
+        FROM UNNEST(
+          REGEXP_EXTRACT_ALL(
+            REGEXP_REPLACE(
+              p, 
+              r'^(\d{1,2}/\d{1,2}(?:/\d{2,4})?|(?:ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)(?:\s*\d{2,4})?|(?:ครั้งที่\s*\d+\s*))\s*(?:จำนวน|ยอด|เป็นเงิน|=)?\s*', 
+              ''
+            ), 
+            r'[\d,]+(?:\.\d*)?'
+          )
+        ) AS v
+      ) AS extract_amount
+    FROM (
+      SELECT 
+        p,
+        CASE WHEN REGEXP_CONTAINS(p, r'^(?:ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)') THEN TRUE ELSE FALSE END AS is_thai_month_only,
+        
+        CAST(SPLIT(COALESCE(REGEXP_EXTRACT(p, r'^(\d{1,2}/\d{1,2}(?:/\d{2,4})?)'), fallback_date), '/')[SAFE_OFFSET(0)] AS INT64) AS d,
+        
+        CASE
+          WHEN REGEXP_CONTAINS(p, r'^ม\.?ค\.?') THEN 1
+          WHEN REGEXP_CONTAINS(p, r'^ก\.?พ\.?') THEN 2
+          WHEN REGEXP_CONTAINS(p, r'^มี\.?ค\.?') THEN 3
+          WHEN REGEXP_CONTAINS(p, r'^เม\.?ย\.?') THEN 4
+          WHEN REGEXP_CONTAINS(p, r'^พ\.?ค\.?') THEN 5
+          WHEN REGEXP_CONTAINS(p, r'^มิ\.?ย\.?') THEN 6
+          WHEN REGEXP_CONTAINS(p, r'^ก\.?ค\.?') THEN 7
+          WHEN REGEXP_CONTAINS(p, r'^ส\.?ค\.?') THEN 8
+          WHEN REGEXP_CONTAINS(p, r'^ก\.?ย\.?') THEN 9
+          WHEN REGEXP_CONTAINS(p, r'^ต\.?ค\.?') THEN 10
+          WHEN REGEXP_CONTAINS(p, r'^พ\.?ย\.?') THEN 11
+          WHEN REGEXP_CONTAINS(p, r'^ธ\.?ค\.?') THEN 12
+          ELSE CAST(SPLIT(COALESCE(REGEXP_EXTRACT(p, r'^(\d{1,2}/\d{1,2}(?:/\d{2,4})?)'), fallback_date), '/')[SAFE_OFFSET(1)] AS INT64)
+        END AS m,
+        
+        CAST(SPLIT(COALESCE(REGEXP_EXTRACT(p, r'^(\d{1,2}/\d{1,2}(?:/\d{2,4})?)'), fallback_date), '/')[SAFE_OFFSET(2)] AS INT64) AS y
+      FROM UNNEST(pair_matches) p
+    ) AS d
+    
+    UNION ALL
+    
+    -- **ชุดข้อมูลที่ 2: มาจากก้อนสำรอง (Fallback)**
+    SELECT AS STRUCT
+      COALESCE(
+        SAFE.PARSE_DATE('%Y-%m-%d', CONCAT(
+          CASE
+            WHEN ext_y IS NULL THEN EXTRACT(YEAR FROM chqdatec)
+            WHEN ext_y > 2400 THEN ext_y - 543
+            WHEN ext_y >= 40 AND ext_y <= 99 THEN ext_y + 1957
+            WHEN ext_y >= 0 AND ext_y < 40 THEN ext_y + 2000
+            ELSE ext_y
+          END, 
+          '-', LPAD(CAST(ext_m AS STRING), 2, '0'), 
+          '-', LPAD(CAST(ext_d AS STRING), 2, '0')
+        )),
+        CASE WHEN fallback_amount IS NOT NULL THEN DATE(chqdatec) ELSE NULL END
+      ) AS extract_date,
+      
+      COALESCE(
+        SAFE_CAST(REPLACE(fallback_amount, ',', '') AS FLOAT64),
+        CASE WHEN fallback_date IS NOT NULL THEN chqtotal ELSE NULL END
+      ) AS extract_amount
+    FROM (
+      SELECT 
+        CAST(SPLIT(fallback_date, '/')[SAFE_OFFSET(0)] AS INT64) AS ext_d,
+        CAST(SPLIT(fallback_date, '/')[SAFE_OFFSET(1)] AS INT64) AS ext_m,
+        CAST(SPLIT(fallback_date, '/')[SAFE_OFFSET(2)] AS INT64) AS ext_y
+    )
+    WHERE ARRAY_LENGTH(pair_matches) = 0 AND (fallback_amount IS NOT NULL OR fallback_date IS NOT NULL OR (chqmemo_extract IS NOT NULL AND chqmemo_extract != ''))
+  ) AS extract_value
 
-FROM date_parsing
-${partition_statement}
-
-pre_operations {
-}
+FROM extracted_pairs
 
 post_operations {
     ${ when(!incremental(), post_operations_statement) }
+    
+    INSERT INTO `monitoring_dataset.dataform_all_logs` (
+        process_name, data_layer, action_name, status, start_time, end_time, error_message, executed_by
+    )
+    SELECT 
+        'Dataform Pipeline', 'VALIDATED', '${name()}', 'SUCCESS', (SELECT start_ts FROM temp_start_${name()}), CURRENT_TIMESTAMP(), NULL, SESSION_USER();
 }
