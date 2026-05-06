@@ -184,11 +184,12 @@ BEGIN
         AND IFNULL(t1.milLinkVcno, '') = IFNULL(t2.milLinkVcno, '')
         AND t1.CompanySK = t2.CompanySK
     LEFT JOIN (
-        SELECT OrderSK, mihVnos
+        SELECT OrderSK, CompanySK, mihVnos
         FROM `${DimOrderTableRef}`
-        QUALIFY ROW_NUMBER() OVER(PARTITION BY mihVnos ORDER BY OrderSK) = 1
+        QUALIFY ROW_NUMBER() OVER(PARTITION BY CompanySK, mihVnos ORDER BY OrderSK) = 1
     ) AS dim_order
         ON IFNULL(t1.milLinkVcno, '') = IFNULL(dim_order.mihVnos, '')
+        AND t1.CompanySK = dim_order.CompanySK
   ) AS S
   ON T.InvoiceSK = S.InvoiceSK
 
