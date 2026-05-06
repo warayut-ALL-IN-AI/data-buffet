@@ -188,7 +188,7 @@ BEGIN
         FROM `${DimOrderTableRef}`
         QUALIFY ROW_NUMBER() OVER(PARTITION BY mihVnos ORDER BY OrderSK) = 1
     ) AS dim_order
-        ON t1.milLinkVcno = dim_order.mihVnos
+        ON IFNULL(t1.milLinkVcno, '') = IFNULL(dim_order.mihVnos, '')
   ) AS S
   ON T.InvoiceSK = S.InvoiceSK
 
