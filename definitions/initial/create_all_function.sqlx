@@ -26,3 +26,158 @@ CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET
   ELSE CAST(NULL AS STRING)
 END)
 );
+
+CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.EXTRACT_CHQ_DATA`(
+  memo_raw STRING, 
+  datec DATETIME,
+  total FLOAT64
+)
+RETURNS STRUCT<
+  chqmemo STRING,
+  extract_text STRING,
+  extract_value ARRAY<STRUCT<extract_date DATE, extract_amount FLOAT64>>
+> AS (
+  (
+    SELECT AS STRUCT
+      chqmemo_clean AS chqmemo,
+      TRIM(
+        REGEXP_REPLACE(
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(
+              REGEXP_REPLACE(
+                REGEXP_REPLACE(
+                  REPLACE(REPLACE(REPLACE(chqmemo_extract, '**', ''), '(', ' '), ')', ' '), 
+                  r'[\n\r]+', 
+                  ' '
+                ),
+                r'(?i)\b(?:RV|JV)[\s\S]*', 
+                ''
+              ),
+              -- [อัปเกรด]: ล็อกสเปกปี พ.ศ. ให้ต้องตามด้วยช่องว่าง และเพิ่มการลบเครื่องหมาย + ที่ตกค้างให้สะอาดขึ้น
+              r'\s*(?:วันที่|ลว\.|ลว|ล/ว|ยกเลิก|จำนวน|=|บาท|(?:ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\s*(?:\d{2,4}(?:\s+|$))?|ชำระครบ|ครบ|(?:เลขที่|no\.?|No\.?|NO\.?|chq\.?|CHQ\.?)\s*#?\s*[a-zA-Z0-9\-]+|ยอดคงค้าง|คงค้าง|ค้าง|แทน|และ|\d{1,2}/\d{1,2}(?:/\d{2,4})?(?:\s*(?:จำนวน|ยอด|เป็นเงิน|=)?\s*[\d,]+(?:\.\d*)?(?:\s*\+\s*[\d,]+(?:\.\d*)?)*)?|[\d,]+\.\d*|\d{1,3}(?:,\d{3})+|\b\d{4,15}(?:\.\d*)?\b|,|\*|\+)\s*', 
+              ' '
+            ),
+            r'\s+', 
+            ' '
+          ),
+          r'^[/*\s]+|[/*\s]+$', 
+          ''
+        )
+      ) AS extract_text,
+      ARRAY(
+        SELECT AS STRUCT
+          COALESCE(
+            CASE
+              WHEN is_thai_month_only THEN LAST_DAY(DATE(EXTRACT(YEAR FROM datec), d.m, 1))
+              ELSE SAFE.PARSE_DATE('%Y-%m-%d', CONCAT(
+                CASE
+                  WHEN d.y IS NULL THEN EXTRACT(YEAR FROM datec)
+                  WHEN d.y > 2400 THEN d.y - 543
+                  WHEN d.y BETWEEN 40 AND 99 THEN d.y + 1957
+                  WHEN d.y >= 0 AND d.y < 40 THEN d.y + 2000
+                  ELSE d.y
+                END, 
+                '-', LPAD(CAST(d.m AS STRING), 2, '0'), 
+                '-', LPAD(CAST(d.d AS STRING), 2, '0')
+              )) 
+            END,
+            DATE(datec)
+          ) AS extract_date,
+          (
+            SELECT SUM(SAFE_CAST(REPLACE(v, ',', '') AS FLOAT64))
+            FROM UNNEST(
+              REGEXP_EXTRACT_ALL(
+                REGEXP_REPLACE(
+                  p, 
+                  -- [อัปเกรด]: ล็อกสเปกปี พ.ศ. ตรงนี้เช่นกัน เพื่อไม่ให้มันเผลอไปกินยอดเงินที่ไม่มีช่องว่างคั่น
+                  r'^(\d{1,2}/\d{1,2}(?:/\d{2,4})?|(?:ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\s*(?:\d{2,4}(?:\s+|$))?|(?:ครั้งที่\s*\d+\s*))\s*(?:จำนวน|ยอด|เป็นเงิน|=)?\s*', 
+                  ''
+                ), 
+                r'[\d,]+(?:\.\d*)?'
+              )
+            ) AS v
+          ) AS extract_amount
+        FROM (
+          SELECT 
+            p,
+            REGEXP_CONTAINS(p, r'^(?:ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)') AS is_thai_month_only,
+            CAST(SPLIT(COALESCE(REGEXP_EXTRACT(p, r'^(\d{1,2}/\d{1,2}(?:/\d{2,4})?)'), fallback_date), '/')[SAFE_OFFSET(0)] AS INT64) AS d,
+            CASE
+              WHEN REGEXP_CONTAINS(p, r'^ม\.?ค\.?') THEN 1
+              WHEN REGEXP_CONTAINS(p, r'^ก\.?พ\.?') THEN 2
+              WHEN REGEXP_CONTAINS(p, r'^มี\.?ค\.?') THEN 3
+              WHEN REGEXP_CONTAINS(p, r'^เม\.?ย\.?') THEN 4
+              WHEN REGEXP_CONTAINS(p, r'^พ\.?ค\.?') THEN 5
+              WHEN REGEXP_CONTAINS(p, r'^มิ\.?ย\.?') THEN 6
+              WHEN REGEXP_CONTAINS(p, r'^ก\.?ค\.?') THEN 7
+              WHEN REGEXP_CONTAINS(p, r'^ส\.?ค\.?') THEN 8
+              WHEN REGEXP_CONTAINS(p, r'^ก\.?ย\.?') THEN 9
+              WHEN REGEXP_CONTAINS(p, r'^ต\.?ค\.?') THEN 10
+              WHEN REGEXP_CONTAINS(p, r'^พ\.?ย\.?') THEN 11
+              WHEN REGEXP_CONTAINS(p, r'^ธ\.?ค\.?') THEN 12
+              ELSE CAST(SPLIT(COALESCE(REGEXP_EXTRACT(p, r'^(\d{1,2}/\d{1,2}(?:/\d{2,4})?)'), fallback_date), '/')[SAFE_OFFSET(1)] AS INT64)
+            END AS m,
+            CAST(SPLIT(COALESCE(REGEXP_EXTRACT(p, r'^(\d{1,2}/\d{1,2}(?:/\d{2,4})?)'), fallback_date), '/')[SAFE_OFFSET(2)] AS INT64) AS y
+          FROM UNNEST(pair_matches) p
+        ) AS d
+        
+        UNION ALL
+        
+        SELECT AS STRUCT
+          COALESCE(
+            SAFE.PARSE_DATE('%Y-%m-%d', CONCAT(
+              CASE
+                WHEN y IS NULL THEN EXTRACT(YEAR FROM datec)
+                WHEN y > 2400 THEN y - 543
+                WHEN y BETWEEN 40 AND 99 THEN y + 1957
+                WHEN y >= 0 AND y < 40 THEN y + 2000
+                ELSE y
+              END, 
+              '-', LPAD(CAST(m AS STRING), 2, '0'), 
+              '-', LPAD(CAST(d AS STRING), 2, '0')
+            )),
+            CASE WHEN fallback_amount IS NOT NULL THEN DATE(datec) ELSE NULL END
+          ) AS extract_date,
+          COALESCE(
+            SAFE_CAST(REPLACE(fallback_amount, ',', '') AS FLOAT64),
+            CASE WHEN fallback_date IS NOT NULL THEN total ELSE NULL END
+          ) AS extract_amount
+        FROM (
+          SELECT 
+            CAST(SPLIT(fallback_date, '/')[SAFE_OFFSET(0)] AS INT64) AS d,
+            CAST(SPLIT(fallback_date, '/')[SAFE_OFFSET(1)] AS INT64) AS m,
+            CAST(SPLIT(fallback_date, '/')[SAFE_OFFSET(2)] AS INT64) AS y
+        )
+        WHERE ARRAY_LENGTH(pair_matches) = 0 
+          AND (fallback_amount IS NOT NULL OR fallback_date IS NOT NULL OR (chqmemo_extract IS NOT NULL AND chqmemo_extract != ''))
+      ) AS extract_value
+    FROM (
+      SELECT 
+        chqmemo_clean,
+        chqmemo_extract,
+        ARRAY_CONCAT(
+          COALESCE(REGEXP_EXTRACT_ALL(SPLIT(chqmemo_extract, 'ชำระครบ')[SAFE_OFFSET(0)], r'\d{1,2}/\d{1,2}(?:/\d{2,4})?\s*(?:จำนวน|ยอด|เป็นเงิน|=)?\s*(?:\d{1,3}(?:,\d{3})+(?:\.\d*)?|\d+\.\d+|\d{3,})(?:\s*\+\s*(?:\d{1,3}(?:,\d{3})+(?:\.\d*)?|\d+\.\d+|\d{3,}))*(?:[^0-9./]|$|บาท|บ\.)'), []),
+          COALESCE(REGEXP_EXTRACT_ALL(SPLIT(chqmemo_extract, 'ชำระครบ')[SAFE_OFFSET(0)], r'(?:ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\s*(?:\d{2,4}\s+)?\s*(?:จำนวน|ยอด|เป็นเงิน|=)?\s*(?:\d{1,3}(?:,\d{3})+(?:\.\d*)?|\d+\.\d+|\d{3,})(?:\s*\+\s*(?:\d{1,3}(?:,\d{3})+(?:\.\d*)?|\d+\.\d+|\d{3,}))*(?:[^0-9./]|$|บาท|บ\.)'), []),
+          COALESCE(REGEXP_EXTRACT_ALL(SPLIT(chqmemo_extract, 'ชำระครบ')[SAFE_OFFSET(0)], r'(?:ครั้งที่\s*\d+\s*)(?:จำนวน|ยอด|เป็นเงิน|=)?\s*(?:\d{1,3}(?:,\d{3})+(?:\.\d*)?|\d+\.\d+|\d{3,})(?:[^0-9./]|$|บาท|บ\.)'), [])
+        ) AS pair_matches,
+        COALESCE(
+          REGEXP_EXTRACT(SPLIT(chqmemo_extract, 'ชำระครบ')[SAFE_OFFSET(0)], r'(?:=|จำนวน)\s*([\d,]+(?:\.\d*)?)'),
+          REGEXP_EXTRACT(REGEXP_REPLACE(SPLIT(chqmemo_extract, 'ชำระครบ')[SAFE_OFFSET(0)], r'(?:เลขที่|ที่|no\.?|No\.?|เช็ค|chq\.?|CHQ\.?)\s*#?\s*[a-zA-Z0-9\-]+|เปลี่ยนเช็ค[^\d]{0,30}\b\d{6,8}\b', ''), r'(?:\s|^|\(|\[)(\d{1,3}(?:,\d{3})+(?:\.\d*)?|\d+\.\d+|\d{3,})(?:\s|$|\+|[)\]])')
+        ) AS fallback_amount,
+        REGEXP_EXTRACT(chqmemo_extract, r'(\d{1,2}/\d{1,2}(?:/\d{2,4})?)') AS fallback_date
+      FROM (
+        SELECT 
+          CASE WHEN transfer_pos > 1 THEN SUBSTR(memo_raw, 1, transfer_pos - 1) WHEN transfer_pos = 1 THEN '' ELSE memo_raw END AS chqmemo_clean,
+          CASE WHEN transfer_pos > 0 THEN REGEXP_REPLACE(SUBSTR(memo_raw, transfer_pos), r'\+\s*(\d{1,2}/\d{1,2}|ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)', r' \1') ELSE NULL END AS chqmemo_extract
+        FROM (
+          SELECT 
+            COALESCE(
+              NULLIF(REGEXP_INSTR(LOWER(memo_raw), r'(?:โอน(?:เงิน|เข้า|บางส่วน|ครั้งที่|เช็คเด้ง|\s*\d+\.?|\s*[/.\-]*\s*[a-z]+(?:\s*\+\s*[a-z]+)?|\s*(?:กสิกร|กรุง|ไทย|ทหาร|ออม|บัญชี|ธนาคาร|ยูโอบี|ทิสโก้|ธกส|ธอส|scb|bbl|ktb)(?:\s*\+\s*(?:กสิกร|กรุง|ไทย|ทหาร|ออม|บัญชี|ธนาคาร|ยูโอบี|ทิสโก้|ธกส|ธอส|scb|bbl|ktb|[a-z]+))?)|รับ(?:เงิน)?โอนแทน|\*\*\s*(?:[a-z]+(?:\s*\+\s*[a-z]+)?|(?:กสิกร|กรุง|ไทย|ทหาร|ออม|บัญชี|ธนาคาร|ยูโอบี|ทิสโก้|ธกส|ธอส|scb|bbl|ktb)(?:\s*\+\s*(?:กสิกร|กรุง|ไทย|ทหาร|ออม|บัญชี|ธนาคาร|ยูโอบี|ทิสโก้|ธกส|ธอส|scb|bbl|ktb|[a-z]+))?)|เปลี่ยนเช็ค)'), 0), 
+              NULLIF(REGEXP_INSTR(LOWER(memo_raw), r'เช็ค'), 0), 
+              0
+            ) AS transfer_pos
+        )
+      )
+    )
+  )
+);
