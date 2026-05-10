@@ -50,7 +50,7 @@ js {
 }
 
   with mil as (
-    select
+    select distinct
       dim_com.CompanySK,
       dim_com.companyID,
       milYear, milMonth, milDay,
@@ -100,7 +100,10 @@ js {
     mil.* except(InvoiceSk, CompanySK, companyID),
     current_date('Asia/Bangkok') as asatdate
   from mil as mil
-  LEFT JOIN `${FactOrderTableRef}` AS fact_ord
+  LEFT JOIN (
+    SELECT * FROM `${FactOrderTableRef}`
+    qualify row_number() over(partition by CompanySK, milYear, milMonth, milDay, milType, milVnos, milCus, milStk order by FactOrderSK desc) = 1
+  ) AS fact_ord
     ON IFNULL(mil.milLinkVcno, '') = IFNULL(fact_ord.milVnos, '')
     AND mil.milStk = fact_ord.milStk
     AND mil.CompanySK = fact_ord.CompanySK
