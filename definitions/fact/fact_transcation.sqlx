@@ -6,12 +6,12 @@ config {
 
 js {
     // Define table references
-    const FactTransactionTable = {
+    const FactTranscationTable = {
         database: databuffet.DATABASE,
         schema: databuffet.FACT_TABLE,
         name: name(),
     };
-    const FactTransactionTableRef = `${FactTransactionTable.database}.${FactTransactionTable.schema}.${FactTransactionTable.name}`;
+    const FactTranscationTableRef = `${FactTranscationTable.database}.${FactTranscationTable.schema}.${FactTranscationTable.name}`;
 
     const DimProductTable = {
         database: databuffet.DATABASE,
@@ -156,7 +156,7 @@ js {
 }
 
 BEGIN
-  CREATE OR REPLACE TEMP TABLE temp_fact_transaction 
+  CREATE OR REPLACE TEMP TABLE temp_fact_transcation 
   AS
   WITH raw_transction as (
     SELECT 
@@ -201,7 +201,8 @@ BEGIN
       ON trans.milCus = deb.debCode
       AND trans.companyID = deb.company_id
       
-    WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1
+    WHERE PARSE_DATE('%Y%m%d', CONCAT(trans.milYear, FORMAT("%02d", trans.milMonth), FORMAT("%02d", trans.milDay))) >= DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR)
+      and trans.asatdate >= CURRENT_DATE('Asia/Bangkok')-1
       -- and trans.companyID = 'ag01'
       -- AND milVnos = '6901003086'
       -- AND trans.milPer = '1065043'
@@ -655,10 +656,10 @@ BEGIN
 --   -- ALL : 2388305
 
   BEGIN    
-    DELETE FROM `${FactTransactionTableRef}` AS T
+    DELETE FROM `${FactTranscationTableRef}` AS T
     WHERE EXISTS (
       SELECT 1 
-      FROM temp_fact_transaction AS S 
+      FROM temp_fact_transcation AS S 
       WHERE T.milVnos = S.milVnos
         AND T.milType = S.milType
         AND T.CompanySK = S.CompanySK
@@ -667,13 +668,13 @@ BEGIN
   END;
 
   BEGIN
-    INSERT INTO `${FactTransactionTableRef}` 
-    SELECT * FROM temp_fact_transaction;
+    INSERT INTO `${FactTranscationTableRef}` 
+    SELECT * FROM temp_fact_transcation;
   END;
 
 END;
 
 BEGIN
-  DELETE FROM ${FactTransactionTableRef}
+  DELETE FROM ${FactTranscationTableRef}
   WHERE mix_date < DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR);
 END;

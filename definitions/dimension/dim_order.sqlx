@@ -35,7 +35,7 @@ BEGIN
         from ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
         where mil.miltype in ('PS', 'IS')
             and mil.asatdate >= current_date('Asia/Bangkok')-1
-            -- and mil.company_id = 'ag01'
+            and PARSE_DATE('%Y%m%d', CONCAT(mil.milYear, FORMAT("%02d", mil.milMonth), FORMAT("%02d", mil.milDay))) >= DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR)
     ),
     main_table as (
         select
@@ -119,6 +119,7 @@ BEGIN
         left join `${DimCompanyTableRef}` as dim_com
             on mih.company_id = dim_com.companyID
         WHERE mih.mihType = 'PS'
+            and PARSE_DATE('%Y%m%d', CONCAT(mih.mihYear, FORMAT("%02d", mih.mihMonth), FORMAT("%02d", mih.mihDay))) >= DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR)
             -- and mih.company_id = 'ag01'
     )
 
