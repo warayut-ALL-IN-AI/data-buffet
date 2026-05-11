@@ -132,6 +132,7 @@ BEGIN
         -- where a.company_id = 'ag01'
         --and a.STKcode885 is not null and a.STKcode885 <> ''
         qualify row_number() over(partition by dim_com.CompanySK, ProductCode order by prd_updated_date desc) = 1
+        
     )
     SELECT
       S.*,
@@ -142,6 +143,7 @@ BEGIN
       ON S.ProductCode = T.ProductCode
       AND IFNULL(S.Barcode, '') = IFNULL(T.Barcode, '')
       AND S.CompanySK = T.CompanySK
+
   ) S
   ON T.ProductCode = S.ProductCode 
     AND IFNULL(T.Barcode, '') = IFNULL(S.Barcode, '')
