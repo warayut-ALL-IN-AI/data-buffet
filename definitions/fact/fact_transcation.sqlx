@@ -159,7 +159,7 @@ BEGIN
   CREATE OR REPLACE TEMP TABLE temp_fact_transcation 
   AS
   WITH raw_transction as (
-    SELECT 
+    SELECT distinct
       channel_sk.ChannelSK,
       channel_sk.ChannelCostID,
       channel_sk.ChannelFinanceSK,
@@ -276,16 +276,15 @@ BEGIN
                 and trans.ChannelCostID = sale_sk.CostChannelID
             WHEN IFNULL(TRIM(sale_sk.DepCode), '') = '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
-                and ((trans.ChannelCostID = sale_sk.CostChannelID)
-                  or (CASE
-                        WHEN trans.debgroup in ('HP', 'HPEXPO') THEN lower(sale_sk.DepartmentID) like 'hp_%'
-                        WHEN trans.debgroup in ('TW', 'TWEXPO') THEN lower(sale_sk.DepartmentID) like 'tw_%'
-                        WHEN trans.debgroup in ('BT', 'BT.C') THEN lower(sale_sk.DepartmentID) like 'bt_%'
-                        WHEN trans.debgroup in ('GB') THEN lower(sale_sk.DepartmentID) like 'gb_%'
-                        WHEN trans.debgroup in ('MH') THEN lower(sale_sk.DepartmentID) like 'mh_%'
-                        WHEN trans.debgroup in ('DOHOME') THEN lower(sale_sk.DepartmentID) like 'dh_%'
-                      END)
-                )
+                and (CASE
+                      WHEN trans.ChannelCostID = sale_sk.CostChannelID THEN TRUE
+                      WHEN trans.debgroup in ('HP', 'HPEXPO') THEN lower(sale_sk.DepartmentID) like 'hp_%'
+                      WHEN trans.debgroup in ('TW', 'TWEXPO') THEN lower(sale_sk.DepartmentID) like 'tw_%'
+                      WHEN trans.debgroup in ('BT', 'BT.C') THEN lower(sale_sk.DepartmentID) like 'bt_%'
+                      WHEN trans.debgroup in ('GB') THEN lower(sale_sk.DepartmentID) like 'gb_%'
+                      WHEN trans.debgroup in ('MH') THEN lower(sale_sk.DepartmentID) like 'mh_%'
+                      WHEN trans.debgroup in ('DOHOME') THEN lower(sale_sk.DepartmentID) like 'dh_%'
+                    END)
             WHEN IFNULL(TRIM(sale_sk.ProvinceID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and (CASE 
@@ -367,7 +366,7 @@ BEGIN
       and trans.CompanySK = dir_sk.CompanySK
 
   WHERE IFNULL(trans.ChannelCostID, '') != 'COST99999'
-  qualify row_number() over(partition by trans.milType,trans.milVnos,trans.milCus,trans.milStk,trans.milPer,trans.milListno order by sale_sk.seq_condition) = 1
+  qualify row_number() over(partition by trans.milType,trans.milVnos,trans.milCus,trans.milStk,trans.milPer,trans.milListno order by sale_sk.seq_condition, sale_sk.SaleRepSK desc) = 1
   
 ), final_part2 as (
   SELECT 
@@ -424,16 +423,15 @@ BEGIN
                 and trans.ChannelCostID = sale_sk.CostChannelID
             WHEN IFNULL(TRIM(sale_sk.DepCode), '') = '' and IFNULL(TRIM(sale_sk.CostChannelID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
-                and ((trans.ChannelCostID = sale_sk.CostChannelID)
-                  or (CASE
-                        WHEN trans.debgroup in ('HP', 'HPEXPO') THEN lower(sale_sk.DepartmentID) like 'hp_%'
-                        WHEN trans.debgroup in ('TW', 'TWEXPO') THEN lower(sale_sk.DepartmentID) like 'tw_%'
-                        WHEN trans.debgroup in ('BT', 'BT.C') THEN lower(sale_sk.DepartmentID) like 'bt_%'
-                        WHEN trans.debgroup in ('GB') THEN lower(sale_sk.DepartmentID) like 'gb_%'
-                        WHEN trans.debgroup in ('MH') THEN lower(sale_sk.DepartmentID) like 'mh_%'
-                        WHEN trans.debgroup in ('DOHOME') THEN lower(sale_sk.DepartmentID) like 'dh_%'
-                      END)
-                )
+                and (CASE
+                      WHEN trans.ChannelCostID = sale_sk.CostChannelID THEN TRUE
+                      WHEN trans.debgroup in ('HP', 'HPEXPO') THEN lower(sale_sk.DepartmentID) like 'hp_%'
+                      WHEN trans.debgroup in ('TW', 'TWEXPO') THEN lower(sale_sk.DepartmentID) like 'tw_%'
+                      WHEN trans.debgroup in ('BT', 'BT.C') THEN lower(sale_sk.DepartmentID) like 'bt_%'
+                      WHEN trans.debgroup in ('GB') THEN lower(sale_sk.DepartmentID) like 'gb_%'
+                      WHEN trans.debgroup in ('MH') THEN lower(sale_sk.DepartmentID) like 'mh_%'
+                      WHEN trans.debgroup in ('DOHOME') THEN lower(sale_sk.DepartmentID) like 'dh_%'
+                    END)
             WHEN IFNULL(TRIM(sale_sk.ProvinceID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_sk.EmployeeID as STRING))
                 and (CASE 
@@ -541,16 +539,15 @@ BEGIN
                 and trans.ChannelCostID = sale_addon.CostChannelID
             WHEN IFNULL(TRIM(sale_addon.DepCode), '') = '' and IFNULL(TRIM(sale_addon.CostChannelID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
-                and ((trans.ChannelCostID = sale_addon.CostChannelID)
-                  or (CASE
-                        WHEN trans.debgroup in ('HP', 'HPEXPO') THEN lower(sale_addon.DepartmentID) like 'hp_%'
-                        WHEN trans.debgroup in ('TW', 'TWEXPO') THEN lower(sale_addon.DepartmentID) like 'tw_%'
-                        WHEN trans.debgroup in ('BT', 'BT.C') THEN lower(sale_addon.DepartmentID) like 'bt_%'
-                        WHEN trans.debgroup in ('GB') THEN lower(sale_addon.DepartmentID) like 'gb_%'
-                        WHEN trans.debgroup in ('MH') THEN lower(sale_addon.DepartmentID) like 'mh_%'
-                        WHEN trans.debgroup in ('DOHOME') THEN lower(sale_addon.DepartmentID) like 'dh_%'
-                      END)
-                )
+                and (CASE
+                      WHEN trans.ChannelCostID = sale_addon.CostChannelID THEN TRUE
+                      WHEN trans.debgroup in ('HP', 'HPEXPO') THEN lower(sale_addon.DepartmentID) like 'hp_%'
+                      WHEN trans.debgroup in ('TW', 'TWEXPO') THEN lower(sale_addon.DepartmentID) like 'tw_%'
+                      WHEN trans.debgroup in ('BT', 'BT.C') THEN lower(sale_addon.DepartmentID) like 'bt_%'
+                      WHEN trans.debgroup in ('GB') THEN lower(sale_addon.DepartmentID) like 'gb_%'
+                      WHEN trans.debgroup in ('MH') THEN lower(sale_addon.DepartmentID) like 'mh_%'
+                      WHEN trans.debgroup in ('DOHOME') THEN lower(sale_addon.DepartmentID) like 'dh_%'
+                    END)
             WHEN IFNULL(TRIM(sale_addon.ProvinceID), '') != ''
               THEN TRIM(IFNULL(trans.DummyChannel, trans.milPer)) = TRIM(CAST(sale_addon.EmployeeID as STRING))
                 and (CASE 
@@ -600,7 +597,7 @@ BEGIN
       and trans.CompanySK = costgroup_sk.CompanySK
 
   WHERE trans.ChannelCostID = 'COST99999'
-  qualify row_number() over(partition by trans.milType,trans.milVnos,trans.milCus,trans.milStk,trans.milPer,trans.milListno order by sale_sk.seq_condition) = 1
+  qualify row_number() over(partition by trans.milType,trans.milVnos,trans.milCus,trans.milStk,trans.milPer,trans.milListno order by sale_sk.seq_condition, sale_sk.SaleRepSK desc) = 1
 
 ), mix_table as (
   select * except(ProductGroupACC, debgroup)
