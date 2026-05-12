@@ -219,6 +219,9 @@ with chq as (
     mih.mihType as InvoiceType,
     mih.mihCus as CustomerID,
     PARSE_DATE('%Y%m%d', CONCAT(mih.mihYear, FORMAT("%02d", mih.mihMonth),  mih.mihDay)) as InvoiceDate, 
+    mih.mihjob,
+    mih.mihdep,
+    mih.mihper,
     mih.mihstanding as TransCreditTerm,
     mih.mihNetSum as milSum
   from ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
@@ -235,6 +238,9 @@ with chq as (
     mih.mihType as InvoiceType,
     mih.mihCus as CustomerID,
     PARSE_DATE('%Y%m%d', CONCAT(mih.mihYear, FORMAT("%02d", mih.mihMonth),  mih.mihDay)) as InvoiceDate, 
+    mih.mihjob,
+    mih.mihdep,
+    mih.mihper,
     MAX(mih.mihstanding) as TransCreditTerm,
     MAX(mih.mihNetSum) as milSum
   from ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
@@ -253,7 +259,7 @@ with chq as (
       )
     and PARSE_DATE('%Y%m%d', CONCAT(CAST(mih.mihyear AS STRING), FORMAT('%02d', mih.mihmonth), FORMAT('%02d', mih.mihday))) <= CURRENT_DATE('Asia/Bangkok')
     -- and mih.mihyear >= 2023
-  group by 1,2,4,5,6
+  group by 1,2,4,5,6,7,8,9
 
 ), main_mix AS (
   SELECT * FROM main_is
@@ -404,9 +410,9 @@ with chq as (
     final.InvoiceNo as cfsVnosID,
     final.InvoiceType as cfsTypeID,
 
-    CAST(NULL AS STRING) as cfsJob,
-    CAST(NULL AS STRING) as cfsDep,
-    CAST(NULL AS STRING) as cfsPer,
+    mihJob as cfsJob,
+    mihDep as cfsDep,
+    mihPer as cfsPer,
 
     final.CustomerID as debCode,
     dim_cus.debnamet as debName,
@@ -429,16 +435,26 @@ with chq as (
 
     -- IF(OutStanding between -1 and 1, 'Completed', 'Non-Completed') as flagComplete,
     (CASE 
-      WHEN EXTRACT(YEAR FROM final.InvoiceDate) <= 2023 and IF(OutStanding between -1 and 1, 'Completed', 'Non-Completed') = 'Non-Completed' THEN
-        IF( 
-            (select 1
-              from ${ref(databuffet.VALIDATED_MAC5, "cfs")}
-              where cfsclearsum = -1
-                and cfsclearall = -1
-                and company_id = final.companyid
-                and cfsvnosid = final.InvoiceNo) = 1, 
-            'Completed', 'Non-Completed'
-          )
+      WHEN EXTRACT(YEAR FROM final.InvoiceDate) <= 2023 
+        and IF(OutStanding between -1 and 1, 'Completed', 'Non-Completed') = 'Non-Completed'
+          THEN IF( 
+                  IFNULL(
+                    (select 
+                      min(PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday)))) as min_date
+                      from databuffet-nonprd.validated_mac5.mir
+                      where mirtype = 'RS'
+                        and company_id = final.companyid
+                        and mirbinvno = final.InvoiceNo), 
+                    DATE('2000-01-01')
+                  ) <= CURRENT_DATE('Asia/Bangkok')
+                  and (select 1
+                    from databuffet-nonprd.validated_mac5.cfs
+                    where cfsclearsum = -1
+                      and cfsclearall = -1
+                      and company_id = final.companyid
+                      and cfsvnosid = final.InvoiceNo) = 1, 
+                  'Completed', 'Non-Completed'
+                )
       ELSE IF(OutStanding between -1 and 1, 'Completed', 'Non-Completed')
     END) as flagComplete,
 
