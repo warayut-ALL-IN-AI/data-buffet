@@ -1,0 +1,448 @@
+config {
+  type: "operations",
+  dependencies: ["dim_customer", "dim_invoice"],
+  tags: [databuffet.TAG_DIM_DAILY],
+  hasOutput: true
+}
+
+js {
+    const DimAgingTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimAgingTableRef = `${DimAgingTable.database}.${DimAgingTable.schema}.${DimAgingTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+
+    const DimInvoiceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_invoice",
+    };
+    const DimInvoiceTableRef = `${DimInvoiceTable.database}.${DimInvoiceTable.schema}.${DimInvoiceTable.name}`;
+
+    const DimAgingHistoryTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_aging_history",
+    };
+    const DimAgingHistoryTableRef = `${DimAgingHistoryTable.database}.${DimAgingHistoryTable.schema}.${DimAgingHistoryTable.name}`;
+
+    const DimAgingView = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_VIEW,
+        name: "view_dim_aging",
+    };
+    const DimAgingViewRef = `${DimAgingView.database}.${DimAgingView.schema}.${DimAgingView.name}`;
+
+    const FactBillingTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: "fact_mir_vs",
+    };
+    const FactBillingTableRef = `${FactBillingTable.database}.${FactBillingTable.schema}.${FactBillingTable.name}`;
+
+    const DimStatusNotReceiveTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_status_not_receive",
+    };
+    const DimStatusNotReceiveTableRef = `${DimStatusNotReceiveTable.database}.${DimStatusNotReceiveTable.schema}.${DimStatusNotReceiveTable.name}`;
+
+}
+
+CREATE OR REPLACE TABLE `${DimAgingTableRef}`
+CLUSTER BY AgingSK
+AS
+WITH mir_raw AS (
+  SELECT
+    mir.company_id,
+    mir.mirbinvno,
+    (CASE 
+      WHEN dsr.StatusID is not null THEN 'EXC.'
+      ELSE 'INC.'
+    END) as status, 
+    MIN(PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday)))) AS min_receipt_date,
+    MAX(PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday)))) AS max_receipt_date
+  FROM ${ref(databuffet.VALIDATED_MAC5, "mir")} as mir
+  LEFT JOIN ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
+    ON mih.mihtype = 'RS'
+    and mih.mihcancel = 0
+    and mir.mirvnos = mih.mihvnos
+    and mir.company_id = mih.company_id
+  LEFT JOIN `${DimStatusNotReceiveTableRef}` as dsr
+    ON mih.company_id = dsr.CompanyID 
+    AND mih.mihstatus = dsr.StatusID
+  WHERE mir.mirtype = 'RS'
+  GROUP BY 1, 2, 3
+  QUALIFY row_number() over(partition by company_id, mirbinvno, min_receipt_date, max_receipt_date order by (case when status = 'INC.' then 1 else 3 end)) = 1
+
+), mir_raw_logic AS (
+  SELECT 
+    *,
+    MAX(CASE WHEN status = 'EXC.' THEN min_receipt_date END) OVER(PARTITION BY company_id, mirbinvno) as exc_min_date,
+    MAX(CASE WHEN status = 'INC.' THEN max_receipt_date END) OVER(PARTITION BY company_id, mirbinvno) as inc_max_date
+  FROM mir_raw
+
+), mir_raw_agg AS (
+  SELECT 
+    company_id, 
+    mirbinvno, 
+    status, 
+    min_receipt_date, 
+    max_receipt_date
+  FROM mir_raw_logic
+  WHERE 
+    (CASE 
+      WHEN inc_max_date < exc_min_date AND status = 'INC.' THEN TRUE
+      WHEN inc_max_date < exc_min_date AND status = 'EXC.' THEN FALSE
+      ELSE TRUE 
+    END)
+    AND max_receipt_date <= current_date('Asia/Bangkok')-1
+  QUALIFY row_number() over(partition by company_id, mirbinvno order by min_receipt_date desc, max_receipt_date desc) = 1
+  
+),
+-- 1. ดึงข้อมูลตั้งหนี้ตั้งต้น
+Base_CFS AS (
+  SELECT
+    c.company_id,
+    c.cfsvnosid                       AS CFSvnosID,
+    c.cfsdateid                       AS CFSdateID,
+    c.cfscusid                        AS CFScusID,
+    c.cfstypeid                       AS CFStypeID,
+    c.cfsjob                          AS CFSjob,
+    c.cfsdep AS CFSdep,
+    c.cfsper AS CFSper,
+    c.cfsclearsum                     AS CFSclearSUM,
+    c.cfsclearall                     AS CFSclearALL,
+    CAST(c.cfssumreq  AS FLOAT64)     AS CFSsumREQ,
+
+    (CASE 
+      WHEN (
+        SELECT 
+          MIN(PARSE_DATE('%Y%m%d', CONCAT(mir.miryear, FORMAT("%02d", mir.mirmonth), FORMAT("%02d", mir.mirday))))
+        FROM ${ref(databuffet.VALIDATED_MAC5, "mir")} as mir
+        WHERE c.cfsvnosid = mir.mirbinvno
+          and mir.mirtype = 'RS'
+          and PARSE_DATE('%Y%m%d', CONCAT(mir.miryear, FORMAT("%02d", mir.mirmonth), FORMAT("%02d", mir.mirday))) > current_date('Asia/Bangkok')
+          and c.company_id = mir.company_id
+      ) is not null THEN 
+        (CASE 
+          WHEN (
+            SELECT 
+              MIN(PARSE_DATE('%Y%m%d', CONCAT(mir.miryear, FORMAT("%02d", mir.mirmonth), FORMAT("%02d", mir.mirday))))
+            FROM ${ref(databuffet.VALIDATED_MAC5, "mir")} as mir
+            WHERE c.cfsvnosid = mir.mirbinvno
+              and mir.mirtype = 'RS'
+              and PARSE_DATE('%Y%m%d', CONCAT(mir.miryear, FORMAT("%02d", mir.mirmonth), FORMAT("%02d", mir.mirday))) > current_date('Asia/Bangkok')
+              and c.company_id = mir.company_id
+          ) >= current_date('Asia/Bangkok') THEN 0 ELSE CAST(c.cfssumcut1 AS FLOAT64) 
+        END)
+      ELSE CAST(c.cfssumcut1 AS FLOAT64)
+    END) AS CFSsumCUT1,
+    -- (CASE
+    --   -- WHEN IFNULL(mir.mirbinvno, '') = '' AND CAST(c.cfssumcut2 AS FLOAT64) = 0.0 THEN 0
+    --   WHEN IFNULL(mir.mirbinvno, '') = '' AND EXTRACT(YEAR FROM c.cfsdateid) >= 2022 THEN 0
+    --   ELSE CAST(c.cfssumcut1 AS FLOAT64)
+    -- END) AS CFSsumCUT1,
+
+    -- CAST(c.cfssumcut1 AS FLOAT64) AS CFSsumCUT1,
+    
+    CAST(c.cfssumcut2 AS FLOAT64)     AS CFSsumCUT2,
+    (
+      SELECT MIHstanding 
+      FROM ${ref(databuffet.CURATED_MAC5, "curated_mih")} as sub1 
+      where sub1.mihvnos = c.cfsvnosid
+        and sub1.mihcus = c.cfscusid
+        and sub1.company_id = c.company_id
+    ) as TransCreditTerm
+  FROM ${ref(databuffet.VALIDATED_MAC5, "cfs")} as c
+  LEFT JOIN ${ref(databuffet.CURATED_MAC5, "curated_mih")} as m 
+    ON c.CFSvnosID = m.mihvnos
+    and c.company_id = m.company_id
+    and m.mihstatus != 32
+  WHERE EXTRACT(YEAR FROM c.cfsdateid) BETWEEN 2000 AND 2030
+    AND c.cfstypeid = 'IS'
+    -- and c.company_id = 'ag01'
+
+),
+-- 2. หาราคาที่ถูกต้องจากหน้าบิล (ซ่อม CFSsumREQ)
+Fix_Req AS (
+  SELECT 
+    c.company_id,
+    c.CFSvnosID,
+    c.CFScusID,
+    CAST(m.mihnetsum AS FLOAT64) AS corrected_req
+  FROM Base_CFS c
+  LEFT JOIN ${ref(databuffet.CURATED_MAC5, "curated_mih")} m 
+    ON c.CFSvnosID = m.mihvnos 
+    AND c.CFScusID = m.mihcus
+    AND c.company_id = m.company_id
+  WHERE m.mihtype = 'IS' 
+    AND m.MIHcancel = 0 
+    AND CAST(c.CFSsumREQ AS FLOAT64) != CAST(m.mihnetsum AS FLOAT64)
+
+),
+-- 3. หายอดใบเสร็จที่ถูกต้อง (ซ่อม CFSsumCUT1)
+Fix_Cut1 AS (
+  SELECT 
+    mir.company_id,
+    mir.MIRbinvNo AS CFSvnosID,
+    SUM(CAST(mir.mirsum AS FLOAT64)) AS corrected_cut1
+  FROM ${ref(databuffet.VALIDATED_MAC5, "mir")} mir
+  LEFT JOIN ${ref(databuffet.CURATED_MAC5, "curated_mih")} mih 
+    ON mih.mihvnos = mir.mirvnos 
+    AND mih.mihtype = mir.mirtype 
+    AND mih.mihcus = mir.mircus 
+    AND mih.mihyear = mir.miryear 
+    AND mih.mihmonth = mir.mirmonth 
+    AND mih.mihday = mir.mirday
+    AND mir.company_id = mih.company_id
+  WHERE mir.mirtype = 'RS' 
+    AND mih.MIHcancel = 0
+    -- and mir.company_id = 'ag01'
+  GROUP BY mir.company_id, mir.MIRbinvNo
+
+),
+-- 4. หายอดใบลดหนี้/เพิ่มหนี้ที่ถูกต้อง + VAT 7% (ซ่อม CFSsumCUT2)
+Fix_Cut2 AS (
+  SELECT 
+    mil.company_id,
+    mil.millinkvcno AS CFSvnosID,
+    (SUM(CAST(mil.milsum AS FLOAT64)) + (SUM(CAST(mil.milsum AS FLOAT64)) * 0.07)) AS corrected_cut2
+  FROM ${ref(databuffet.CURATED_MAC5, "curated_mil")} as mil
+  LEFT JOIN ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih 
+    ON mih.mihvnos = mil.milvnos 
+    AND mih.mihtype = mil.miltype 
+    AND mih.mihcus = mil.milcus 
+    AND mih.mihyear = mil.milyear 
+    AND mih.mihmonth = mil.milmonth 
+    AND mih.mihday = mil.milday
+    and mih.company_id = mil.company_id
+  WHERE mih.mihstatus != 29 
+    AND mil.miltype = 'BS' 
+    AND mil.milyear >= 2000
+    -- and mil.company_id = 'ag01'
+  GROUP BY mil.company_id, mil.millinkvcno
+
+),
+-- 5. ประกอบร่างและซ่อมข้อมูลให้เป็นก้อนที่ถูกต้อง
+Cleaned_CFS AS (
+  SELECT 
+    b.company_id,
+    b.CFSvnosID, b.CFScusID, b.CFSdateID, b.CFStypeID, 
+    b.CFSjob, b.CFSdep, b.CFSper, b.CFSclearSUM, b.CFSclearALL,
+    COALESCE(fr.corrected_req, b.CFSsumREQ) AS CFSsumREQ,
+    COALESCE(fc1.corrected_cut1, b.CFSsumCUT1) AS CFSsumCUT1,
+    COALESCE(fc2.corrected_cut2, b.CFSsumCUT2) AS CFSsumCUT2,
+    b.TransCreditTerm
+  FROM Base_CFS b
+  LEFT JOIN Fix_Req fr 
+    ON b.CFSvnosID = fr.CFSvnosID 
+    AND b.CFScusID = fr.CFScusID
+    and b.company_id = fr.company_id
+  LEFT JOIN Fix_Cut1 fc1 
+    ON b.CFSvnosID = fc1.CFSvnosID 
+    AND CAST(b.CFSsumCUT1 AS FLOAT64) != fc1.corrected_cut1
+    and b.company_id = fc1.company_id
+  LEFT JOIN Fix_Cut2 fc2 
+    ON b.CFSvnosID = fc2.CFSvnosID 
+    AND CAST(b.CFSsumCUT2 AS FLOAT64) != fc2.corrected_cut2
+    and b.company_id = fc2.company_id
+
+),
+-- 6. คำนวณยอดหนี้คงเหลือและหาอายุหนี้
+AR_Calculation AS (
+  SELECT
+    c.company_id,
+    c.CFSvnosID,
+    c.CFScusID AS debcode,
+    c.CFSdateID,
+    c.CFStypeID,
+    c.CFSjob, 
+    c.CFSdep, 
+    c.CFSper,
+    IFNULL(c.TransCreditTerm, IFNULL(d.debcreditterm, 0)) AS CalcreditTerm,
+    IFNULL(c.TransCreditTerm, 0) as TransCreditTerm,
+    IFNULL(d.debcreditterm, 0) as DebCreditTerm,
+    d.deblimit,
+    SUBSTR(d.debnamet, 1, 200) AS debnamet,
+    REPLACE(SUBSTR(d.debmemo, 1, 200), CHR(10), '') AS debmemo,
+    SUBSTR(c.CFSjob, 1, 15) AS channel,
+    (IFNULL(c.CFSsumREQ, 0) - (IFNULL(c.CFSsumCUT1, 0) + ABS(IFNULL(c.CFSsumCUT2, 0)))) AS outstanding_amt,
+    c.CFSsumREQ,
+    c.CFSsumCUT1,
+    ABS(c.CFSsumCUT2) AS CFSsumCUT2,
+    (c.CFSsumCUT1 + ABS(c.CFSsumCUT2)) AS CFSsumTotal,
+    (CASE
+      WHEN mir.status = 'EXC.' THEN 'Non-Completed'
+      WHEN DATE(mir.max_receipt_date) >= DATE(c.cfsdateid) and DATE(mir.max_receipt_date) <= current_date('Asia/Bangkok') THEN 'Completed' 
+      WHEN current_date('Asia/Bangkok') <= mir.max_receipt_date THEN 'Non-Completed'
+      WHEN IFNULL(c.CFSclearSUM, 0) != -1 AND IFNULL(c.CFSclearALL, 0) != -1 THEN 'Non-Completed'
+      ELSE 'Completed'
+    END) AS flagComplete
+  FROM Cleaned_CFS as c
+  LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "deb")} as d 
+    ON c.CFScusID = d.DEBcode
+    and c.company_id = d.company_id
+  LEFT JOIN mir_raw_agg as mir
+    ON c.cfsVnosid = mir.mirbinvno
+    AND c.company_id = mir.company_id
+  WHERE c.CFStypeID != 'PS'
+
+),
+-- 7. สร้าง CTE จำลองการทำงานของ 3 Functions (ดึง Top 1 ด้วย ANY_VALUE)
+MIH_References AS (
+  SELECT 
+    company_id,
+    MIHvnos,
+    ANY_VALUE(MIHref2) AS MIHref2_PO,
+    ANY_VALUE(MIHdesc) AS MIHnote_Desc,
+    ANY_VALUE(CASE WHEN MIHtype = 'IS' THEN mihref1 ELSE NULL END) AS MIHref1_IS
+  FROM ${ref(databuffet.CURATED_MAC5, "curated_mih")}
+  -- where company_id = 'ag01'
+  GROUP BY company_id, MIHvnos
+  
+), 
+-- 8. ผลลัพธ์สุดท้าย พร้อมจัด Bucket (Aging) ออก Report
+final AS (
+  SELECT DISTINCT
+    ar.company_id,
+    PARSE_DATE('%d/%m/%Y', SUBSTR(mie.MIEctermDX, 1, 10)) AS duedate,
+    PARSE_DATE('%Y%m%d', CONCAT(mie.mieyear, FORMAT("%02d", mie.miemonth), FORMAT("%02d", mie.mieday))) as invdate,
+    ar.CFSvnosID,
+    ar.CFStypeID,
+    ar.CFSjob, 
+    ar.CFSdep, 
+    ar.CFSper,
+    ar.debcode,
+    ar.debnamet,
+    ar.CalCreditTerm,
+    ar.DebCreditTerm,
+    ar.TransCreditTerm,
+    ar.deblimit,
+    ar.debmemo,
+    ar.channel,
+    
+    IFNULL(ref.MIHref2_PO, '') AS MIHref2,
+    IFNULL(ref.MIHnote_Desc, '') AS MIHnote,
+    IFNULL(ref.MIHref1_IS, '') AS MIHref1,
+
+    (CASE WHEN ar.flagComplete = 'Completed' THEN 0 ELSE ar.outstanding_amt END) as outstanding_amt,
+    ar.CFSsumREQ,
+    (CASE WHEN ar.flagComplete = 'Completed' THEN 0 ELSE ar.CFSsumCUT1 END) as CFSsumCUT1,
+    (CASE WHEN ar.flagComplete = 'Completed' THEN ar.CFSsumREQ ELSE ar.CFSsumCUT2 END) as CFSsumCUT2,
+    (CASE WHEN ar.flagComplete = 'Completed' THEN ar.CFSsumREQ ELSE ar.CFSsumTotal END) as CFSsumTotal,
+    ar.flagComplete
+
+  FROM AR_Calculation as ar
+  LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "mie")} as mie 
+    ON ar.CFSvnosID = mie.mievnos 
+    AND mie.mietype = 'IS'
+    AND ar.company_id = mie.company_id
+  LEFT JOIN MIH_References as ref 
+    ON ar.CFSvnosID = ref.MIHvnos
+    and ar.company_id = ref.company_id
+  -- LEFT JOIN databuffet-nonprd.dimension_table.dim_aging_rang as agingrang_sk
+  --   ON IF( (ar.qty_day - ar.credit_term_days) <= 0, 0, (ar.qty_day - ar.credit_term_days)) between agingrang_sk.AgingDayMin and agingrang_sk.AgingDayMax
+  -- WHERE ar.company_id = 'ag01'
+  -- ORDER BY ar.CFSvnosID
+  
+  QUALIFY row_number() over(partition by ar.CFSvnosID, PARSE_DATE('%Y%m%d', CONCAT(mie.mieyear, FORMAT("%02d", mie.miemonth), FORMAT("%02d", mie.mieday))) order by dueDate desc) = 1
+
+), dim_invoice as (
+  select InvoiceSK, CompanySK, mihVnos
+  from `${DimInvoiceTableRef}`
+  qualify row_number() over(partition by CompanySK, mihVnos order by InvoiceSK) = 1
+
+)
+  select 
+    row_number() over(order by dim_com.CompanySK, CFSvnosID, invdate) as AgingSK,
+    -- AgingRangSK,
+    vs.BillingSK,
+    dim_cus.CustomerSK,
+    inv.InvoiceSK,
+    dim_com.CompanySK,
+    dim_com.companyID,
+    final.duedate as dueDate,
+    final.invdate as invoiceDate,
+    final.CFSvnosID as cfsVnosID,
+    final.CFStypeID as cfsTypeID,
+    final.CFSjob as cfsJob,
+    final.CFSdep as cfsDep,
+    final.CFSper as cfsPer,
+    final.debcode as debCode,
+    final.debnamet as debName,
+    final.CalCreditTerm as calCreditTerm,
+    final.DebCreditTerm as debCreditTerm,
+    final.TransCreditTerm as transCreditTerm,
+    final.deblimit as debLimit, 
+    final.debmemo as debMemo,
+    -- DayRange as dayRange,
+    final.channel as channel,
+    final.MIHref2 as mihRef2,
+    final.MIHnote as mihNote,
+    final.MIHref1 as mihRef1,
+    final.outstanding_amt,
+    final.CFSsumREQ as cfsSumREQ,
+    final.CFSsumCUT1 as cfsSumCUT1,
+    final.CFSsumCUT2 as cfsSumCUT2,
+    final.CFSsumTotal as cfsSumTotal,
+    final.flagComplete
+  from final
+  left join `${DimCompanyTableRef}` as dim_com
+    on final.company_id = dim_com.companyID
+  left join `${DimCustomerTableRef}` as dim_cus
+    on final.debcode = dim_cus.debcode
+    and dim_com.CompanySK = dim_cus.CompanySK
+  left join dim_invoice as inv
+    on final.cfsVnosID = inv.mihVnos
+    and dim_com.CompanySK = inv.CompanySK
+  left join `${FactBillingTableRef}` as vs
+    on final.cfsvnosid = vs.mirbinvno
+    and final.company_id = vs.company_id
+  -- where flagComplete != 'Completed'
+  -- ORDER BY CFSvnosID
+;
+
+
+BEGIN
+    DECLARE run_date DATE DEFAULT CURRENT_DATE('Asia/Bangkok')-1;
+
+    --- delete data before daily process
+    DELETE FROM `${DimAgingHistoryTableRef}`
+    WHERE asatdate >= run_date
+    ;
+
+    --- insert data for daily process
+    INSERT INTO `${DimAgingHistoryTableRef}`
+    SELECT run_date as asatdate, *
+    FROM `${DimAgingViewRef}`
+    WHERE IFNULL(flagComplete, '') = 'Non-Completed'
+    ;
+
+    --- delete data for daily process
+    DELETE FROM `${DimAgingHistoryTableRef}`
+    WHERE (
+        DATE_TRUNC(asatdate, MONTH) = DATE_TRUNC(run_date, MONTH)
+        AND asatdate < run_date
+    )
+    OR 
+    (
+        DATE_TRUNC(asatdate, MONTH) < DATE_TRUNC(run_date, MONTH)
+        AND asatdate != LAST_DAY(asatdate)
+    );
+END;
