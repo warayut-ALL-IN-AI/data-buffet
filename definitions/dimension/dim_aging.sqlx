@@ -435,7 +435,7 @@ with chq as (
 
     -- IF(OutStanding between -1 and 1, 'Completed', 'Non-Completed') as flagComplete,
     (CASE 
-      WHEN EXTRACT(YEAR FROM final.InvoiceDate) <= 2023 
+      WHEN EXTRACT(YEAR FROM final.InvoiceDate) < 2023 
         and IF(OutStanding between -1 and 1, 'Completed', 'Non-Completed') = 'Non-Completed'
           THEN IF( 
                   IFNULL(
