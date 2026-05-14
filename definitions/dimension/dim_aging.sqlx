@@ -183,12 +183,13 @@ with chq as (
 ), mie as (
   select 
     company_id, mietype, mievnos, 
-    COALESCE(
+    MAX(COALESCE(
       SAFE.PARSE_DATE('%d/%m/%Y', SUBSTR(mie.MIEctermDX, 1, 10)),
       SAFE.PARSE_DATE('%d/%m/%Y', SUBSTR(mie.MIEctermDX, 1, 9)),
       SAFE.PARSE_DATE('%d/%m/%y', SUBSTR(mie.MIEctermDX, 1, 7))
-    ) as DueDate
+    )) as DueDate
   from ${ref(databuffet.VALIDATED_MAC5, "mie")} as mie
+  group by 1,2,3
 
 ), main_is_raw as (
   select 
@@ -277,7 +278,7 @@ with chq as (
   group by 1,2,4,5,6,7,8,9,10
 
 ), final_main_mix as (
-  select 
+  select distinct
     main.* except(TotalAmount, CnAmount, DnAmount), 
     COALESCE(mie.DueDate, (main.InvoiceDate + main.TransCreditTerm)) as DueDate,
     (main.InvoiceDate + main.TransCreditTerm) as RealDueDate,
@@ -314,7 +315,7 @@ with chq as (
     and main.InvoiceNo = mir.mirbinvno
   where not exists (select 1 from `${CfsClose2024TableRef}` as fix where main.InvoiceNo = fix.cfsvnosid and main.CompanyID = 'ag01')
   union all
-  select 
+  select distinct
     main.* except(TotalAmount, CnAmount, DnAmount), 
     COALESCE(mie.DueDate, (main.InvoiceDate + main.TransCreditTerm)) as DueDate,
     (main.InvoiceDate + main.TransCreditTerm) as RealDueDate,
