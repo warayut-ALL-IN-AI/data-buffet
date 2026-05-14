@@ -92,14 +92,12 @@ with chq as (
   group by 1,2
 
 ), normal_mir_summary AS (
-  -- ส่วนที่ 1: หายอดที่เคยจ่ายไปแล้วแบบปกติ (Normal RI)
   SELECT 
     company_id,
     mirbinvno,
     SUM(mirsum) as total_normal_paid
   FROM ${ref(databuffet.VALIDATED_MAC5, "mir")}
   WHERE mirtype = 'RS'
-    -- เงื่อนไขสำคัญ: ต้องไม่เอาเลขที่ใบรับ (mirvnos) ที่เรากำลังจะเอาไปคำนวณ FIFO ในรอบนี้มารวม
     AND (company_id, mirvnos) NOT IN (
        SELECT AS STRUCT company_id, cqlvnos 
        FROM chq
@@ -113,8 +111,6 @@ with chq as (
     mir.mirbinvno, 
     mir.mirbinvdate,
     mir.mirvnos, 
-    -- ส่วนที่ 2: คำนวณยอดคงเหลือของบิลก่อนเข้า FIFO
-    -- ถ้าไม่มีการจ่ายปกติมาก่อน ให้ใช้ mihnetsum ตรงๆ
     (COALESCE(mih.mihnetsum, 0) - COALESCE(norm.total_normal_paid, 0)) as adjusted_mihnetsum,
     ri.extract_date, 
     ri.extract_amount
@@ -126,7 +122,6 @@ with chq as (
     ON mir.company_id = mih.company_id
     AND mir.mirbinvno = mih.mihvnos
     AND mir.mirbinvtype = mih.mihtype
-  -- Join เพื่อเอายอดที่จ่ายปกติมาหักออก
   LEFT JOIN normal_mir_summary as norm
     ON mir.company_id = norm.company_id
     AND mir.mirbinvno = norm.mirbinvno
@@ -136,7 +131,6 @@ with chq as (
 ), running_calculations AS (
   SELECT 
     *,
-    -- ส่วนที่ 3: เปลี่ยนมาใช้ adjusted_mihnetsum ในการทำ Running Total
     SUM(adjusted_mihnetsum) OVER (PARTITION BY company_id, mirvnos ORDER BY mirbinvdate, mirbinvno) as accum_mihnetsum,
     COALESCE(SUM(adjusted_mihnetsum) OVER (PARTITION BY company_id, mirvnos ORDER BY mirbinvdate, mirbinvno 
               ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) as cut_accum_amount
@@ -146,26 +140,12 @@ with chq as (
   SELECT
     company_id,
     mirbinvno,
-    -- mirbinvdate,
     mirvnos,
-    -- ปรับปัดเศษ 2 ตำแหน่งในส่วนแสดงผล
-    -- ROUND(adjusted_mihnetsum, 2) as adjusted_mihnetsum,
     extract_date,
-    -- ROUND(extract_amount, 2) as extract_amount,
-    -- ROUND(accum_mihnetsum, 2) as accum_mihnetsum,
-    -- ROUND(cut_accum_amount, 2) as cut_accum_amount,
-    
-    -- คำนวณยอดจ่ายและปัดเศษ
     ROUND(
       GREATEST(0, LEAST(adjusted_mihnetsum, extract_amount - cut_accum_amount)), 
       2
     ) as mirsum,
-    
-    -- คำนวณยอดคงเหลือและปัดเศษ
-    -- ROUND(
-    --   adjusted_mihnetsum - GREATEST(0, LEAST(adjusted_mihnetsum, extract_amount - cut_accum_amount)), 
-    --   2
-    -- ) as new_outstanding
   FROM running_calculations
 
 ), mir as (
@@ -198,7 +178,6 @@ with chq as (
       )
     )
     and PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday))) <= CURRENT_DATE('Asia/Bangkok')
-    -- and mir.mirbinvno in ('H6601000337')
   group by 1,2
 
 ), mie as (
@@ -211,38 +190,37 @@ with chq as (
     ) as DueDate
   from ${ref(databuffet.VALIDATED_MAC5, "mie")} as mie
 
-), main_is as (
+), main_is_raw as (
   select 
     mih.company_id as CompanyID, 
     mih.mihVnos as InvoiceNo,
-    CAST(null as STRING) as InvoiceRef,
     mih.mihType as InvoiceType,
     mih.mihCus as CustomerID,
     PARSE_DATE('%Y%m%d', CONCAT(mih.mihYear, FORMAT("%02d", mih.mihMonth),  mih.mihDay)) as InvoiceDate, 
-    mih.mihjob,
-    mih.mihdep,
-    mih.mihper,
+    mih.mihJob,
+    mih.mihDep,
+    mih.mihPer,
     mih.mihstanding as TransCreditTerm,
-    mih.mihNetSum as milSum
+    mih.mihNetSum as TotalAmount,
   from ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
   where mih.mihType = 'IS'
     and mih.mihcancel = 0
     and PARSE_DATE('%Y%m%d', CONCAT(CAST(mih.mihyear AS STRING), FORMAT('%02d', mih.mihmonth), FORMAT('%02d', mih.mihday))) <= CURRENT_DATE('Asia/Bangkok')
-    -- and mih.mihyear >= 2023
 
-), main_bs_as as (
+), main_bs_as_raw as (
   select 
     mih.company_id as CompanyID, 
     mih.mihVnos as InvoiceNo,
-    STRING_AGG(DISTINCT mil.milLinkVcno, '|') as InvoiceRef,
+    mil.milLinkVcno as InvoiceRef,
     mih.mihType as InvoiceType,
     mih.mihCus as CustomerID,
     PARSE_DATE('%Y%m%d', CONCAT(mih.mihYear, FORMAT("%02d", mih.mihMonth),  mih.mihDay)) as InvoiceDate, 
-    mih.mihjob,
-    mih.mihdep,
-    mih.mihper,
-    MAX(mih.mihstanding) as TransCreditTerm,
-    MAX(mih.mihNetSum) as milSum
+    mih.mihJob,
+    mih.mihDep,
+    mih.mihPer,
+    mih.mihstanding as TransCreditTerm,
+    mih.mihNetSum as TotalAmount,
+    (mil.milSum * 1.07) as InvoiceAmount
   from ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
   left join ${ref(databuffet.CURATED_MAC5, "curated_mil")} as mil
     on mih.company_id = mil.company_id
@@ -258,42 +236,106 @@ with chq as (
         where ar_snamet in ('เงินมัดจำรับล่วงหน้า', 'ยกเลิกใบกำกับภาษี', 'ยกเลิกลดหนี้', 'ยกเลิก', 'เงินมัดจำรับล่วงหน้า 214025')
       )
     and PARSE_DATE('%Y%m%d', CONCAT(CAST(mih.mihyear AS STRING), FORMAT('%02d', mih.mihmonth), FORMAT('%02d', mih.mihday))) <= CURRENT_DATE('Asia/Bangkok')
-    -- and mih.mihyear >= 2023
+
+), main_bs_as as (
+  select 
+    CompanyID, 
+    InvoiceNo,
+    STRING_AGG(DISTINCT InvoiceRef, '|') as InvoiceRef,
+    InvoiceType,
+    CustomerID,
+    InvoiceDate, 
+    mihJob,
+    mihDep,
+    mihPer,
+    MAX(TransCreditTerm) as TransCreditTerm,
+    ROUND(MAX(IFNULL(TotalAmount, 0.00)), 2) as TotalAmount,
+    ROUND(SUM(IF(InvoiceType = 'BS', IFNULL(InvoiceAmount, 0.00), 0.00)), 2) as CnAmount,
+    ROUND(SUM(IF(InvoiceType = 'AS', IFNULL(InvoiceAmount, 0.00), 0.00)), 2) as DnAmount
+  from main_bs_as_raw
   group by 1,2,4,5,6,7,8,9
 
-), main_mix AS (
-  SELECT * FROM main_is
-  UNION ALL
-  SELECT * FROM main_bs_as
+), main_is AS (
+  SELECT 
+    t_is.CompanyID, 
+    t_is.InvoiceNo,
+    STRING_AGG(DISTINCT t_bs_as.InvoiceNo, '|') as InvoiceRef,
+    t_is.InvoiceType,
+    t_is.CustomerID,
+    t_is.InvoiceDate,
+    t_is.mihJob,
+    t_is.mihDep,
+    t_is.mihPer,
+    t_is.TransCreditTerm,
+    ROUND(MAX(IFNULL(t_is.TotalAmount, 0.00)), 2) as TotalAmount,
+    ROUND(SUM(IF(t_bs_as.InvoiceType = 'BS', IFNULL(t_bs_as.InvoiceAmount, 0.00), 0.00)), 2) as CnAmount,
+    ROUND(SUM(IF(t_bs_as.InvoiceType = 'AS', IFNULL(t_bs_as.InvoiceAmount, 0.00), 0.00)), 2) as DnAmount,
+  FROM main_is_raw as t_is
+  LEFT JOIN main_bs_as_raw as t_bs_as
+    on t_is.CompanyID = t_bs_as.CompanyID
+    and t_is.InvoiceNo = t_bs_as.InvoiceRef
+  group by 1,2,4,5,6,7,8,9,10
 
 ), final_main_mix as (
   select 
-    main.* except(milSum), 
+    main.* except(TotalAmount, CnAmount, DnAmount), 
     COALESCE(mie.DueDate, (main.InvoiceDate + main.TransCreditTerm)) as DueDate,
     (main.InvoiceDate + main.TransCreditTerm) as RealDueDate,
     main.TransCreditTerm as CalCreditTerm,
-    IFNULL(main.milSum, 0.00) as TotalAmount,
     mir.MinReceiveDate,
     mir.MaxReceiveDate,
+    main.TotalAmount,
     (CASE 
-      WHEN mir.status_complete = 1 THEN main.milSum
-      ELSE mir.mirsum
-    END) as PaymentAmount,
+      WHEN mir.status_complete = 1 THEN main.TotalAmount
+      ELSE IFNULL(mir.mirsum, 0.00)
+    END) as RiAmount,
+    main.CnAmount,	
+    main.DnAmount,
     (CASE 
       WHEN mir.status_complete = 1 THEN 0 
       ELSE ROUND(
-        CAST( 
-          IFNULL(main.milSum, 0.00)
-          - (CASE 
-              WHEN mir.status_complete = 1 THEN IFNULL(main.milSum, 0.00)
-              ELSE IFNULL(mir.mirsum, 0.00)
-            END) 
-        AS NUMERIC)
-      , 2)
+                main.TotalAmount
+                - (CASE 
+                    WHEN mir.status_complete = 1 THEN main.TotalAmount
+                    ELSE IFNULL(mir.mirsum, 0.00)
+                  END)
+                + main.CnAmount
+                + main.DnAmount
+              , 2)
     END) as OutStanding,
-    mir.status_complete,
 
-  from main_mix as main
+  from main_is as main
+  left join mie as mie
+    on main.CompanyID = mie.company_id
+    and main.InvoiceType = mie.mietype
+    and main.InvoiceNo = mie.mievnos
+  left join mir as mir
+    on main.CompanyID = mir.company_id
+    and main.InvoiceNo = mir.mirbinvno
+  where not exists (select 1 from `${CfsClose2024TableRef}` as fix where main.InvoiceNo = fix.cfsvnosid and main.CompanyID = 'ag01')
+  union all
+  select 
+    main.* except(TotalAmount, CnAmount, DnAmount), 
+    COALESCE(mie.DueDate, (main.InvoiceDate + main.TransCreditTerm)) as DueDate,
+    (main.InvoiceDate + main.TransCreditTerm) as RealDueDate,
+    main.TransCreditTerm as CalCreditTerm,
+    mir.MinReceiveDate,
+    mir.MaxReceiveDate,
+    main.TotalAmount,
+    0.00 as RiAmount,
+    0.00 as CnAmount,	
+    0.00 as DnAmount,
+    (CASE 
+      WHEN mir.status_complete = 1 THEN 0
+      WHEN main.InvoiceRef is null THEN main.TotalAmount
+      ELSE ROUND(
+              main.TotalAmount
+              - IF(InvoiceType = 'BS', main.CnAmount, 0.00)
+              + IF(InvoiceType = 'AS', main.DnAmount, 0.00)
+            , 2)
+    END) as OutStanding,
+
+  from main_bs_as as main
   left join mie as mie
     on main.CompanyID = mie.company_id
     and main.InvoiceType = mie.mietype
@@ -303,99 +345,60 @@ with chq as (
     and main.InvoiceNo = mir.mirbinvno
   where not exists (select 1 from `${CfsClose2024TableRef}` as fix where main.InvoiceNo = fix.cfsvnosid and main.CompanyID = 'ag01')
 
-), all_pairs AS (
-  -- 1. สร้างคู่ความสัมพันธ์พื้นฐาน (A -> B และ B -> A)
-  SELECT DISTINCT CompanyID, InvoiceNo AS ID1, TRIM(ref_id) AS ID2
-  FROM final_main_mix, UNNEST(SPLIT(InvoiceRef, '|')) AS ref_id
-  WHERE InvoiceRef IS NOT NULL AND TRIM(ref_id) != ''
+) , group_data as (
+  select distinct
+    companyID, InvoiceNo,
+    IF(InvoiceType = 'IS', InvoiceNo, InvoiceRefValue) as invoiceIS, 
+    IF(InvoiceType in ('BS', 'AS'), InvoiceNo, InvoiceRefValue) as invoiceBSAS,
+  from final_main_mix
+  left join unnest(SPLIT(InvoiceRef, '|')) as InvoiceRefValue
+
+), base_pairs AS (
+  -- 1. เตรียมข้อมูลพื้นฐาน ล็อคด้วย companyID
+  SELECT DISTINCT companyID, invoiceIS AS a, invoiceBSAS AS b FROM group_data
   UNION DISTINCT
-  SELECT DISTINCT CompanyID, TRIM(ref_id) AS ID1, InvoiceNo AS ID2
-  FROM final_main_mix, UNNEST(SPLIT(InvoiceRef, '|')) AS ref_id
-  WHERE InvoiceRef IS NOT NULL AND TRIM(ref_id) != ''
+  SELECT DISTINCT companyID, invoiceBSAS AS a, invoiceIS AS b FROM group_data
 
-), expanded_links AS (
-  -- 2. ขยายการเชื่อมต่อ (Double Hop) เพื่อให้ Bridge ID (เช่น 6711003240) ลากกลุ่มมาเจอกัน
-  SELECT DISTINCT CompanyID, ID1, ID2 FROM all_pairs
-  UNION DISTINCT
-  SELECT DISTINCT a.CompanyID, a.ID1, b.ID2
-  FROM all_pairs a
-  JOIN all_pairs b ON a.ID2 = b.ID1 AND a.CompanyID = b.CompanyID
-
-), network_map AS (
-  -- 3. หาเลขที่น้อยที่สุดจากความสัมพันธ์ทอดแรกและทอดสอง
+), hop_2 AS (
+  -- 2. Step 1: หาเพื่อนของเพื่อน (2-Hop) ภายในบริษัทตัวเอง
   SELECT 
-    CompanyID,
-    ID1 AS InvoiceNo,
-    MIN(ID2) OVER(PARTITION BY CompanyID, ID1) as MinID
-  FROM expanded_links
-
-), cross_network_map AS (
-  -- 4. (เพิ่มส่วนนี้) ทำความสะอาด Network อีกรอบ เพื่อให้มั่นใจว่า Bridge ID ลากค่า MIN ไปถึงกัน
-  SELECT 
-    a.CompanyID,
-    a.InvoiceNo,
-    MIN(b.MinID) as GlobalMinID
-  FROM network_map a
-  LEFT JOIN network_map b ON a.MinID = b.InvoiceNo AND a.CompanyID = b.CompanyID
+    t1.companyID, t1.a, 
+    MIN(t2.b) as min_node
+  FROM base_pairs as t1
+  INNER JOIN base_pairs as t2 
+    ON  t1.b = t2.a 
+    AND t1.companyID = t2.companyID
   GROUP BY 1, 2
 
-), grouped_data AS (
-  -- 5. แปะ DataGroupID โดยใช้ GlobalMinID
+), hop_4 AS (
+  -- 3. Step 2: หาเพื่อนของเพื่อนของเพื่อนของเพื่อน (4-Hop) ภายในบริษัทตัวเอง
   SELECT 
-    f.*,
-    COALESCE(
-      MIN(m.GlobalMinID) OVER(PARTITION BY f.CompanyID, 
-        COALESCE(m.GlobalMinID, f.InvoiceNo)
-      ),
-      f.InvoiceNo
-    ) AS DataGroupID
-  FROM final_main_mix AS f
-  LEFT JOIN cross_network_map m ON f.CompanyID = m.CompanyID AND f.InvoiceNo = m.InvoiceNo
+    t1.companyID, t1.a, 
+    MIN(t2.min_node) as final_group_id
+  FROM hop_2 as t1
+  INNER JOIN hop_2 as t2 
+    ON  t1.min_node = t2.a 
+    AND t1.companyID = t2.companyID
+  GROUP BY 1, 2
 
-), final_grouped_summary AS (
--- 4. กลับเข้าสู่ Logic เดิมของคุณ (คำนวณยอด Sum ต่อไปตามปกติ)
-  SELECT 
-    *,
-    COUNT(DISTINCT IF(MaxReceiveDate IS NOT NULL, TRUE, NULL)) OVER(PARTITION BY CompanyID, DataGroupID) AS Group_mir_true,
-    COUNT(DISTINCT IF(MaxReceiveDate IS NULL, TRUE, NULL)) OVER(PARTITION BY CompanyID, DataGroupID) AS Group_mir_false,
-    ROUND(SUM(IFNULL(TotalAmount,0.00)) OVER(PARTITION BY CompanyID, DataGroupID), 2) as GroupSumTotalAmount,
-    ROUND(SUM(IFNULL(PaymentAmount, 0.00)) OVER(PARTITION BY CompanyID, DataGroupID), 2) as GroupSumPaymentAmount,
-    ROUND(SUM(IFNULL(OutStanding, 0.00)) OVER(PARTITION BY CompanyID, DataGroupID), 2) AS GroupSumOutStanding,
-    
-    ROUND(
-      SUM(IFNULL(OutStanding, 0.00)) OVER(PARTITION BY CompanyID, DataGroupID) + 
-      SUM(IF(InvoiceType IN ('BS', 'AS'), IFNULL(TotalAmount, 0.00), 0)) OVER(PARTITION BY CompanyID, DataGroupID) 
-    , 2) AS GroupSumAdjustOutStanding
-  FROM grouped_data
-
-), final_result AS (
+), group_data_final as (
+  -- 4. นำไปประกอบร่างกลับเข้ากับ Data หลัก
   SELECT DISTINCT
-    *,
-    (CASE 
-      -- Hybird
-      WHEN (Group_mir_true = 1 and Group_mir_false = 1) and GroupSumAdjustOutStanding between -1 and 1 THEN 'Completed'
-      WHEN (Group_mir_true = 1 and Group_mir_false = 1) and GroupSumOutStanding between -1 and 1 THEN 'Completed'
-      WHEN (Group_mir_true = 1 and Group_mir_false = 1) and GroupSumTotalAmount between -1 and 1 THEN 'Completed'
-
-      -- have mir
-      WHEN (Group_mir_true = 1 and Group_mir_false = 0) and GroupSumAdjustOutStanding between -1 and 1 THEN 'Completed'
-      WHEN (Group_mir_true = 1 and Group_mir_false = 0) and GroupSumOutStanding between -1 and 1 THEN 'Completed'
-      WHEN (Group_mir_true = 1 and Group_mir_false = 0) and GroupSumTotalAmount between -1 and 1 THEN 'Completed'
-
-      -- not have mir
-      WHEN (Group_mir_true = 0 and Group_mir_false = 1) and GroupSumOutStanding between -1 and 1 THEN 'Completed'
-      WHEN (Group_mir_true = 0 and Group_mir_false = 1) and GroupSumTotalAmount between -1 and 1 THEN 'Completed'
-
-      ELSE 'Non-Completed'
-    END) as FlagCompleted
-  FROM final_grouped_summary
+    t.companyID, t.InvoiceNo,
+    -- t.invoiceIS,
+    -- t.invoiceBSAS,
+    COALESCE(g.final_group_id, t.invoiceIS, t.InvoiceNo) as group_id
+  FROM group_data as t
+  LEFT JOIN hop_4 as g 
+    ON  t.invoiceIS = g.a 
+    AND t.companyID = g.companyID
 
 ), dim_invoice as (
   select InvoiceSK, CompanySK, mihVnos
   from `${DimInvoiceTableRef}`
   qualify row_number() over(partition by CompanySK, mihVnos order by InvoiceSK) = 1
 
-)
+), final as (
   select
     row_number() over(order by dim_com.CompanySK, final.InvoiceNo, final.InvoiceDate) as AgingSK,
     vs.BillingSK,
@@ -410,9 +413,9 @@ with chq as (
     final.InvoiceNo as cfsVnosID,
     final.InvoiceType as cfsTypeID,
 
-    mihJob as cfsJob,
-    mihDep as cfsDep,
-    mihPer as cfsPer,
+    final.mihJob as cfsJob,
+    final.mihDep as cfsDep,
+    final.mihPer as cfsPer,
 
     final.CustomerID as debCode,
     dim_cus.debnamet as debName,
@@ -427,28 +430,27 @@ with chq as (
     CAST(NULL AS STRING) as mihNote,
     final.InvoiceRef as mihRef1,
 
-    final.TotalAmount as cfsSumREQ,
-    final.PaymentAmount as cfsSumCUT1,
-    CAST(NULL AS FLOAT64) as cfsSumCUT2,
-    final.TotalAmount as cfsSumTotal,
-    final.OutStanding as outstanding_amt,
+    final.TotalAmount,
+    final.RiAmount as PaymentAmount,
+    final.CnAmount as CreditNoteAmount,
+    final.DnAmount as DebitNoteAmount,
+    final.OutStanding,
 
-    -- IF(OutStanding between -1 and 1, 'Completed', 'Non-Completed') as flagComplete,
     (CASE 
-      WHEN EXTRACT(YEAR FROM final.InvoiceDate) < 2023 
+      WHEN EXTRACT(YEAR FROM final.InvoiceDate) < 2023
         and IF(OutStanding between -1 and 1, 'Completed', 'Non-Completed') = 'Non-Completed'
           THEN IF( 
                   IFNULL(
                     (select 
                       min(PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday)))) as min_date
-                      from databuffet-nonprd.validated_mac5.mir
+                      from ${ref(databuffet.VALIDATED_MAC5, "mir")}
                       where mirtype = 'RS'
                         and company_id = final.companyid
                         and mirbinvno = final.InvoiceNo), 
                     DATE('2000-01-01')
                   ) <= CURRENT_DATE('Asia/Bangkok')
                   and (select 1
-                    from databuffet-nonprd.validated_mac5.cfs
+                    from ${ref(databuffet.VALIDATED_MAC5, "cfs")}
                     where cfsclearsum = -1
                       and cfsclearall = -1
                       and company_id = final.companyid
@@ -460,15 +462,7 @@ with chq as (
 
     final.MinReceiveDate,
     final.MaxReceiveDate,
-    final.FlagCompleted as GroupFlagCompleted,
-    final.DataGroupID,
-    final.Group_mir_true,
-    final.Group_mir_false,
-    final.GroupSumTotalAmount,
-    final.GroupSumPaymentAmount,
-    final.GroupSumOutStanding,
-    final.GroupSumAdjustOutStanding
-  from final_result as final
+  from final_main_mix as final
   left join `${DimCompanyTableRef}` as dim_com
     on final.CompanyID = dim_com.companyID
   left join `${DimCustomerTableRef}` as dim_cus
@@ -480,6 +474,23 @@ with chq as (
   left join `${FactBillingTableRef}` as vs
     on final.InvoiceNo = vs.mirbinvno
     and final.CompanyID = vs.company_id
+
+)
+  select 
+    final.*,
+    groupdata.group_id as GroupID,
+    -- COUNT(DISTINCT IF(final.flagComplete = 'Completed', TRUE, null)) OVER(PARTITION BY final.CompanyID, groupdata.group_id) as CompleteOnly,
+    -- COUNT(DISTINCT IF(final.flagComplete = 'Non-Completed', TRUE, null)) OVER(PARTITION BY final.CompanyID, groupdata.group_id) as NonCompleteOnly,
+    (CASE 
+      WHEN COUNT(DISTINCT IF(final.flagComplete = 'Completed', TRUE, null)) OVER(PARTITION BY final.CompanyID, groupdata.group_id) = 1
+        and COUNT(DISTINCT IF(final.flagComplete = 'Non-Completed', TRUE, null)) OVER(PARTITION BY final.CompanyID, groupdata.group_id) = 0
+          THEN 'Completed'
+      ELSE 'Non-Completed'
+    END) as GroupFlagComplete
+  from final as final
+  left join group_data_final as groupdata
+    on final.CompanyID = groupdata.CompanyID
+    and final.cfsVnosID = groupdata.InvoiceNo
 ;
 
 
