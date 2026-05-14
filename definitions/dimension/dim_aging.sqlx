@@ -345,7 +345,7 @@ with chq as (
     and main.InvoiceNo = mir.mirbinvno
   where not exists (select 1 from `${CfsClose2024TableRef}` as fix where main.InvoiceNo = fix.cfsvnosid and main.CompanyID = 'ag01')
 
-) , group_data as (
+), group_data as (
   select distinct
     companyID, InvoiceNo,
     IF(InvoiceType = 'IS', InvoiceNo, InvoiceRefValue) as invoiceIS, 
@@ -360,38 +360,49 @@ with chq as (
   SELECT DISTINCT companyID, invoiceBSAS AS a, invoiceIS AS b FROM group_data
 
 ), hop_2 AS (
-  -- 2. Step 1: หาเพื่อนของเพื่อน (2-Hop) ภายในบริษัทตัวเอง
+  -- hop_2: ระยะ 2 ทอด
   SELECT 
     t1.companyID, t1.a, 
-    MIN(t2.b) as min_node
+    MIN(LEAST(t1.a, t1.b, t2.b)) as min_node
   FROM base_pairs as t1
   INNER JOIN base_pairs as t2 
-    ON  t1.b = t2.a 
+    ON t1.b = t2.a 
     AND t1.companyID = t2.companyID
   GROUP BY 1, 2
 
 ), hop_4 AS (
-  -- 3. Step 2: หาเพื่อนของเพื่อนของเพื่อนของเพื่อน (4-Hop) ภายในบริษัทตัวเอง
+  -- hop_4: ระยะ 4 ทอด
   SELECT 
     t1.companyID, t1.a, 
-    MIN(t2.min_node) as final_group_id
+    MIN(LEAST(t1.a, t1.min_node, t2.min_node)) as final_group_id
   FROM hop_2 as t1
   INNER JOIN hop_2 as t2 
-    ON  t1.min_node = t2.a 
+    ON t1.min_node = t2.a 
+    AND t1.companyID = t2.companyID
+  GROUP BY 1, 2
+
+), hop_8 AS (
+  -- hop_8: ระยะ 8 ทอด
+  SELECT 
+    t1.companyID, t1.a, 
+    MIN(LEAST(t1.a, t1.final_group_id, t2.final_group_id)) as super_group_id
+  FROM hop_4 as t1
+  INNER JOIN hop_4 as t2 
+    ON t1.final_group_id = t2.a 
     AND t1.companyID = t2.companyID
   GROUP BY 1, 2
 
 ), group_data_final as (
-  -- 4. นำไปประกอบร่างกลับเข้ากับ Data หลัก
-  SELECT DISTINCT
-    t.companyID, t.InvoiceNo,
-    -- t.invoiceIS,
-    -- t.invoiceBSAS,
-    COALESCE(g.final_group_id, t.invoiceIS, t.InvoiceNo) as group_id
+  SELECT 
+    t.companyID, 
+    t.InvoiceNo,
+    -- หาค่าที่น้อยที่สุดจากทุก "ทางเชื่อม" ที่ Invoice นี้มี
+    MIN(COALESCE(g.super_group_id, t.invoiceIS, t.InvoiceNo)) as group_id
   FROM group_data as t
-  LEFT JOIN hop_4 as g 
+  LEFT JOIN hop_8 as g 
     ON  t.invoiceIS = g.a 
     AND t.companyID = g.companyID
+  GROUP BY 1, 2
 
 ), dim_invoice as (
   select InvoiceSK, CompanySK, mihVnos
@@ -442,7 +453,7 @@ with chq as (
           THEN IF( 
                   IFNULL(
                     (select 
-                      min(PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday)))) as min_date
+                      min(PARSE_DATE('%Y%m%d', CONCAT(CAST(miryear AS STRING), FORMAT('%02d', mirmonth), FORMAT('%02d', mirday)))) as min_date
                       from ${ref(databuffet.VALIDATED_MAC5, "mir")}
                       where mirtype = 'RS'
                         and company_id = final.companyid
@@ -476,17 +487,13 @@ with chq as (
     and final.CompanyID = vs.company_id
 
 )
-  select 
+  select distinct
     final.*,
     groupdata.group_id as GroupID,
-    -- COUNT(DISTINCT IF(final.flagComplete = 'Completed', TRUE, null)) OVER(PARTITION BY final.CompanyID, groupdata.group_id) as CompleteOnly,
-    -- COUNT(DISTINCT IF(final.flagComplete = 'Non-Completed', TRUE, null)) OVER(PARTITION BY final.CompanyID, groupdata.group_id) as NonCompleteOnly,
-    (CASE 
-      WHEN COUNT(DISTINCT IF(final.flagComplete = 'Completed', TRUE, null)) OVER(PARTITION BY final.CompanyID, groupdata.group_id) = 1
-        and COUNT(DISTINCT IF(final.flagComplete = 'Non-Completed', TRUE, null)) OVER(PARTITION BY final.CompanyID, groupdata.group_id) = 0
-          THEN 'Completed'
-      ELSE 'Non-Completed'
-    END) as GroupFlagComplete
+    IF( LOGICAL_AND(final.flagComplete = 'Completed') OVER(PARTITION BY final.CompanyID, groupdata.group_id),
+      'Completed',
+      'Non-Completed'
+    ) as GroupFlagComplete
   from final as final
   left join group_data_final as groupdata
     on final.CompanyID = groupdata.CompanyID
