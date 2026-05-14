@@ -331,7 +331,7 @@ with chq as (
       ELSE ROUND(
               main.TotalAmount
               - IF(InvoiceType = 'BS', main.CnAmount, 0.00)
-              + IF(InvoiceType = 'AS', main.DnAmount, 0.00)
+              - IF(InvoiceType = 'AS', main.DnAmount, 0.00)
             , 2)
     END) as OutStanding,
 
