@@ -146,6 +146,29 @@ with chq as (
       GREATEST(0, LEAST(adjusted_mihnetsum, extract_amount - cut_accum_amount)), 
       2
     ) as mirsum,
+
+    -- company_id,
+    -- mirbinvno,
+    -- mirbinvdate,
+    -- mirvnos,
+    -- ปรับปัดเศษ 2 ตำแหน่งในส่วนแสดงผล
+    -- ROUND(adjusted_mihnetsum, 2) as adjusted_mihnetsum,
+    -- extract_date,
+    -- ROUND(extract_amount, 2) as extract_amount,
+    -- ROUND(accum_mihnetsum, 2) as accum_mihnetsum,
+    -- ROUND(cut_accum_amount, 2) as cut_accum_amount,
+    
+    -- คำนวณยอดจ่ายและปัดเศษ
+    -- ROUND(
+    --   GREATEST(0, LEAST(adjusted_mihnetsum, extract_amount - cut_accum_amount)), 
+    --   2
+    -- ) as mirsum,
+    
+    -- คำนวณยอดคงเหลือและปัดเศษ
+    -- ROUND(
+    --   adjusted_mihnetsum - GREATEST(0, LEAST(adjusted_mihnetsum, extract_amount - cut_accum_amount)), 
+    --   2
+    -- ) as new_outstanding
   FROM running_calculations
 
 ), mir as (
