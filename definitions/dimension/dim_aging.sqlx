@@ -201,6 +201,7 @@ with chq as (
     mih.mihJob,
     mih.mihDep,
     mih.mihPer,
+    mih.mihNotes,
     mih.mihstanding as TransCreditTerm,
     mih.mihNetSum as TotalAmount,
   from ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
@@ -219,6 +220,7 @@ with chq as (
     mih.mihJob,
     mih.mihDep,
     mih.mihPer,
+    mih.mihNotes,
     mih.mihstanding as TransCreditTerm,
     mih.mihNetSum as TotalAmount,
     (mil.milSum * 1.07) as InvoiceAmount
@@ -249,12 +251,13 @@ with chq as (
     mihJob,
     mihDep,
     mihPer,
+    mihNotes,
     MAX(TransCreditTerm) as TransCreditTerm,
     ROUND(MAX(IFNULL(TotalAmount, 0.00)), 2) as TotalAmount,
     ROUND(SUM(IF(InvoiceType = 'BS', IFNULL(InvoiceAmount, 0.00), 0.00)), 2) as CnAmount,
     ROUND(SUM(IF(InvoiceType = 'AS', IFNULL(InvoiceAmount, 0.00), 0.00)), 2) as DnAmount
   from main_bs_as_raw
-  group by 1,2,4,5,6,7,8,9
+  group by 1,2,4,5,6,7,8,9,10
 
 ), main_is AS (
   SELECT 
@@ -267,7 +270,8 @@ with chq as (
     t_is.mihJob,
     t_is.mihDep,
     t_is.mihPer,
-    t_is.TransCreditTerm,
+    t_is.mihNotes,
+    MAX(t_is.TransCreditTerm) as TransCreditTerm,
     ROUND(MAX(IFNULL(t_is.TotalAmount, 0.00)), 2) as TotalAmount,
     ROUND(SUM(IF(t_bs_as.InvoiceType = 'BS', IFNULL(t_bs_as.InvoiceAmount, 0.00), 0.00)), 2) as CnAmount,
     ROUND(SUM(IF(t_bs_as.InvoiceType = 'AS', IFNULL(t_bs_as.InvoiceAmount, 0.00), 0.00)), 2) as DnAmount,
@@ -439,7 +443,7 @@ with chq as (
 
     CAST(NULL AS STRING) as channel,
     CAST(NULL AS STRING) as mihRef2,
-    CAST(NULL AS STRING) as mihNote,
+    final.mihNotes as mihNote,
     final.InvoiceRef as mihRef1,
 
     final.TotalAmount,
