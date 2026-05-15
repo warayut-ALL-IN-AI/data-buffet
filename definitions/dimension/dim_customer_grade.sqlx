@@ -224,12 +224,18 @@ USING (
       final.deblimit as CustomerLimit,
       final.debcreditterm as CustomerCreditTerm,
       final.debmemo as CustomerMemo,
+
       final.receive_sum as SumPaymentReceive,
       final.receive_avg as AvgReceiveAgeDay,
       final.cancel_chq as CountCancelCheque,
+      final.first_contact_today as CalculateFirstContact,
+      final.credibility_score as CredibilityValue,
+
       final.first_contact_date as FirstContactDate,
+
       (((payment_receive_score + avg_collect_score + bounce_chq_score + contact_score + credibility_score) / 80.0) * 100.0) as CalPercent,
       grade_score.Grade,
+
       final.asatdate
     from final
     left join `${DimCustomerGradeTableRef}` as existing
@@ -260,6 +266,8 @@ WHEN MATCHED THEN
     SumPaymentReceive = S.SumPaymentReceive,
     AvgReceiveAgeDay = S.AvgReceiveAgeDay,
     CountCancelCheque = S.CountCancelCheque,
+    CalculateFirstContact = S.CalculateFirstContact,
+    CredibilityValue = S.CredibilityValue,
     FirstContactDate = S.FirstContactDate,
     CalPercent = S.CalPercent,
     Grade = S.Grade,
@@ -267,10 +275,10 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
   INSERT (CustomerGradeSK, CustomerSK, PaymentReceiveSK, AvgCollectSK, BounceChequeSK, ContactSK, GradeSK, CompanySK, 
   CompanyID, Year, CustomerCode, CustomerName, CustomerLimit, CustomerCreditTerm, CustomerMemo, 
-  SumPaymentReceive, AvgReceiveAgeDay, CountCancelCheque, FirstContactDate, FirstContactCal, 
-  CalPercent, Grade, asatdate)
+  SumPaymentReceive, AvgReceiveAgeDay, CountCancelCheque, CalculateFirstContact, CredibilityValue, 
+  FirstContactDate, CalPercent, Grade, asatdate)
 
   VALUES (S.CustomerGradeSK, S.CustomerSK, S.PaymentReceiveSK, S.AvgCollectSK, S.BounceChequeSK, S.ContactSK, S.GradeSK, S.CompanySK, 
   S.CompanyID, S.Year, S.CustomerCode, S.CustomerName, S.CustomerLimit, S.CustomerCreditTerm, S.CustomerMemo, 
-  S.SumPaymentReceive, S.AvgReceiveAgeDay, S.CountCancelCheque, S.FirstContactDate, S.FirstContactDate, 
-  S.CalPercent, S.Grade, S.asatdate);
+  S.SumPaymentReceive, S.AvgReceiveAgeDay, S.CountCancelCheque, S.CalculateFirstContact, S.CredibilityValue, 
+  S.FirstContactDate, S.CalPercent, S.Grade, S.asatdate);
