@@ -90,6 +90,21 @@ USING (
     from `${DimCalendarTableRef}`
     where Year = EXTRACT(YEAR FROM current_date('Asia/Bangkok')-1)
 
+  ), chq as (
+    SELECT
+      cql.company_id, cql.cqlvnos,
+      ex.extract_date, 
+      ex.extract_amount
+    FROM ${ref(databuffet.VALIDATED_MAC5, "chq")} as chq
+    , UNNEST(extract_value) as ex
+    INNER JOIN (
+      select distinct company_id, cqlno, cqlvnos, 
+      from ${ref(databuffet.VALIDATED_MAC5, "cql")}
+    ) as cql 
+      ON chq.chqno = cql.cqlno 
+      and chq.company_id = cql.company_id
+    WHERE ex.extract_date is not null
+
   ), dim_customer as (
     SELECT 
       cust.CustomerSK,
@@ -112,8 +127,13 @@ USING (
     group by 1, 2
 
   ), sum_receive as (
-    select company_id, mircus, miryear, sum(mirsum) as mirsum
+    select 
+      mir.company_id, mir.mircus, COALESCE(extract(YEAR from chq.extract_date), mir.miryear) as miryear,
+      SUM(COALESCE(chq.extract_amount, mir.mirsum)) as mirsum,
     from ${ref(databuffet.VALIDATED_MAC5, "mir")} as mir
+    left join chq as chq
+      on mir.company_id = chq.company_id
+      and mir.mirvnos = chq.cqlvnos
     where mirtype = 'RS'
       and exists (select 1 from dim_customer as t2 where mir.mircus = t2.debcode)
     group by 1,2,3
