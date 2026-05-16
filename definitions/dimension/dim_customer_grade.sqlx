@@ -169,6 +169,7 @@ USING (
       IFNULL(contact_score.Score, 0) as contact_score,
       20 as credibility_score,
       current_date('Asia/Bangkok')-1 as asatdate
+      
     from dim_customer as cust
     left join mih_first_contact as add_first_contact 
       on cust.debcode = add_first_contact.mihcus 
@@ -178,10 +179,10 @@ USING (
       on cust.debcode = rec_sum.mircus 
       and cust.year = rec_sum.miryear 
       and cust.companyID = rec_sum.company_id
-      
+
     left join `${DimPaymentScoreTableRef}` as payment_receive_score 
       on cust.CompanySK = payment_receive_score.CompanySK 
-      and IFNULL(rec_sum.mirsum, 0) between payment_receive_score.PaymentReceivedMin and payment_receive_score.PaymentReceivedMax
+      and ROUND(IFNULL(rec_sum.mirsum, 0)) between payment_receive_score.PaymentReceivedMin and payment_receive_score.PaymentReceivedMax
       and current_date('Asia/Bangkok')-1 between payment_receive_score.StartDate	and payment_receive_score.EndDate
 
     left join avg_receiptageday as rec_age 
@@ -190,7 +191,7 @@ USING (
       and cust.companyID = rec_age.companyID
     left join `${DimAVGCollectScoreTableRef}` as avg_collect_score 
       on cust.CompanySK = avg_collect_score.CompanySK 
-      and IFNULL(rec_age.ReceiptAgeDays, 0) between avg_collect_score.AvgCollectiondayMin and avg_collect_score.AvgCollectiondayMax
+      and ROUND(IFNULL(rec_age.ReceiptAgeDays, 0)) between avg_collect_score.AvgCollectiondayMin and avg_collect_score.AvgCollectiondayMax
       and current_date('Asia/Bangkok')-1 between avg_collect_score.StartDate	and avg_collect_score.EndDate
 
     left join cancel_chq as can_chq 
@@ -199,7 +200,7 @@ USING (
       and cust.companyID = can_chq.company_id
     left join `${DimBounceChqScoreTableRef}` as bounce_chq_score 
       on cust.CompanySK = bounce_chq_score.CompanySK 
-      and IFNULL(can_chq.cancel_chq, 0) between bounce_chq_score.BouncedChequeMin and bounce_chq_score.BouncedChequeMax
+      and ROUND(IFNULL(can_chq.cancel_chq, 0)) between bounce_chq_score.BouncedChequeMin and bounce_chq_score.BouncedChequeMax
       and current_date('Asia/Bangkok')-1 between bounce_chq_score.StartDate	and bounce_chq_score.EndDate
 
     left join `${DimContactScoreTableRef}` as contact_score 
