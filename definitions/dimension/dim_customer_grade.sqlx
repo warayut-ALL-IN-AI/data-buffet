@@ -224,14 +224,19 @@ USING (
       final.deblimit as CustomerLimit,
       final.debcreditterm as CustomerCreditTerm,
       final.debmemo as CustomerMemo,
-
+    
       final.receive_sum as SumPaymentReceive,
       final.receive_avg as AvgReceiveAgeDay,
       final.cancel_chq as CountCancelCheque,
-      final.first_contact_today as CalculateFirstContact,
-      final.credibility_score as CredibilityValue,
-
       final.first_contact_date as FirstContactDate,
+      final.first_contact_today as CalculateFirstContact,
+      final.credibility_score as Credibility,
+
+      -- final.payment_receive_score as PaymentReceiveScore,
+      -- final.avg_collect_score as AvgCollectScore,
+      -- final.bounce_chq_score as BounceChqScore,
+      -- final.contact_score as FirstContactScore,
+      -- final.credibility_score as CredibilityScore,
 
       (((payment_receive_score + avg_collect_score + bounce_chq_score + contact_score + credibility_score) / 80.0) * 100.0) as CalPercent,
       grade_score.Grade,
