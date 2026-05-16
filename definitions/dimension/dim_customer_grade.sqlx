@@ -178,9 +178,11 @@ USING (
       on cust.debcode = rec_sum.mircus 
       and cust.year = rec_sum.miryear 
       and cust.companyID = rec_sum.company_id
+      
     left join `${DimPaymentScoreTableRef}` as payment_receive_score 
       on cust.CompanySK = payment_receive_score.CompanySK 
       and IFNULL(rec_sum.mirsum, 0) between payment_receive_score.PaymentReceivedMin and payment_receive_score.PaymentReceivedMax
+      and current_date('Asia/Bangkok')-1 between payment_receive_score.StartDate	and payment_receive_score.EndDate
 
     left join avg_receiptageday as rec_age 
       on cust.debcode = rec_age.debcode 
@@ -189,6 +191,7 @@ USING (
     left join `${DimAVGCollectScoreTableRef}` as avg_collect_score 
       on cust.CompanySK = avg_collect_score.CompanySK 
       and IFNULL(rec_age.ReceiptAgeDays, 0) between avg_collect_score.AvgCollectiondayMin and avg_collect_score.AvgCollectiondayMax
+      and current_date('Asia/Bangkok')-1 between avg_collect_score.StartDate	and avg_collect_score.EndDate
 
     left join cancel_chq as can_chq 
       on cust.debcode = can_chq.chqcus 
@@ -197,10 +200,12 @@ USING (
     left join `${DimBounceChqScoreTableRef}` as bounce_chq_score 
       on cust.CompanySK = bounce_chq_score.CompanySK 
       and IFNULL(can_chq.cancel_chq, 0) between bounce_chq_score.BouncedChequeMin and bounce_chq_score.BouncedChequeMax
+      and current_date('Asia/Bangkok')-1 between bounce_chq_score.StartDate	and bounce_chq_score.EndDate
 
     left join `${DimContactScoreTableRef}` as contact_score 
       on cust.CompanySK = contact_score.CompanySK 
-      and (DATE_DIFF(current_date('Asia/Bangkok')-1, IFNULL(cust.debdate, add_first_contact.first_contact), DAY) / 365.0) between contact_score.ContactYearMin and contact_score.ContactYearMax
+      and ROUND(DATE_DIFF(current_date('Asia/Bangkok')-1, IFNULL(cust.debdate, add_first_contact.first_contact), DAY) / 365.0) between contact_score.ContactYearMin and contact_score.ContactYearMax
+      and current_date('Asia/Bangkok')-1 between contact_score.StartDate	and contact_score.EndDate
     
     where cust.Year >= EXTRACT(YEAR FROM IFNULL(cust.debdate, add_first_contact.first_contact))
 
