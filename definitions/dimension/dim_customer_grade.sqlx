@@ -169,7 +169,7 @@ USING (
       IFNULL(contact_score.Score, 0) as contact_score,
       20 as credibility_score,
       current_date('Asia/Bangkok')-1 as asatdate
-      
+
     from dim_customer as cust
     left join mih_first_contact as add_first_contact 
       on cust.debcode = add_first_contact.mihcus 
@@ -236,7 +236,7 @@ USING (
       final.cancel_chq as CountCancelCheque,
       final.first_contact_date as FirstContactDate,
       final.first_contact_today as CalculateFirstContact,
-      final.credibility_score as Credibility,
+      final.credibility_score as CredibilityValue,
 
       -- final.payment_receive_score as PaymentReceiveScore,
       -- final.avg_collect_score as AvgCollectScore,
