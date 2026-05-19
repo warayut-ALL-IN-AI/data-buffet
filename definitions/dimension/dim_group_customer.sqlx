@@ -1,0 +1,65 @@
+config {
+  type: "operations",
+  dependencies: ["dim_customer"],
+  tags: [databuffet.TAG_DIM_DAILY], // ปรับ Tag ตามที่คุณใช้งานจริงได้เลยครับ
+  hasOutput: true
+}
+
+js {
+    const DimGroupCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(), // หรือจะใส่ "dim_group_customer" ตรงๆ ก็ได้
+    };
+    const DimGroupCustomerTableRef = `${DimGroupCustomerTable.database}.${DimGroupCustomerTable.schema}.${DimGroupCustomerTable.name}`;
+
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+}
+
+declare max_sk INT64;
+
+-- หาค่า SK สูงสุดปัจจุบัน (ถ้าตารางว่างให้เริ่มที่ 0)
+set max_sk = IFNULL( (select IFNULL(MAX(GroupCustomerSK), 0) from `${DimGroupCustomerTableRef}`), 0 );
+
+MERGE `${DimGroupCustomerTableRef}` as T
+USING (
+  with dim_cust as (
+    select distinct
+      CompanySK, 
+      companyID, 
+      IFNULL(debgroup, debcode) as debgroup
+    from `${DimCustomerTableRef}`
+  ),
+  final as (
+    select 
+      -- ถ้ามีข้อมูลอยู่แล้วให้ใช้ SK เดิม, ถ้าเป็นข้อมูลใหม่ให้เอา max_sk บวกกับ row_number()
+      (CASE 
+        WHEN existing.GroupCustomerSK is not null THEN existing.GroupCustomerSK
+        ELSE max_sk + row_number() over(partition by existing.GroupCustomerSK is null order by dim_cust.companyID, dim_cust.debgroup)
+      END) as GroupCustomerSK,
+      dim_cust.CompanySK,
+      dim_cust.companyID,
+      dim_cust.debgroup
+    from dim_cust
+    -- Join กลับไปหาตารางตัวเองเพื่อเช็คว่า Group นี้เคยถูกสร้างไว้หรือยัง
+    left join `${DimGroupCustomerTableRef}` as existing
+      on dim_cust.CompanySK = existing.CompanySK
+      and dim_cust.debgroup = existing.debgroup
+  )
+  select * from final
+
+) as S
+ON T.GroupCustomerSK = S.GroupCustomerSK
+WHEN MATCHED THEN
+  UPDATE SET 
+    CompanySK = S.CompanySK,
+    companyID = S.companyID,
+    debgroup = S.debgroup
+WHEN NOT MATCHED THEN
+  INSERT (GroupCustomerSK, CompanySK, companyID, debgroup)
+  VALUES (S.GroupCustomerSK, S.CompanySK, S.companyID, S.debgroup);
