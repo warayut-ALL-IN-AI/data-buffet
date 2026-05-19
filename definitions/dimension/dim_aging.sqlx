@@ -545,7 +545,7 @@ BEGIN
 
     --- insert data for daily process
     INSERT INTO `${DimAgingHistoryTableRef}`
-    SELECT run_date as asatdate, *
+    SELECT run_date as asatdate, * except(ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK)
     FROM `${DimAgingViewRef}`
     WHERE GroupFlagComplete = 'Non-Completed' 
     ;
