@@ -350,11 +350,15 @@ with chq as (
     mir.MinReceiveDate,
     mir.MaxReceiveDate,
     main.TotalAmount,
-    0.00 as RiAmount,
+    (CASE 
+      WHEN main.InvoiceRef is null and mir.MinReceiveDate is not null THEN main.TotalAmount
+      ELSE 0.00
+    END) as RiAmount,
     0.00 as CnAmount,	
     0.00 as DnAmount,
     (CASE 
       WHEN mir.status_complete = 1 THEN 0
+      WHEN main.InvoiceRef is null AND mir.MinReceiveDate is not null THEN 0.00
       WHEN main.InvoiceRef is null THEN main.TotalAmount
       ELSE ROUND(
               main.TotalAmount
