@@ -547,7 +547,7 @@ BEGIN
     INSERT INTO `${DimAgingHistoryTableRef}`
     SELECT run_date as asatdate, *
     FROM `${DimAgingViewRef}`
-    WHERE IFNULL(flagComplete, '') = 'Non-Completed'
+    WHERE IFNULL(GroupFlagComplete, '') = 'Non-Completed'
     ;
 
     --- delete data for daily process
