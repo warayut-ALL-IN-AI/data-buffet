@@ -1,0 +1,66 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_SALEOUT,
+    dependencies: ["validated_schema_saleout", "create_all_table_raw_saleout_mdt"],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: ["Store", "Cat", "Sub_Cat", "Brand", "SKU"],
+    bigquery: {
+        clusterBy: ["Store", "Cat", "Sub_Cat", "Brand"]
+    },
+}
+
+js {
+    const pk_key = ["Store", "Cat", "Sub_Cat", "Brand", "SKU"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+    NULLIF(CAST(TRIM(Store) AS STRING), '') as Store,
+    NULLIF(CAST(TRIM(Cat) AS STRING), '') as Cat,
+    NULLIF(CAST(TRIM(Sub_Cat) AS STRING), '') as Sub_Cat,
+    NULLIF(CAST(TRIM(Brand) AS STRING), '') as Brand,
+    NULLIF(CAST(TRIM(SKU) AS STRING), '') as SKU,
+    NULLIF(CAST(TRIM(Barcode) AS STRING), '') as Barcode,
+    NULLIF(CAST(TRIM(Description) AS STRING), '') as Description,
+    NULLIF(CAST(TRIM(Product_Type) AS STRING), '') as Product_Type,
+    CAST(Sales_Amount as FLOAT64) as Sales_Amount,
+    CAST(Sales_Qty as INT64) as Sales_Qty,
+    CAST(Stock_On_Hand as FLOAT64) as Stock_On_Hand,
+    CAST(Stock_On_Order as INT64) as Stock_On_Order,
+    PARSE_DATE('%Y-%m-%d', TRIM(Last_Sold_Date)) as Last_Sold_Date,
+    PARSE_DATE('%Y-%m-%d', TRIM(Last_Receive_Date)) as Last_Receive_Date,
+    PARSE_DATE('%Y%m%d', ASATDATE) as ASATDATE,
+FROM `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}.report_sale_subscription`
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

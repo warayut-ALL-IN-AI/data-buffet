@@ -1,0 +1,75 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_SALEOUT_MDT,
+    dependencies: ["validated_schema_saleout", "create_all_table_raw_saleout_mdt"],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: ["vendor_id", "branch"],
+    bigquery: {
+        clusterBy: ["vendor_id", "branch"]
+    },
+}
+
+js {
+    const pk_key = ["vendor_id", "branch"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+    NULLIF(CAST(TRIM(VENDOR_ID) AS STRING), '') AS vendor_id,
+    NULLIF(CAST(TRIM(VENDOR_NAME) AS STRING), '') AS vendor_name,
+    NULLIF(CAST(TRIM(BRANCH) AS STRING), '') AS branch,
+    CAST(MTD_LAST_YEAR AS FLOAT64) AS mtd_last_year,
+    CAST(MTD_CURRENT_YEAR AS FLOAT64) AS mtd_current_year,
+    NULLIF(CAST(TRIM(MTD__Growth) AS STRING), '') AS mtd_growth,
+    CAST(YTD_LAST_YEAR AS FLOAT64) AS ytd_last_year,
+    CAST(YTD_CURRENT_YEAR AS FLOAT64) AS ytd_current_year,
+    NULLIF(CAST(TRIM(YTD__Growth) AS STRING), '') AS ytd_growth,
+    CAST(MTD_LAST_YEAR_QTY AS FLOAT64) AS mtd_last_year_qty,
+    CAST(MTD_CURR_YEAR_QTY AS FLOAT64) AS mtd_curr_year_qty,
+    CAST(MTD_PCT_GROWTH_QTY AS FLOAT64) AS mtd_pct_growth_qty,
+    CAST(YTD_LAST_YEAR_QTY AS FLOAT64) AS ytd_last_year_qty,
+    CAST(YTD_CURR_YEAR_QTY AS FLOAT64) AS ytd_curr_year_qty,
+    CAST(YTD_PCT_GROWTH_QTY AS FLOAT64) AS ytd_pct_growth_qty,
+    CAST(MTD_LAST_YEAR_SQM AS FLOAT64) AS mtd_last_year_sqm,
+    CAST(MTD_CURR_YEAR_SQM AS FLOAT64) AS mtd_curr_year_sqm,
+    CAST(MTD_PCT_GROWTH_SQM AS FLOAT64) AS mtd_pct_growth_sqm,
+    CAST(YTD_LAST_YEAR_SQM AS FLOAT64) AS ytd_last_year_sqm,
+    CAST(YTD_CURR_YEAR_SQM AS FLOAT64) AS ytd_curr_year_sqm,
+    CAST(YTD_PCT_GROWTH_SQM AS FLOAT64) AS ytd_pct_growth_sqm,
+    PARSE_DATE('%Y/%m/%d', TRIM(START_DATE)) AS start_date,
+    PARSE_DATE('%Y/%m/%d', TRIM(END_DATE)) AS end_date,
+    PARSE_DATE('%Y%m%d', ASATDATE) as ASATDATE,
+FROM `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}.sales_by_branch`
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

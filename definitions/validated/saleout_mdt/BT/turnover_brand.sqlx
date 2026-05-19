@@ -1,0 +1,61 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_SALEOUT_MDT,
+    dependencies: ["validated_schema_saleout", "create_all_table_raw_saleout_mdt"],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: ["vendor_id", "mch3", "brand", "class_stock"],
+    bigquery: {
+        clusterBy: ["vendor_id", "mch3", "brand", "class_stock"]
+    },
+}
+
+js {
+    const pk_key = ["vendor_id", "mch3", "brand", "class_stock"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+    NULLIF(CAST(TRIM(VENDOR_ID) AS STRING), '') AS vendor_id,
+    NULLIF(CAST(TRIM(VENDOR_NAME) AS STRING), '') AS vendor_name,
+    NULLIF(CAST(TRIM(MCH3) AS STRING), '') AS mch3,
+    NULLIF(CAST(TRIM(BRAND) AS STRING), '') AS brand,
+    NULLIF(CAST(TRIM(CLASS_STOCK) AS STRING), '') AS class_stock,
+    CAST(UR_COST_AMT AS FLOAT64) AS ur_cost_amt,
+    CAST(T_O AS FLOAT64) AS t_o,
+    PARSE_DATE('%Y/%m/%d', TRIM(START_DATE)) AS start_date,
+    PARSE_DATE('%Y/%m/%d', TRIM(END_DATE)) AS end_date,
+    PARSE_DATE('%Y%m%d', ASATDATE) as ASATDATE,
+FROM `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}.turnover_brand`
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

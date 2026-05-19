@@ -1,0 +1,70 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_SALEOUT_MDT,
+    dependencies: ["validated_schema_saleout", "create_all_table_raw_saleout_mdt"],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: ["vendor_id", "year_date_id", "month_date_id", "branch", "article_id"],
+    bigquery: {
+        clusterBy: ["vendor_id", "year_date_id", "month_date_id", "branch"]
+    },
+}
+
+js {
+    const pk_key = ["vendor_id", "year_date_id", "month_date_id", "branch", "article_id"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+    NULLIF(CAST(TRIM(VENDOR_ID) AS STRING), '') AS vendor_id,
+    NULLIF(CAST(TRIM(VENDOR_NAME) AS STRING), '') AS vendor_name,
+    CAST(YEAR_DATE_ID AS INT64) AS year_date_id,
+    NULLIF(CAST(TRIM(MONTH_DATE_ID) AS STRING), '') AS month_date_id,
+    NULLIF(CAST(TRIM(BRANCH) AS STRING), '') AS branch,
+    NULLIF(CAST(TRIM(DISTRIBUTION_CHANNEL) AS STRING), '') AS distribution_channel,
+    NULLIF(CAST(TRIM(ARTICLE_ID) AS STRING), '') AS article_id,
+    NULLIF(CAST(TRIM(ARTICLE_NAME_TH) AS STRING), '') AS article_name_th,
+    NULLIF(CAST(TRIM(BRAND) AS STRING), '') AS brand,
+    NULLIF(CAST(TRIM(FLAG_PROJECT) AS STRING), '') AS flag_project,
+    NULLIF(CAST(TRIM(ITEM_FLAG) AS STRING), '') AS item_flag,
+    NULLIF(CAST(TRIM(MCH3) AS STRING), '') AS mch3,
+    NULLIF(CAST(TRIM(MCH2) AS STRING), '') AS mch2,
+    CAST(NET_INC_TAX AS FLOAT64) AS net_inc_tax,
+    CAST(SALE_QTY AS INT64) AS sale_qty,
+    CAST(SALE_SQM AS FLOAT64) AS sale_sqm,
+    PARSE_DATE('%Y/%m/%d', TRIM(START_DATE)) AS start_date,
+    PARSE_DATE('%Y/%m/%d', TRIM(END_DATE)) AS end_date,
+    PARSE_DATE('%Y%m%d', ASATDATE) as ASATDATE,
+FROM `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}.sale_by_branch_detail`
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

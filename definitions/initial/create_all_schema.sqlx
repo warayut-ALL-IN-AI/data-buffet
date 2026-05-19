@@ -25,6 +25,9 @@ CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_MASTERSKU}`
 CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}` OPTIONS(location="${databuffet.REGION}");
 CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_MASTERSKU}` OPTIONS(location="${databuffet.REGION}");
 
+-- SALEOUT_MDT
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}` OPTIONS(location="${databuffet.REGION}");
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SALEOUT_MDT}` OPTIONS(location="${databuffet.REGION}");
 
 -- DIMENSION
 CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}` OPTIONS(location="${databuffet.REGION}");

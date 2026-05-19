@@ -1,0 +1,17 @@
+config {
+  type: "operations",
+  dependencies: [],
+  tags: [databuffet.TAG_INITIAL],
+}
+
+
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SALEOUT_MDT}.sale_by_branch_detail`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SALEOUT_MDT}.sale_by_branch_mch3`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SALEOUT_MDT}.sales_by_branch`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SALEOUT_MDT}.stock_aging`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SALEOUT_MDT}.stock_by_branch`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SALEOUT_MDT}.turnover`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SALEOUT_MDT}.turnover_brand`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SALEOUT_MDT}.saleout_gb`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SALEOUT_MDT}.saleout_hp`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SALEOUT_MDT}.report_sale_subscription`;

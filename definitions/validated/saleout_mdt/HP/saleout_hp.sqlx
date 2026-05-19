@@ -1,0 +1,70 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_SALEOUT,
+    dependencies: ["validated_schema_saleout", "create_all_table_raw_saleout_mdt"],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: ["crdate", "periodtype", "vendorno", "siteno", "itemno", "mch3", "artno"],
+    bigquery: {
+        clusterBy: ["crdate", "vendorno", "siteno", "mch3"]
+    },
+}
+
+js {
+    const pk_key = ["crdate", "periodtype", "vendorno", "siteno", "itemno", "mch3", "artno"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+    PARSE_DATETIME('%d/%m/%Y %H:%M', TRIM(CRDATE)) AS crdate,
+    NULLIF(CAST(TRIM(PERIODTYPE) AS STRING), '') AS periodtype,
+    PARSE_DATE('%d/%m/%Y', REGEXP_REPLACE(TRIM(PERIODDATE), r'[="]', '')) AS perioddate,
+    NULLIF(CAST(TRIM(VENDORNO) AS STRING), '') AS vendorno,
+    NULLIF(CAST(TRIM(VENDORNAME) AS STRING), '') AS vendorname,
+    NULLIF(CAST(TRIM(SITENO) AS STRING), '') AS siteno,
+    NULLIF(CAST(TRIM(SITENAME) AS STRING), '') AS sitename,
+    NULLIF(CAST(TRIM(ITEMNO) AS STRING), '') AS itemno,
+    NULLIF(CAST(TRIM(MCH3) AS STRING), '') AS mch3,
+    NULLIF(CAST(TRIM(MCH2DESC) AS STRING), '') AS mch2desc,
+    NULLIF(CAST(TRIM(MCH1DESC) AS STRING), '') AS mch1desc,
+    NULLIF(CAST(TRIM(ARTNO) AS STRING), '') AS artno,
+    NULLIF(CAST(TRIM(ARTDESC) AS STRING), '') AS artdesc,
+    NULLIF(CAST(REGEXP_REPLACE(TRIM(ARTEAN), r'[="]', '') AS STRING), '') AS artean,
+    NULLIF(CAST(REGEXP_REPLACE(TRIM(VDARTNO), r'[="]', '') AS STRING), '') AS vdartno,
+    NULLIF(CAST(TRIM(VDARTDESC) AS STRING), '') AS vdartdesc,
+    CAST(QTY AS FLOAT64) AS qty,
+    CAST(VALUE AS FLOAT64) AS value,
+    PARSE_DATE('%Y%m%d', ASATDATE) as ASATDATE,
+FROM `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}.saleout_hp`
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

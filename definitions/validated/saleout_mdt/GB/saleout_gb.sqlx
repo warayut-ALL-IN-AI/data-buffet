@@ -1,0 +1,80 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_SALEOUT,
+    dependencies: ["validated_schema_saleout", "create_all_table_raw_saleout_mdt"],
+    tags: [databuffet.TAG_VALIDATED],
+    uniqueKey: ["sale_no", "sale_date", "branch_code", "product_code"],
+    bigquery: {
+        clusterBy: ["sale_no", "sale_date", "branch_code", "product_code"]
+    },
+}
+
+js {
+    const pk_key = ["sale_no", "sale_date", "branch_code", "product_code"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ASATDATE DESC) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+    NULLIF(CAST(TRIM(No_) AS STRING), '') AS row_no,
+    NULLIF(CAST(TRIM(Sale_No_) AS STRING), '') AS sale_no,
+    COALESCE(
+        -- 1. ลองแปลงแบบ มม/วว/ปปปป (ค.ศ.) ก่อน เช่น "2/14/1483" -> 1483-02-14
+        SAFE.PARSE_DATE('%m/%d/%Y', TRIM(Sale_Date)),
+        
+        -- 2. ลองแปลงแบบ วว/มม/ปปปป (ค.ศ.) เผื่อมีผสมมา
+        SAFE.PARSE_DATE('%d/%m/%Y', TRIM(Sale_Date)),
+        
+        -- 3. ถ้าแปลง ค.ศ. ตรงๆ ไม่ผ่าน ค่อยคิดว่าเป็น พ.ศ. (วว/มม/พ.ศ.) แล้วนำมาลบ 543
+        PARSE_DATE('%d/%m/%Y', 
+            CONCAT(
+                SPLIT(TRIM(Sale_Date), '/')[OFFSET(0)], '/',
+                SPLIT(TRIM(Sale_Date), '/')[OFFSET(1)], '/',
+                CAST(SPLIT(TRIM(Sale_Date), '/')[OFFSET(2)] AS INT64) - 543
+            )
+        )
+    ) AS sale_date,
+    NULLIF(CAST(TRIM(Branch_Code) AS STRING), '') AS branch_code,
+    NULLIF(CAST(TRIM(Branch_Name) AS STRING), '') AS branch_name,
+    NULLIF(CAST(TRIM(Branch_Short_Name) AS STRING), '') AS branch_short_name,
+    NULLIF(CAST(TRIM(Product_Code) AS STRING), '') AS product_code,
+    NULLIF(CAST(TRIM(Product_Name) AS STRING), '') AS product_name,
+    CAST(Sale_Quantity AS INT64) AS sale_quantity,
+    CAST(REGEXP_REPLACE(TRIM(Sale_Amount), r"[,\']", '') AS FLOAT64) AS sale_amount,
+    NULLIF(CAST(TRIM(Type) AS STRING), '') AS type,
+    NULLIF(CAST(TRIM(Reference_No_) AS STRING), '') AS reference_no,
+    NULLIF(CAST(TRIM(Deposit_No_) AS STRING), '') AS deposit_no,
+    PARSE_DATE('%Y%m%d', ASATDATE) as ASATDATE,
+FROM `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}.saleout_gb`
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}
