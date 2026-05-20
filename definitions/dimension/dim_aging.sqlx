@@ -304,7 +304,7 @@ with chq as (
     and t_is.InvoiceNo = t_bs_as.InvoiceRef
   LEFT JOIN mir as mir
     on t_bs_as.CompanyID = mir.company_id
-    and t_bs_as.InvoiceRef = mir.mirbinvno
+    and t_bs_as.InvoiceNo = mir.mirbinvno
   group by 1,2,4,5,6,7,8,9,10
 
 ), final_main_mix as (
