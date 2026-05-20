@@ -20,13 +20,6 @@ js {
     };
     const DimCalendarTableRef = `${DimCalendarTable.database}.${DimCalendarTable.schema}.${DimCalendarTable.name}`;
 
-    const DimCompanyTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_company",
-    };
-    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
-
     const DimCustomerTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -34,12 +27,12 @@ js {
     };
     const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
 
-    const DimAgingView = {
+    const DimStatusNotReceiveTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_VIEW,
-        name: "view_dim_aging",
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_status_not_receive",
     };
-    const DimAgingViewRef = `${DimAgingView.database}.${DimAgingView.schema}.${DimAgingView.name}`;
+    const DimStatusNotReceiveTableRef = `${DimStatusNotReceiveTable.database}.${DimStatusNotReceiveTable.schema}.${DimStatusNotReceiveTable.name}`;
 
     const DimPaymentScoreTable = {
         database: databuffet.DATABASE,
@@ -75,13 +68,10 @@ js {
         name: "dim_grade",
     };
     const DimGradeTableRef = `${DimGradeTable.database}.${DimGradeTable.schema}.${DimGradeTable.name}`;
-
 }
 
 declare max_sk INT64;
-
 set max_sk = IFNULL( (select IFNULL(MAX(CustomerGradeSK), 0) from `${DimCustomerGradeTableRef}`), 0 );
-
 
 MERGE `${DimCustomerGradeTableRef}` as T
 USING (
@@ -98,15 +88,85 @@ USING (
     FROM ${ref(databuffet.VALIDATED_MAC5, "chq")} as chq
     , UNNEST(extract_value) as ex
     INNER JOIN (
-      select distinct company_id, cqlno, cqlvnos, 
+      select distinct company_id, cqlno, cqlvnos 
       from ${ref(databuffet.VALIDATED_MAC5, "cql")}
     ) as cql 
       ON chq.chqno = cql.cqlno 
       and chq.company_id = cql.company_id
     WHERE ex.extract_date is not null
 
+  ), mie as (
+    select 
+      company_id, mietype, mievnos, 
+      MAX(COALESCE(
+        SAFE.PARSE_DATE('%d/%m/%Y', SUBSTR(mie.MIEctermDX, 1, 10)),
+        SAFE.PARSE_DATE('%d/%m/%Y', SUBSTR(mie.MIEctermDX, 1, 9)),
+        SAFE.PARSE_DATE('%d/%m/%y', SUBSTR(mie.MIEctermDX, 1, 7))
+      )) as DueDate
+    from ${ref(databuffet.VALIDATED_MAC5, "mie")} as mie
+    group by 1,2,3
+
+  ), mir_raw as (
+    select 
+      mir.company_id, 
+      mir.mircus, 
+      COALESCE(extract(YEAR from chq.extract_date), mir.miryear) as miryear,
+      mir.mirvnos, 
+      mir.mirbinvtype,
+      mir.mirbinvno,
+      (COALESCE(chq.extract_date, PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday))))) as mirdate,
+      ROUND((IF(mirbinvtype in ('BS', 'AS'), mih_is.mihnetsum, mir.mirsum)),2) as mirsum,
+      (COALESCE(mie.DueDate, (PARSE_DATE('%Y%m%d', CONCAT(mih_is.mihYear, FORMAT("%02d", mih_is.mihMonth),  mih_is.mihDay)) + mih_is.mihstanding))) as dueDate,
+      ((PARSE_DATE('%Y%m%d', CONCAT(mih_is.mihYear, FORMAT("%02d", mih_is.mihMonth),  mih_is.mihDay)) + mih_is.mihstanding)) as realDueDate,
+      (CAST(mir.mirbinvdate as DATE)) as InvoiceDate
+    from ${ref(databuffet.VALIDATED_MAC5, "mir")} as mir
+    inner join ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
+      on mir.company_id = mih.company_id
+      and mir.mirvnos = mih.mihvnos
+      and mir.mirtype = mih.mihtype
+      and mih.mihcancel = 0
+    inner join ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih_is
+      on mir.company_id = mih_is.company_id
+      and mir.mirbinvno = mih_is.mihvnos
+      and mir.mirbinvtype = mih_is.mihtype
+      and mih_is.mihcancel = 0
+    left join chq as chq
+      on mir.company_id = chq.company_id
+      and mir.mirvnos = chq.cqlvnos
+    left join mie as mie
+      on mir.company_id = mie.company_id
+      and mir.mirbinvtype = mie.mietype
+      and mir.mirbinvno = mie.mievnos
+    where mir.mirtype = 'RS'
+      and (
+        (mir.miryear <= 2022 and mih.mihstatus = 7)      
+        or 
+        not exists (
+          select 1
+          from `${DimStatusNotReceiveTableRef}` as exc_status
+          where mir.company_id = exc_status.CompanyID
+          and mih.mihstatus = exc_status.StatusID
+        )
+      )
+
+  ), cal_mir as (
+    select 
+      mir.*,
+      IF(DATE_DIFF(mirdate, realDueDate, DAY) > 0.0, DATE_DIFF(mirdate, realDueDate, DAY), null) as receiveAgeDays_dueDate,
+      IF(DATE_DIFF(mirdate, InvoiceDate, DAY) > 0.0, DATE_DIFF(mirdate, InvoiceDate, DAY), null) as receiveAgeDays_invoiceDate
+    from mir_raw as mir
+
+  ), final_mir as (
+    select 
+      mir.company_id, mir.mircus, miryear,
+      ROUND(SUM(mir.mirsum),2) as mirsum,
+      CEIL(AVG(mir.receiveAgeDays_dueDate)) as receiveAgeDays_dueDate,
+      CEIL(AVG(mir.receiveAgeDays_invoiceDate)) as receiveAgeDays_invoiceDate
+    from cal_mir as mir
+    group by 1, 2, 3
+
   ), dim_customer as (
-    SELECT 
+    SELECT   
       cust.CustomerSK,
       cust.CompanySK,
       cust.companyID,
@@ -116,32 +176,42 @@ USING (
       cust.deblimit,
       cust.debcreditterm, 
       cust.debmemo,
+      deb.debeditdt,
       year.Year
     FROM `${DimCustomerTableRef}` as cust
+    LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "deb")} as deb
+      on cust.companyID = deb.company_id
+      and cust.debcode = deb.debcode
     CROSS JOIN calendar_year as year
 
   ), mih_first_contact as (
-    select company_id, mihcus, MIN(PARSE_DATE('%Y%m%d', CONCAT(mihYear, FORMAT("%02d", mihMonth),  mihDay))) as first_contact
-    from ${ref(databuffet.CURATED_MAC5, "curated_mih")}
-    where mihcus in (select debcode from dim_customer where debdate is null)
+    select 
+      company_id, 
+      mihcus, 
+      MIN(PARSE_DATE('%Y%m%d', CONCAT(mihYear, FORMAT("%02d", mihMonth),  mihDay))) as first_contact
+    from ${ref(databuffet.VALIDATED_MAC5, "mih")}
+    where mihcus in (
+      select debcode
+      from dim_customer
+      where debdate is null
+    )
     group by 1, 2
 
   ), sum_receive as (
     select 
-      mir.company_id, mir.mircus, COALESCE(extract(YEAR from chq.extract_date), mir.miryear) as miryear,
-      SUM(COALESCE(chq.extract_amount, mir.mirsum)) as mirsum,
-    from ${ref(databuffet.VALIDATED_MAC5, "mir")} as mir
-    left join chq as chq
-      on mir.company_id = chq.company_id
-      and mir.mirvnos = chq.cqlvnos
-    where mirtype = 'RS'
-      and exists (select 1 from dim_customer as t2 where mir.mircus = t2.debcode)
+      mir.company_id, mir.mircus, miryear,
+      SUM(mir.mirsum) as mirsum
+    from final_mir as mir
+    where exists (select 1 from dim_customer as t2 where mir.mircus = t2.debcode and mir.company_id = t2.companyID)
     group by 1,2,3
 
   ), avg_receiptageday as (
-    select companyID, debcode, EXTRACT(YEAR FROM cfsDate) as cfsyear, AVG(ReceiptAgeDays) as ReceiptAgeDays
-    from `${DimAgingViewRef}` as aging
-    where exists (select 1 from dim_customer as t2 where aging.debcode = t2.debcode)
+    select 
+      mir.company_id, mir.mircus, miryear,
+      CEIL(AVG(receiveAgeDays_dueDate)) as receiveAgeDays_dueDate,
+      CEIL(AVG(receiveAgeDays_invoiceDate)) as receiveAgeDays_invoiceDate
+    from final_mir as mir
+    where exists (select 1 from dim_customer as t2 where mir.mircus = t2.debcode and mir.company_id = t2.companyID)
     group by 1, 2, 3
 
   ), cancel_chq as (
@@ -157,106 +227,123 @@ USING (
       IFNULL(rec_sum.mirsum, 0) as receive_sum, 
       payment_receive_score.PaymentReceiveSK,
       IFNULL(payment_receive_score.Score, 0) as payment_receive_score,
-      IFNULL(rec_age.ReceiptAgeDays, 0) as receive_avg,
-      avg_collect_score.AvgCollectSK,
-      IFNULL(avg_collect_score.Score, 0) as avg_collect_score,
+
+      IFNULL(rec_age_inv.receiveAgeDays_invoiceDate, 0) as receive_avg_inv,
+      avg_collect_score_inv.AvgCollectSK as InvAvgCollectSK,
+      IFNULL(avg_collect_score_inv.Score, 0) as avg_collect_score_inv,
+
+      IFNULL(rec_age_due.receiveAgeDays_dueDate, 0) as receive_avg_due,
+      avg_collect_score_due.AvgCollectSK as DueAvgCollectSK,
+      IFNULL(avg_collect_score_due.Score, 0) as avg_collect_score_due,
+
       IFNULL(can_chq.cancel_chq, 0) as cancel_chq,
       bounce_chq_score.BounceChequeSK,
       IFNULL(bounce_chq_score.Score, 0) as bounce_chq_score,
-      IFNULL(cust.debdate, add_first_contact.first_contact) as first_contact_date,
-      (DATE_DIFF(current_date('Asia/Bangkok')-1, IFNULL(cust.debdate, add_first_contact.first_contact), DAY) / 365.0) as first_contact_today,
+
+      COALESCE(cust.debdate, add_first_contact.first_contact, cust.debeditdt) as first_contact_date,
+      (DATE_DIFF(current_date('Asia/Bangkok')-1, COALESCE(cust.debdate, add_first_contact.first_contact, cust.debeditdt), DAY) / 365.0) as first_contact_today,
       contact_score.ContactSK,
       IFNULL(contact_score.Score, 0) as contact_score,
+
       20 as credibility_score,
       current_date('Asia/Bangkok')-1 as asatdate
-
     from dim_customer as cust
-    left join mih_first_contact as add_first_contact 
-      on cust.debcode = add_first_contact.mihcus 
+    left join mih_first_contact as add_first_contact
+      on cust.debcode = add_first_contact.mihcus
       and cust.companyID = add_first_contact.company_id
 
-    left join sum_receive as rec_sum 
-      on cust.debcode = rec_sum.mircus 
-      and cust.year = rec_sum.miryear 
+    left join sum_receive as rec_sum
+      on cust.debcode = rec_sum.mircus
+      and cust.year = rec_sum.miryear
       and cust.companyID = rec_sum.company_id
-
-    left join `${DimPaymentScoreTableRef}` as payment_receive_score 
-      on cust.CompanySK = payment_receive_score.CompanySK 
+    left join `${DimPaymentScoreTableRef}` as payment_receive_score
+      on cust.CompanySK = payment_receive_score.CompanySK
       and ROUND(IFNULL(rec_sum.mirsum, 0)) between payment_receive_score.PaymentReceivedMin and payment_receive_score.PaymentReceivedMax
-      and current_date('Asia/Bangkok')-1 between payment_receive_score.StartDate	and payment_receive_score.EndDate
+      and current_date('Asia/Bangkok')-1 between payment_receive_score.StartDate  and payment_receive_score.EndDate
 
-    left join avg_receiptageday as rec_age 
-      on cust.debcode = rec_age.debcode 
-      and cust.year = rec_age.cfsyear 
-      and cust.companyID = rec_age.companyID
-    left join `${DimAVGCollectScoreTableRef}` as avg_collect_score 
-      on cust.CompanySK = avg_collect_score.CompanySK 
-      and ROUND(IFNULL(rec_age.ReceiptAgeDays, 0)) between avg_collect_score.AvgCollectiondayMin and avg_collect_score.AvgCollectiondayMax
-      and current_date('Asia/Bangkok')-1 between avg_collect_score.StartDate	and avg_collect_score.EndDate
+    left join avg_receiptageday as rec_age_inv
+      on cust.debcode = rec_age_inv.mircus
+      and cust.year = rec_age_inv.miryear
+      and cust.companyID = rec_age_inv.company_id
+    left join `${DimAVGCollectScoreTableRef}` as avg_collect_score_inv
+      on cust.CompanyID = avg_collect_score_inv.CompanyID
+      and ROUND(IFNULL(rec_age_inv.receiveAgeDays_invoiceDate, 0)) between avg_collect_score_inv.AvgCollectiondayMin and avg_collect_score_inv.AvgCollectiondayMax
+      and current_date('Asia/Bangkok')-1 between avg_collect_score_inv.StartDate  and avg_collect_score_inv.EndDate
+      
+    left join avg_receiptageday as rec_age_due
+      on cust.debcode = rec_age_due.mircus
+      and cust.year = rec_age_due.miryear
+      and cust.companyID = rec_age_due.company_id
+    left join `${DimAVGCollectScoreTableRef}` as avg_collect_score_due
+      on cust.CompanyID = avg_collect_score_due.CompanyID
+      and ROUND(IFNULL(rec_age_due.receiveAgeDays_dueDate, 0)) between avg_collect_score_due.AvgCollectiondayMin and avg_collect_score_due.AvgCollectiondayMax
+      and current_date('Asia/Bangkok')-1 between avg_collect_score_due.StartDate  and avg_collect_score_due.EndDate
 
-    left join cancel_chq as can_chq 
-      on cust.debcode = can_chq.chqcus 
-      and cust.year = can_chq.chqyear 
+    left join cancel_chq as can_chq
+      on cust.debcode = can_chq.chqcus
+      and cust.year = can_chq.chqyear
       and cust.companyID = can_chq.company_id
-    left join `${DimBounceChqScoreTableRef}` as bounce_chq_score 
-      on cust.CompanySK = bounce_chq_score.CompanySK 
+    left join `${DimBounceChqScoreTableRef}` as bounce_chq_score
+      on cust.CompanySK = bounce_chq_score.CompanySK
       and ROUND(IFNULL(can_chq.cancel_chq, 0)) between bounce_chq_score.BouncedChequeMin and bounce_chq_score.BouncedChequeMax
-      and current_date('Asia/Bangkok')-1 between bounce_chq_score.StartDate	and bounce_chq_score.EndDate
+      and current_date('Asia/Bangkok')-1 between bounce_chq_score.StartDate and bounce_chq_score.EndDate
 
-    left join `${DimContactScoreTableRef}` as contact_score 
-      on cust.CompanySK = contact_score.CompanySK 
-      and ROUND(DATE_DIFF(current_date('Asia/Bangkok')-1, IFNULL(cust.debdate, add_first_contact.first_contact), DAY) / 365.0) between contact_score.ContactYearMin and contact_score.ContactYearMax
-      and current_date('Asia/Bangkok')-1 between contact_score.StartDate	and contact_score.EndDate
+    left join `${DimContactScoreTableRef}` as contact_score
+      on cust.CompanySK = contact_score.CompanySK
+      and ROUND(DATE_DIFF(current_date('Asia/Bangkok')-1, COALESCE(cust.debdate, add_first_contact.first_contact, cust.debeditdt), DAY) / 365.0) between contact_score.ContactYearMin and contact_score.ContactYearMax
+      and current_date('Asia/Bangkok')-1 between contact_score.StartDate  and contact_score.EndDate
     
-    where cust.Year >= EXTRACT(YEAR FROM IFNULL(cust.debdate, add_first_contact.first_contact))
-
+    where cust.Year >= EXTRACT(YEAR FROM COALESCE(cust.debdate, add_first_contact.first_contact, cust.debeditdt))
   )
-    select 
-      (CASE 
-        WHEN existing.CustomerGradeSK is not null THEN existing.CustomerGradeSK
-        ELSE max_sk + row_number() over(partition by existing.CustomerGradeSK is null order by final.CompanySK, final.Year, final.debcode)
-      END) as CustomerGradeSK,
-      final.CustomerSK,
-      final.PaymentReceiveSK,
-      final.AvgCollectSK,
-      final.BounceChequeSK,
-      final.ContactSK,
-      grade_score.GradeSK,
-      final.CompanySK,
-      final.companyID as CompanyID,
-      final.Year,
-      final.debcode as CustomerCode,
-      final.debnamet as CustomerName,
-      final.deblimit as CustomerLimit,
-      final.debcreditterm as CustomerCreditTerm,
-      final.debmemo as CustomerMemo,
+  select 
+    (CASE 
+      WHEN existing.CustomerGradeSK is not null THEN existing.CustomerGradeSK
+      ELSE max_sk + row_number() over(partition by existing.CustomerGradeSK is null order by final.CompanySK, final.Year, final.debcode)
+    END) as CustomerGradeSK,
+    final.CustomerSK,
+    final.PaymentReceiveSK,
+    final.InvAvgCollectSK,
+    final.DueAvgCollectSK,
+    final.BounceChequeSK,
+    final.ContactSK,
+    grade_score_inv.GradeSK as InvoiceGradeSK,
+    grade_score_due.GradeSK as DueGradeSK,
+    final.CompanySK,
+    final.companyID as CompanyID,
+    final.Year,
+    final.debcode as CustomerCode,
+    final.debnamet as CustomerName,
+    final.deblimit as CustomerLimit,
+    final.debcreditterm as CustomerCreditTerm,
+    final.debmemo as CustomerMemo,
     
-      final.receive_sum as SumPaymentReceive,
-      final.receive_avg as AvgReceiveAgeDay,
-      final.cancel_chq as CountCancelCheque,
-      final.first_contact_date as FirstContactDate,
-      final.first_contact_today as CalculateFirstContact,
-      final.credibility_score as CredibilityValue,
+    final.receive_sum as SumPaymentReceive,
+    final.receive_avg_inv as InvoiceDateAvgReceiveAgeDay,
+    final.receive_avg_due as DueDateAvgReceiveAgeDay,
+    final.cancel_chq as CountCancelCheque,
+    final.first_contact_today as CalculateFirstContact,
+    final.credibility_score as Credibility,
+    final.first_contact_date as FirstContactDate,
 
-      -- final.payment_receive_score as PaymentReceiveScore,
-      -- final.avg_collect_score as AvgCollectScore,
-      -- final.bounce_chq_score as BounceChqScore,
-      -- final.contact_score as FirstContactScore,
-      -- final.credibility_score as CredibilityScore,
+    (((payment_receive_score + avg_collect_score_inv + bounce_chq_score + contact_score + credibility_score) / 80.0) * 100.0) as InvoiceCalPercent,
+    grade_score_inv.Grade as InvoiceGrade,
 
-      (((payment_receive_score + avg_collect_score + bounce_chq_score + contact_score + credibility_score) / 80.0) * 100.0) as CalPercent,
-      grade_score.Grade,
-
-      final.asatdate
-    from final
-    left join `${DimCustomerGradeTableRef}` as existing
-      on final.Year = existing.Year 
-      and final.debcode = existing.CustomerCode
-      and final.CompanySK = existing.CompanySK
-
-    left join `${DimGradeTableRef}` as grade_score
-      on final.CompanySK = grade_score.CompanySK
-      and (((payment_receive_score + avg_collect_score + bounce_chq_score + contact_score + credibility_score) / 80.0) * 100.0) between grade_score.Percentmin and grade_score.Percentmax
+    (((payment_receive_score + avg_collect_score_due + bounce_chq_score + contact_score + credibility_score) / 80.0) * 100.0) as DueCalPercent,
+    grade_score_due.Grade as DueGrade,
+    final.asatdate
+  from final
+  left join `${DimCustomerGradeTableRef}` as existing
+    on final.Year = existing.Year 
+    and final.debcode = existing.CustomerCode
+    and final.CompanySK = existing.CompanySK
+  left join `${DimGradeTableRef}` as grade_score_inv
+    on final.CompanySK = grade_score_inv.CompanySK
+    and (((payment_receive_score + avg_collect_score_inv + bounce_chq_score + contact_score + credibility_score) / 80.0) * 100.0) 
+      between grade_score_inv.Percentmin and grade_score_inv.Percentmax
+  left join `${DimGradeTableRef}` as grade_score_due
+    on final.CompanySK = grade_score_due.CompanySK
+    and (((payment_receive_score + avg_collect_score_due + bounce_chq_score + contact_score + credibility_score) / 80.0) * 100.0) 
+      between grade_score_due.Percentmin and grade_score_due.Percentmax
 
 ) as S
 ON T.CustomerGradeSK = S.CustomerGradeSK
@@ -264,10 +351,12 @@ WHEN MATCHED THEN
   UPDATE SET 
     CustomerSK = S.CustomerSK,
     PaymentReceiveSK = S.PaymentReceiveSK,
-    AvgCollectSK = S.AvgCollectSK,
+    InvAvgCollectSK = S.InvAvgCollectSK,
+    DueAvgCollectSK = S.DueAvgCollectSK,
     BounceChequeSK = S.BounceChequeSK,
     ContactSK = S.ContactSK,
-    GradeSK = S.GradeSK,
+    InvoiceGradeSK = S.InvoiceGradeSK,
+    DueGradeSK = S.DueGradeSK,
     CompanySK = S.CompanySK,
     CompanyID = S.CompanyID,
     CustomerName = S.CustomerName,
@@ -275,21 +364,31 @@ WHEN MATCHED THEN
     CustomerCreditTerm = S.CustomerCreditTerm,
     CustomerMemo = S.CustomerMemo,
     SumPaymentReceive = S.SumPaymentReceive,
-    AvgReceiveAgeDay = S.AvgReceiveAgeDay,
+    InvoiceDateAvgReceiveAgeDay = S.InvoiceDateAvgReceiveAgeDay,
+    DueDateAvgReceiveAgeDay = S.DueDateAvgReceiveAgeDay,
     CountCancelCheque = S.CountCancelCheque,
     CalculateFirstContact = S.CalculateFirstContact,
-    CredibilityValue = S.CredibilityValue,
+    Credibility = S.Credibility,
     FirstContactDate = S.FirstContactDate,
-    CalPercent = S.CalPercent,
-    Grade = S.Grade,
+    InvoiceCalPercent = S.InvoiceCalPercent,
+    InvoiceGrade = S.InvoiceGrade,
+    DueCalPercent = S.DueCalPercent,
+    DueGrade = S.DueGrade,
     asatdate = S.asatdate
 WHEN NOT MATCHED THEN
-  INSERT (CustomerGradeSK, CustomerSK, PaymentReceiveSK, AvgCollectSK, BounceChequeSK, ContactSK, GradeSK, CompanySK, 
-  CompanyID, Year, CustomerCode, CustomerName, CustomerLimit, CustomerCreditTerm, CustomerMemo, 
-  SumPaymentReceive, AvgReceiveAgeDay, CountCancelCheque, CalculateFirstContact, CredibilityValue, 
-  FirstContactDate, CalPercent, Grade, asatdate)
-
-  VALUES (S.CustomerGradeSK, S.CustomerSK, S.PaymentReceiveSK, S.AvgCollectSK, S.BounceChequeSK, S.ContactSK, S.GradeSK, S.CompanySK, 
-  S.CompanyID, S.Year, S.CustomerCode, S.CustomerName, S.CustomerLimit, S.CustomerCreditTerm, S.CustomerMemo, 
-  S.SumPaymentReceive, S.AvgReceiveAgeDay, S.CountCancelCheque, S.CalculateFirstContact, S.CredibilityValue, 
-  S.FirstContactDate, S.CalPercent, S.Grade, S.asatdate);
+  INSERT (
+    CustomerGradeSK, CustomerSK, PaymentReceiveSK, InvAvgCollectSK, DueAvgCollectSK, 
+    BounceChequeSK, ContactSK, InvoiceGradeSK, DueGradeSK, CompanySK, CompanyID, 
+    Year, CustomerCode, CustomerName, CustomerLimit, CustomerCreditTerm, CustomerMemo, 
+    SumPaymentReceive, InvoiceDateAvgReceiveAgeDay, DueDateAvgReceiveAgeDay, 
+    CountCancelCheque, CalculateFirstContact, Credibility, FirstContactDate, 
+    InvoiceCalPercent, InvoiceGrade, DueCalPercent, DueGrade, asatdate
+  )
+  VALUES (
+    S.CustomerGradeSK, S.CustomerSK, S.PaymentReceiveSK, S.InvAvgCollectSK, S.DueAvgCollectSK, 
+    S.BounceChequeSK, S.ContactSK, S.InvoiceGradeSK, S.DueGradeSK, S.CompanySK, S.CompanyID, 
+    S.Year, S.CustomerCode, S.CustomerName, S.CustomerLimit, S.CustomerCreditTerm, S.CustomerMemo, 
+    S.SumPaymentReceive, S.InvoiceDateAvgReceiveAgeDay, S.DueDateAvgReceiveAgeDay, 
+    S.CountCancelCheque, S.CalculateFirstContact, S.Credibility, S.FirstContactDate, 
+    S.InvoiceCalPercent, S.InvoiceGrade, S.DueCalPercent, S.DueGrade, S.asatdate
+  );
