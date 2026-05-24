@@ -53,12 +53,9 @@ END;`;
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
     CAST(mcontractid AS STRING) as mcontractid,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(dateinsert, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dateinsert, 1, 19))
-    ) AS dateinsert,
-    CAST(status AS INT64) as status,
-    NULLIF(CAST(TRIM(uinsert) AS STRING), '') as uinsert
+    ${databuffet.parseFlexibleDatetime('dateinsert')} AS dateinsert,
+    ${databuffet.castInt64('status')} as status,
+    ${databuffet.cleanString('uinsert')} as uinsert
 
   FROM
     `${sourceTableRef}`

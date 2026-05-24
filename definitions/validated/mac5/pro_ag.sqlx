@@ -52,17 +52,14 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(proagid AS INT64) as proagid,
-    NULLIF(CAST(TRIM(proagstkcode) AS STRING), '') as proagstkcode,
-    NULLIF(CAST(TRIM(proagsttcode) AS STRING), '') as proagsttcode,
-    NULLIF(CAST(TRIM(proagstt) AS STRING), '') as proagstt,
+    ${databuffet.castInt64('proagid')} as proagid,
+    ${databuffet.cleanString('proagstkcode')} as proagstkcode,
+    ${databuffet.cleanString('proagsttcode')} as proagsttcode,
+    ${databuffet.cleanString('proagstt')} as proagstt,
     PARSE_DATE('%Y-%m-%d', SUBSTR(proagstrdate, 1, 10)) AS proagstrdate,
     PARSE_DATE('%Y-%m-%d', SUBSTR(proagenddate, 1, 10)) AS proagenddate,
-    NULLIF(CAST(TRIM(proagregion) AS STRING), '') as proagregion,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(dinsert, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19))
-    ) AS dinsert
+    ${databuffet.cleanString('proagregion')} as proagregion,
+    ${databuffet.parseFlexibleDatetime('dinsert')} AS dinsert
 
   FROM
     `${sourceTableRef}`

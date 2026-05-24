@@ -52,10 +52,10 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(id AS INT64) as id,
-    NULLIF(CAST(TRIM(deb_code) AS STRING), '') as deb_code,
-    NULLIF(CAST(TRIM(vendor_name) AS STRING), '') as vendor_name,
-    NULLIF(CAST(TRIM(channel) AS STRING), '') as channel
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.cleanString('deb_code')} as deb_code,
+    ${databuffet.cleanString('vendor_name')} as vendor_name,
+    ${databuffet.cleanString('channel')} as channel
 
   FROM
     `${sourceTableRef}`

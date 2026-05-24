@@ -52,20 +52,14 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(rnoid AS INT64) as rnoid,
-    NULLIF(CAST(TRIM(rnoprefix) AS STRING), '') as rnoprefix,
-    NULLIF(CAST(TRIM(rnoyear) AS STRING), '') as rnoyear,
-    NULLIF(CAST(TRIM(rnomonth) AS STRING), '') as rnomonth,
-    CAST(rnorunning AS INT64) as rnorunning,
-    NULLIF(CAST(TRIM(rnorunno) AS STRING), '') as rnorunno,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(rnocrdate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(rnocrdate, 1, 19))
-    ) AS rnocrdate,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(rnoupdatedate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(rnoupdatedate, 1, 19))
-    ) AS rnoupdatedate
+    ${databuffet.castInt64('rnoid')} as rnoid,
+    ${databuffet.cleanString('rnoprefix')} as rnoprefix,
+    ${databuffet.cleanString('rnoyear')} as rnoyear,
+    ${databuffet.cleanString('rnomonth')} as rnomonth,
+    ${databuffet.castInt64('rnorunning')} as rnorunning,
+    ${databuffet.cleanString('rnorunno')} as rnorunno,
+    ${databuffet.parseFlexibleDatetime('rnocrdate')} AS rnocrdate,
+    ${databuffet.parseFlexibleDatetime('rnoupdatedate')} AS rnoupdatedate
 
   FROM
     `${sourceTableRef}`

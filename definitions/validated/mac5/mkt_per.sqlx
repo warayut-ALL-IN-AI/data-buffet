@@ -52,19 +52,13 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
-    NULLIF(CAST(TRIM(pername) AS STRING), '') as pername,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perstart, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perstart, 1, 19))
-    ) as perstart,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perend, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perend, 1, 19))
-    ) as perend,
-    NULLIF(CAST(TRIM(perzone) AS STRING), '') as perzone,
-    NULLIF(CAST(TRIM(persector) AS STRING), '') as persector,
-    CAST(zseq AS INT64) as zseq,
+    ${databuffet.cleanString('percode')} as percode,
+    ${databuffet.cleanString('pername')} as pername,
+    ${databuffet.parseFlexibleDatetime('perstart')} as perstart,
+    ${databuffet.parseFlexibleDatetime('perend')} as perend,
+    ${databuffet.cleanString('perzone')} as perzone,
+    ${databuffet.cleanString('persector')} as persector,
+    ${databuffet.castInt64('zseq')} as zseq,
 
   FROM
     `${sourceTableRef}`

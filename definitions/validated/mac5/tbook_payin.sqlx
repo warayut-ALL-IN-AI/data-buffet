@@ -52,16 +52,10 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    NULLIF(CAST(TRIM(orderno) AS STRING), '') as orderno,
-    CAST(status AS INT64) as status,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(datetime, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetime, 1, 19))
-    ) AS datetime,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(datetimeapprove, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetimeapprove, 1, 19))
-    ) AS datetimeapprove
+    ${databuffet.cleanString('orderno')} as orderno,
+    ${databuffet.castInt64('status')} as status,
+    ${databuffet.parseFlexibleDatetime('datetime')} AS datetime,
+    ${databuffet.parseFlexibleDatetime('datetimeapprove')} AS datetimeapprove
 
   FROM
     `${sourceTableRef}`

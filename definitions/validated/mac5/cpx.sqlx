@@ -52,25 +52,22 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    NULLIF(CAST(TRIM(cpxstkid) AS STRING), '') as cpxstkid,
-    CAST(cpxlinkid AS INT64) as cpxlinkid,
-    NULLIF(CAST(TRIM(cpxvnosid) AS STRING), '') as cpxvnosid,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(cpxdateid, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cpxdateid, 1, 19))
-    ) AS cpxdateid,
-    NULLIF(CAST(TRIM(cpxjob) AS STRING), '') as cpxjob,
-    NULLIF(CAST(TRIM(cpxdep) AS STRING), '') as cpxdep,
-    NULLIF(CAST(TRIM(cpxper) AS STRING), '') as cpxper,
-    NULLIF(CAST(TRIM(cpxdoc) AS STRING), '') as cpxdoc,
-    NULLIF(CAST(TRIM(cpxmec) AS STRING), '') as cpxmec,
-    NULLIF(CAST(TRIM(cpxsto) AS STRING), '') as cpxsto,
-    CAST(cpxstkreq AS FLOAT64) as cpxstkreq,
-    CAST(cpxstkcut AS FLOAT64) as cpxstkcut,
-    CAST(cpxclearstk AS INT64) as cpxclearstk,
-    CAST(cpxclearuser AS INT64) as cpxclearuser,
-    CAST(cpxclearall AS INT64) as cpxclearall,
-    CAST(cpxstatus AS INT64) as cpxstatus
+    ${databuffet.cleanString('cpxstkid')} as cpxstkid,
+    ${databuffet.castInt64('cpxlinkid')} as cpxlinkid,
+    ${databuffet.cleanString('cpxvnosid')} as cpxvnosid,
+    ${databuffet.parseFlexibleDatetime('cpxdateid')} AS cpxdateid,
+    ${databuffet.cleanString('cpxjob')} as cpxjob,
+    ${databuffet.cleanString('cpxdep')} as cpxdep,
+    ${databuffet.cleanString('cpxper')} as cpxper,
+    ${databuffet.cleanString('cpxdoc')} as cpxdoc,
+    ${databuffet.cleanString('cpxmec')} as cpxmec,
+    ${databuffet.cleanString('cpxsto')} as cpxsto,
+    ${databuffet.castFloat64('cpxstkreq')} as cpxstkreq,
+    ${databuffet.castFloat64('cpxstkcut')} as cpxstkcut,
+    ${databuffet.castInt64('cpxclearstk')} as cpxclearstk,
+    ${databuffet.castInt64('cpxclearuser')} as cpxclearuser,
+    ${databuffet.castInt64('cpxclearall')} as cpxclearall,
+    ${databuffet.castInt64('cpxstatus')} as cpxstatus
 
   FROM
     `${sourceTableRef}`

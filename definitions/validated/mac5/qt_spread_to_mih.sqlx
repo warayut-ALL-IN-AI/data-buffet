@@ -52,13 +52,13 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(id AS INT64) as id,
-    CAST(qt_spread_ref_id AS INT64) as qt_spread_ref_id,
-    NULLIF(CAST(TRIM(qtid) AS STRING), '') as qtid,
-    NULLIF(CAST(TRIM(mihvnos) AS STRING), '') as mihvnos,
-    CAST(status AS INT64) as status,
-    CAST(rdysendtomac5 AS INT64) as rdysendtomac5,
-    NULLIF(CAST(TRIM(sto) AS STRING), '') as sto
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.castInt64('qt_spread_ref_id')} as qt_spread_ref_id,
+    ${databuffet.cleanString('qtid')} as qtid,
+    ${databuffet.cleanString('mihvnos')} as mihvnos,
+    ${databuffet.castInt64('status')} as status,
+    ${databuffet.castInt64('rdysendtomac5')} as rdysendtomac5,
+    ${databuffet.cleanString('sto')} as sto
 
   FROM
     `${sourceTableRef}`

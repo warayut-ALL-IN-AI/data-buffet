@@ -52,12 +52,12 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(id AS INT64) as id,
-    NULLIF(CAST(TRIM(iddesc) AS STRING), '') as iddesc,
-    NULLIF(CAST(TRIM(idcode) AS STRING), '') as idcode,
-    NULLIF(CAST(TRIM(name) AS STRING), '') as name,
-    NULLIF(CAST(TRIM(dep) AS STRING), '') as dep,
-    NULLIF(CAST(TRIM(pic) AS STRING), '') as pic
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.cleanString('iddesc')} as iddesc,
+    ${databuffet.cleanString('idcode')} as idcode,
+    ${databuffet.cleanString('name')} as name,
+    ${databuffet.cleanString('dep')} as dep,
+    ${databuffet.cleanString('pic')} as pic
 
   FROM
     `${sourceTableRef}`

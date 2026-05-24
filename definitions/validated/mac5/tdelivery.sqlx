@@ -53,19 +53,19 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    NULLIF(CAST(TRIM(frun) AS STRING), '') as frun,
-    NULLIF(CAST(TRIM(fmaster) AS STRING), '') as fmaster,
-    NULLIF(CAST(TRIM(fserial_no) AS STRING), '') as fserial_no,
-    NULLIF(CAST(TRIM(fdatetime) AS STRING), '') as fdatetime,
-    NULLIF(CAST(TRIM(flattitude) AS STRING), '') as flattitude,
-    NULLIF(CAST(TRIM(flongtitude) AS STRING), '') as flongtitude,
-    NULLIF(CAST(TRIM(fpoi) AS STRING), '') as fpoi,
-    NULLIF(CAST(TRIM(fzone) AS STRING), '') as fzone,
-    NULLIF(CAST(TRIM(fvat) AS STRING), '') as fvat,
-    NULLIF(CAST(TRIM(freceive) AS STRING), '') as freceive,
-    NULLIF(CAST(TRIM(fdocument) AS STRING), '') as fdocument,
-    NULLIF(CAST(TRIM(flatd) AS STRING), '') as flatd,
-    NULLIF(CAST(TRIM(flongd) AS STRING), '') as flongd
+    ${databuffet.cleanString('frun')} as frun,
+    ${databuffet.cleanString('fmaster')} as fmaster,
+    ${databuffet.cleanString('fserial_no')} as fserial_no,
+    ${databuffet.cleanString('fdatetime')} as fdatetime,
+    ${databuffet.cleanString('flattitude')} as flattitude,
+    ${databuffet.cleanString('flongtitude')} as flongtitude,
+    ${databuffet.cleanString('fpoi')} as fpoi,
+    ${databuffet.cleanString('fzone')} as fzone,
+    ${databuffet.cleanString('fvat')} as fvat,
+    ${databuffet.cleanString('freceive')} as freceive,
+    ${databuffet.cleanString('fdocument')} as fdocument,
+    ${databuffet.cleanString('flatd')} as flatd,
+    ${databuffet.cleanString('flongd')} as flongd
   FROM
     `${sourceTableRef}`
 )

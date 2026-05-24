@@ -52,9 +52,9 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    NULLIF(CAST(TRIM(mihvnos) AS STRING), '') as mihvnos,
-    NULLIF(CAST(TRIM(mihstatus) AS STRING), '') as mihstatus,
-    NULLIF(CAST(TRIM(sdate) AS STRING), '') as sdate
+    ${databuffet.cleanString('mihvnos')} as mihvnos,
+    ${databuffet.cleanString('mihstatus')} as mihstatus,
+    ${databuffet.cleanString('sdate')} as sdate
 
   FROM
     `${sourceTableRef}`

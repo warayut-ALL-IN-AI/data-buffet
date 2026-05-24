@@ -52,23 +52,23 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    NULLIF(CAST(TRIM(docno) AS STRING), '') as docno,
-    NULLIF(CAST(TRIM(lv1) AS STRING), '') as lv1,
-    NULLIF(CAST(TRIM(lv2) AS STRING), '') as lv2,
-    NULLIF(CAST(TRIM(lv3) AS STRING), '') as lv3,
-    NULLIF(CAST(TRIM(note1) AS STRING), '') as note1,
-    NULLIF(CAST(TRIM(note2) AS STRING), '') as note2,
-    NULLIF(CAST(TRIM(note3) AS STRING), '') as note3,
-    NULLIF(CAST(TRIM(u1) AS STRING), '') as u1,
-    NULLIF(CAST(TRIM(u2) AS STRING), '') as u2,
-    NULLIF(CAST(TRIM(u3) AS STRING), '') as u3,
-    NULLIF(CAST(TRIM(d1) AS STRING), '') as d1,
-    NULLIF(CAST(TRIM(d2) AS STRING), '') as d2,
-    NULLIF(CAST(TRIM(d3) AS STRING), '') as d3,
-    NULLIF(CAST(TRIM(sendto) AS STRING), '') as sendto,
-    NULLIF(CAST(TRIM(sendtime) AS STRING), '') as sendtime,
-    NULLIF(CAST(TRIM(comment) AS STRING), '') as comment,
-    NULLIF(CAST(TRIM(stktype) AS STRING), '') as stktype
+    ${databuffet.cleanString('docno')} as docno,
+    ${databuffet.cleanString('lv1')} as lv1,
+    ${databuffet.cleanString('lv2')} as lv2,
+    ${databuffet.cleanString('lv3')} as lv3,
+    ${databuffet.cleanString('note1')} as note1,
+    ${databuffet.cleanString('note2')} as note2,
+    ${databuffet.cleanString('note3')} as note3,
+    ${databuffet.cleanString('u1')} as u1,
+    ${databuffet.cleanString('u2')} as u2,
+    ${databuffet.cleanString('u3')} as u3,
+    ${databuffet.cleanString('d1')} as d1,
+    ${databuffet.cleanString('d2')} as d2,
+    ${databuffet.cleanString('d3')} as d3,
+    ${databuffet.cleanString('sendto')} as sendto,
+    ${databuffet.cleanString('sendtime')} as sendtime,
+    ${databuffet.cleanString('comment')} as comment,
+    ${databuffet.cleanString('stktype')} as stktype
 
   FROM
     `${sourceTableRef}`

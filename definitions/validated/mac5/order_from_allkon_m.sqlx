@@ -52,30 +52,21 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(id AS INT64) as id,
-    NULLIF(CAST(TRIM(order_no) AS STRING), '') as order_no,
-    NULLIF(CAST(TRIM(status) AS STRING), '') as status,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(create_date, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19))
-    ) AS create_date,
-    NULLIF(CAST(TRIM(promotion_type) AS STRING), '') as promotion_type,
-    NULLIF(CAST(TRIM(notes) AS STRING), '') as notes,
-    NULLIF(CAST(TRIM(sub_order) AS STRING), '') as sub_order,
-    NULLIF(CAST(TRIM(made_from) AS STRING), '') as made_from,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(datetime, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetime, 1, 19))
-    ) AS datetime,
-    NULLIF(CAST(TRIM(deliverystatus) AS STRING), '') as deliverystatus,
-    NULLIF(CAST(TRIM(cancelstatus) AS STRING), '') as cancelstatus,
-    NULLIF(CAST(TRIM(confirmstatus) AS STRING), '') as confirmstatus,
-    NULLIF(CAST(TRIM(order_source) AS STRING), '') as order_source,
-    CAST(is_complete AS INT64) as is_complete,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(update_date, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19))
-    ) AS update_date
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.cleanString('order_no')} as order_no,
+    ${databuffet.cleanString('status')} as status,
+    ${databuffet.parseFlexibleDatetime('create_date')} AS create_date,
+    ${databuffet.cleanString('promotion_type')} as promotion_type,
+    ${databuffet.cleanString('notes')} as notes,
+    ${databuffet.cleanString('sub_order')} as sub_order,
+    ${databuffet.cleanString('made_from')} as made_from,
+    ${databuffet.parseFlexibleDatetime('datetime')} AS datetime,
+    ${databuffet.cleanString('deliverystatus')} as deliverystatus,
+    ${databuffet.cleanString('cancelstatus')} as cancelstatus,
+    ${databuffet.cleanString('confirmstatus')} as confirmstatus,
+    ${databuffet.cleanString('order_source')} as order_source,
+    ${databuffet.castInt64('is_complete')} as is_complete,
+    ${databuffet.parseFlexibleDatetime('update_date')} AS update_date
 
   FROM
     `${sourceTableRef}`

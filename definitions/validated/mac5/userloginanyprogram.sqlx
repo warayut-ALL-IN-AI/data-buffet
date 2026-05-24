@@ -52,21 +52,18 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(id AS INT64) as id,
-    NULLIF(CAST(TRIM(username) AS STRING), '') as username,
-    NULLIF(CAST(TRIM(password) AS STRING), '') as password,
-    NULLIF(CAST(TRIM(actionapp) AS STRING), '') as actionapp,
-    NULLIF(CAST(TRIM(name) AS STRING), '') as name,
-    NULLIF(CAST(TRIM(notes) AS STRING), '') as notes,
-    NULLIF(CAST(TRIM(department) AS STRING), '') as department,
-    NULLIF(CAST(TRIM(levelaction) AS STRING), '') as levelaction,
-    NULLIF(CAST(TRIM(email) AS STRING), '') as email,
-    NULLIF(CAST(TRIM(token) AS STRING), '') as token,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(tokenexpiry, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tokenexpiry, 1, 19))
-    ) AS tokenexpiry,
-    CAST(istokenvalid AS INT64) as istokenvalid
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.cleanString('username')} as username,
+    ${databuffet.cleanString('password')} as password,
+    ${databuffet.cleanString('actionapp')} as actionapp,
+    ${databuffet.cleanString('name')} as name,
+    ${databuffet.cleanString('notes')} as notes,
+    ${databuffet.cleanString('department')} as department,
+    ${databuffet.cleanString('levelaction')} as levelaction,
+    ${databuffet.cleanString('email')} as email,
+    ${databuffet.cleanString('token')} as token,
+    ${databuffet.parseFlexibleDatetime('tokenexpiry')} AS tokenexpiry,
+    ${databuffet.castInt64('istokenvalid')} as istokenvalid
 
   FROM
     `${sourceTableRef}`

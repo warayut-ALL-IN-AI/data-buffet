@@ -52,13 +52,13 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    NULLIF(CAST(TRIM(stdcode) AS STRING), '') as stdcode,
-    CAST(stdtype AS INT64) as stdtype,
-    NULLIF(CAST(TRIM(stddebtor) AS STRING), '') as stddebtor,
-    NULLIF(CAST(TRIM(stdstkcode) AS STRING), '') as stdstkcode,
-    NULLIF(CAST(TRIM(stddesct1) AS STRING), '') as stddesct1,
-    NULLIF(CAST(TRIM(stddesce1) AS STRING), '') as stddesce1,
-    CAST(stdautono AS INT64) as stdautono
+    ${databuffet.cleanString('stdcode')} as stdcode,
+    ${databuffet.castInt64('stdtype')} as stdtype,
+    ${databuffet.cleanString('stddebtor')} as stddebtor,
+    ${databuffet.cleanString('stdstkcode')} as stdstkcode,
+    ${databuffet.cleanString('stddesct1')} as stddesct1,
+    ${databuffet.cleanString('stddesce1')} as stddesce1,
+    ${databuffet.castInt64('stdautono')} as stdautono
 
   FROM
     `${sourceTableRef}`

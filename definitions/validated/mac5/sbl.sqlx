@@ -52,10 +52,10 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    NULLIF(CAST(TRIM(sblstk) AS STRING), '') as sblstk,
-    NULLIF(CAST(TRIM(sblsto) AS STRING), '') as sblsto,
-    CAST(sblquan AS FLOAT64) as sblquan,
-    CAST(sblquanp2 AS FLOAT64) as sblquanp2
+    ${databuffet.cleanString('sblstk')} as sblstk,
+    ${databuffet.cleanString('sblsto')} as sblsto,
+    ${databuffet.castFloat64('sblquan')} as sblquan,
+    ${databuffet.castFloat64('sblquanp2')} as sblquanp2
 
   FROM
     `${sourceTableRef}`

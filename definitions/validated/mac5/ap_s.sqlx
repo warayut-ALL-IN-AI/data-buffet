@@ -42,55 +42,55 @@ END;`;
 WITH all_sources AS (
   SELECT
     'ag01' AS company_id,
-    CAST(ap_scode AS INT64) as ap_scode,
-    NULLIF(CAST(TRIM(ap_snamet) AS STRING), '') as ap_snamet,
-    NULLIF(CAST(TRIM(ap_snamee) AS STRING), '') as ap_snamee,
-    CAST(ap_scolf AS INT64) as ap_scolf,
-    CAST(ap_scolb AS INT64) as ap_scolb
+    ${databuffet.castInt64('ap_scode')} as ap_scode,
+    ${databuffet.cleanString('ap_snamet')} as ap_snamet,
+    ${databuffet.cleanString('ap_snamee')} as ap_snamee,
+    ${databuffet.castInt64('ap_scolf')} as ap_scolf,
+    ${databuffet.castInt64('ap_scolb')} as ap_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.ap_s`
 
   UNION ALL
 
   SELECT
     'aa05' AS company_id,
-    CAST(ap_scode AS INT64) as ap_scode,
-    NULLIF(CAST(TRIM(ap_snamet) AS STRING), '') as ap_snamet,
-    NULLIF(CAST(TRIM(ap_snamee) AS STRING), '') as ap_snamee,
-    CAST(ap_scolf AS INT64) as ap_scolf,
-    CAST(ap_scolb AS INT64) as ap_scolb
+    ${databuffet.castInt64('ap_scode')} as ap_scode,
+    ${databuffet.cleanString('ap_snamet')} as ap_snamet,
+    ${databuffet.cleanString('ap_snamee')} as ap_snamee,
+    ${databuffet.castInt64('ap_scolf')} as ap_scolf,
+    ${databuffet.castInt64('ap_scolb')} as ap_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.ap_s`
 
   UNION ALL
 
   SELECT
     'ab01' AS company_id,
-    CAST(ap_scode AS INT64) as ap_scode,
-    NULLIF(CAST(TRIM(ap_snamet) AS STRING), '') as ap_snamet,
-    NULLIF(CAST(TRIM(ap_snamee) AS STRING), '') as ap_snamee,
-    CAST(ap_scolf AS INT64) as ap_scolf,
-    CAST(ap_scolb AS INT64) as ap_scolb
+    ${databuffet.castInt64('ap_scode')} as ap_scode,
+    ${databuffet.cleanString('ap_snamet')} as ap_snamet,
+    ${databuffet.cleanString('ap_snamee')} as ap_snamee,
+    ${databuffet.castInt64('ap_scolf')} as ap_scolf,
+    ${databuffet.castInt64('ap_scolb')} as ap_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.ap_s`
 
   UNION ALL
 
   SELECT
     'ac02' AS company_id,
-    CAST(ap_scode AS INT64) as ap_scode,
-    NULLIF(CAST(TRIM(ap_snamet) AS STRING), '') as ap_snamet,
-    NULLIF(CAST(TRIM(ap_snamee) AS STRING), '') as ap_snamee,
-    CAST(ap_scolf AS INT64) as ap_scolf,
-    CAST(ap_scolb AS INT64) as ap_scolb
+    ${databuffet.castInt64('ap_scode')} as ap_scode,
+    ${databuffet.cleanString('ap_snamet')} as ap_snamet,
+    ${databuffet.cleanString('ap_snamee')} as ap_snamee,
+    ${databuffet.castInt64('ap_scolf')} as ap_scolf,
+    ${databuffet.castInt64('ap_scolb')} as ap_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.ap_s`
 
   UNION ALL
 
   SELECT
     'ak02' AS company_id,
-    CAST(ap_scode AS INT64) as ap_scode,
-    NULLIF(CAST(TRIM(ap_snamet) AS STRING), '') as ap_snamet,
-    NULLIF(CAST(TRIM(ap_snamee) AS STRING), '') as ap_snamee,
-    CAST(ap_scolf AS INT64) as ap_scolf,
-    CAST(ap_scolb AS INT64) as ap_scolb
+    ${databuffet.castInt64('ap_scode')} as ap_scode,
+    ${databuffet.cleanString('ap_snamet')} as ap_snamet,
+    ${databuffet.cleanString('ap_snamee')} as ap_snamee,
+    ${databuffet.castInt64('ap_scolf')} as ap_scolf,
+    ${databuffet.castInt64('ap_scolb')} as ap_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.ap_s`
 )
 

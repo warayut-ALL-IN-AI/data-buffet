@@ -52,10 +52,10 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(grpid AS INT64) as grpid,
-    NULLIF(CAST(TRIM(grpstatus) AS STRING), '') as grpstatus,
-    NULLIF(CAST(TRIM(grpname) AS STRING), '') as grpname,
-    NULLIF(CAST(TRIM(grpline) AS STRING), '') as grpline
+    ${databuffet.castInt64('grpid')} as grpid,
+    ${databuffet.cleanString('grpstatus')} as grpstatus,
+    ${databuffet.cleanString('grpname')} as grpname,
+    ${databuffet.cleanString('grpline')} as grpline
 
   FROM
     `${sourceTableRef}`

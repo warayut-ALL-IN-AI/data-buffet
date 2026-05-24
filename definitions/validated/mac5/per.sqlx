@@ -42,93 +42,63 @@ END;`;
 WITH all_sources AS (
   SELECT
     'ag01' AS company_id,
-    NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
-    NULLIF(CAST(TRIM(perdep) AS STRING), '') as perdep,
-    NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
-    NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
-    NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perbdate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19))
-    ) AS perbdate,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworks, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19))
-    ) AS perworks,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworkf, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19))
-    ) AS perworkf,
-    NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
-    NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
-    NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
-    NULLIF(CAST(TRIM(pertel) AS STRING), '') as pertel,
-    NULLIF(CAST(TRIM(perpositn) AS STRING), '') as perpositn,
-    CAST(perstatus AS INT64) as perstatus,
-    CAST(pernchild AS INT64) as pernchild,
-    CAST(percisstudy AS INT64) as percisstudy,
-    CAST(pernotstudy AS INT64) as pernotstudy,
-    CAST(persalary AS FLOAT64) as persalary,
-    CAST(perhide AS INT64) as perhide,
-    CAST(perlock AS INT64) as perlock,
-    NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditlk, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19))
-    ) AS pereditlk,
-    NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditdt, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19))
-    ) AS pereditdt,
-    NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
-    NULLIF(CAST(TRIM(perzone) AS STRING), '') as perzone
+    ${databuffet.cleanString('percode')} as percode,
+    ${databuffet.cleanString('perdep')} as perdep,
+    ${databuffet.cleanString('pertaxnos')} as pertaxnos,
+    ${databuffet.cleanString('pernamet')} as pernamet,
+    ${databuffet.cleanString('pernamee')} as pernamee,
+    ${databuffet.parseFlexibleDatetime('perbdate')} AS perbdate,
+    ${databuffet.parseFlexibleDatetime('perworks')} AS perworks,
+    ${databuffet.parseFlexibleDatetime('perworkf')} AS perworkf,
+    ${databuffet.cleanString('peradd1')} as peradd1,
+    ${databuffet.cleanString('peradd2')} as peradd2,
+    ${databuffet.cleanString('peradd3')} as peradd3,
+    ${databuffet.cleanString('pertel')} as pertel,
+    ${databuffet.cleanString('perpositn')} as perpositn,
+    ${databuffet.castInt64('perstatus')} as perstatus,
+    ${databuffet.castInt64('pernchild')} as pernchild,
+    ${databuffet.castInt64('percisstudy')} as percisstudy,
+    ${databuffet.castInt64('pernotstudy')} as pernotstudy,
+    ${databuffet.castFloat64('persalary')} as persalary,
+    ${databuffet.castInt64('perhide')} as perhide,
+    ${databuffet.castInt64('perlock')} as perlock,
+    ${databuffet.cleanString('permemo')} as permemo,
+    ${databuffet.parseFlexibleDatetime('pereditlk')} AS pereditlk,
+    ${databuffet.cleanString('perrefwe')} as perrefwe,
+    ${databuffet.parseFlexibleDatetime('pereditdt')} AS pereditdt,
+    ${databuffet.cleanString('pereditmf')} as pereditmf,
+    ${databuffet.cleanString('perzone')} as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.per`
 
   UNION ALL
 
   SELECT
     'aa05' AS company_id,
-    NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
-    NULLIF(CAST(TRIM(perdep) AS STRING), '') as perdep,
-    NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
-    NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
-    NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perbdate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19))
-    ) AS perbdate,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworks, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19))
-    ) AS perworks,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworkf, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19))
-    ) AS perworkf,
-    NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
-    NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
-    NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
-    NULLIF(CAST(TRIM(pertel) AS STRING), '') as pertel,
-    NULLIF(CAST(TRIM(perpositn) AS STRING), '') as perpositn,
-    CAST(perstatus AS INT64) as perstatus,
-    CAST(pernchild AS INT64) as pernchild,
-    CAST(percisstudy AS INT64) as percisstudy,
-    CAST(pernotstudy AS INT64) as pernotstudy,
-    CAST(persalary AS FLOAT64) as persalary,
-    CAST(perhide AS INT64) as perhide,
-    CAST(perlock AS INT64) as perlock,
-    NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditlk, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19))
-    ) AS pereditlk,
-    NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditdt, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19))
-    ) AS pereditdt,
-    NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
+    ${databuffet.cleanString('percode')} as percode,
+    ${databuffet.cleanString('perdep')} as perdep,
+    ${databuffet.cleanString('pertaxnos')} as pertaxnos,
+    ${databuffet.cleanString('pernamet')} as pernamet,
+    ${databuffet.cleanString('pernamee')} as pernamee,
+    ${databuffet.parseFlexibleDatetime('perbdate')} AS perbdate,
+    ${databuffet.parseFlexibleDatetime('perworks')} AS perworks,
+    ${databuffet.parseFlexibleDatetime('perworkf')} AS perworkf,
+    ${databuffet.cleanString('peradd1')} as peradd1,
+    ${databuffet.cleanString('peradd2')} as peradd2,
+    ${databuffet.cleanString('peradd3')} as peradd3,
+    ${databuffet.cleanString('pertel')} as pertel,
+    ${databuffet.cleanString('perpositn')} as perpositn,
+    ${databuffet.castInt64('perstatus')} as perstatus,
+    ${databuffet.castInt64('pernchild')} as pernchild,
+    ${databuffet.castInt64('percisstudy')} as percisstudy,
+    ${databuffet.castInt64('pernotstudy')} as pernotstudy,
+    ${databuffet.castFloat64('persalary')} as persalary,
+    ${databuffet.castInt64('perhide')} as perhide,
+    ${databuffet.castInt64('perlock')} as perlock,
+    ${databuffet.cleanString('permemo')} as permemo,
+    ${databuffet.parseFlexibleDatetime('pereditlk')} AS pereditlk,
+    ${databuffet.cleanString('perrefwe')} as perrefwe,
+    ${databuffet.parseFlexibleDatetime('pereditdt')} AS pereditdt,
+    ${databuffet.cleanString('pereditmf')} as pereditmf,
     CAST(NULL AS STRING) as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.per`
 
@@ -136,46 +106,31 @@ WITH all_sources AS (
 
   SELECT
     'ab01' AS company_id,
-    NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
-    NULLIF(CAST(TRIM(perdep) AS STRING), '') as perdep,
-    NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
-    NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
-    NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perbdate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19))
-    ) AS perbdate,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworks, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19))
-    ) AS perworks,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworkf, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19))
-    ) AS perworkf,
-    NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
-    NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
-    NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
-    NULLIF(CAST(TRIM(pertel) AS STRING), '') as pertel,
-    NULLIF(CAST(TRIM(perpositn) AS STRING), '') as perpositn,
-    CAST(perstatus AS INT64) as perstatus,
-    CAST(pernchild AS INT64) as pernchild,
-    CAST(percisstudy AS INT64) as percisstudy,
-    CAST(pernotstudy AS INT64) as pernotstudy,
-    CAST(persalary AS FLOAT64) as persalary,
-    CAST(perhide AS INT64) as perhide,
-    CAST(perlock AS INT64) as perlock,
-    NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditlk, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19))
-    ) AS pereditlk,
-    NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditdt, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19))
-    ) AS pereditdt,
-    NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
+    ${databuffet.cleanString('percode')} as percode,
+    ${databuffet.cleanString('perdep')} as perdep,
+    ${databuffet.cleanString('pertaxnos')} as pertaxnos,
+    ${databuffet.cleanString('pernamet')} as pernamet,
+    ${databuffet.cleanString('pernamee')} as pernamee,
+    ${databuffet.parseFlexibleDatetime('perbdate')} AS perbdate,
+    ${databuffet.parseFlexibleDatetime('perworks')} AS perworks,
+    ${databuffet.parseFlexibleDatetime('perworkf')} AS perworkf,
+    ${databuffet.cleanString('peradd1')} as peradd1,
+    ${databuffet.cleanString('peradd2')} as peradd2,
+    ${databuffet.cleanString('peradd3')} as peradd3,
+    ${databuffet.cleanString('pertel')} as pertel,
+    ${databuffet.cleanString('perpositn')} as perpositn,
+    ${databuffet.castInt64('perstatus')} as perstatus,
+    ${databuffet.castInt64('pernchild')} as pernchild,
+    ${databuffet.castInt64('percisstudy')} as percisstudy,
+    ${databuffet.castInt64('pernotstudy')} as pernotstudy,
+    ${databuffet.castFloat64('persalary')} as persalary,
+    ${databuffet.castInt64('perhide')} as perhide,
+    ${databuffet.castInt64('perlock')} as perlock,
+    ${databuffet.cleanString('permemo')} as permemo,
+    ${databuffet.parseFlexibleDatetime('pereditlk')} AS pereditlk,
+    ${databuffet.cleanString('perrefwe')} as perrefwe,
+    ${databuffet.parseFlexibleDatetime('pereditdt')} AS pereditdt,
+    ${databuffet.cleanString('pereditmf')} as pereditmf,
     CAST(NULL AS STRING) as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.per`
 
@@ -183,46 +138,31 @@ WITH all_sources AS (
 
   SELECT
     'ac02' AS company_id,
-    NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
-    NULLIF(CAST(TRIM(perdep) AS STRING), '') as perdep,
-    NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
-    NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
-    NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perbdate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19))
-    ) AS perbdate,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworks, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19))
-    ) AS perworks,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworkf, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19))
-    ) AS perworkf,
-    NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
-    NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
-    NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
-    NULLIF(CAST(TRIM(pertel) AS STRING), '') as pertel,
-    NULLIF(CAST(TRIM(perpositn) AS STRING), '') as perpositn,
-    CAST(perstatus AS INT64) as perstatus,
-    CAST(pernchild AS INT64) as pernchild,
-    CAST(percisstudy AS INT64) as percisstudy,
-    CAST(pernotstudy AS INT64) as pernotstudy,
-    CAST(persalary AS FLOAT64) as persalary,
-    CAST(perhide AS INT64) as perhide,
-    CAST(perlock AS INT64) as perlock,
-    NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditlk, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19))
-    ) AS pereditlk,
-    NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditdt, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19))
-    ) AS pereditdt,
-    NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
+    ${databuffet.cleanString('percode')} as percode,
+    ${databuffet.cleanString('perdep')} as perdep,
+    ${databuffet.cleanString('pertaxnos')} as pertaxnos,
+    ${databuffet.cleanString('pernamet')} as pernamet,
+    ${databuffet.cleanString('pernamee')} as pernamee,
+    ${databuffet.parseFlexibleDatetime('perbdate')} AS perbdate,
+    ${databuffet.parseFlexibleDatetime('perworks')} AS perworks,
+    ${databuffet.parseFlexibleDatetime('perworkf')} AS perworkf,
+    ${databuffet.cleanString('peradd1')} as peradd1,
+    ${databuffet.cleanString('peradd2')} as peradd2,
+    ${databuffet.cleanString('peradd3')} as peradd3,
+    ${databuffet.cleanString('pertel')} as pertel,
+    ${databuffet.cleanString('perpositn')} as perpositn,
+    ${databuffet.castInt64('perstatus')} as perstatus,
+    ${databuffet.castInt64('pernchild')} as pernchild,
+    ${databuffet.castInt64('percisstudy')} as percisstudy,
+    ${databuffet.castInt64('pernotstudy')} as pernotstudy,
+    ${databuffet.castFloat64('persalary')} as persalary,
+    ${databuffet.castInt64('perhide')} as perhide,
+    ${databuffet.castInt64('perlock')} as perlock,
+    ${databuffet.cleanString('permemo')} as permemo,
+    ${databuffet.parseFlexibleDatetime('pereditlk')} AS pereditlk,
+    ${databuffet.cleanString('perrefwe')} as perrefwe,
+    ${databuffet.parseFlexibleDatetime('pereditdt')} AS pereditdt,
+    ${databuffet.cleanString('pereditmf')} as pereditmf,
     CAST(NULL AS STRING) as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.per`
 
@@ -230,46 +170,31 @@ WITH all_sources AS (
 
   SELECT
     'ak02' AS company_id,
-    NULLIF(CAST(TRIM(percode) AS STRING), '') as percode,
-    NULLIF(CAST(TRIM(perdep) AS STRING), '') as perdep,
-    NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
-    NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
-    NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perbdate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19))
-    ) AS perbdate,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworks, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19))
-    ) AS perworks,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworkf, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19))
-    ) AS perworkf,
-    NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
-    NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
-    NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
-    NULLIF(CAST(TRIM(pertel) AS STRING), '') as pertel,
-    NULLIF(CAST(TRIM(perpositn) AS STRING), '') as perpositn,
-    CAST(perstatus AS INT64) as perstatus,
-    CAST(pernchild AS INT64) as pernchild,
-    CAST(percisstudy AS INT64) as percisstudy,
-    CAST(pernotstudy AS INT64) as pernotstudy,
-    CAST(persalary AS FLOAT64) as persalary,
-    CAST(perhide AS INT64) as perhide,
-    CAST(perlock AS INT64) as perlock,
-    NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditlk, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19))
-    ) AS pereditlk,
-    NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditdt, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19))
-    ) AS pereditdt,
-    NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
+    ${databuffet.cleanString('percode')} as percode,
+    ${databuffet.cleanString('perdep')} as perdep,
+    ${databuffet.cleanString('pertaxnos')} as pertaxnos,
+    ${databuffet.cleanString('pernamet')} as pernamet,
+    ${databuffet.cleanString('pernamee')} as pernamee,
+    ${databuffet.parseFlexibleDatetime('perbdate')} AS perbdate,
+    ${databuffet.parseFlexibleDatetime('perworks')} AS perworks,
+    ${databuffet.parseFlexibleDatetime('perworkf')} AS perworkf,
+    ${databuffet.cleanString('peradd1')} as peradd1,
+    ${databuffet.cleanString('peradd2')} as peradd2,
+    ${databuffet.cleanString('peradd3')} as peradd3,
+    ${databuffet.cleanString('pertel')} as pertel,
+    ${databuffet.cleanString('perpositn')} as perpositn,
+    ${databuffet.castInt64('perstatus')} as perstatus,
+    ${databuffet.castInt64('pernchild')} as pernchild,
+    ${databuffet.castInt64('percisstudy')} as percisstudy,
+    ${databuffet.castInt64('pernotstudy')} as pernotstudy,
+    ${databuffet.castFloat64('persalary')} as persalary,
+    ${databuffet.castInt64('perhide')} as perhide,
+    ${databuffet.castInt64('perlock')} as perlock,
+    ${databuffet.cleanString('permemo')} as permemo,
+    ${databuffet.parseFlexibleDatetime('pereditlk')} AS pereditlk,
+    ${databuffet.cleanString('perrefwe')} as perrefwe,
+    ${databuffet.parseFlexibleDatetime('pereditdt')} AS pereditdt,
+    ${databuffet.cleanString('pereditmf')} as pereditmf,
     CAST(NULL AS STRING) as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.per`
 )

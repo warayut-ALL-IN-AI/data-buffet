@@ -52,17 +52,14 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    NULLIF(CAST(TRIM(stocode) AS STRING), '') as stocode,
-    NULLIF(CAST(TRIM(stogroup) AS STRING), '') as stogroup,
-    NULLIF(CAST(TRIM(stodesct) AS STRING), '') as stodesct,
-    NULLIF(CAST(TRIM(stodesce) AS STRING), '') as stodesce,
-    CAST(stolock AS INT64) as stolock,
-    CAST(stohide AS INT64) as stohide,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(stoeditdt, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stoeditdt, 1, 19))
-    ) AS stoeditdt,
-    NULLIF(CAST(TRIM(stoeditmf) AS STRING), '') as stoeditmf
+    ${databuffet.cleanString('stocode')} as stocode,
+    ${databuffet.cleanString('stogroup')} as stogroup,
+    ${databuffet.cleanString('stodesct')} as stodesct,
+    ${databuffet.cleanString('stodesce')} as stodesce,
+    ${databuffet.castInt64('stolock')} as stolock,
+    ${databuffet.castInt64('stohide')} as stohide,
+    ${databuffet.parseFlexibleDatetime('stoeditdt')} AS stoeditdt,
+    ${databuffet.cleanString('stoeditmf')} as stoeditmf
 
   FROM
     `${sourceTableRef}`

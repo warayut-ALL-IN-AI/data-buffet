@@ -52,8 +52,8 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(id AS INT64) as id,
-    NULLIF(CAST(TRIM(debcode) AS STRING), '') as debcode
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.cleanString('debcode')} as debcode
 
   FROM
     `${sourceTableRef}`

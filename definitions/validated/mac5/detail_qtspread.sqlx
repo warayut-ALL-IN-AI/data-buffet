@@ -52,29 +52,23 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(id AS INT64) as id,
-    CAST(ref_id AS INT64) as ref_id,
-    CAST(qtid AS INT64) as qtid,
-    NULLIF(CAST(TRIM(quodeid) AS STRING), '') as quodeid,
-    NULLIF(CAST(TRIM(stkcode) AS STRING), '') as stkcode,
-    CAST(quantity AS FLOAT64) as quantity,
-    CAST(price AS FLOAT64) as price,
-    NULLIF(CAST(TRIM(total) AS STRING), '') as total,
-    NULLIF(CAST(TRIM(uinsert) AS STRING), '') as uinsert,
-    NULLIF(CAST(TRIM(uupdate) AS STRING), '') as uupdate,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(dinsert, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19))
-    ) as dinsert,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(dupdate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19))
-    ) as dupdate,
-    NULLIF(CAST(TRIM(status) AS STRING), '') as status,
-    NULLIF(CAST(TRIM(link) AS STRING), '') as link,
-    NULLIF(CAST(TRIM(type) AS STRING), '') as type,
-    NULLIF(CAST(TRIM(fandex) AS STRING), '') as fandex,
-    NULLIF(CAST(TRIM(itemsize) AS STRING), '') as itemsize
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.castInt64('ref_id')} as ref_id,
+    ${databuffet.castInt64('qtid')} as qtid,
+    ${databuffet.cleanString('quodeid')} as quodeid,
+    ${databuffet.cleanString('stkcode')} as stkcode,
+    ${databuffet.castFloat64('quantity')} as quantity,
+    ${databuffet.castFloat64('price')} as price,
+    ${databuffet.cleanString('total')} as total,
+    ${databuffet.cleanString('uinsert')} as uinsert,
+    ${databuffet.cleanString('uupdate')} as uupdate,
+    ${databuffet.parseFlexibleDatetime('dinsert')} as dinsert,
+    ${databuffet.parseFlexibleDatetime('dupdate')} as dupdate,
+    ${databuffet.cleanString('status')} as status,
+    ${databuffet.cleanString('link')} as link,
+    ${databuffet.cleanString('type')} as type,
+    ${databuffet.cleanString('fandex')} as fandex,
+    ${databuffet.cleanString('itemsize')} as itemsize
 
   FROM
     `${sourceTableRef}`

@@ -52,15 +52,12 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(id AS INT64) as id,
-    NULLIF(CAST(TRIM(combostk) AS STRING), '') as combostk,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(date, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(date, 1, 19))
-    ) AS date,
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.cleanString('combostk')} as combostk,
+    ${databuffet.parseFlexibleDatetime('date')} AS date,
     CAST(uinsert AS STRING) as uinsert,
     CAST(uupdate AS STRING) as uupdate,
-    CAST(status AS INT64) as status,
+    ${databuffet.castInt64('status')} as status,
     CAST(notecomboset AS STRING) as notecomboset
 
   FROM

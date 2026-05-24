@@ -53,36 +53,30 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(CSTdate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CSTdate, 1, 19))
-    ) AS cstdate,
-    NULLIF(CAST(TRIM(CSTtype) AS STRING), '') AS csttype,
-    NULLIF(CAST(TRIM(CSTvnos) AS STRING), '') AS cstvnos,
-    NULLIF(CAST(TRIM(CSTcus) AS STRING), '') AS cstcus,
-    NULLIF(CAST(TRIM(CSTstk) AS STRING), '') AS cststk,
-    NULLIF(CAST(TRIM(CSTjob) AS STRING), '') AS cstjob,
-    NULLIF(CAST(TRIM(CSTdep) AS STRING), '') AS cstdep,
-    NULLIF(CAST(TRIM(CSTper) AS STRING), '') AS cstper,
-    NULLIF(CAST(TRIM(CSTdoc) AS STRING), '') AS cstdoc,
-    NULLIF(CAST(TRIM(CSTmec) AS STRING), '') AS cstmec,
-    NULLIF(CAST(TRIM(CSTsto) AS STRING), '') AS cststo,
-    CAST(CSTquan AS FLOAT64) AS cstquan,
-    CAST(CSTquanP2 AS FLOAT64) AS cstquanp2,
-    CAST(CSTcogSP AS FLOAT64) AS cstcogsp,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(CSTexpDATE, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CSTexpDATE, 1, 19))
-    ) AS cstexpdate,
-    NULLIF(CAST(TRIM(CSTlinkVC) AS STRING), '') AS cstlinkvc,
-    CAST(CSTlinkVCid AS INT64) AS cstlinkvcid,
-    CAST(CSTio AS INT64) AS cstio,
-    CAST(CSTioZW AS INT64) AS cstiozw,
-    CAST(CSTlist AS INT64) AS cstlist,
-    CAST(CSTcostA AS FLOAT64) AS cstcosta,
-    CAST(CSTcostF AS FLOAT64) AS cstcostf,
-    CAST(CSTcostL AS FLOAT64) AS cstcostl,
-    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
+    ${databuffet.parseFlexibleDatetime('CSTdate')} AS cstdate,
+    ${databuffet.cleanString('CSTtype')} AS csttype,
+    ${databuffet.cleanString('CSTvnos')} AS cstvnos,
+    ${databuffet.cleanString('CSTcus')} AS cstcus,
+    ${databuffet.cleanString('CSTstk')} AS cststk,
+    ${databuffet.cleanString('CSTjob')} AS cstjob,
+    ${databuffet.cleanString('CSTdep')} AS cstdep,
+    ${databuffet.cleanString('CSTper')} AS cstper,
+    ${databuffet.cleanString('CSTdoc')} AS cstdoc,
+    ${databuffet.cleanString('CSTmec')} AS cstmec,
+    ${databuffet.cleanString('CSTsto')} AS cststo,
+    ${databuffet.castFloat64('CSTquan')} AS cstquan,
+    ${databuffet.castFloat64('CSTquanP2')} AS cstquanp2,
+    ${databuffet.castFloat64('CSTcogSP')} AS cstcogsp,
+    ${databuffet.parseFlexibleDatetime('CSTexpDATE')} AS cstexpdate,
+    ${databuffet.cleanString('CSTlinkVC')} AS cstlinkvc,
+    ${databuffet.castInt64('CSTlinkVCid')} AS cstlinkvcid,
+    ${databuffet.castInt64('CSTio')} AS cstio,
+    ${databuffet.castInt64('CSTioZW')} AS cstiozw,
+    ${databuffet.castInt64('CSTlist')} AS cstlist,
+    ${databuffet.castFloat64('CSTcostA')} AS cstcosta,
+    ${databuffet.castFloat64('CSTcostF')} AS cstcostf,
+    ${databuffet.castFloat64('CSTcostL')} AS cstcostl,
+    ${databuffet.parseAsatDate()} AS asatdate
   FROM
     `${sourceTableRef}`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }

@@ -52,10 +52,10 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    NULLIF(CAST(TRIM(REGEXP_REPLACE(STGcode, r'[\n\r\t-.]', '')) AS STRING), '') as stgcode,
-    NULLIF(CAST(TRIM(STGdescT) AS STRING), '') as stgdesct,
-    NULLIF(CAST(TRIM(STGdescE) AS STRING), '') as stgdesce,
-    NULLIF(CAST(TRIM(stgacccode) AS STRING), '') as stgacccode
+    ${databuffet.cleanCode('STGcode', "r'[\\n\\r\\t-.]'")} as stgcode,
+    ${databuffet.cleanString('STGdescT')} as stgdesct,
+    ${databuffet.cleanString('STGdescE')} as stgdesce,
+    ${databuffet.cleanString('stgacccode')} as stgacccode
 
   FROM
     `${sourceTableRef}`

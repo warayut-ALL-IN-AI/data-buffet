@@ -52,19 +52,16 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(id AS INT64) as id,
-    CAST(qtid AS INT64) as qtid,
-    CAST(qtspread_ref_id AS INT64) as qtspread_ref_id,
-    CAST(quodeid AS INT64) as quodeid,
-    CAST(quolinkdel AS INT64) as quolinkdel,
-    NULLIF(CAST(TRIM(stkcode) AS STRING), '') as stkcode,
-    NULLIF(CAST(TRIM(stkgive) AS STRING), '') as stkgive,
-    CAST(quantity AS INT64) as quantity,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(datetimekey, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetimekey, 1, 19))
-    ) AS datetimekey,
-    CAST(status AS INT64) as status
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.castInt64('qtid')} as qtid,
+    ${databuffet.castInt64('qtspread_ref_id')} as qtspread_ref_id,
+    ${databuffet.castInt64('quodeid')} as quodeid,
+    ${databuffet.castInt64('quolinkdel')} as quolinkdel,
+    ${databuffet.cleanString('stkcode')} as stkcode,
+    ${databuffet.cleanString('stkgive')} as stkgive,
+    ${databuffet.castInt64('quantity')} as quantity,
+    ${databuffet.parseFlexibleDatetime('datetimekey')} AS datetimekey,
+    ${databuffet.castInt64('status')} as status
 
   FROM
     `${sourceTableRef}`

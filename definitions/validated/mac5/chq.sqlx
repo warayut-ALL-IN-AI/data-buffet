@@ -58,275 +58,185 @@ pre_operations {
 WITH raw_sources AS (
   SELECT
     'ag01' AS company_id,
-    NULLIF(CAST(TRIM(chqno) AS STRING), '') as chqno,
-    NULLIF(CAST(TRIM(chqbank) AS STRING), '') as chqbank,
-    NULLIF(CAST(TRIM(chqacode) AS STRING), '') as chqacode,
-    NULLIF(CAST(TRIM(chqcus) AS STRING), '') as chqcus,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatec, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19))
-    ) AS chqdatec,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdater, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19))
-    ) AS chqdater,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatep, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19))
-    ) AS chqdatep,
-    CAST(chqtype AS INT64) as chqtype,
-    CAST(chqstatus AS INT64) as chqstatus,
-    CAST(chqtotal AS FLOAT64) as chqtotal,
-    NULLIF(CAST(TRIM(chqmemo) AS STRING), '') as chqmemo,
-    CAST(chqgl AS INT64) as chqgl,
-    CAST(chqmi AS INT64) as chqmi,
-    CAST(chqown AS INT64) as chqown,
-    CAST(chqtag AS INT64) as chqtag,
-    CAST(chqstatusn AS INT64) as chqstatusn,
-    CAST(chqlock AS INT64) as chqlock,
-    CAST(chqpassgl AS INT64) as chqpassgl,
-    NULLIF(CAST(TRIM(chqjob) AS STRING), '') as chqjob,
-    NULLIF(CAST(TRIM(chqdep) AS STRING), '') as chqdep,
-    NULLIF(CAST(TRIM(chqper) AS STRING), '') as chqper,
-    NULLIF(CAST(TRIM(chqzon) AS STRING), '') as chqzon,
-    NULLIF(CAST(TRIM(chqrcode) AS STRING), '') as chqrcode,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqeditlk, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19))
-    ) AS chqeditlk,
-    NULLIF(CAST(TRIM(chqkeyuser) AS STRING), '') as chqkeyuser,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqkeydate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19))
-    ) AS chqkeydate,
-    CAST(chqdeduct AS FLOAT64) as chqdeduct,
-    NULLIF(CAST(TRIM(chqecode) AS STRING), '') as chqecode,
-    NULLIF(CAST(TRIM(chqbranch) AS STRING), '') as chqbranch,
-    NULLIF(CAST(TRIM(chqmec) AS STRING), '') as chqmec,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatev, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19))
-    ) AS chqdatev
+    ${databuffet.cleanString('chqno')} as chqno,
+    ${databuffet.cleanString('chqbank')} as chqbank,
+    ${databuffet.cleanString('chqacode')} as chqacode,
+    ${databuffet.cleanString('chqcus')} as chqcus,
+    ${databuffet.parseFlexibleDatetime('chqdatec')} AS chqdatec,
+    ${databuffet.parseFlexibleDatetime('chqdater')} AS chqdater,
+    ${databuffet.parseFlexibleDatetime('chqdatep')} AS chqdatep,
+    ${databuffet.castInt64('chqtype')} as chqtype,
+    ${databuffet.castInt64('chqstatus')} as chqstatus,
+    ${databuffet.castFloat64('chqtotal')} as chqtotal,
+    ${databuffet.cleanString('chqmemo')} as chqmemo,
+    ${databuffet.castInt64('chqgl')} as chqgl,
+    ${databuffet.castInt64('chqmi')} as chqmi,
+    ${databuffet.castInt64('chqown')} as chqown,
+    ${databuffet.castInt64('chqtag')} as chqtag,
+    ${databuffet.castInt64('chqstatusn')} as chqstatusn,
+    ${databuffet.castInt64('chqlock')} as chqlock,
+    ${databuffet.castInt64('chqpassgl')} as chqpassgl,
+    ${databuffet.cleanString('chqjob')} as chqjob,
+    ${databuffet.cleanString('chqdep')} as chqdep,
+    ${databuffet.cleanString('chqper')} as chqper,
+    ${databuffet.cleanString('chqzon')} as chqzon,
+    ${databuffet.cleanString('chqrcode')} as chqrcode,
+    ${databuffet.parseFlexibleDatetime('chqeditlk')} AS chqeditlk,
+    ${databuffet.cleanString('chqkeyuser')} as chqkeyuser,
+    ${databuffet.parseFlexibleDatetime('chqkeydate')} AS chqkeydate,
+    ${databuffet.castFloat64('chqdeduct')} as chqdeduct,
+    ${databuffet.cleanString('chqecode')} as chqecode,
+    ${databuffet.cleanString('chqbranch')} as chqbranch,
+    ${databuffet.cleanString('chqmec')} as chqmec,
+    ${databuffet.parseFlexibleDatetime('chqdatev')} AS chqdatev
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.chq`
 
   UNION ALL
 
   SELECT
     'aa05' AS company_id,
-    NULLIF(CAST(TRIM(chqno) AS STRING), '') as chqno,
-    NULLIF(CAST(TRIM(chqbank) AS STRING), '') as chqbank,
-    NULLIF(CAST(TRIM(chqacode) AS STRING), '') as chqacode,
-    NULLIF(CAST(TRIM(chqcus) AS STRING), '') as chqcus,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatec, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19))
-    ) AS chqdatec,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdater, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19))
-    ) AS chqdater,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatep, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19))
-    ) AS chqdatep,
-    CAST(chqtype AS INT64) as chqtype,
-    CAST(chqstatus AS INT64) as chqstatus,
-    CAST(chqtotal AS FLOAT64) as chqtotal,
-    NULLIF(CAST(TRIM(chqmemo) AS STRING), '') as chqmemo,
-    CAST(chqgl AS INT64) as chqgl,
-    CAST(chqmi AS INT64) as chqmi,
-    CAST(chqown AS INT64) as chqown,
-    CAST(chqtag AS INT64) as chqtag,
-    CAST(chqstatusn AS INT64) as chqstatusn,
-    CAST(chqlock AS INT64) as chqlock,
-    CAST(chqpassgl AS INT64) as chqpassgl,
-    NULLIF(CAST(TRIM(chqjob) AS STRING), '') as chqjob,
-    NULLIF(CAST(TRIM(chqdep) AS STRING), '') as chqdep,
-    NULLIF(CAST(TRIM(chqper) AS STRING), '') as chqper,
-    NULLIF(CAST(TRIM(chqzon) AS STRING), '') as chqzon,
-    NULLIF(CAST(TRIM(chqrcode) AS STRING), '') as chqrcode,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqeditlk, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19))
-    ) AS chqeditlk,
-    NULLIF(CAST(TRIM(chqkeyuser) AS STRING), '') as chqkeyuser,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqkeydate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19))
-    ) AS chqkeydate,
-    CAST(chqdeduct AS FLOAT64) as chqdeduct,
-    NULLIF(CAST(TRIM(chqecode) AS STRING), '') as chqecode,
-    NULLIF(CAST(TRIM(chqbranch) AS STRING), '') as chqbranch,
-    NULLIF(CAST(TRIM(chqmec) AS STRING), '') as chqmec,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatev, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19))
-    ) AS chqdatev
+    ${databuffet.cleanString('chqno')} as chqno,
+    ${databuffet.cleanString('chqbank')} as chqbank,
+    ${databuffet.cleanString('chqacode')} as chqacode,
+    ${databuffet.cleanString('chqcus')} as chqcus,
+    ${databuffet.parseFlexibleDatetime('chqdatec')} AS chqdatec,
+    ${databuffet.parseFlexibleDatetime('chqdater')} AS chqdater,
+    ${databuffet.parseFlexibleDatetime('chqdatep')} AS chqdatep,
+    ${databuffet.castInt64('chqtype')} as chqtype,
+    ${databuffet.castInt64('chqstatus')} as chqstatus,
+    ${databuffet.castFloat64('chqtotal')} as chqtotal,
+    ${databuffet.cleanString('chqmemo')} as chqmemo,
+    ${databuffet.castInt64('chqgl')} as chqgl,
+    ${databuffet.castInt64('chqmi')} as chqmi,
+    ${databuffet.castInt64('chqown')} as chqown,
+    ${databuffet.castInt64('chqtag')} as chqtag,
+    ${databuffet.castInt64('chqstatusn')} as chqstatusn,
+    ${databuffet.castInt64('chqlock')} as chqlock,
+    ${databuffet.castInt64('chqpassgl')} as chqpassgl,
+    ${databuffet.cleanString('chqjob')} as chqjob,
+    ${databuffet.cleanString('chqdep')} as chqdep,
+    ${databuffet.cleanString('chqper')} as chqper,
+    ${databuffet.cleanString('chqzon')} as chqzon,
+    ${databuffet.cleanString('chqrcode')} as chqrcode,
+    ${databuffet.parseFlexibleDatetime('chqeditlk')} AS chqeditlk,
+    ${databuffet.cleanString('chqkeyuser')} as chqkeyuser,
+    ${databuffet.parseFlexibleDatetime('chqkeydate')} AS chqkeydate,
+    ${databuffet.castFloat64('chqdeduct')} as chqdeduct,
+    ${databuffet.cleanString('chqecode')} as chqecode,
+    ${databuffet.cleanString('chqbranch')} as chqbranch,
+    ${databuffet.cleanString('chqmec')} as chqmec,
+    ${databuffet.parseFlexibleDatetime('chqdatev')} AS chqdatev
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.chq`
 
   UNION ALL
 
   SELECT
     'ab01' AS company_id,
-    NULLIF(CAST(TRIM(chqno) AS STRING), '') as chqno,
-    NULLIF(CAST(TRIM(chqbank) AS STRING), '') as chqbank,
-    NULLIF(CAST(TRIM(chqacode) AS STRING), '') as chqacode,
-    NULLIF(CAST(TRIM(chqcus) AS STRING), '') as chqcus,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatec, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19))
-    ) AS chqdatec,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdater, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19))
-    ) AS chqdater,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatep, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19))
-    ) AS chqdatep,
-    CAST(chqtype AS INT64) as chqtype,
-    CAST(chqstatus AS INT64) as chqstatus,
-    CAST(chqtotal AS FLOAT64) as chqtotal,
-    NULLIF(CAST(TRIM(chqmemo) AS STRING), '') as chqmemo,
-    CAST(chqgl AS INT64) as chqgl,
-    CAST(chqmi AS INT64) as chqmi,
-    CAST(chqown AS INT64) as chqown,
-    CAST(chqtag AS INT64) as chqtag,
-    CAST(chqstatusn AS INT64) as chqstatusn,
-    CAST(chqlock AS INT64) as chqlock,
-    CAST(chqpassgl AS INT64) as chqpassgl,
-    NULLIF(CAST(TRIM(chqjob) AS STRING), '') as chqjob,
-    NULLIF(CAST(TRIM(chqdep) AS STRING), '') as chqdep,
-    NULLIF(CAST(TRIM(chqper) AS STRING), '') as chqper,
-    NULLIF(CAST(TRIM(chqzon) AS STRING), '') as chqzon,
-    NULLIF(CAST(TRIM(chqrcode) AS STRING), '') as chqrcode,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqeditlk, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19))
-    ) AS chqeditlk,
-    NULLIF(CAST(TRIM(chqkeyuser) AS STRING), '') as chqkeyuser,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqkeydate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19))
-    ) AS chqkeydate,
-    CAST(chqdeduct AS FLOAT64) as chqdeduct,
-    NULLIF(CAST(TRIM(chqecode) AS STRING), '') as chqecode,
-    NULLIF(CAST(TRIM(chqbranch) AS STRING), '') as chqbranch,
-    NULLIF(CAST(TRIM(chqmec) AS STRING), '') as chqmec,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatev, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19))
-    ) AS chqdatev
+    ${databuffet.cleanString('chqno')} as chqno,
+    ${databuffet.cleanString('chqbank')} as chqbank,
+    ${databuffet.cleanString('chqacode')} as chqacode,
+    ${databuffet.cleanString('chqcus')} as chqcus,
+    ${databuffet.parseFlexibleDatetime('chqdatec')} AS chqdatec,
+    ${databuffet.parseFlexibleDatetime('chqdater')} AS chqdater,
+    ${databuffet.parseFlexibleDatetime('chqdatep')} AS chqdatep,
+    ${databuffet.castInt64('chqtype')} as chqtype,
+    ${databuffet.castInt64('chqstatus')} as chqstatus,
+    ${databuffet.castFloat64('chqtotal')} as chqtotal,
+    ${databuffet.cleanString('chqmemo')} as chqmemo,
+    ${databuffet.castInt64('chqgl')} as chqgl,
+    ${databuffet.castInt64('chqmi')} as chqmi,
+    ${databuffet.castInt64('chqown')} as chqown,
+    ${databuffet.castInt64('chqtag')} as chqtag,
+    ${databuffet.castInt64('chqstatusn')} as chqstatusn,
+    ${databuffet.castInt64('chqlock')} as chqlock,
+    ${databuffet.castInt64('chqpassgl')} as chqpassgl,
+    ${databuffet.cleanString('chqjob')} as chqjob,
+    ${databuffet.cleanString('chqdep')} as chqdep,
+    ${databuffet.cleanString('chqper')} as chqper,
+    ${databuffet.cleanString('chqzon')} as chqzon,
+    ${databuffet.cleanString('chqrcode')} as chqrcode,
+    ${databuffet.parseFlexibleDatetime('chqeditlk')} AS chqeditlk,
+    ${databuffet.cleanString('chqkeyuser')} as chqkeyuser,
+    ${databuffet.parseFlexibleDatetime('chqkeydate')} AS chqkeydate,
+    ${databuffet.castFloat64('chqdeduct')} as chqdeduct,
+    ${databuffet.cleanString('chqecode')} as chqecode,
+    ${databuffet.cleanString('chqbranch')} as chqbranch,
+    ${databuffet.cleanString('chqmec')} as chqmec,
+    ${databuffet.parseFlexibleDatetime('chqdatev')} AS chqdatev
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.chq`
 
   UNION ALL
 
   SELECT
     'ac02' AS company_id,
-    NULLIF(CAST(TRIM(chqno) AS STRING), '') as chqno,
-    NULLIF(CAST(TRIM(chqbank) AS STRING), '') as chqbank,
-    NULLIF(CAST(TRIM(chqacode) AS STRING), '') as chqacode,
-    NULLIF(CAST(TRIM(chqcus) AS STRING), '') as chqcus,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatec, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19))
-    ) AS chqdatec,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdater, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19))
-    ) AS chqdater,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatep, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19))
-    ) AS chqdatep,
-    CAST(chqtype AS INT64) as chqtype,
-    CAST(chqstatus AS INT64) as chqstatus,
-    CAST(chqtotal AS FLOAT64) as chqtotal,
-    NULLIF(CAST(TRIM(chqmemo) AS STRING), '') as chqmemo,
-    CAST(chqgl AS INT64) as chqgl,
-    CAST(chqmi AS INT64) as chqmi,
-    CAST(chqown AS INT64) as chqown,
-    CAST(chqtag AS INT64) as chqtag,
-    CAST(chqstatusn AS INT64) as chqstatusn,
-    CAST(chqlock AS INT64) as chqlock,
-    CAST(chqpassgl AS INT64) as chqpassgl,
-    NULLIF(CAST(TRIM(chqjob) AS STRING), '') as chqjob,
-    NULLIF(CAST(TRIM(chqdep) AS STRING), '') as chqdep,
-    NULLIF(CAST(TRIM(chqper) AS STRING), '') as chqper,
-    NULLIF(CAST(TRIM(chqzon) AS STRING), '') as chqzon,
-    NULLIF(CAST(TRIM(chqrcode) AS STRING), '') as chqrcode,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqeditlk, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19))
-    ) AS chqeditlk,
-    NULLIF(CAST(TRIM(chqkeyuser) AS STRING), '') as chqkeyuser,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqkeydate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19))
-    ) AS chqkeydate,
-    CAST(chqdeduct AS FLOAT64) as chqdeduct,
-    NULLIF(CAST(TRIM(chqecode) AS STRING), '') as chqecode,
-    NULLIF(CAST(TRIM(chqbranch) AS STRING), '') as chqbranch,
-    NULLIF(CAST(TRIM(chqmec) AS STRING), '') as chqmec,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatev, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19))
-    ) AS chqdatev
+    ${databuffet.cleanString('chqno')} as chqno,
+    ${databuffet.cleanString('chqbank')} as chqbank,
+    ${databuffet.cleanString('chqacode')} as chqacode,
+    ${databuffet.cleanString('chqcus')} as chqcus,
+    ${databuffet.parseFlexibleDatetime('chqdatec')} AS chqdatec,
+    ${databuffet.parseFlexibleDatetime('chqdater')} AS chqdater,
+    ${databuffet.parseFlexibleDatetime('chqdatep')} AS chqdatep,
+    ${databuffet.castInt64('chqtype')} as chqtype,
+    ${databuffet.castInt64('chqstatus')} as chqstatus,
+    ${databuffet.castFloat64('chqtotal')} as chqtotal,
+    ${databuffet.cleanString('chqmemo')} as chqmemo,
+    ${databuffet.castInt64('chqgl')} as chqgl,
+    ${databuffet.castInt64('chqmi')} as chqmi,
+    ${databuffet.castInt64('chqown')} as chqown,
+    ${databuffet.castInt64('chqtag')} as chqtag,
+    ${databuffet.castInt64('chqstatusn')} as chqstatusn,
+    ${databuffet.castInt64('chqlock')} as chqlock,
+    ${databuffet.castInt64('chqpassgl')} as chqpassgl,
+    ${databuffet.cleanString('chqjob')} as chqjob,
+    ${databuffet.cleanString('chqdep')} as chqdep,
+    ${databuffet.cleanString('chqper')} as chqper,
+    ${databuffet.cleanString('chqzon')} as chqzon,
+    ${databuffet.cleanString('chqrcode')} as chqrcode,
+    ${databuffet.parseFlexibleDatetime('chqeditlk')} AS chqeditlk,
+    ${databuffet.cleanString('chqkeyuser')} as chqkeyuser,
+    ${databuffet.parseFlexibleDatetime('chqkeydate')} AS chqkeydate,
+    ${databuffet.castFloat64('chqdeduct')} as chqdeduct,
+    ${databuffet.cleanString('chqecode')} as chqecode,
+    ${databuffet.cleanString('chqbranch')} as chqbranch,
+    ${databuffet.cleanString('chqmec')} as chqmec,
+    ${databuffet.parseFlexibleDatetime('chqdatev')} AS chqdatev
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.chq`
 
   UNION ALL
 
   SELECT
     'ak02' AS company_id,
-    NULLIF(CAST(TRIM(chqno) AS STRING), '') as chqno,
-    NULLIF(CAST(TRIM(chqbank) AS STRING), '') as chqbank,
-    NULLIF(CAST(TRIM(chqacode) AS STRING), '') as chqacode,
-    NULLIF(CAST(TRIM(chqcus) AS STRING), '') as chqcus,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatec, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19))
-    ) AS chqdatec,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdater, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19))
-    ) AS chqdater,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatep, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19))
-    ) AS chqdatep,
-    CAST(chqtype AS INT64) as chqtype,
-    CAST(chqstatus AS INT64) as chqstatus,
-    CAST(chqtotal AS FLOAT64) as chqtotal,
-    NULLIF(CAST(TRIM(chqmemo) AS STRING), '') as chqmemo,
-    CAST(chqgl AS INT64) as chqgl,
-    CAST(chqmi AS INT64) as chqmi,
-    CAST(chqown AS INT64) as chqown,
-    CAST(chqtag AS INT64) as chqtag,
-    CAST(chqstatusn AS INT64) as chqstatusn,
-    CAST(chqlock AS INT64) as chqlock,
-    CAST(chqpassgl AS INT64) as chqpassgl,
-    NULLIF(CAST(TRIM(chqjob) AS STRING), '') as chqjob,
-    NULLIF(CAST(TRIM(chqdep) AS STRING), '') as chqdep,
-    NULLIF(CAST(TRIM(chqper) AS STRING), '') as chqper,
-    NULLIF(CAST(TRIM(chqzon) AS STRING), '') as chqzon,
-    NULLIF(CAST(TRIM(chqrcode) AS STRING), '') as chqrcode,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqeditlk, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19))
-    ) AS chqeditlk,
-    NULLIF(CAST(TRIM(chqkeyuser) AS STRING), '') as chqkeyuser,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqkeydate, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19))
-    ) AS chqkeydate,
-    CAST(chqdeduct AS FLOAT64) as chqdeduct,
-    NULLIF(CAST(TRIM(chqecode) AS STRING), '') as chqecode,
-    NULLIF(CAST(TRIM(chqbranch) AS STRING), '') as chqbranch,
-    NULLIF(CAST(TRIM(chqmec) AS STRING), '') as chqmec,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatev, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19))
-    ) AS chqdatev
+    ${databuffet.cleanString('chqno')} as chqno,
+    ${databuffet.cleanString('chqbank')} as chqbank,
+    ${databuffet.cleanString('chqacode')} as chqacode,
+    ${databuffet.cleanString('chqcus')} as chqcus,
+    ${databuffet.parseFlexibleDatetime('chqdatec')} AS chqdatec,
+    ${databuffet.parseFlexibleDatetime('chqdater')} AS chqdater,
+    ${databuffet.parseFlexibleDatetime('chqdatep')} AS chqdatep,
+    ${databuffet.castInt64('chqtype')} as chqtype,
+    ${databuffet.castInt64('chqstatus')} as chqstatus,
+    ${databuffet.castFloat64('chqtotal')} as chqtotal,
+    ${databuffet.cleanString('chqmemo')} as chqmemo,
+    ${databuffet.castInt64('chqgl')} as chqgl,
+    ${databuffet.castInt64('chqmi')} as chqmi,
+    ${databuffet.castInt64('chqown')} as chqown,
+    ${databuffet.castInt64('chqtag')} as chqtag,
+    ${databuffet.castInt64('chqstatusn')} as chqstatusn,
+    ${databuffet.castInt64('chqlock')} as chqlock,
+    ${databuffet.castInt64('chqpassgl')} as chqpassgl,
+    ${databuffet.cleanString('chqjob')} as chqjob,
+    ${databuffet.cleanString('chqdep')} as chqdep,
+    ${databuffet.cleanString('chqper')} as chqper,
+    ${databuffet.cleanString('chqzon')} as chqzon,
+    ${databuffet.cleanString('chqrcode')} as chqrcode,
+    ${databuffet.parseFlexibleDatetime('chqeditlk')} AS chqeditlk,
+    ${databuffet.cleanString('chqkeyuser')} as chqkeyuser,
+    ${databuffet.parseFlexibleDatetime('chqkeydate')} AS chqkeydate,
+    ${databuffet.castFloat64('chqdeduct')} as chqdeduct,
+    ${databuffet.cleanString('chqecode')} as chqecode,
+    ${databuffet.cleanString('chqbranch')} as chqbranch,
+    ${databuffet.cleanString('chqmec')} as chqmec,
+    ${databuffet.parseFlexibleDatetime('chqdatev')} AS chqdatev
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.chq`
 ),
 

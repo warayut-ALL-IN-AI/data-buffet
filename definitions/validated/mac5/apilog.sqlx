@@ -52,18 +52,12 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(logid AS INT64) as logid,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(runat, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(runat, 1, 19))
-    ) AS runat,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(completedat, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(completedat, 1, 19))
-    ) AS completedat,
-    CAST(issuccess AS INT64) as issuccess,
-    NULLIF(CAST(TRIM(errormessage) AS STRING), '') as errormessage,
-    NULLIF(CAST(TRIM(resultjson) AS STRING), '') as resultjson
+    ${databuffet.castInt64('logid')} as logid,
+    ${databuffet.parseFlexibleDatetime('runat')} AS runat,
+    ${databuffet.parseFlexibleDatetime('completedat')} AS completedat,
+    ${databuffet.castInt64('issuccess')} as issuccess,
+    ${databuffet.cleanString('errormessage')} as errormessage,
+    ${databuffet.cleanString('resultjson')} as resultjson
 
   FROM
     `${sourceTableRef}`

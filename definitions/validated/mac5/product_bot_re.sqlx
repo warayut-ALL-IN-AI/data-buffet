@@ -52,16 +52,13 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(id AS INT64) as id,
-    NULLIF(CAST(TRIM(sku_id) AS STRING), '') as sku_id,
-    CAST(qty AS FLOAT64) as qty,
-    CAST(price AS FLOAT64) as price,
-    NULLIF(CAST(TRIM(channel) AS STRING), '') as channel,
-    NULLIF(CAST(TRIM(type_product) AS STRING), '') as type_product,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(create_date, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19))
-    ) AS create_date
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.cleanString('sku_id')} as sku_id,
+    ${databuffet.castFloat64('qty')} as qty,
+    ${databuffet.castFloat64('price')} as price,
+    ${databuffet.cleanString('channel')} as channel,
+    ${databuffet.cleanString('type_product')} as type_product,
+    ${databuffet.parseFlexibleDatetime('create_date')} AS create_date
 
   FROM
     `${sourceTableRef}`

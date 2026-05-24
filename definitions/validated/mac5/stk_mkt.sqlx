@@ -52,18 +52,18 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    NULLIF(CAST(TRIM(stkcode) AS STRING), '') as stkcode,
-    NULLIF(CAST(TRIM(stkgroup) AS STRING), '') as stkgroup,
-    NULLIF(CAST(TRIM(stkdesct1) AS STRING), '') as stkdesct1,
-    NULLIF(CAST(TRIM(zgroup1) AS STRING), '') as zgroup1,
-    NULLIF(CAST(TRIM(zgroup2) AS STRING), '') as zgroup2,
-    NULLIF(CAST(TRIM(zsize) AS STRING), '') as zsize,
-    NULLIF(CAST(TRIM(zcolor) AS STRING), '') as zcolor,
-    NULLIF(CAST(TRIM(zgroup3) AS STRING), '') as zgroup3,
-    NULLIF(CAST(TRIM(zgroup4) AS STRING), '') as zgroup4,
-    NULLIF(CAST(TRIM(zgroup5) AS STRING), '') as zgroup5,
-    NULLIF(CAST(TRIM(zgroup6) AS STRING), '') as zgroup6,
-    NULLIF(CAST(TRIM(zgroup7) AS STRING), '') as zgroup7
+    ${databuffet.cleanString('stkcode')} as stkcode,
+    ${databuffet.cleanString('stkgroup')} as stkgroup,
+    ${databuffet.cleanString('stkdesct1')} as stkdesct1,
+    ${databuffet.cleanString('zgroup1')} as zgroup1,
+    ${databuffet.cleanString('zgroup2')} as zgroup2,
+    ${databuffet.cleanString('zsize')} as zsize,
+    ${databuffet.cleanString('zcolor')} as zcolor,
+    ${databuffet.cleanString('zgroup3')} as zgroup3,
+    ${databuffet.cleanString('zgroup4')} as zgroup4,
+    ${databuffet.cleanString('zgroup5')} as zgroup5,
+    ${databuffet.cleanString('zgroup6')} as zgroup6,
+    ${databuffet.cleanString('zgroup7')} as zgroup7
   FROM
     `${sourceTableRef}`
 )

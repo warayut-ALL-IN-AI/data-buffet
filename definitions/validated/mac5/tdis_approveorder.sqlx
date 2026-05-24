@@ -52,15 +52,12 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    CAST(id AS INT64) as id,
-    NULLIF(CAST(TRIM(preorder) AS STRING), '') as preorder,
-    NULLIF(CAST(TRIM(orderno) AS STRING), '') as orderno,
-    NULLIF(CAST(TRIM(userkey) AS STRING), '') as userkey,
-    NULLIF(CAST(TRIM(userapprove) AS STRING), '') as userapprove,
-    COALESCE(
-      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(datetime, 1, 19)),
-      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetime, 1, 19))
-    ) AS datetime
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.cleanString('preorder')} as preorder,
+    ${databuffet.cleanString('orderno')} as orderno,
+    ${databuffet.cleanString('userkey')} as userkey,
+    ${databuffet.cleanString('userapprove')} as userapprove,
+    ${databuffet.parseFlexibleDatetime('datetime')} AS datetime
 
   FROM
     `${sourceTableRef}`
