@@ -54,7 +54,7 @@ END;`;
 SELECT
   ${databuffet.functionData.cleanString('ps_id')} AS ps_id,
   ${databuffet.functionData.cleanString('ps_name')} AS ps_name,
-  CAST(ps_is_use AS BOOL) as ps_is_use,
+  ${databuffet.functionData.castBool('ps_is_use')} as ps_is_use,
   ${databuffet.functionData.parseFlexibleDatetime('ps_created_date')} as ps_created_date,
   ${databuffet.functionData.parseFlexibleDatetime('ps_updated_date')} as ps_updated_date,
   ${databuffet.functionData.parseAsatDate()} as asatdate,

@@ -49,6 +49,14 @@ function castFloat64(col) {
     return `CAST(${col} AS FLOAT64)`
 }
 
+/**
+ * @param {string} col - column name or expression
+ * @returns {string} GoogleSQL expression to cast column to BOOL
+ */
+function castBool(col) {
+    return `CAST(${col} AS BOOL)`
+}
+
 module.exports = {
     cleanString,
     cleanCode,
@@ -56,4 +64,5 @@ module.exports = {
     parseAsatDate,
     castInt64,
     castFloat64,
+    castBool,
 }

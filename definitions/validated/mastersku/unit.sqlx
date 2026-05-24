@@ -55,7 +55,7 @@ SELECT
   ${databuffet.functionData.cleanString('unit_id')} AS unit_id,
   ${databuffet.functionData.cleanString('unit_type_name')} AS unit_type_name,
   ${databuffet.functionData.cleanString('unit_name')} AS unit_name,
-  CAST(unit_is_use AS BOOL) as unit_is_use,
+  ${databuffet.functionData.castBool('unit_is_use')} as unit_is_use,
   ${databuffet.functionData.parseFlexibleDatetime('unit_created_date')} as unit_created_date,
   ${databuffet.functionData.parseFlexibleDatetime('unit_updated_date')} as unit_updated_date,
   ${databuffet.functionData.parseAsatDate()} as asatdate,

@@ -91,7 +91,7 @@ SELECT
   ${databuffet.functionData.cleanString('pd_caution_path')} AS pd_caution_path,
   ${databuffet.functionData.cleanString('pd_file_name')} AS pd_file_name,
   ${databuffet.functionData.cleanString('pd_file_path')} AS pd_file_path,
-  CAST(pd_is_system AS BOOL) AS pd_is_system,
+  ${databuffet.functionData.castBool('pd_is_system')} AS pd_is_system,
   ${databuffet.functionData.parseFlexibleDatetime('pd_created_date')} AS pd_created_date,
   ${databuffet.functionData.cleanString('pd_created_by')} AS pd_created_by,
   ${databuffet.functionData.parseFlexibleDatetime('pd_updated_date')} AS pd_updated_date,
