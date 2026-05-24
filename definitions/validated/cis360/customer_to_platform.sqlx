@@ -56,7 +56,7 @@ SELECT
     ${databuffet.functionData.cleanString('customer_profile_id')} as customer_profile_id,
     ${databuffet.functionData.castInt64('platform_id')} as platform_id,
     ${databuffet.functionData.parseFlexibleDatetime('create_relationship_date')} as create_relationship_date,
-    CAST(is_delete as BOOL) as is_delete,
+    ${databuffet.functionData.castBool('is_delete')} as is_delete,
     ${databuffet.functionData.parseFlexibleDatetime('create_date')} as create_date,
     ${databuffet.functionData.cleanString('create_by')} as create_by,
     ${databuffet.functionData.cleanString('create_by_platform')} as create_by_platform,

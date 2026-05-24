@@ -64,7 +64,7 @@ SELECT
     ${databuffet.functionData.castInt64('total_items')} as total_items,
     ${databuffet.functionData.castFloat64('total_amount')} as total_amount,
     ${databuffet.functionData.cleanString('url_reference')} as url_reference,
-    CAST(is_delete as BOOL) as is_delete,
+    ${databuffet.functionData.castBool('is_delete')} as is_delete,
     ${databuffet.functionData.parseFlexibleDatetime('transaction_date')} as transaction_date,
     ${databuffet.functionData.parseFlexibleDatetime('create_date')} as create_date,
     ${databuffet.functionData.cleanString('create_by')} as create_by,
