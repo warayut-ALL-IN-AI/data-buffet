@@ -1,6 +1,6 @@
 const variables = require("./controller/variables.json")
 const cdcConfig = require("./controller/cdc-config.json")
-const sqlHelpers = require("./controller/function")
+const functionData = require("./controller/function-data")
 
 
 module.exports = {
@@ -9,5 +9,5 @@ module.exports = {
     REGION: dataform.projectConfig.defaultLocation,
     ...variables,
     cdcConfig,
-    ...sqlHelpers,
+    ...functionData,
 }
