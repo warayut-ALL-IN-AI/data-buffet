@@ -52,12 +52,12 @@ END;`;
 }
 
 SELECT
-  ${databuffet.cleanString('pas_id')} AS pas_id,
-  ${databuffet.cleanString('pas_name')} AS pas_name,
+  ${databuffet.functionData.cleanString('pas_id')} AS pas_id,
+  ${databuffet.functionData.cleanString('pas_name')} AS pas_name,
   CAST(pas_is_use AS BOOL) as pas_is_use,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pas_created_date, 1, 19)) as pas_created_date,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pas_updated_date, 1, 19)) as pas_updated_date,
-  ${databuffet.parseAsatDate()} as asatdate,
+  ${databuffet.functionData.parseAsatDate()} as asatdate,
 
 FROM
   `${sourceTableRef}`

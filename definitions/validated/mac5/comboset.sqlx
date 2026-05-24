@@ -52,16 +52,16 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.cleanString('combostk')} as combostk,
-    ${databuffet.cleanString('stkcode')} as stkcode,
-    ${databuffet.parseFlexibleDatetime('date')} AS date,
-    ${databuffet.cleanString('uinsert')} as uinsert,
-    ${databuffet.cleanString('uupdate')} as uupdate,
-    ${databuffet.castInt64('status')} as status,
-    ${databuffet.castInt64('quantity')} as quantity,
-    ${databuffet.castFloat64('price')} as price,
-    ${databuffet.castFloat64('lp')} as lp
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.cleanString('combostk')} as combostk,
+    ${databuffet.functionData.cleanString('stkcode')} as stkcode,
+    ${databuffet.functionData.parseFlexibleDatetime('date')} AS date,
+    ${databuffet.functionData.cleanString('uinsert')} as uinsert,
+    ${databuffet.functionData.cleanString('uupdate')} as uupdate,
+    ${databuffet.functionData.castInt64('status')} as status,
+    ${databuffet.functionData.castInt64('quantity')} as quantity,
+    ${databuffet.functionData.castFloat64('price')} as price,
+    ${databuffet.functionData.castFloat64('lp')} as lp
 
   FROM
     `${sourceTableRef}`

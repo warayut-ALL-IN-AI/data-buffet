@@ -52,21 +52,21 @@ END;`;
 }
 
 SELECT
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.cleanString('customer_type_name')} as customer_type_name,
-    ${databuffet.cleanString('customer_type_name_en')} as customer_type_name_en,
-    ${databuffet.cleanString('customer_type_code')} as customer_type_code,
-    ${databuffet.castInt64('customer_type_order')} as customer_type_order,
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.cleanString('customer_type_name')} as customer_type_name,
+    ${databuffet.functionData.cleanString('customer_type_name_en')} as customer_type_name_en,
+    ${databuffet.functionData.cleanString('customer_type_code')} as customer_type_code,
+    ${databuffet.functionData.castInt64('customer_type_order')} as customer_type_order,
     CAST(is_constant as BOOL) as is_constant,
     CAST(active_status as BOOL) as active_status,
     CAST(is_delete as BOOL) as is_delete,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) as create_date,
-    ${databuffet.cleanString('create_by')} as create_by,
-    ${databuffet.cleanString('create_by_platform')} as create_by_platform,
-    ${databuffet.cleanString('update_by_platform')} as update_by_platform,
+    ${databuffet.functionData.cleanString('create_by')} as create_by,
+    ${databuffet.functionData.cleanString('create_by_platform')} as create_by_platform,
+    ${databuffet.functionData.cleanString('update_by_platform')} as update_by_platform,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19)) as update_date,
-    ${databuffet.cleanString('update_by')} AS update_by,
-    ${databuffet.parseAsatDate()} AS asatdate,
+    ${databuffet.functionData.cleanString('update_by')} AS update_by,
+    ${databuffet.functionData.parseAsatDate()} AS asatdate,
 
 FROM
   `${sourceTableRef}`

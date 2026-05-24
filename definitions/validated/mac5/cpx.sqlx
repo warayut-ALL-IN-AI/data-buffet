@@ -52,22 +52,22 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.cleanString('cpxstkid')} as cpxstkid,
-    ${databuffet.castInt64('cpxlinkid')} as cpxlinkid,
-    ${databuffet.cleanString('cpxvnosid')} as cpxvnosid,
-    ${databuffet.parseFlexibleDatetime('cpxdateid')} AS cpxdateid,
-    ${databuffet.cleanString('cpxjob')} as cpxjob,
-    ${databuffet.cleanString('cpxdep')} as cpxdep,
-    ${databuffet.cleanString('cpxper')} as cpxper,
-    ${databuffet.cleanString('cpxdoc')} as cpxdoc,
-    ${databuffet.cleanString('cpxmec')} as cpxmec,
-    ${databuffet.cleanString('cpxsto')} as cpxsto,
-    ${databuffet.castFloat64('cpxstkreq')} as cpxstkreq,
-    ${databuffet.castFloat64('cpxstkcut')} as cpxstkcut,
-    ${databuffet.castInt64('cpxclearstk')} as cpxclearstk,
-    ${databuffet.castInt64('cpxclearuser')} as cpxclearuser,
-    ${databuffet.castInt64('cpxclearall')} as cpxclearall,
-    ${databuffet.castInt64('cpxstatus')} as cpxstatus
+    ${databuffet.functionData.cleanString('cpxstkid')} as cpxstkid,
+    ${databuffet.functionData.castInt64('cpxlinkid')} as cpxlinkid,
+    ${databuffet.functionData.cleanString('cpxvnosid')} as cpxvnosid,
+    ${databuffet.functionData.parseFlexibleDatetime('cpxdateid')} AS cpxdateid,
+    ${databuffet.functionData.cleanString('cpxjob')} as cpxjob,
+    ${databuffet.functionData.cleanString('cpxdep')} as cpxdep,
+    ${databuffet.functionData.cleanString('cpxper')} as cpxper,
+    ${databuffet.functionData.cleanString('cpxdoc')} as cpxdoc,
+    ${databuffet.functionData.cleanString('cpxmec')} as cpxmec,
+    ${databuffet.functionData.cleanString('cpxsto')} as cpxsto,
+    ${databuffet.functionData.castFloat64('cpxstkreq')} as cpxstkreq,
+    ${databuffet.functionData.castFloat64('cpxstkcut')} as cpxstkcut,
+    ${databuffet.functionData.castInt64('cpxclearstk')} as cpxclearstk,
+    ${databuffet.functionData.castInt64('cpxclearuser')} as cpxclearuser,
+    ${databuffet.functionData.castInt64('cpxclearall')} as cpxclearall,
+    ${databuffet.functionData.castInt64('cpxstatus')} as cpxstatus
 
   FROM
     `${sourceTableRef}`

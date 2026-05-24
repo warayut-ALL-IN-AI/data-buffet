@@ -40,16 +40,16 @@ END;`;
 }
 
 SELECT
-    ${databuffet.cleanString('VENDOR_ID')} AS vendor_id,
-    ${databuffet.cleanString('VENDOR_NAME')} AS vendor_name,
-    ${databuffet.cleanString('MCH3')} AS mch3,
-    ${databuffet.cleanString('BRAND')} AS brand,
-    ${databuffet.cleanString('CLASS_STOCK')} AS class_stock,
-    ${databuffet.castFloat64('UR_COST_AMT')} AS ur_cost_amt,
-    ${databuffet.castFloat64('T_O')} AS t_o,
+    ${databuffet.functionData.cleanString('VENDOR_ID')} AS vendor_id,
+    ${databuffet.functionData.cleanString('VENDOR_NAME')} AS vendor_name,
+    ${databuffet.functionData.cleanString('MCH3')} AS mch3,
+    ${databuffet.functionData.cleanString('BRAND')} AS brand,
+    ${databuffet.functionData.cleanString('CLASS_STOCK')} AS class_stock,
+    ${databuffet.functionData.castFloat64('UR_COST_AMT')} AS ur_cost_amt,
+    ${databuffet.functionData.castFloat64('T_O')} AS t_o,
     PARSE_DATE('%Y/%m/%d', TRIM(START_DATE)) AS start_date,
     PARSE_DATE('%Y/%m/%d', TRIM(END_DATE)) AS end_date,
-    ${databuffet.parseAsatDate()} as ASATDATE,
+    ${databuffet.functionData.parseAsatDate()} as ASATDATE,
 FROM `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}.turnover_brand`
 ${partition_statement}
 

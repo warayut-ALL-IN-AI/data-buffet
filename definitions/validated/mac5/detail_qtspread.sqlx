@@ -52,23 +52,23 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.castInt64('ref_id')} as ref_id,
-    ${databuffet.castInt64('qtid')} as qtid,
-    ${databuffet.cleanString('quodeid')} as quodeid,
-    ${databuffet.cleanString('stkcode')} as stkcode,
-    ${databuffet.castFloat64('quantity')} as quantity,
-    ${databuffet.castFloat64('price')} as price,
-    ${databuffet.cleanString('total')} as total,
-    ${databuffet.cleanString('uinsert')} as uinsert,
-    ${databuffet.cleanString('uupdate')} as uupdate,
-    ${databuffet.parseFlexibleDatetime('dinsert')} as dinsert,
-    ${databuffet.parseFlexibleDatetime('dupdate')} as dupdate,
-    ${databuffet.cleanString('status')} as status,
-    ${databuffet.cleanString('link')} as link,
-    ${databuffet.cleanString('type')} as type,
-    ${databuffet.cleanString('fandex')} as fandex,
-    ${databuffet.cleanString('itemsize')} as itemsize
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.castInt64('ref_id')} as ref_id,
+    ${databuffet.functionData.castInt64('qtid')} as qtid,
+    ${databuffet.functionData.cleanString('quodeid')} as quodeid,
+    ${databuffet.functionData.cleanString('stkcode')} as stkcode,
+    ${databuffet.functionData.castFloat64('quantity')} as quantity,
+    ${databuffet.functionData.castFloat64('price')} as price,
+    ${databuffet.functionData.cleanString('total')} as total,
+    ${databuffet.functionData.cleanString('uinsert')} as uinsert,
+    ${databuffet.functionData.cleanString('uupdate')} as uupdate,
+    ${databuffet.functionData.parseFlexibleDatetime('dinsert')} as dinsert,
+    ${databuffet.functionData.parseFlexibleDatetime('dupdate')} as dupdate,
+    ${databuffet.functionData.cleanString('status')} as status,
+    ${databuffet.functionData.cleanString('link')} as link,
+    ${databuffet.functionData.cleanString('type')} as type,
+    ${databuffet.functionData.cleanString('fandex')} as fandex,
+    ${databuffet.functionData.cleanString('itemsize')} as itemsize
 
   FROM
     `${sourceTableRef}`

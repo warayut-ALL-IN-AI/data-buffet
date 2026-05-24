@@ -52,17 +52,17 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.cleanString('doccode')} as doccode,
-    ${databuffet.cleanString('docgroup')} as docgroup,
-    ${databuffet.cleanString('docdesct')} as docdesct,
-    ${databuffet.cleanString('docdesce')} as docdesce,
-    ${databuffet.castInt64('doclock')} as doclock,
-    ${databuffet.cleanString('docacc')} as docacc,
-    ${databuffet.castInt64('docdebit')} as docdebit,
-    ${databuffet.cleanString('docrefwe')} as docrefwe,
-    ${databuffet.castInt64('dochide')} as dochide,
-    ${databuffet.parseFlexibleDatetime('doceditdt')} AS doceditdt,
-    ${databuffet.cleanString('doceditmf')} as doceditmf
+    ${databuffet.functionData.cleanString('doccode')} as doccode,
+    ${databuffet.functionData.cleanString('docgroup')} as docgroup,
+    ${databuffet.functionData.cleanString('docdesct')} as docdesct,
+    ${databuffet.functionData.cleanString('docdesce')} as docdesce,
+    ${databuffet.functionData.castInt64('doclock')} as doclock,
+    ${databuffet.functionData.cleanString('docacc')} as docacc,
+    ${databuffet.functionData.castInt64('docdebit')} as docdebit,
+    ${databuffet.functionData.cleanString('docrefwe')} as docrefwe,
+    ${databuffet.functionData.castInt64('dochide')} as dochide,
+    ${databuffet.functionData.parseFlexibleDatetime('doceditdt')} AS doceditdt,
+    ${databuffet.functionData.cleanString('doceditmf')} as doceditmf
 
   FROM
     `${sourceTableRef}`

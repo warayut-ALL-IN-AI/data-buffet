@@ -52,15 +52,15 @@ END;`;
 }
 
 SELECT
-  ${databuffet.cleanString('pgcg_id')} AS pgcg_id,
-  ${databuffet.cleanString('pgcg_pg_id')} AS pgcg_pg_id,
-  ${databuffet.cleanString('pgcg_cost_group_detail')} AS pgcg_cost_group_detail,
+  ${databuffet.functionData.cleanString('pgcg_id')} AS pgcg_id,
+  ${databuffet.functionData.cleanString('pgcg_pg_id')} AS pgcg_pg_id,
+  ${databuffet.functionData.cleanString('pgcg_cost_group_detail')} AS pgcg_cost_group_detail,
   CAST(pgcg_is_use AS BOOL) AS pgcg_is_use,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pgcg_create_date, 1, 19)) AS pgcg_create_date,
-  ${databuffet.cleanString('pgcg_create_by')} AS pgcg_create_by,
+  ${databuffet.functionData.cleanString('pgcg_create_by')} AS pgcg_create_by,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pgcg_update_date, 1, 19)) AS pgcg_update_date,
-  ${databuffet.cleanString('pgcg_update_by')} AS pgcg_update_by,
-  ${databuffet.parseAsatDate()} AS asatdate,
+  ${databuffet.functionData.cleanString('pgcg_update_by')} AS pgcg_update_by,
+  ${databuffet.functionData.parseAsatDate()} AS asatdate,
 
 FROM
   `${sourceTableRef}`

@@ -52,13 +52,13 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.cleanString('stdcode')} as stdcode,
-    ${databuffet.castInt64('stdtype')} as stdtype,
-    ${databuffet.cleanString('stddebtor')} as stddebtor,
-    ${databuffet.cleanString('stdstkcode')} as stdstkcode,
-    ${databuffet.cleanString('stddesct1')} as stddesct1,
-    ${databuffet.cleanString('stddesce1')} as stddesce1,
-    ${databuffet.castInt64('stdautono')} as stdautono
+    ${databuffet.functionData.cleanString('stdcode')} as stdcode,
+    ${databuffet.functionData.castInt64('stdtype')} as stdtype,
+    ${databuffet.functionData.cleanString('stddebtor')} as stddebtor,
+    ${databuffet.functionData.cleanString('stdstkcode')} as stdstkcode,
+    ${databuffet.functionData.cleanString('stddesct1')} as stddesct1,
+    ${databuffet.functionData.cleanString('stddesce1')} as stddesce1,
+    ${databuffet.functionData.castInt64('stdautono')} as stdautono
 
   FROM
     `${sourceTableRef}`

@@ -52,22 +52,22 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.castInt64('mainqtid')} as mainqtid,
-    ${databuffet.cleanString('preorderno')} as preorderno,
-    ${databuffet.cleanString('orderno')} as orderno,
-    ${databuffet.cleanString('type')} as type,
-    ${databuffet.cleanString('path212')} as path212,
-    ${databuffet.cleanString('path10acc')} as path10acc,
-    ${databuffet.cleanString('path10fac')} as path10fac,
-    ${databuffet.cleanString('filename')} as filename,
-    ${databuffet.cleanString('uinsert')} as uinsert,
-    ${databuffet.cleanString('date')} as date,
-    ${databuffet.castInt64('status')} as status,
-    ${databuffet.cleanString('pathqtid')} as pathqtid,
-    ${databuffet.cleanString('note')} as note,
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.castInt64('mainqtid')} as mainqtid,
+    ${databuffet.functionData.cleanString('preorderno')} as preorderno,
+    ${databuffet.functionData.cleanString('orderno')} as orderno,
+    ${databuffet.functionData.cleanString('type')} as type,
+    ${databuffet.functionData.cleanString('path212')} as path212,
+    ${databuffet.functionData.cleanString('path10acc')} as path10acc,
+    ${databuffet.functionData.cleanString('path10fac')} as path10fac,
+    ${databuffet.functionData.cleanString('filename')} as filename,
+    ${databuffet.functionData.cleanString('uinsert')} as uinsert,
+    ${databuffet.functionData.cleanString('date')} as date,
+    ${databuffet.functionData.castInt64('status')} as status,
+    ${databuffet.functionData.cleanString('pathqtid')} as pathqtid,
+    ${databuffet.functionData.cleanString('note')} as note,
     PARSE_DATE('%Y-%m-%d', SUBSTR(datepayinadmin, 1, 19)) as datepayinadmin,
-    ${databuffet.cleanString('refpo')} as refpo
+    ${databuffet.functionData.cleanString('refpo')} as refpo
 
   FROM
     `${sourceTableRef}`

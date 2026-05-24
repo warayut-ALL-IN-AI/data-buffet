@@ -40,21 +40,21 @@ END;`;
 }
 
 SELECT
-    ${databuffet.cleanString('Store')} as Store,
-    ${databuffet.cleanString('Cat')} as Cat,
-    ${databuffet.cleanString('Sub_Cat')} as Sub_Cat,
-    ${databuffet.cleanString('Brand')} as Brand,
-    ${databuffet.cleanString('SKU')} as SKU,
-    ${databuffet.cleanString('Barcode')} as Barcode,
-    ${databuffet.cleanString('Description')} as Description,
-    ${databuffet.cleanString('Product_Type')} as Product_Type,
+    ${databuffet.functionData.cleanString('Store')} as Store,
+    ${databuffet.functionData.cleanString('Cat')} as Cat,
+    ${databuffet.functionData.cleanString('Sub_Cat')} as Sub_Cat,
+    ${databuffet.functionData.cleanString('Brand')} as Brand,
+    ${databuffet.functionData.cleanString('SKU')} as SKU,
+    ${databuffet.functionData.cleanString('Barcode')} as Barcode,
+    ${databuffet.functionData.cleanString('Description')} as Description,
+    ${databuffet.functionData.cleanString('Product_Type')} as Product_Type,
     CAST(Sales_Amount as FLOAT64) as Sales_Amount,
     CAST(Sales_Qty as INT64) as Sales_Qty,
     CAST(Stock_On_Hand as FLOAT64) as Stock_On_Hand,
     CAST(Stock_On_Order as INT64) as Stock_On_Order,
     PARSE_DATE('%Y-%m-%d', TRIM(Last_Sold_Date)) as Last_Sold_Date,
     PARSE_DATE('%Y-%m-%d', TRIM(Last_Receive_Date)) as Last_Receive_Date,
-    ${databuffet.parseAsatDate()} as ASATDATE,
+    ${databuffet.functionData.parseAsatDate()} as ASATDATE,
 FROM `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}.report_sale_subscription`
 ${partition_statement}
 

@@ -52,10 +52,10 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.cleanString('orderno')} as orderno,
-    ${databuffet.castInt64('status')} as status,
-    ${databuffet.parseFlexibleDatetime('datetime')} AS datetime,
-    ${databuffet.parseFlexibleDatetime('datetimeapprove')} AS datetimeapprove
+    ${databuffet.functionData.cleanString('orderno')} as orderno,
+    ${databuffet.functionData.castInt64('status')} as status,
+    ${databuffet.functionData.parseFlexibleDatetime('datetime')} AS datetime,
+    ${databuffet.functionData.parseFlexibleDatetime('datetimeapprove')} AS datetimeapprove
 
   FROM
     `${sourceTableRef}`

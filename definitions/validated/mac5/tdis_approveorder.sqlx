@@ -52,12 +52,12 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.cleanString('preorder')} as preorder,
-    ${databuffet.cleanString('orderno')} as orderno,
-    ${databuffet.cleanString('userkey')} as userkey,
-    ${databuffet.cleanString('userapprove')} as userapprove,
-    ${databuffet.parseFlexibleDatetime('datetime')} AS datetime
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.cleanString('preorder')} as preorder,
+    ${databuffet.functionData.cleanString('orderno')} as orderno,
+    ${databuffet.functionData.cleanString('userkey')} as userkey,
+    ${databuffet.functionData.cleanString('userapprove')} as userapprove,
+    ${databuffet.functionData.parseFlexibleDatetime('datetime')} AS datetime
 
   FROM
     `${sourceTableRef}`

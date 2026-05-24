@@ -52,12 +52,12 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.cleanString('combostk')} as combostk,
-    ${databuffet.parseFlexibleDatetime('date')} AS date,
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.cleanString('combostk')} as combostk,
+    ${databuffet.functionData.parseFlexibleDatetime('date')} AS date,
     CAST(uinsert AS STRING) as uinsert,
     CAST(uupdate AS STRING) as uupdate,
-    ${databuffet.castInt64('status')} as status,
+    ${databuffet.functionData.castInt64('status')} as status,
     CAST(notecomboset AS STRING) as notecomboset
 
   FROM

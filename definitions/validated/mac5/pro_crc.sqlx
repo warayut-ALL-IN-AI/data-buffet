@@ -52,14 +52,14 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.cleanString('procrcstkcode')} as procrcstkcode,
-    ${databuffet.cleanString('procrcsttcode')} as procrcsttcode,
-    ${databuffet.cleanString('procrcstt')} as procrcstt,
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.cleanString('procrcstkcode')} as procrcstkcode,
+    ${databuffet.functionData.cleanString('procrcsttcode')} as procrcsttcode,
+    ${databuffet.functionData.cleanString('procrcstt')} as procrcstt,
     PARSE_DATE('%Y-%m-%d', SUBSTR(procrcstrdate, 1, 10)) AS procrcstrdate,
     PARSE_DATE('%Y-%m-%d', SUBSTR(procrcenddate, 1, 10)) AS procrcenddate,
-    ${databuffet.cleanString('procrcregion')} as procrcregion,
-    ${databuffet.parseFlexibleDatetime('dinsert')} AS dinsert
+    ${databuffet.functionData.cleanString('procrcregion')} as procrcregion,
+    ${databuffet.functionData.parseFlexibleDatetime('dinsert')} AS dinsert
 
   FROM
     `${sourceTableRef}`

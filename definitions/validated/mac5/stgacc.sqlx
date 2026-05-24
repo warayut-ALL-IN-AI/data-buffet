@@ -52,8 +52,8 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.cleanCode('gacccode', "r'[\\n\\r\\t-.]'")} as gacccode,
-    ${databuffet.cleanString('gaccname')} as gaccname,
+    ${databuffet.functionData.cleanCode('gacccode', "r'[\\n\\r\\t-.]'")} as gacccode,
+    ${databuffet.functionData.cleanString('gaccname')} as gaccname,
 
   FROM
     `${sourceTableRef}`

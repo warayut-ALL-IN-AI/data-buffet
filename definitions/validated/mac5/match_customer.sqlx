@@ -52,11 +52,11 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.cleanString('customer_allkon')} as customer_allkon,
-    ${databuffet.cleanString('customer_mac5')} as customer_mac5,
-    ${databuffet.cleanString('mihjob')} as mihjob,
-    ${databuffet.parseFlexibleDatetime('create_date')} AS create_date
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.cleanString('customer_allkon')} as customer_allkon,
+    ${databuffet.functionData.cleanString('customer_mac5')} as customer_mac5,
+    ${databuffet.functionData.cleanString('mihjob')} as mihjob,
+    ${databuffet.functionData.parseFlexibleDatetime('create_date')} AS create_date
 
   FROM
     `${sourceTableRef}`

@@ -52,13 +52,13 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.cleanString('sku_id')} as sku_id,
-    ${databuffet.castFloat64('qty')} as qty,
-    ${databuffet.castFloat64('price')} as price,
-    ${databuffet.cleanString('channel')} as channel,
-    ${databuffet.cleanString('type_product')} as type_product,
-    ${databuffet.parseFlexibleDatetime('create_date')} AS create_date
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.cleanString('sku_id')} as sku_id,
+    ${databuffet.functionData.castFloat64('qty')} as qty,
+    ${databuffet.functionData.castFloat64('price')} as price,
+    ${databuffet.functionData.cleanString('channel')} as channel,
+    ${databuffet.functionData.cleanString('type_product')} as type_product,
+    ${databuffet.functionData.parseFlexibleDatetime('create_date')} AS create_date
 
   FROM
     `${sourceTableRef}`

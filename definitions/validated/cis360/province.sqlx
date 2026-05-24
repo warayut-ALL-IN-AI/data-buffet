@@ -52,18 +52,18 @@ END;`;
 }
 
 SELECT
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.cleanString('province_code')} as province_code,
-    ${databuffet.cleanString('province_name')} as province_name,
-    ${databuffet.cleanString('province_name_en')} as province_name_en,
-    ${databuffet.castInt64('country_id')} as country_id,
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.cleanString('province_code')} as province_code,
+    ${databuffet.functionData.cleanString('province_name')} as province_name,
+    ${databuffet.functionData.cleanString('province_name_en')} as province_name_en,
+    ${databuffet.functionData.castInt64('country_id')} as country_id,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) as create_date,
-    ${databuffet.cleanString('create_by')} as create_by,
-    ${databuffet.cleanString('create_by_platform')} as create_by_platform,
-    ${databuffet.cleanString('update_by_platform')} as update_by_platform,
+    ${databuffet.functionData.cleanString('create_by')} as create_by,
+    ${databuffet.functionData.cleanString('create_by_platform')} as create_by_platform,
+    ${databuffet.functionData.cleanString('update_by_platform')} as update_by_platform,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19)) as update_date,
-    ${databuffet.cleanString('update_by')} AS update_by,
-    ${databuffet.parseAsatDate()} AS asatdate,
+    ${databuffet.functionData.cleanString('update_by')} AS update_by,
+    ${databuffet.functionData.parseAsatDate()} AS asatdate,
 
 FROM
   `${sourceTableRef}`

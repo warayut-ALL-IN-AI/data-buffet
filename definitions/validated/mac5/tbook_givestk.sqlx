@@ -52,16 +52,16 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.castInt64('qtid')} as qtid,
-    ${databuffet.castInt64('qtspread_ref_id')} as qtspread_ref_id,
-    ${databuffet.castInt64('quodeid')} as quodeid,
-    ${databuffet.castInt64('quolinkdel')} as quolinkdel,
-    ${databuffet.cleanString('stkcode')} as stkcode,
-    ${databuffet.cleanString('stkgive')} as stkgive,
-    ${databuffet.castInt64('quantity')} as quantity,
-    ${databuffet.parseFlexibleDatetime('datetimekey')} AS datetimekey,
-    ${databuffet.castInt64('status')} as status
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.castInt64('qtid')} as qtid,
+    ${databuffet.functionData.castInt64('qtspread_ref_id')} as qtspread_ref_id,
+    ${databuffet.functionData.castInt64('quodeid')} as quodeid,
+    ${databuffet.functionData.castInt64('quolinkdel')} as quolinkdel,
+    ${databuffet.functionData.cleanString('stkcode')} as stkcode,
+    ${databuffet.functionData.cleanString('stkgive')} as stkgive,
+    ${databuffet.functionData.castInt64('quantity')} as quantity,
+    ${databuffet.functionData.parseFlexibleDatetime('datetimekey')} AS datetimekey,
+    ${databuffet.functionData.castInt64('status')} as status
 
   FROM
     `${sourceTableRef}`

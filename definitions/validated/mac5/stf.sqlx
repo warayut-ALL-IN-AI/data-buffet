@@ -52,12 +52,12 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.cleanString('stfcode')} as stfcode,
-    ${databuffet.cleanString('stflist')} as stflist,
-    ${databuffet.castFloat64('stfquan')} as stfquan,
-    ${databuffet.castInt64('stfunit')} as stfunit,
-    ${databuffet.castInt64('stfautono')} as stfautono,
-    ${databuffet.cleanString('stfmemo')} as stfmemo
+    ${databuffet.functionData.cleanString('stfcode')} as stfcode,
+    ${databuffet.functionData.cleanString('stflist')} as stflist,
+    ${databuffet.functionData.castFloat64('stfquan')} as stfquan,
+    ${databuffet.functionData.castInt64('stfunit')} as stfunit,
+    ${databuffet.functionData.castInt64('stfautono')} as stfautono,
+    ${databuffet.functionData.cleanString('stfmemo')} as stfmemo
 
   FROM
     `${sourceTableRef}`

@@ -52,13 +52,13 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.cleanString('percode')} as percode,
-    ${databuffet.cleanString('pername')} as pername,
-    ${databuffet.parseFlexibleDatetime('perstart')} as perstart,
-    ${databuffet.parseFlexibleDatetime('perend')} as perend,
-    ${databuffet.cleanString('perzone')} as perzone,
-    ${databuffet.cleanString('persector')} as persector,
-    ${databuffet.castInt64('zseq')} as zseq,
+    ${databuffet.functionData.cleanString('percode')} as percode,
+    ${databuffet.functionData.cleanString('pername')} as pername,
+    ${databuffet.functionData.parseFlexibleDatetime('perstart')} as perstart,
+    ${databuffet.functionData.parseFlexibleDatetime('perend')} as perend,
+    ${databuffet.functionData.cleanString('perzone')} as perzone,
+    ${databuffet.functionData.cleanString('persector')} as persector,
+    ${databuffet.functionData.castInt64('zseq')} as zseq,
 
   FROM
     `${sourceTableRef}`

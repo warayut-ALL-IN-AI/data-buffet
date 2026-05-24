@@ -43,21 +43,21 @@ END;`;
 WITH all_sources AS (
   SELECT
     'ag01' AS company_id,
-    ${databuffet.parseFlexibleDatetime('CQLdate')} AS cqldate,
-    ${databuffet.cleanString('CQLbank')} AS cqlbank,
-    ${databuffet.cleanString('CQLno')} AS cqlno,
-    ${databuffet.castInt64('CQLsys')} AS cqlsys,
-    ${databuffet.castInt64('CQLday')} AS cqlday,
-    ${databuffet.castInt64('CQLmonth')} AS cqlmonth,
-    ${databuffet.castInt64('CQLyear')} AS cqlyear,
-    ${databuffet.castInt64('CQLbook')} AS cqlbook,
-    ${databuffet.cleanString('CQLvnos')} AS cqlvnos,
-    ${databuffet.castFloat64('CQLsumL')} AS cqlsuml,
-    ${databuffet.cleanString('CQLmivt')} AS cqlmivt,
-    ${databuffet.cleanString('CQLcus')} AS cqlcus,
-    ${databuffet.castInt64('CQLtag')} AS cqltag,
-    ${databuffet.castInt64('CQLAutoNO')} AS cqlautono,
-    ${databuffet.parseAsatDate()} AS asatdate
+    ${databuffet.functionData.parseFlexibleDatetime('CQLdate')} AS cqldate,
+    ${databuffet.functionData.cleanString('CQLbank')} AS cqlbank,
+    ${databuffet.functionData.cleanString('CQLno')} AS cqlno,
+    ${databuffet.functionData.castInt64('CQLsys')} AS cqlsys,
+    ${databuffet.functionData.castInt64('CQLday')} AS cqlday,
+    ${databuffet.functionData.castInt64('CQLmonth')} AS cqlmonth,
+    ${databuffet.functionData.castInt64('CQLyear')} AS cqlyear,
+    ${databuffet.functionData.castInt64('CQLbook')} AS cqlbook,
+    ${databuffet.functionData.cleanString('CQLvnos')} AS cqlvnos,
+    ${databuffet.functionData.castFloat64('CQLsumL')} AS cqlsuml,
+    ${databuffet.functionData.cleanString('CQLmivt')} AS cqlmivt,
+    ${databuffet.functionData.cleanString('CQLcus')} AS cqlcus,
+    ${databuffet.functionData.castInt64('CQLtag')} AS cqltag,
+    ${databuffet.functionData.castInt64('CQLAutoNO')} AS cqlautono,
+    ${databuffet.functionData.parseAsatDate()} AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.cql`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 
@@ -65,21 +65,21 @@ WITH all_sources AS (
 
   SELECT
     'aa05' AS company_id,
-    ${databuffet.parseFlexibleDatetime('CQLdate')} AS cqldate,
-    ${databuffet.cleanString('CQLbank')} AS cqlbank,
-    ${databuffet.cleanString('CQLno')} AS cqlno,
-    ${databuffet.castInt64('CQLsys')} AS cqlsys,
-    ${databuffet.castInt64('CQLday')} AS cqlday,
-    ${databuffet.castInt64('CQLmonth')} AS cqlmonth,
-    ${databuffet.castInt64('CQLyear')} AS cqlyear,
-    ${databuffet.castInt64('CQLbook')} AS cqlbook,
-    ${databuffet.cleanString('CQLvnos')} AS cqlvnos,
-    ${databuffet.castFloat64('CQLsumL')} AS cqlsuml,
-    ${databuffet.cleanString('CQLmivt')} AS cqlmivt,
-    ${databuffet.cleanString('CQLcus')} AS cqlcus,
-    ${databuffet.castInt64('CQLtag')} AS cqltag,
-    ${databuffet.castInt64('CQLAutoNO')} AS cqlautono,
-    ${databuffet.parseAsatDate()} AS asatdate
+    ${databuffet.functionData.parseFlexibleDatetime('CQLdate')} AS cqldate,
+    ${databuffet.functionData.cleanString('CQLbank')} AS cqlbank,
+    ${databuffet.functionData.cleanString('CQLno')} AS cqlno,
+    ${databuffet.functionData.castInt64('CQLsys')} AS cqlsys,
+    ${databuffet.functionData.castInt64('CQLday')} AS cqlday,
+    ${databuffet.functionData.castInt64('CQLmonth')} AS cqlmonth,
+    ${databuffet.functionData.castInt64('CQLyear')} AS cqlyear,
+    ${databuffet.functionData.castInt64('CQLbook')} AS cqlbook,
+    ${databuffet.functionData.cleanString('CQLvnos')} AS cqlvnos,
+    ${databuffet.functionData.castFloat64('CQLsumL')} AS cqlsuml,
+    ${databuffet.functionData.cleanString('CQLmivt')} AS cqlmivt,
+    ${databuffet.functionData.cleanString('CQLcus')} AS cqlcus,
+    ${databuffet.functionData.castInt64('CQLtag')} AS cqltag,
+    ${databuffet.functionData.castInt64('CQLAutoNO')} AS cqlautono,
+    ${databuffet.functionData.parseAsatDate()} AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.cql`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 
@@ -87,21 +87,21 @@ WITH all_sources AS (
 
   SELECT
     'ab01' AS company_id,
-    ${databuffet.parseFlexibleDatetime('CQLdate')} AS cqldate,
-    ${databuffet.cleanString('CQLbank')} AS cqlbank,
-    ${databuffet.cleanString('CQLno')} AS cqlno,
-    ${databuffet.castInt64('CQLsys')} AS cqlsys,
-    ${databuffet.castInt64('CQLday')} AS cqlday,
-    ${databuffet.castInt64('CQLmonth')} AS cqlmonth,
-    ${databuffet.castInt64('CQLyear')} AS cqlyear,
-    ${databuffet.castInt64('CQLbook')} AS cqlbook,
-    ${databuffet.cleanString('CQLvnos')} AS cqlvnos,
-    ${databuffet.castFloat64('CQLsumL')} AS cqlsuml,
-    ${databuffet.cleanString('CQLmivt')} AS cqlmivt,
-    ${databuffet.cleanString('CQLcus')} AS cqlcus,
-    ${databuffet.castInt64('CQLtag')} AS cqltag,
-    ${databuffet.castInt64('CQLAutoNO')} AS cqlautono,
-    ${databuffet.parseAsatDate()} AS asatdate
+    ${databuffet.functionData.parseFlexibleDatetime('CQLdate')} AS cqldate,
+    ${databuffet.functionData.cleanString('CQLbank')} AS cqlbank,
+    ${databuffet.functionData.cleanString('CQLno')} AS cqlno,
+    ${databuffet.functionData.castInt64('CQLsys')} AS cqlsys,
+    ${databuffet.functionData.castInt64('CQLday')} AS cqlday,
+    ${databuffet.functionData.castInt64('CQLmonth')} AS cqlmonth,
+    ${databuffet.functionData.castInt64('CQLyear')} AS cqlyear,
+    ${databuffet.functionData.castInt64('CQLbook')} AS cqlbook,
+    ${databuffet.functionData.cleanString('CQLvnos')} AS cqlvnos,
+    ${databuffet.functionData.castFloat64('CQLsumL')} AS cqlsuml,
+    ${databuffet.functionData.cleanString('CQLmivt')} AS cqlmivt,
+    ${databuffet.functionData.cleanString('CQLcus')} AS cqlcus,
+    ${databuffet.functionData.castInt64('CQLtag')} AS cqltag,
+    ${databuffet.functionData.castInt64('CQLAutoNO')} AS cqlautono,
+    ${databuffet.functionData.parseAsatDate()} AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.cql`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 
@@ -109,21 +109,21 @@ WITH all_sources AS (
 
   SELECT
     'ac02' AS company_id,
-    ${databuffet.parseFlexibleDatetime('CQLdate')} AS cqldate,
-    ${databuffet.cleanString('CQLbank')} AS cqlbank,
-    ${databuffet.cleanString('CQLno')} AS cqlno,
-    ${databuffet.castInt64('CQLsys')} AS cqlsys,
-    ${databuffet.castInt64('CQLday')} AS cqlday,
-    ${databuffet.castInt64('CQLmonth')} AS cqlmonth,
-    ${databuffet.castInt64('CQLyear')} AS cqlyear,
-    ${databuffet.castInt64('CQLbook')} AS cqlbook,
-    ${databuffet.cleanString('CQLvnos')} AS cqlvnos,
-    ${databuffet.castFloat64('CQLsumL')} AS cqlsuml,
-    ${databuffet.cleanString('CQLmivt')} AS cqlmivt,
-    ${databuffet.cleanString('CQLcus')} AS cqlcus,
-    ${databuffet.castInt64('CQLtag')} AS cqltag,
-    ${databuffet.castInt64('CQLAutoNO')} AS cqlautono,
-    ${databuffet.parseAsatDate()} AS asatdate
+    ${databuffet.functionData.parseFlexibleDatetime('CQLdate')} AS cqldate,
+    ${databuffet.functionData.cleanString('CQLbank')} AS cqlbank,
+    ${databuffet.functionData.cleanString('CQLno')} AS cqlno,
+    ${databuffet.functionData.castInt64('CQLsys')} AS cqlsys,
+    ${databuffet.functionData.castInt64('CQLday')} AS cqlday,
+    ${databuffet.functionData.castInt64('CQLmonth')} AS cqlmonth,
+    ${databuffet.functionData.castInt64('CQLyear')} AS cqlyear,
+    ${databuffet.functionData.castInt64('CQLbook')} AS cqlbook,
+    ${databuffet.functionData.cleanString('CQLvnos')} AS cqlvnos,
+    ${databuffet.functionData.castFloat64('CQLsumL')} AS cqlsuml,
+    ${databuffet.functionData.cleanString('CQLmivt')} AS cqlmivt,
+    ${databuffet.functionData.cleanString('CQLcus')} AS cqlcus,
+    ${databuffet.functionData.castInt64('CQLtag')} AS cqltag,
+    ${databuffet.functionData.castInt64('CQLAutoNO')} AS cqlautono,
+    ${databuffet.functionData.parseAsatDate()} AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.cql`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 
@@ -131,21 +131,21 @@ WITH all_sources AS (
 
   SELECT
     'ak02' AS company_id,
-    ${databuffet.parseFlexibleDatetime('CQLdate')} AS cqldate,
-    ${databuffet.cleanString('CQLbank')} AS cqlbank,
-    ${databuffet.cleanString('CQLno')} AS cqlno,
-    ${databuffet.castInt64('CQLsys')} AS cqlsys,
-    ${databuffet.castInt64('CQLday')} AS cqlday,
-    ${databuffet.castInt64('CQLmonth')} AS cqlmonth,
-    ${databuffet.castInt64('CQLyear')} AS cqlyear,
-    ${databuffet.castInt64('CQLbook')} AS cqlbook,
-    ${databuffet.cleanString('CQLvnos')} AS cqlvnos,
-    ${databuffet.castFloat64('CQLsumL')} AS cqlsuml,
-    ${databuffet.cleanString('CQLmivt')} AS cqlmivt,
-    ${databuffet.cleanString('CQLcus')} AS cqlcus,
-    ${databuffet.castInt64('CQLtag')} AS cqltag,
-    ${databuffet.castInt64('CQLAutoNO')} AS cqlautono,
-    ${databuffet.parseAsatDate()} AS asatdate
+    ${databuffet.functionData.parseFlexibleDatetime('CQLdate')} AS cqldate,
+    ${databuffet.functionData.cleanString('CQLbank')} AS cqlbank,
+    ${databuffet.functionData.cleanString('CQLno')} AS cqlno,
+    ${databuffet.functionData.castInt64('CQLsys')} AS cqlsys,
+    ${databuffet.functionData.castInt64('CQLday')} AS cqlday,
+    ${databuffet.functionData.castInt64('CQLmonth')} AS cqlmonth,
+    ${databuffet.functionData.castInt64('CQLyear')} AS cqlyear,
+    ${databuffet.functionData.castInt64('CQLbook')} AS cqlbook,
+    ${databuffet.functionData.cleanString('CQLvnos')} AS cqlvnos,
+    ${databuffet.functionData.castFloat64('CQLsumL')} AS cqlsuml,
+    ${databuffet.functionData.cleanString('CQLmivt')} AS cqlmivt,
+    ${databuffet.functionData.cleanString('CQLcus')} AS cqlcus,
+    ${databuffet.functionData.castInt64('CQLtag')} AS cqltag,
+    ${databuffet.functionData.castInt64('CQLAutoNO')} AS cqlautono,
+    ${databuffet.functionData.parseAsatDate()} AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.cql`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 )

@@ -52,14 +52,14 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('rnoid')} as rnoid,
-    ${databuffet.cleanString('rnoprefix')} as rnoprefix,
-    ${databuffet.cleanString('rnoyear')} as rnoyear,
-    ${databuffet.cleanString('rnomonth')} as rnomonth,
-    ${databuffet.castInt64('rnorunning')} as rnorunning,
-    ${databuffet.cleanString('rnorunno')} as rnorunno,
-    ${databuffet.parseFlexibleDatetime('rnocrdate')} AS rnocrdate,
-    ${databuffet.parseFlexibleDatetime('rnoupdatedate')} AS rnoupdatedate
+    ${databuffet.functionData.castInt64('rnoid')} as rnoid,
+    ${databuffet.functionData.cleanString('rnoprefix')} as rnoprefix,
+    ${databuffet.functionData.cleanString('rnoyear')} as rnoyear,
+    ${databuffet.functionData.cleanString('rnomonth')} as rnomonth,
+    ${databuffet.functionData.castInt64('rnorunning')} as rnorunning,
+    ${databuffet.functionData.cleanString('rnorunno')} as rnorunno,
+    ${databuffet.functionData.parseFlexibleDatetime('rnocrdate')} AS rnocrdate,
+    ${databuffet.functionData.parseFlexibleDatetime('rnoupdatedate')} AS rnoupdatedate
 
   FROM
     `${sourceTableRef}`

@@ -52,21 +52,21 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.cleanString('order_no')} as order_no,
-    ${databuffet.cleanString('status')} as status,
-    ${databuffet.parseFlexibleDatetime('create_date')} AS create_date,
-    ${databuffet.cleanString('promotion_type')} as promotion_type,
-    ${databuffet.cleanString('notes')} as notes,
-    ${databuffet.cleanString('sub_order')} as sub_order,
-    ${databuffet.cleanString('made_from')} as made_from,
-    ${databuffet.parseFlexibleDatetime('datetime')} AS datetime,
-    ${databuffet.cleanString('deliverystatus')} as deliverystatus,
-    ${databuffet.cleanString('cancelstatus')} as cancelstatus,
-    ${databuffet.cleanString('confirmstatus')} as confirmstatus,
-    ${databuffet.cleanString('order_source')} as order_source,
-    ${databuffet.castInt64('is_complete')} as is_complete,
-    ${databuffet.parseFlexibleDatetime('update_date')} AS update_date
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.cleanString('order_no')} as order_no,
+    ${databuffet.functionData.cleanString('status')} as status,
+    ${databuffet.functionData.parseFlexibleDatetime('create_date')} AS create_date,
+    ${databuffet.functionData.cleanString('promotion_type')} as promotion_type,
+    ${databuffet.functionData.cleanString('notes')} as notes,
+    ${databuffet.functionData.cleanString('sub_order')} as sub_order,
+    ${databuffet.functionData.cleanString('made_from')} as made_from,
+    ${databuffet.functionData.parseFlexibleDatetime('datetime')} AS datetime,
+    ${databuffet.functionData.cleanString('deliverystatus')} as deliverystatus,
+    ${databuffet.functionData.cleanString('cancelstatus')} as cancelstatus,
+    ${databuffet.functionData.cleanString('confirmstatus')} as confirmstatus,
+    ${databuffet.functionData.cleanString('order_source')} as order_source,
+    ${databuffet.functionData.castInt64('is_complete')} as is_complete,
+    ${databuffet.functionData.parseFlexibleDatetime('update_date')} AS update_date
 
   FROM
     `${sourceTableRef}`

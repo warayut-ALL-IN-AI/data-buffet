@@ -52,20 +52,20 @@ END;`;
 }
 
 SELECT
-  ${databuffet.cleanString('bra_id')} AS bra_id,
-  ${databuffet.cleanString('bra_name')} AS bra_name,
-  ${databuffet.cleanString('bra_name_th')} AS bra_name_th,
-  ${databuffet.cleanString('bra_detail')} AS bra_detail,
-  ${databuffet.cleanString('bra_vendor_id')} AS bra_vendor_id,
-  ${databuffet.cleanString('bra_logo_name')} AS bra_logo_name,
-  ${databuffet.cleanString('bra_logo_path')} AS bra_logo_path,
+  ${databuffet.functionData.cleanString('bra_id')} AS bra_id,
+  ${databuffet.functionData.cleanString('bra_name')} AS bra_name,
+  ${databuffet.functionData.cleanString('bra_name_th')} AS bra_name_th,
+  ${databuffet.functionData.cleanString('bra_detail')} AS bra_detail,
+  ${databuffet.functionData.cleanString('bra_vendor_id')} AS bra_vendor_id,
+  ${databuffet.functionData.cleanString('bra_logo_name')} AS bra_logo_name,
+  ${databuffet.functionData.cleanString('bra_logo_path')} AS bra_logo_path,
   CAST(bra_is_use AS BOOL) AS bra_is_use,
   CAST(bra_is_active AS BOOL) AS bra_is_active,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(bra_created_date, 1, 19)) AS bra_created_date,
-  ${databuffet.cleanString('bra_created_by')} AS bra_created_by,
+  ${databuffet.functionData.cleanString('bra_created_by')} AS bra_created_by,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(bra_updated_date, 1, 19)) AS bra_updated_date,
-  ${databuffet.cleanString('bra_updated_by')} AS bra_updated_by,
-  ${databuffet.parseAsatDate()} AS asatdate,
+  ${databuffet.functionData.cleanString('bra_updated_by')} AS bra_updated_by,
+  ${databuffet.functionData.parseAsatDate()} AS asatdate,
 FROM
   `${sourceTableRef}`
 ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }

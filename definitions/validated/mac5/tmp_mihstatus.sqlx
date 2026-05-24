@@ -52,9 +52,9 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.cleanString('mihvnos')} as mihvnos,
-    ${databuffet.cleanString('mihstatus')} as mihstatus,
-    ${databuffet.cleanString('sdate')} as sdate
+    ${databuffet.functionData.cleanString('mihvnos')} as mihvnos,
+    ${databuffet.functionData.cleanString('mihstatus')} as mihstatus,
+    ${databuffet.functionData.cleanString('sdate')} as sdate
 
   FROM
     `${sourceTableRef}`

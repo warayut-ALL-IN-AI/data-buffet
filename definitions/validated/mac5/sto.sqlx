@@ -52,14 +52,14 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.cleanString('stocode')} as stocode,
-    ${databuffet.cleanString('stogroup')} as stogroup,
-    ${databuffet.cleanString('stodesct')} as stodesct,
-    ${databuffet.cleanString('stodesce')} as stodesce,
-    ${databuffet.castInt64('stolock')} as stolock,
-    ${databuffet.castInt64('stohide')} as stohide,
-    ${databuffet.parseFlexibleDatetime('stoeditdt')} AS stoeditdt,
-    ${databuffet.cleanString('stoeditmf')} as stoeditmf
+    ${databuffet.functionData.cleanString('stocode')} as stocode,
+    ${databuffet.functionData.cleanString('stogroup')} as stogroup,
+    ${databuffet.functionData.cleanString('stodesct')} as stodesct,
+    ${databuffet.functionData.cleanString('stodesce')} as stodesce,
+    ${databuffet.functionData.castInt64('stolock')} as stolock,
+    ${databuffet.functionData.castInt64('stohide')} as stohide,
+    ${databuffet.functionData.parseFlexibleDatetime('stoeditdt')} AS stoeditdt,
+    ${databuffet.functionData.cleanString('stoeditmf')} as stoeditmf
 
   FROM
     `${sourceTableRef}`

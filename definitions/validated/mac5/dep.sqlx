@@ -42,70 +42,70 @@ END;`;
 WITH all_sources AS (
   SELECT
     'ag01' AS company_id,
-    ${databuffet.cleanString('depcode')} as depcode,
-    ${databuffet.cleanString('depgroup')} as depgroup,
-    ${databuffet.cleanString('depdesct')} as depdesct,
-    ${databuffet.cleanString('depdesce')} as depdesce,
-    ${databuffet.castInt64('dephide')} as dephide,
-    ${databuffet.castInt64('deplock')} as deplock,
-    ${databuffet.parseFlexibleDatetime('depeditdt')} AS depeditdt,
-    ${databuffet.cleanString('depeditmf')} as depeditmf
+    ${databuffet.functionData.cleanString('depcode')} as depcode,
+    ${databuffet.functionData.cleanString('depgroup')} as depgroup,
+    ${databuffet.functionData.cleanString('depdesct')} as depdesct,
+    ${databuffet.functionData.cleanString('depdesce')} as depdesce,
+    ${databuffet.functionData.castInt64('dephide')} as dephide,
+    ${databuffet.functionData.castInt64('deplock')} as deplock,
+    ${databuffet.functionData.parseFlexibleDatetime('depeditdt')} AS depeditdt,
+    ${databuffet.functionData.cleanString('depeditmf')} as depeditmf
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.dep`
 
   UNION ALL
 
   SELECT
     'aa05' AS company_id,
-    ${databuffet.cleanString('depcode')} as depcode,
-    ${databuffet.cleanString('depgroup')} as depgroup,
-    ${databuffet.cleanString('depdesct')} as depdesct,
-    ${databuffet.cleanString('depdesce')} as depdesce,
-    ${databuffet.castInt64('dephide')} as dephide,
-    ${databuffet.castInt64('deplock')} as deplock,
-    ${databuffet.parseFlexibleDatetime('depeditdt')} AS depeditdt,
-    ${databuffet.cleanString('depeditmf')} as depeditmf
+    ${databuffet.functionData.cleanString('depcode')} as depcode,
+    ${databuffet.functionData.cleanString('depgroup')} as depgroup,
+    ${databuffet.functionData.cleanString('depdesct')} as depdesct,
+    ${databuffet.functionData.cleanString('depdesce')} as depdesce,
+    ${databuffet.functionData.castInt64('dephide')} as dephide,
+    ${databuffet.functionData.castInt64('deplock')} as deplock,
+    ${databuffet.functionData.parseFlexibleDatetime('depeditdt')} AS depeditdt,
+    ${databuffet.functionData.cleanString('depeditmf')} as depeditmf
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.dep`
 
   UNION ALL
 
   SELECT
     'ab01' AS company_id,
-    ${databuffet.cleanString('depcode')} as depcode,
-    ${databuffet.cleanString('depgroup')} as depgroup,
-    ${databuffet.cleanString('depdesct')} as depdesct,
-    ${databuffet.cleanString('depdesce')} as depdesce,
-    ${databuffet.castInt64('dephide')} as dephide,
-    ${databuffet.castInt64('deplock')} as deplock,
-    ${databuffet.parseFlexibleDatetime('depeditdt')} AS depeditdt,
-    ${databuffet.cleanString('depeditmf')} as depeditmf
+    ${databuffet.functionData.cleanString('depcode')} as depcode,
+    ${databuffet.functionData.cleanString('depgroup')} as depgroup,
+    ${databuffet.functionData.cleanString('depdesct')} as depdesct,
+    ${databuffet.functionData.cleanString('depdesce')} as depdesce,
+    ${databuffet.functionData.castInt64('dephide')} as dephide,
+    ${databuffet.functionData.castInt64('deplock')} as deplock,
+    ${databuffet.functionData.parseFlexibleDatetime('depeditdt')} AS depeditdt,
+    ${databuffet.functionData.cleanString('depeditmf')} as depeditmf
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.dep`
 
   UNION ALL
 
   SELECT
     'ac02' AS company_id,
-    ${databuffet.cleanString('depcode')} as depcode,
-    ${databuffet.cleanString('depgroup')} as depgroup,
-    ${databuffet.cleanString('depdesct')} as depdesct,
-    ${databuffet.cleanString('depdesce')} as depdesce,
-    ${databuffet.castInt64('dephide')} as dephide,
-    ${databuffet.castInt64('deplock')} as deplock,
-    ${databuffet.parseFlexibleDatetime('depeditdt')} AS depeditdt,
-    ${databuffet.cleanString('depeditmf')} as depeditmf
+    ${databuffet.functionData.cleanString('depcode')} as depcode,
+    ${databuffet.functionData.cleanString('depgroup')} as depgroup,
+    ${databuffet.functionData.cleanString('depdesct')} as depdesct,
+    ${databuffet.functionData.cleanString('depdesce')} as depdesce,
+    ${databuffet.functionData.castInt64('dephide')} as dephide,
+    ${databuffet.functionData.castInt64('deplock')} as deplock,
+    ${databuffet.functionData.parseFlexibleDatetime('depeditdt')} AS depeditdt,
+    ${databuffet.functionData.cleanString('depeditmf')} as depeditmf
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.dep`
 
   UNION ALL
 
   SELECT
     'ak02' AS company_id,
-    ${databuffet.cleanString('depcode')} as depcode,
-    ${databuffet.cleanString('depgroup')} as depgroup,
-    ${databuffet.cleanString('depdesct')} as depdesct,
-    ${databuffet.cleanString('depdesce')} as depdesce,
-    ${databuffet.castInt64('dephide')} as dephide,
-    ${databuffet.castInt64('deplock')} as deplock,
-    ${databuffet.parseFlexibleDatetime('depeditdt')} AS depeditdt,
-    ${databuffet.cleanString('depeditmf')} as depeditmf
+    ${databuffet.functionData.cleanString('depcode')} as depcode,
+    ${databuffet.functionData.cleanString('depgroup')} as depgroup,
+    ${databuffet.functionData.cleanString('depdesct')} as depdesct,
+    ${databuffet.functionData.cleanString('depdesce')} as depdesce,
+    ${databuffet.functionData.castInt64('dephide')} as dephide,
+    ${databuffet.functionData.castInt64('deplock')} as deplock,
+    ${databuffet.functionData.parseFlexibleDatetime('depeditdt')} AS depeditdt,
+    ${databuffet.functionData.cleanString('depeditmf')} as depeditmf
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.dep`
 )
 

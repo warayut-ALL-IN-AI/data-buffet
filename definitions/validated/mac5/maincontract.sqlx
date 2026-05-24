@@ -53,9 +53,9 @@ END;`;
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
     CAST(mcontractid AS STRING) as mcontractid,
-    ${databuffet.parseFlexibleDatetime('dateinsert')} AS dateinsert,
-    ${databuffet.castInt64('status')} as status,
-    ${databuffet.cleanString('uinsert')} as uinsert
+    ${databuffet.functionData.parseFlexibleDatetime('dateinsert')} AS dateinsert,
+    ${databuffet.functionData.castInt64('status')} as status,
+    ${databuffet.functionData.cleanString('uinsert')} as uinsert
 
   FROM
     `${sourceTableRef}`

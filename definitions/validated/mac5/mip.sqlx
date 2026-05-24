@@ -52,13 +52,13 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.cleanString('MIPvnos')} AS mipvnos,
-    ${databuffet.castInt64('MIPfileno')} AS mipfileno,
-    ${databuffet.castInt64('MIPrev')} AS miprev,
-    ${databuffet.cleanString('MIPpath')} AS mippath,
-    ${databuffet.cleanString('MIPtype')} AS miptype,
-    ${databuffet.parseFlexibleDatetime('MIPcrdate')} AS mipcrdate,
-    ${databuffet.parseFlexibleDatetime('MIPupdatedate')} AS mipupdatedate
+    ${databuffet.functionData.cleanString('MIPvnos')} AS mipvnos,
+    ${databuffet.functionData.castInt64('MIPfileno')} AS mipfileno,
+    ${databuffet.functionData.castInt64('MIPrev')} AS miprev,
+    ${databuffet.functionData.cleanString('MIPpath')} AS mippath,
+    ${databuffet.functionData.cleanString('MIPtype')} AS miptype,
+    ${databuffet.functionData.parseFlexibleDatetime('MIPcrdate')} AS mipcrdate,
+    ${databuffet.functionData.parseFlexibleDatetime('MIPupdatedate')} AS mipupdatedate
   FROM
     `${sourceTableRef}`
 )

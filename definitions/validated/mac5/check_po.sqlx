@@ -52,8 +52,8 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.cleanString('debcode')} as debcode
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.cleanString('debcode')} as debcode
 
   FROM
     `${sourceTableRef}`

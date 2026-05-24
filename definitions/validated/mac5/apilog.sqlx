@@ -52,12 +52,12 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('logid')} as logid,
-    ${databuffet.parseFlexibleDatetime('runat')} AS runat,
-    ${databuffet.parseFlexibleDatetime('completedat')} AS completedat,
-    ${databuffet.castInt64('issuccess')} as issuccess,
-    ${databuffet.cleanString('errormessage')} as errormessage,
-    ${databuffet.cleanString('resultjson')} as resultjson
+    ${databuffet.functionData.castInt64('logid')} as logid,
+    ${databuffet.functionData.parseFlexibleDatetime('runat')} AS runat,
+    ${databuffet.functionData.parseFlexibleDatetime('completedat')} AS completedat,
+    ${databuffet.functionData.castInt64('issuccess')} as issuccess,
+    ${databuffet.functionData.cleanString('errormessage')} as errormessage,
+    ${databuffet.functionData.cleanString('resultjson')} as resultjson
 
   FROM
     `${sourceTableRef}`

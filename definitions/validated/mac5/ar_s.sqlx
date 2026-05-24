@@ -42,55 +42,55 @@ END;`;
 WITH all_sources AS (
   SELECT
     'ag01' AS company_id,
-    ${databuffet.castInt64('ar_scode')} as ar_scode,
-    ${databuffet.cleanString('ar_snamet')} as ar_snamet,
-    ${databuffet.cleanString('ar_snamee')} as ar_snamee,
-    ${databuffet.castInt64('ar_scolf')} as ar_scolf,
-    ${databuffet.castInt64('ar_scolb')} as ar_scolb
+    ${databuffet.functionData.castInt64('ar_scode')} as ar_scode,
+    ${databuffet.functionData.cleanString('ar_snamet')} as ar_snamet,
+    ${databuffet.functionData.cleanString('ar_snamee')} as ar_snamee,
+    ${databuffet.functionData.castInt64('ar_scolf')} as ar_scolf,
+    ${databuffet.functionData.castInt64('ar_scolb')} as ar_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.ar_s`
 
   UNION ALL
 
   SELECT
     'aa05' AS company_id,
-    ${databuffet.castInt64('ar_scode')} as ar_scode,
-    ${databuffet.cleanString('ar_snamet')} as ar_snamet,
-    ${databuffet.cleanString('ar_snamee')} as ar_snamee,
-    ${databuffet.castInt64('ar_scolf')} as ar_scolf,
-    ${databuffet.castInt64('ar_scolb')} as ar_scolb
+    ${databuffet.functionData.castInt64('ar_scode')} as ar_scode,
+    ${databuffet.functionData.cleanString('ar_snamet')} as ar_snamet,
+    ${databuffet.functionData.cleanString('ar_snamee')} as ar_snamee,
+    ${databuffet.functionData.castInt64('ar_scolf')} as ar_scolf,
+    ${databuffet.functionData.castInt64('ar_scolb')} as ar_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.ar_s`
 
   UNION ALL
 
   SELECT
     'ab01' AS company_id,
-    ${databuffet.castInt64('ar_scode')} as ar_scode,
-    ${databuffet.cleanString('ar_snamet')} as ar_snamet,
-    ${databuffet.cleanString('ar_snamee')} as ar_snamee,
-    ${databuffet.castInt64('ar_scolf')} as ar_scolf,
-    ${databuffet.castInt64('ar_scolb')} as ar_scolb
+    ${databuffet.functionData.castInt64('ar_scode')} as ar_scode,
+    ${databuffet.functionData.cleanString('ar_snamet')} as ar_snamet,
+    ${databuffet.functionData.cleanString('ar_snamee')} as ar_snamee,
+    ${databuffet.functionData.castInt64('ar_scolf')} as ar_scolf,
+    ${databuffet.functionData.castInt64('ar_scolb')} as ar_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.ar_s`
 
   UNION ALL
 
   SELECT
     'ac02' AS company_id,
-    ${databuffet.castInt64('ar_scode')} as ar_scode,
-    ${databuffet.cleanString('ar_snamet')} as ar_snamet,
-    ${databuffet.cleanString('ar_snamee')} as ar_snamee,
-    ${databuffet.castInt64('ar_scolf')} as ar_scolf,
-    ${databuffet.castInt64('ar_scolb')} as ar_scolb
+    ${databuffet.functionData.castInt64('ar_scode')} as ar_scode,
+    ${databuffet.functionData.cleanString('ar_snamet')} as ar_snamet,
+    ${databuffet.functionData.cleanString('ar_snamee')} as ar_snamee,
+    ${databuffet.functionData.castInt64('ar_scolf')} as ar_scolf,
+    ${databuffet.functionData.castInt64('ar_scolb')} as ar_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.ar_s`
 
   UNION ALL
 
   SELECT
     'ak02' AS company_id,
-    ${databuffet.castInt64('ar_scode')} as ar_scode,
-    ${databuffet.cleanString('ar_snamet')} as ar_snamet,
-    ${databuffet.cleanString('ar_snamee')} as ar_snamee,
-    ${databuffet.castInt64('ar_scolf')} as ar_scolf,
-    ${databuffet.castInt64('ar_scolb')} as ar_scolb
+    ${databuffet.functionData.castInt64('ar_scode')} as ar_scode,
+    ${databuffet.functionData.cleanString('ar_snamet')} as ar_snamet,
+    ${databuffet.functionData.cleanString('ar_snamee')} as ar_snamee,
+    ${databuffet.functionData.castInt64('ar_scolf')} as ar_scolf,
+    ${databuffet.functionData.castInt64('ar_scolb')} as ar_scolb
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.ar_s`
 )
 

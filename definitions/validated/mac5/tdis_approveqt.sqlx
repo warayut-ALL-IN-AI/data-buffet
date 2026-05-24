@@ -52,23 +52,23 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.cleanString('docno')} as docno,
-    ${databuffet.cleanString('lv1')} as lv1,
-    ${databuffet.cleanString('lv2')} as lv2,
-    ${databuffet.cleanString('lv3')} as lv3,
-    ${databuffet.cleanString('note1')} as note1,
-    ${databuffet.cleanString('note2')} as note2,
-    ${databuffet.cleanString('note3')} as note3,
-    ${databuffet.cleanString('u1')} as u1,
-    ${databuffet.cleanString('u2')} as u2,
-    ${databuffet.cleanString('u3')} as u3,
-    ${databuffet.cleanString('d1')} as d1,
-    ${databuffet.cleanString('d2')} as d2,
-    ${databuffet.cleanString('d3')} as d3,
-    ${databuffet.cleanString('sendto')} as sendto,
-    ${databuffet.cleanString('sendtime')} as sendtime,
-    ${databuffet.cleanString('comment')} as comment,
-    ${databuffet.cleanString('stktype')} as stktype
+    ${databuffet.functionData.cleanString('docno')} as docno,
+    ${databuffet.functionData.cleanString('lv1')} as lv1,
+    ${databuffet.functionData.cleanString('lv2')} as lv2,
+    ${databuffet.functionData.cleanString('lv3')} as lv3,
+    ${databuffet.functionData.cleanString('note1')} as note1,
+    ${databuffet.functionData.cleanString('note2')} as note2,
+    ${databuffet.functionData.cleanString('note3')} as note3,
+    ${databuffet.functionData.cleanString('u1')} as u1,
+    ${databuffet.functionData.cleanString('u2')} as u2,
+    ${databuffet.functionData.cleanString('u3')} as u3,
+    ${databuffet.functionData.cleanString('d1')} as d1,
+    ${databuffet.functionData.cleanString('d2')} as d2,
+    ${databuffet.functionData.cleanString('d3')} as d3,
+    ${databuffet.functionData.cleanString('sendto')} as sendto,
+    ${databuffet.functionData.cleanString('sendtime')} as sendtime,
+    ${databuffet.functionData.cleanString('comment')} as comment,
+    ${databuffet.functionData.cleanString('stktype')} as stktype
 
   FROM
     `${sourceTableRef}`

@@ -52,10 +52,10 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.cleanString('sblstk')} as sblstk,
-    ${databuffet.cleanString('sblsto')} as sblsto,
-    ${databuffet.castFloat64('sblquan')} as sblquan,
-    ${databuffet.castFloat64('sblquanp2')} as sblquanp2
+    ${databuffet.functionData.cleanString('sblstk')} as sblstk,
+    ${databuffet.functionData.cleanString('sblsto')} as sblsto,
+    ${databuffet.functionData.castFloat64('sblquan')} as sblquan,
+    ${databuffet.functionData.castFloat64('sblquanp2')} as sblquanp2
 
   FROM
     `${sourceTableRef}`

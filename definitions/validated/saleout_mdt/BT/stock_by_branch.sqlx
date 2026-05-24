@@ -40,18 +40,18 @@ END;`;
 }
 
 SELECT
-    ${databuffet.cleanString('VENDOR_ID')} AS vendor_id,
-    ${databuffet.cleanString('VENDOR_NAME')} AS vendor_name,
-    ${databuffet.cleanString('BRANCH')} AS branch,
-    ${databuffet.cleanString('MCH3')} AS mch3,
-    ${databuffet.cleanString('ARTICLE_ID')} AS article_id,
-    ${databuffet.cleanString('ARTICLE_NAME_TH')} AS article_name_th,
-    ${databuffet.cleanString('ITEM_FLAG')} AS item_flag,
-    ${databuffet.castInt64('UR_QTY')} AS ur_qty,
-    ${databuffet.castFloat64('UR_COST_AMT')} AS ur_cost_amt,
+    ${databuffet.functionData.cleanString('VENDOR_ID')} AS vendor_id,
+    ${databuffet.functionData.cleanString('VENDOR_NAME')} AS vendor_name,
+    ${databuffet.functionData.cleanString('BRANCH')} AS branch,
+    ${databuffet.functionData.cleanString('MCH3')} AS mch3,
+    ${databuffet.functionData.cleanString('ARTICLE_ID')} AS article_id,
+    ${databuffet.functionData.cleanString('ARTICLE_NAME_TH')} AS article_name_th,
+    ${databuffet.functionData.cleanString('ITEM_FLAG')} AS item_flag,
+    ${databuffet.functionData.castInt64('UR_QTY')} AS ur_qty,
+    ${databuffet.functionData.castFloat64('UR_COST_AMT')} AS ur_cost_amt,
     PARSE_DATE('%Y/%m/%d', TRIM(START_DATE)) AS start_date,
     PARSE_DATE('%Y/%m/%d', TRIM(END_DATE)) AS end_date,
-    ${databuffet.parseAsatDate()} as ASATDATE,
+    ${databuffet.functionData.parseAsatDate()} as ASATDATE,
 FROM `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}.stock_by_branch`
 ${partition_statement}
 

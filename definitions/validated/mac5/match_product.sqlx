@@ -52,10 +52,10 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('id')} as id,
-    ${databuffet.cleanString('barcode')} as barcode,
-    ${databuffet.cleanString('product_id')} as product_id,
-    ${databuffet.parseFlexibleDatetime('create_date')} AS create_date
+    ${databuffet.functionData.castInt64('id')} as id,
+    ${databuffet.functionData.cleanString('barcode')} as barcode,
+    ${databuffet.functionData.cleanString('product_id')} as product_id,
+    ${databuffet.functionData.parseFlexibleDatetime('create_date')} AS create_date
 
   FROM
     `${sourceTableRef}`

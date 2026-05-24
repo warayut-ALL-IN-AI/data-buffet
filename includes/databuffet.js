@@ -9,5 +9,5 @@ module.exports = {
     REGION: dataform.projectConfig.defaultLocation,
     ...variables,
     cdcConfig,
-    ...functionData,
+    functionData,
 }

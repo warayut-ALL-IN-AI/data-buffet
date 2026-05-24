@@ -52,10 +52,10 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    ${databuffet.castInt64('grpid')} as grpid,
-    ${databuffet.cleanString('grpstatus')} as grpstatus,
-    ${databuffet.cleanString('grpname')} as grpname,
-    ${databuffet.cleanString('grpline')} as grpline
+    ${databuffet.functionData.castInt64('grpid')} as grpid,
+    ${databuffet.functionData.cleanString('grpstatus')} as grpstatus,
+    ${databuffet.functionData.cleanString('grpname')} as grpname,
+    ${databuffet.functionData.cleanString('grpline')} as grpline
 
   FROM
     `${sourceTableRef}`
