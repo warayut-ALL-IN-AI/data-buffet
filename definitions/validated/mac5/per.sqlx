@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "create_all_table_raw_mac5_aa05", "create_all_table_raw_mac5_ab01", "create_all_table_raw_mac5_ac02", "create_all_table_raw_mac5_ak02"],
@@ -47,9 +47,18 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
     NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
     NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19)) AS perbdate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19)) AS perworks,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19)) AS perworkf,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perbdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19))
+    ) AS perbdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworks, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19))
+    ) AS perworks,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworkf, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19))
+    ) AS perworkf,
     NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
     NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
     NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
@@ -63,9 +72,15 @@ WITH all_sources AS (
     CAST(perhide AS INT64) as perhide,
     CAST(perlock AS INT64) as perlock,
     NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19)) AS pereditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19))
+    ) AS pereditlk,
     NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19))
+    ) AS pereditdt,
     NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
     NULLIF(CAST(TRIM(perzone) AS STRING), '') as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.per`
@@ -79,9 +94,18 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
     NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
     NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19)) AS perbdate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19)) AS perworks,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19)) AS perworkf,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perbdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19))
+    ) AS perbdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworks, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19))
+    ) AS perworks,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworkf, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19))
+    ) AS perworkf,
     NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
     NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
     NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
@@ -95,9 +119,15 @@ WITH all_sources AS (
     CAST(perhide AS INT64) as perhide,
     CAST(perlock AS INT64) as perlock,
     NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19)) AS pereditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19))
+    ) AS pereditlk,
     NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19))
+    ) AS pereditdt,
     NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
     CAST(NULL AS STRING) as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.per`
@@ -111,9 +141,18 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
     NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
     NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19)) AS perbdate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19)) AS perworks,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19)) AS perworkf,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perbdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19))
+    ) AS perbdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworks, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19))
+    ) AS perworks,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworkf, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19))
+    ) AS perworkf,
     NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
     NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
     NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
@@ -127,9 +166,15 @@ WITH all_sources AS (
     CAST(perhide AS INT64) as perhide,
     CAST(perlock AS INT64) as perlock,
     NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19)) AS pereditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19))
+    ) AS pereditlk,
     NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19))
+    ) AS pereditdt,
     NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
     CAST(NULL AS STRING) as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.per`
@@ -143,9 +188,18 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
     NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
     NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19)) AS perbdate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19)) AS perworks,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19)) AS perworkf,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perbdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19))
+    ) AS perbdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworks, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19))
+    ) AS perworks,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworkf, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19))
+    ) AS perworkf,
     NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
     NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
     NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
@@ -159,9 +213,15 @@ WITH all_sources AS (
     CAST(perhide AS INT64) as perhide,
     CAST(perlock AS INT64) as perlock,
     NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19)) AS pereditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19))
+    ) AS pereditlk,
     NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19))
+    ) AS pereditdt,
     NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
     CAST(NULL AS STRING) as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.per`
@@ -175,9 +235,18 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(pertaxnos) AS STRING), '') as pertaxnos,
     NULLIF(CAST(TRIM(pernamet) AS STRING), '') as pernamet,
     NULLIF(CAST(TRIM(pernamee) AS STRING), '') as pernamee,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19)) AS perbdate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19)) AS perworks,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19)) AS perworkf,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perbdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perbdate, 1, 19))
+    ) AS perbdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworks, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworks, 1, 19))
+    ) AS perworks,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(perworkf, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(perworkf, 1, 19))
+    ) AS perworkf,
     NULLIF(CAST(TRIM(peradd1) AS STRING), '') as peradd1,
     NULLIF(CAST(TRIM(peradd2) AS STRING), '') as peradd2,
     NULLIF(CAST(TRIM(peradd3) AS STRING), '') as peradd3,
@@ -191,9 +260,15 @@ WITH all_sources AS (
     CAST(perhide AS INT64) as perhide,
     CAST(perlock AS INT64) as perlock,
     NULLIF(CAST(TRIM(permemo) AS STRING), '') as permemo,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19)) AS pereditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditlk, 1, 19))
+    ) AS pereditlk,
     NULLIF(CAST(TRIM(perrefwe) AS STRING), '') as perrefwe,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19)) AS pereditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(pereditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pereditdt, 1, 19))
+    ) AS pereditdt,
     NULLIF(CAST(TRIM(pereditmf) AS STRING), '') as pereditmf,
     CAST(NULL AS STRING) as perzone
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.per`

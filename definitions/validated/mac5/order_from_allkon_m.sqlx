@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -55,18 +55,27 @@ WITH all_sources AS (
     CAST(id AS INT64) as id,
     NULLIF(CAST(TRIM(order_no) AS STRING), '') as order_no,
     NULLIF(CAST(TRIM(status) AS STRING), '') as status,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) AS create_date,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(create_date, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19))
+    ) AS create_date,
     NULLIF(CAST(TRIM(promotion_type) AS STRING), '') as promotion_type,
     NULLIF(CAST(TRIM(notes) AS STRING), '') as notes,
     NULLIF(CAST(TRIM(sub_order) AS STRING), '') as sub_order,
     NULLIF(CAST(TRIM(made_from) AS STRING), '') as made_from,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetime, 1, 19)) AS datetime,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(datetime, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetime, 1, 19))
+    ) AS datetime,
     NULLIF(CAST(TRIM(deliverystatus) AS STRING), '') as deliverystatus,
     NULLIF(CAST(TRIM(cancelstatus) AS STRING), '') as cancelstatus,
     NULLIF(CAST(TRIM(confirmstatus) AS STRING), '') as confirmstatus,
     NULLIF(CAST(TRIM(order_source) AS STRING), '') as order_source,
     CAST(is_complete AS INT64) as is_complete,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19)) AS update_date
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(update_date, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19))
+    ) AS update_date
 
   FROM
     `${sourceTableRef}`

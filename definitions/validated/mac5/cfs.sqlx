@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -42,7 +42,10 @@ END;`;
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
     NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19)) AS cfsdateid,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(cfsdateid, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19))
+    ) AS cfsdateid,
     NULLIF(CAST(TRIM(cfscusid) AS STRING), '') as cfscusid,
     NULLIF(CAST(TRIM(cfstypeid) AS STRING), '') as cfstypeid,
     NULLIF(CAST(TRIM(cfsjob) AS STRING), '') as cfsjob,
@@ -65,7 +68,10 @@ WITH all_sources AS (
   UNION ALL
   SELECT 'aa05' AS company_id,
     NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19)) AS cfsdateid,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(cfsdateid, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19))
+    ) AS cfsdateid,
     NULLIF(CAST(TRIM(cfscusid) AS STRING), '') as cfscusid,
     NULLIF(CAST(TRIM(cfstypeid) AS STRING), '') as cfstypeid,
     NULLIF(CAST(TRIM(cfsjob) AS STRING), '') as cfsjob,
@@ -88,7 +94,10 @@ WITH all_sources AS (
   UNION ALL
   SELECT 'ab01' AS company_id,
     NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19)) AS cfsdateid,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(cfsdateid, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19))
+    ) AS cfsdateid,
     NULLIF(CAST(TRIM(cfscusid) AS STRING), '') as cfscusid,
     NULLIF(CAST(TRIM(cfstypeid) AS STRING), '') as cfstypeid,
     NULLIF(CAST(TRIM(cfsjob) AS STRING), '') as cfsjob,
@@ -111,7 +120,10 @@ WITH all_sources AS (
   UNION ALL
   SELECT 'ac02' AS company_id,
     NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19)) AS cfsdateid,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(cfsdateid, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19))
+    ) AS cfsdateid,
     NULLIF(CAST(TRIM(cfscusid) AS STRING), '') as cfscusid,
     NULLIF(CAST(TRIM(cfstypeid) AS STRING), '') as cfstypeid,
     NULLIF(CAST(TRIM(cfsjob) AS STRING), '') as cfsjob,
@@ -134,7 +146,10 @@ WITH all_sources AS (
   UNION ALL
   SELECT 'ak02' AS company_id,
     NULLIF(CAST(TRIM(cfsvnosid) AS STRING), '') as cfsvnosid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19)) AS cfsdateid,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(cfsdateid, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cfsdateid, 1, 19))
+    ) AS cfsdateid,
     NULLIF(CAST(TRIM(cfscusid) AS STRING), '') as cfscusid,
     NULLIF(CAST(TRIM(cfstypeid) AS STRING), '') as cfstypeid,
     NULLIF(CAST(TRIM(cfsjob) AS STRING), '') as cfsjob,

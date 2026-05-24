@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -73,7 +73,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(mihdischt1) AS STRING), '') as mihdischt1,
     NULLIF(CAST(TRIM(mihdischt2) AS STRING), '') as mihdischt2,
     NULLIF(CAST(TRIM(mihdelvsite) AS STRING), '') as mihdelvsite,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihdelvdate, 1, 19)) AS mihdelvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mihdelvdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihdelvdate, 1, 19))
+    ) AS mihdelvdate,
     CAST(mihstanding AS INT64) as mihstanding,
     CAST(mihlinkgl AS INT64) as mihlinkgl,
     CAST(mihnouplink AS INT64) as mihnouplink,
@@ -99,29 +102,59 @@ WITH all_sources AS (
     CAST(mihextracut AS INT64) as mihextracut,
     NULLIF(CAST(TRIM(mihextramem) AS STRING), '') as mihextramem,
     NULLIF(CAST(TRIM(mihrecno) AS STRING), '') as mihrecno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihrecdate, 1, 19)) AS mihrecdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mihrecdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihrecdate, 1, 19))
+    ) AS mihrecdate,
     NULLIF(CAST(TRIM(mihsavetag) AS STRING), '') as mihsavetag,
     NULLIF(CAST(TRIM(mihkeyuser) AS STRING), '') as mihkeyuser,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihkeydate, 1, 19)) AS mihkeydate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mihkeydate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihkeydate, 1, 19))
+    ) AS mihkeydate,
     NULLIF(CAST(TRIM(mihdocrunno) AS STRING), '') as mihdocrunno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihdategl, 1, 19)) AS mihdategl,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihduepo, 1, 19)) AS mihduepo,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(miheditlk, 1, 19)) AS miheditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mihdategl, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihdategl, 1, 19))
+    ) AS mihdategl,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mihduepo, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihduepo, 1, 19))
+    ) AS mihduepo,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(miheditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(miheditlk, 1, 19))
+    ) AS miheditlk,
     CAST(mihiscf AS INT64) as mihiscf,
     CAST(mihissp AS INT64) as mihissp,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihdates1, 1, 19)) AS mihdates1,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihdates2, 1, 19)) AS mihdates2,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mihdates1, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihdates1, 1, 19))
+    ) AS mihdates1,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mihdates2, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihdates2, 1, 19))
+    ) AS mihdates2,
     CAST(mihnumsi AS INT64) as mihnumsi,
     CAST(mihnumsc AS FLOAT64) as mihnumsc,
     CAST(mihvatpc AS FLOAT64) as mihvatpc,
     CAST(mihincluded AS INT64) as mihincluded,
     NULLIF(CAST(TRIM(mihtaxvnos) AS STRING), '') as mihtaxvnos,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihtaxdate, 1, 19)) AS mihtaxdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mihtaxdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihtaxdate, 1, 19))
+    ) AS mihtaxdate,
     CAST(mihtaxsum AS FLOAT64) as mihtaxsum,
     CAST(mihload AS INT64) as mihload,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihpaiddate, 1, 19)) AS mihpaiddate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mihpaiddate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihpaiddate, 1, 19))
+    ) AS mihpaiddate,
     NULLIF(CAST(TRIM(mihbookordernum) AS STRING), '') as mihbookordernum,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihsenddate, 1, 19)) AS mihsenddate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mihsenddate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mihsenddate, 1, 19))
+    ) AS mihsenddate,
     CAST(mihbl AS INT64) as mihbl,
     CAST(mihrpv AS INT64) as mihrpv,
     CAST(mihclearcut AS INT64) as mihclearcut,

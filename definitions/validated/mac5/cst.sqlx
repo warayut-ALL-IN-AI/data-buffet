@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "incremental",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -53,7 +53,10 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CSTdate, 1, 19)) AS cstdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(CSTdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CSTdate, 1, 19))
+    ) AS cstdate,
     NULLIF(CAST(TRIM(CSTtype) AS STRING), '') AS csttype,
     NULLIF(CAST(TRIM(CSTvnos) AS STRING), '') AS cstvnos,
     NULLIF(CAST(TRIM(CSTcus) AS STRING), '') AS cstcus,
@@ -67,7 +70,10 @@ WITH all_sources AS (
     CAST(CSTquan AS FLOAT64) AS cstquan,
     CAST(CSTquanP2 AS FLOAT64) AS cstquanp2,
     CAST(CSTcogSP AS FLOAT64) AS cstcogsp,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CSTexpDATE, 1, 19)) AS cstexpdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(CSTexpDATE, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CSTexpDATE, 1, 19))
+    ) AS cstexpdate,
     NULLIF(CAST(TRIM(CSTlinkVC) AS STRING), '') AS cstlinkvc,
     CAST(CSTlinkVCid AS INT64) AS cstlinkvcid,
     CAST(CSTio AS INT64) AS cstio,

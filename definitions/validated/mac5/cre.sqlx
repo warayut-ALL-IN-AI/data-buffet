@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -72,7 +72,10 @@ WITH all_sources AS (
     CAST(cretaxclass AS FLOAT64) as cretaxclass,
     CAST(cregoodsdef AS INT64) as cregoodsdef,
     CAST(crecreditterm AS INT64) as crecreditterm,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(credate, 1, 19)) AS credate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(credate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(credate, 1, 19))
+    ) AS credate,
     CAST(crehide AS INT64) as crehide,
     NULLIF(CAST(TRIM(crefax) AS STRING), '') as crefax,
     NULLIF(CAST(TRIM(creemail) AS STRING), '') as creemail,
@@ -82,12 +85,18 @@ WITH all_sources AS (
     CAST(crelock AS INT64) as crelock,
     NULLIF(CAST(TRIM(creoname) AS STRING), '') as creoname,
     NULLIF(CAST(TRIM(creprice) AS STRING), '') as creprice,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(creeditlk, 1, 19)) AS creeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(creeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(creeditlk, 1, 19))
+    ) AS creeditlk,
     NULLIF(CAST(TRIM(crerefwe) AS STRING), '') as crerefwe,
     NULLIF(CAST(TRIM(cresortnt) AS STRING), '') as cresortnt,
     NULLIF(CAST(TRIM(cresortne) AS STRING), '') as cresortne,
     NULLIF(CAST(TRIM(crecardid) AS STRING), '') as crecardid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(creeditdt, 1, 19)) AS creeditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(creeditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(creeditdt, 1, 19))
+    ) AS creeditdt,
     NULLIF(CAST(TRIM(creeditmf) AS STRING), '') as creeditmf,
     CAST(cretaxtype AS INT64) as cretaxtype,
     CAST(creinex AS INT64) as creinex,

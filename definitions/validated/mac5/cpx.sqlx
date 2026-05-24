@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -55,7 +55,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(cpxstkid) AS STRING), '') as cpxstkid,
     CAST(cpxlinkid AS INT64) as cpxlinkid,
     NULLIF(CAST(TRIM(cpxvnosid) AS STRING), '') as cpxvnosid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cpxdateid, 1, 19)) AS cpxdateid,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(cpxdateid, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cpxdateid, 1, 19))
+    ) AS cpxdateid,
     NULLIF(CAST(TRIM(cpxjob) AS STRING), '') as cpxjob,
     NULLIF(CAST(TRIM(cpxdep) AS STRING), '') as cpxdep,
     NULLIF(CAST(TRIM(cpxper) AS STRING), '') as cpxper,

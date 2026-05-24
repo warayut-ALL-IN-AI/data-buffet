@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -54,8 +54,14 @@ WITH all_sources AS (
   SELECT 'ag01' AS company_id,
     NULLIF(CAST(TRIM(orderno) AS STRING), '') as orderno,
     CAST(status AS INT64) as status,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetime, 1, 19)) AS datetime,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetimeapprove, 1, 19)) AS datetimeapprove
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(datetime, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetime, 1, 19))
+    ) AS datetime,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(datetimeapprove, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(datetimeapprove, 1, 19))
+    ) AS datetimeapprove
 
   FROM
     `${sourceTableRef}`

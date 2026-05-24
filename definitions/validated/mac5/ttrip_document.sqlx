@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -65,9 +65,15 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(fcancel) AS STRING), '') as fcancel,
     NULLIF(CAST(TRIM(fref1) AS STRING), '') as fref1,
     CAST(fdocument_rt AS INT64) as fdocument_rt,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(fdocument_rtdate, 1, 19)) as fdocument_rtdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(fdocument_rtdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(fdocument_rtdate, 1, 19))
+    ) as fdocument_rtdate,
     CAST(fdocument_ac AS INT64) as fdocument_ac,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(fdocument_acdate, 1, 19)) as fdocument_acdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(fdocument_acdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(fdocument_acdate, 1, 19))
+    ) as fdocument_acdate,
     NULLIF(CAST(TRIM(frepro) AS STRING), '') as frepro,
     CAST(fqty_order AS INT64) as fqty_order,
     NULLIF(CAST(TRIM(fitemdoc) AS STRING), '') as fitemdoc,

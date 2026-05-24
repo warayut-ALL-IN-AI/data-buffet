@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -53,12 +53,18 @@ END;`;
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
     NULLIF(CAST(TRIM(tabvnosid) AS STRING), '') as tabvnosid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tabdateid, 1, 19)) AS tabdateid,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(tabdateid, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tabdateid, 1, 19))
+    ) AS tabdateid,
     NULLIF(CAST(TRIM(tabcusid) AS STRING), '') as tabcusid,
     NULLIF(CAST(TRIM(tabtypeid) AS STRING), '') as tabtypeid,
     NULLIF(CAST(TRIM(tablinktype) AS STRING), '') as tablinktype,
     NULLIF(CAST(TRIM(tablinkvno) AS STRING), '') as tablinkvno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tablinkvdate, 1, 19)) AS tablinkvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(tablinkvdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tablinkvdate, 1, 19))
+    ) AS tablinkvdate,
     NULLIF(CAST(TRIM(tablinkvcus) AS STRING), '') as tablinkvcus,
     NULLIF(CAST(TRIM(tablinkvtype) AS STRING), '') as tablinkvtype,
     CAST(tablinkvid AS INT64) as tablinkvid,

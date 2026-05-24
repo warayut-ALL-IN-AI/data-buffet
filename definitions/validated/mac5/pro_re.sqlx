@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -59,7 +59,10 @@ WITH all_sources AS (
     PARSE_DATE('%Y-%m-%d', SUBSTR(prorestrdate, 1, 10)) AS prorestrdate,
     PARSE_DATE('%Y-%m-%d', SUBSTR(proreenddate, 1, 10)) AS proreenddate,
     NULLIF(CAST(TRIM(proreregion) AS STRING), '') as proreregion,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19)) AS dinsert
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(dinsert, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19))
+    ) AS dinsert
 
   FROM
     `${sourceTableRef}`

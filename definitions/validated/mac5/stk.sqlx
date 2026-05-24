@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "create_all_table_raw_mac5_aa05", "create_all_table_raw_mac5_ab01", "create_all_table_raw_mac5_ac02", "create_all_table_raw_mac5_ak02"],
@@ -92,14 +92,20 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(stkmemo) AS STRING), '') as stkmemo,
     NULLIF(CAST(TRIM(stkacc1) AS STRING), '') as stkacc1,
     NULLIF(CAST(TRIM(stkacc2) AS STRING), '') as stkacc2,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditlk, 1, 19)) AS stkeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(stkeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditlk, 1, 19))
+    ) AS stkeditlk,
     NULLIF(CAST(TRIM(stkrefwe) AS STRING), '') as stkrefwe,
     NULLIF(CAST(TRIM(stkbarc1) AS STRING), '') as stkbarc1,
     NULLIF(CAST(TRIM(stkbarc2) AS STRING), '') as stkbarc2,
     NULLIF(CAST(TRIM(stkbarc3) AS STRING), '') as stkbarc3,
     NULLIF(CAST(TRIM(stksortnt) AS STRING), '') as stksortnt,
     NULLIF(CAST(TRIM(stksortne) AS STRING), '') as stksortne,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditdt, 1, 19)) AS stkeditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(stkeditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditdt, 1, 19))
+    ) AS stkeditdt,
     CAST(stkstatus AS INT64) as stkstatus,
     NULLIF(CAST(TRIM(stksto) AS STRING), '') as stksto,
     NULLIF(CAST(TRIM(stkeditmf) AS STRING), '') as stkeditmf,
@@ -178,14 +184,20 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(stkmemo) AS STRING), '') as stkmemo,
     NULLIF(CAST(TRIM(stkacc1) AS STRING), '') as stkacc1,
     NULLIF(CAST(TRIM(stkacc2) AS STRING), '') as stkacc2,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditlk, 1, 19)) AS stkeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(stkeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditlk, 1, 19))
+    ) AS stkeditlk,
     NULLIF(CAST(TRIM(stkrefwe) AS STRING), '') as stkrefwe,
     NULLIF(CAST(TRIM(stkbarc1) AS STRING), '') as stkbarc1,
     NULLIF(CAST(TRIM(stkbarc2) AS STRING), '') as stkbarc2,
     NULLIF(CAST(TRIM(stkbarc3) AS STRING), '') as stkbarc3,
     NULLIF(CAST(TRIM(stksortnt) AS STRING), '') as stksortnt,
     NULLIF(CAST(TRIM(stksortne) AS STRING), '') as stksortne,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditdt, 1, 19)) AS stkeditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(stkeditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditdt, 1, 19))
+    ) AS stkeditdt,
     CAST(stkstatus AS INT64) as stkstatus,
     NULLIF(CAST(TRIM(stksto) AS STRING), '') as stksto,
     NULLIF(CAST(TRIM(stkeditmf) AS STRING), '') as stkeditmf,
@@ -264,14 +276,20 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(stkmemo) AS STRING), '') as stkmemo,
     NULLIF(CAST(TRIM(stkacc1) AS STRING), '') as stkacc1,
     NULLIF(CAST(TRIM(stkacc2) AS STRING), '') as stkacc2,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditlk, 1, 19)) AS stkeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(stkeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditlk, 1, 19))
+    ) AS stkeditlk,
     NULLIF(CAST(TRIM(stkrefwe) AS STRING), '') as stkrefwe,
     NULLIF(CAST(TRIM(stkbarc1) AS STRING), '') as stkbarc1,
     NULLIF(CAST(TRIM(stkbarc2) AS STRING), '') as stkbarc2,
     NULLIF(CAST(TRIM(stkbarc3) AS STRING), '') as stkbarc3,
     NULLIF(CAST(TRIM(stksortnt) AS STRING), '') as stksortnt,
     NULLIF(CAST(TRIM(stksortne) AS STRING), '') as stksortne,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditdt, 1, 19)) AS stkeditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(stkeditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditdt, 1, 19))
+    ) AS stkeditdt,
     CAST(stkstatus AS INT64) as stkstatus,
     NULLIF(CAST(TRIM(stksto) AS STRING), '') as stksto,
     NULLIF(CAST(TRIM(stkeditmf) AS STRING), '') as stkeditmf,
@@ -350,14 +368,20 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(stkmemo) AS STRING), '') as stkmemo,
     NULLIF(CAST(TRIM(stkacc1) AS STRING), '') as stkacc1,
     NULLIF(CAST(TRIM(stkacc2) AS STRING), '') as stkacc2,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditlk, 1, 19)) AS stkeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(stkeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditlk, 1, 19))
+    ) AS stkeditlk,
     NULLIF(CAST(TRIM(stkrefwe) AS STRING), '') as stkrefwe,
     NULLIF(CAST(TRIM(stkbarc1) AS STRING), '') as stkbarc1,
     NULLIF(CAST(TRIM(stkbarc2) AS STRING), '') as stkbarc2,
     NULLIF(CAST(TRIM(stkbarc3) AS STRING), '') as stkbarc3,
     NULLIF(CAST(TRIM(stksortnt) AS STRING), '') as stksortnt,
     NULLIF(CAST(TRIM(stksortne) AS STRING), '') as stksortne,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditdt, 1, 19)) AS stkeditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(stkeditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditdt, 1, 19))
+    ) AS stkeditdt,
     CAST(stkstatus AS INT64) as stkstatus,
     NULLIF(CAST(TRIM(stksto) AS STRING), '') as stksto,
     NULLIF(CAST(TRIM(stkeditmf) AS STRING), '') as stkeditmf,
@@ -436,14 +460,20 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(stkmemo) AS STRING), '') as stkmemo,
     NULLIF(CAST(TRIM(stkacc1) AS STRING), '') as stkacc1,
     NULLIF(CAST(TRIM(stkacc2) AS STRING), '') as stkacc2,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditlk, 1, 19)) AS stkeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(stkeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditlk, 1, 19))
+    ) AS stkeditlk,
     NULLIF(CAST(TRIM(stkrefwe) AS STRING), '') as stkrefwe,
     NULLIF(CAST(TRIM(stkbarc1) AS STRING), '') as stkbarc1,
     NULLIF(CAST(TRIM(stkbarc2) AS STRING), '') as stkbarc2,
     NULLIF(CAST(TRIM(stkbarc3) AS STRING), '') as stkbarc3,
     NULLIF(CAST(TRIM(stksortnt) AS STRING), '') as stksortnt,
     NULLIF(CAST(TRIM(stksortne) AS STRING), '') as stksortne,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditdt, 1, 19)) AS stkeditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(stkeditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(stkeditdt, 1, 19))
+    ) AS stkeditdt,
     CAST(stkstatus AS INT64) as stkstatus,
     NULLIF(CAST(TRIM(stksto) AS STRING), '') as stksto,
     NULLIF(CAST(TRIM(stkeditmf) AS STRING), '') as stkeditmf,

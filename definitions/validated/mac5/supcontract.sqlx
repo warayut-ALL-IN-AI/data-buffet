@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -55,7 +55,10 @@ WITH all_sources AS (
     CAST(id AS INT64) as id,
     CAST(mcontractid AS STRING) as mcontractid,
     NULLIF(CAST(TRIM(scontractid) AS STRING), '') as scontractid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dateinsert, 1, 19)) AS dateinsert,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(dateinsert, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dateinsert, 1, 19))
+    ) AS dateinsert,
     CAST(status AS INT64) as status,
     NULLIF(CAST(TRIM(uinsert) AS STRING), '') as uinsert
 

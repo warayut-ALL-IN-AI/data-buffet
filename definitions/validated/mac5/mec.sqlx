@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -61,9 +61,18 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(mect3) AS STRING), '') as mect3,
     NULLIF(CAST(TRIM(mect4) AS STRING), '') as mect4,
     NULLIF(CAST(TRIM(mect5) AS STRING), '') as mect5,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mecd1, 1, 19)) AS mecd1,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mecd2, 1, 19)) AS mecd2,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mecd3, 1, 19)) AS mecd3,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mecd1, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mecd1, 1, 19))
+    ) AS mecd1,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mecd2, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mecd2, 1, 19))
+    ) AS mecd2,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mecd3, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mecd3, 1, 19))
+    ) AS mecd3,
     CAST(meci1 AS INT64) as meci1,
     CAST(meci2 AS INT64) as meci2,
     CAST(mecc1 AS FLOAT64) as mecc1,
@@ -83,7 +92,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(mecdesc) AS STRING), '') as mecdesc,
     CAST(mechide AS INT64) as mechide,
     CAST(meclock AS INT64) as meclock,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(meceditlk, 1, 19)) AS meceditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(meceditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(meceditlk, 1, 19))
+    ) AS meceditlk,
     NULLIF(CAST(TRIM(mecrefwe) AS STRING), '') as mecrefwe,
     NULLIF(CAST(TRIM(mecsortn) AS STRING), '') as mecsortn,
     NULLIF(CAST(TRIM(mect6) AS STRING), '') as mect6,
@@ -91,7 +103,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(mect8) AS STRING), '') as mect8,
     NULLIF(CAST(TRIM(mect9) AS STRING), '') as mect9,
     NULLIF(CAST(TRIM(mect10) AS STRING), '') as mect10,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(meceditdt, 1, 19)) AS meceditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(meceditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(meceditdt, 1, 19))
+    ) AS meceditdt,
     NULLIF(CAST(TRIM(meceditmf) AS STRING), '') as meceditmf
 
   FROM

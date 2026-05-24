@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -57,8 +57,14 @@ WITH all_sources AS (
     CAST(MIPrev AS INT64) AS miprev,
     NULLIF(CAST(TRIM(MIPpath) AS STRING), '') AS mippath,
     NULLIF(CAST(TRIM(MIPtype) AS STRING), '') AS miptype,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIPcrdate, 1, 19)) AS mipcrdate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIPupdatedate, 1, 19)) AS mipupdatedate
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIPcrdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIPcrdate, 1, 19))
+    ) AS mipcrdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIPupdatedate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIPupdatedate, 1, 19))
+    ) AS mipupdatedate
   FROM
     `${sourceTableRef}`
 )

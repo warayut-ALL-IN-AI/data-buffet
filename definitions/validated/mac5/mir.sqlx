@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "incremental",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -50,7 +50,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(mircus) AS STRING), '') as mircus,
     CAST(mirlistno AS INT64) as mirlistno,
     NULLIF(CAST(TRIM(mirbinvno) AS STRING), '') as mirbinvno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19)) AS mirbinvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mirbinvdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19))
+    ) AS mirbinvdate,
     NULLIF(CAST(TRIM(mirbinvtype) AS STRING), '') as mirbinvtype,
     NULLIF(CAST(TRIM(mirdesc) AS STRING), '') as mirdesc,
     CAST(mircog AS FLOAT64) as mircog,
@@ -76,7 +79,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(mircus) AS STRING), '') as mircus,
     CAST(mirlistno AS INT64) as mirlistno,
     NULLIF(CAST(TRIM(mirbinvno) AS STRING), '') as mirbinvno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19)) AS mirbinvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mirbinvdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19))
+    ) AS mirbinvdate,
     NULLIF(CAST(TRIM(mirbinvtype) AS STRING), '') as mirbinvtype,
     NULLIF(CAST(TRIM(mirdesc) AS STRING), '') as mirdesc,
     CAST(mircog AS FLOAT64) as mircog,
@@ -102,7 +108,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(mircus) AS STRING), '') as mircus,
     CAST(mirlistno AS INT64) as mirlistno,
     NULLIF(CAST(TRIM(mirbinvno) AS STRING), '') as mirbinvno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19)) AS mirbinvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mirbinvdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19))
+    ) AS mirbinvdate,
     NULLIF(CAST(TRIM(mirbinvtype) AS STRING), '') as mirbinvtype,
     NULLIF(CAST(TRIM(mirdesc) AS STRING), '') as mirdesc,
     CAST(mircog AS FLOAT64) as mircog,
@@ -128,7 +137,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(mircus) AS STRING), '') as mircus,
     CAST(mirlistno AS INT64) as mirlistno,
     NULLIF(CAST(TRIM(mirbinvno) AS STRING), '') as mirbinvno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19)) AS mirbinvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mirbinvdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19))
+    ) AS mirbinvdate,
     NULLIF(CAST(TRIM(mirbinvtype) AS STRING), '') as mirbinvtype,
     NULLIF(CAST(TRIM(mirdesc) AS STRING), '') as mirdesc,
     CAST(mircog AS FLOAT64) as mircog,
@@ -154,7 +166,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(mircus) AS STRING), '') as mircus,
     CAST(mirlistno AS INT64) as mirlistno,
     NULLIF(CAST(TRIM(mirbinvno) AS STRING), '') as mirbinvno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19)) AS mirbinvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mirbinvdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mirbinvdate, 1, 19))
+    ) AS mirbinvdate,
     NULLIF(CAST(TRIM(mirbinvtype) AS STRING), '') as mirbinvtype,
     NULLIF(CAST(TRIM(mirdesc) AS STRING), '') as mirdesc,
     CAST(mircog AS FLOAT64) as mircog,

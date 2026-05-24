@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -62,7 +62,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(levelaction) AS STRING), '') as levelaction,
     NULLIF(CAST(TRIM(email) AS STRING), '') as email,
     NULLIF(CAST(TRIM(token) AS STRING), '') as token,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tokenexpiry, 1, 19)) AS tokenexpiry,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(tokenexpiry, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(tokenexpiry, 1, 19))
+    ) AS tokenexpiry,
     CAST(istokenvalid AS INT64) as istokenvalid
 
   FROM

@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "incremental",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -74,7 +74,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(rcvCommand) AS STRING), '') AS rcvcommand,
     NULLIF(CAST(TRIM(rcvExtCode) AS STRING), '') AS rcvextcode,
     NULLIF(CAST(TRIM(mixVnos) AS STRING), '') AS mixvnos,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mixDate, 1, 19)) AS mixdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(mixDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(mixDate, 1, 19))
+    ) AS mixdate,
     NULLIF(CAST(TRIM(rcvTranCode) AS STRING), '') AS rcvtrancode,
     CAST(rcvCancel AS INT64) AS rcvcancel,
     NULLIF(CAST(TRIM(rcvOrder_Pack) AS STRING), '') AS rcvorder_pack,

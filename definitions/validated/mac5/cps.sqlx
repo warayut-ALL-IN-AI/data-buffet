@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "incremental",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -56,7 +56,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(CPSstkID) AS STRING), '') AS cpsstkid,
     CAST(CPSlinkID AS INT64) AS cpslinkid,
     NULLIF(CAST(TRIM(CPSvnosID) AS STRING), '') AS cpsvnosid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CPSdateID, 1, 19)) AS cpsdateid,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(CPSdateID, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CPSdateID, 1, 19))
+    ) AS cpsdateid,
     NULLIF(CAST(TRIM(CPScusID) AS STRING), '') AS cpscusid,
     NULLIF(CAST(TRIM(CPSjob) AS STRING), '') AS cpsjob,
     NULLIF(CAST(TRIM(CPSdep) AS STRING), '') AS cpsdep,
@@ -77,7 +80,10 @@ WITH all_sources AS (
     CAST(CPScurC AS INT64) AS cpscurc,
     CAST(CPSexchg AS FLOAT64) AS cpsexchg,
     CAST(CPScut AS INT64) AS cpscut,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CPSdelvDate, 1, 19)) AS cpsdelvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(CPSdelvDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CPSdelvDate, 1, 19))
+    ) AS cpsdelvdate,
     CAST(CPSlistNo AS INT64) AS cpslistno,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM

@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -55,7 +55,10 @@ WITH all_sources AS (
     CAST(id AS INT64) as id,
     NULLIF(CAST(TRIM(barcode) AS STRING), '') as barcode,
     NULLIF(CAST(TRIM(product_id) AS STRING), '') as product_id,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) AS create_date
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(create_date, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19))
+    ) AS create_date
 
   FROM
     `${sourceTableRef}`

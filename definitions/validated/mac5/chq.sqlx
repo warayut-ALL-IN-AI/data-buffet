@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "create_all_table_raw_mac5_aa05", "create_all_table_raw_mac5_ab01", "create_all_table_raw_mac5_ac02", "create_all_table_raw_mac5_ak02", "create_all_function"],
@@ -62,9 +62,18 @@ WITH raw_sources AS (
     NULLIF(CAST(TRIM(chqbank) AS STRING), '') as chqbank,
     NULLIF(CAST(TRIM(chqacode) AS STRING), '') as chqacode,
     NULLIF(CAST(TRIM(chqcus) AS STRING), '') as chqcus,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19)) AS chqdatec,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19)) AS chqdater,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19)) AS chqdatep,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatec, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19))
+    ) AS chqdatec,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdater, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19))
+    ) AS chqdater,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatep, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19))
+    ) AS chqdatep,
     CAST(chqtype AS INT64) as chqtype,
     CAST(chqstatus AS INT64) as chqstatus,
     CAST(chqtotal AS FLOAT64) as chqtotal,
@@ -81,14 +90,23 @@ WITH raw_sources AS (
     NULLIF(CAST(TRIM(chqper) AS STRING), '') as chqper,
     NULLIF(CAST(TRIM(chqzon) AS STRING), '') as chqzon,
     NULLIF(CAST(TRIM(chqrcode) AS STRING), '') as chqrcode,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19)) AS chqeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19))
+    ) AS chqeditlk,
     NULLIF(CAST(TRIM(chqkeyuser) AS STRING), '') as chqkeyuser,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19)) AS chqkeydate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqkeydate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19))
+    ) AS chqkeydate,
     CAST(chqdeduct AS FLOAT64) as chqdeduct,
     NULLIF(CAST(TRIM(chqecode) AS STRING), '') as chqecode,
     NULLIF(CAST(TRIM(chqbranch) AS STRING), '') as chqbranch,
     NULLIF(CAST(TRIM(chqmec) AS STRING), '') as chqmec,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19)) AS chqdatev
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatev, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19))
+    ) AS chqdatev
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.chq`
 
   UNION ALL
@@ -99,9 +117,18 @@ WITH raw_sources AS (
     NULLIF(CAST(TRIM(chqbank) AS STRING), '') as chqbank,
     NULLIF(CAST(TRIM(chqacode) AS STRING), '') as chqacode,
     NULLIF(CAST(TRIM(chqcus) AS STRING), '') as chqcus,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19)) AS chqdatec,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19)) AS chqdater,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19)) AS chqdatep,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatec, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19))
+    ) AS chqdatec,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdater, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19))
+    ) AS chqdater,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatep, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19))
+    ) AS chqdatep,
     CAST(chqtype AS INT64) as chqtype,
     CAST(chqstatus AS INT64) as chqstatus,
     CAST(chqtotal AS FLOAT64) as chqtotal,
@@ -118,14 +145,23 @@ WITH raw_sources AS (
     NULLIF(CAST(TRIM(chqper) AS STRING), '') as chqper,
     NULLIF(CAST(TRIM(chqzon) AS STRING), '') as chqzon,
     NULLIF(CAST(TRIM(chqrcode) AS STRING), '') as chqrcode,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19)) AS chqeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19))
+    ) AS chqeditlk,
     NULLIF(CAST(TRIM(chqkeyuser) AS STRING), '') as chqkeyuser,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19)) AS chqkeydate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqkeydate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19))
+    ) AS chqkeydate,
     CAST(chqdeduct AS FLOAT64) as chqdeduct,
     NULLIF(CAST(TRIM(chqecode) AS STRING), '') as chqecode,
     NULLIF(CAST(TRIM(chqbranch) AS STRING), '') as chqbranch,
     NULLIF(CAST(TRIM(chqmec) AS STRING), '') as chqmec,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19)) AS chqdatev
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatev, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19))
+    ) AS chqdatev
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.chq`
 
   UNION ALL
@@ -136,9 +172,18 @@ WITH raw_sources AS (
     NULLIF(CAST(TRIM(chqbank) AS STRING), '') as chqbank,
     NULLIF(CAST(TRIM(chqacode) AS STRING), '') as chqacode,
     NULLIF(CAST(TRIM(chqcus) AS STRING), '') as chqcus,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19)) AS chqdatec,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19)) AS chqdater,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19)) AS chqdatep,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatec, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19))
+    ) AS chqdatec,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdater, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19))
+    ) AS chqdater,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatep, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19))
+    ) AS chqdatep,
     CAST(chqtype AS INT64) as chqtype,
     CAST(chqstatus AS INT64) as chqstatus,
     CAST(chqtotal AS FLOAT64) as chqtotal,
@@ -155,14 +200,23 @@ WITH raw_sources AS (
     NULLIF(CAST(TRIM(chqper) AS STRING), '') as chqper,
     NULLIF(CAST(TRIM(chqzon) AS STRING), '') as chqzon,
     NULLIF(CAST(TRIM(chqrcode) AS STRING), '') as chqrcode,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19)) AS chqeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19))
+    ) AS chqeditlk,
     NULLIF(CAST(TRIM(chqkeyuser) AS STRING), '') as chqkeyuser,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19)) AS chqkeydate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqkeydate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19))
+    ) AS chqkeydate,
     CAST(chqdeduct AS FLOAT64) as chqdeduct,
     NULLIF(CAST(TRIM(chqecode) AS STRING), '') as chqecode,
     NULLIF(CAST(TRIM(chqbranch) AS STRING), '') as chqbranch,
     NULLIF(CAST(TRIM(chqmec) AS STRING), '') as chqmec,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19)) AS chqdatev
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatev, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19))
+    ) AS chqdatev
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.chq`
 
   UNION ALL
@@ -173,9 +227,18 @@ WITH raw_sources AS (
     NULLIF(CAST(TRIM(chqbank) AS STRING), '') as chqbank,
     NULLIF(CAST(TRIM(chqacode) AS STRING), '') as chqacode,
     NULLIF(CAST(TRIM(chqcus) AS STRING), '') as chqcus,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19)) AS chqdatec,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19)) AS chqdater,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19)) AS chqdatep,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatec, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19))
+    ) AS chqdatec,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdater, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19))
+    ) AS chqdater,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatep, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19))
+    ) AS chqdatep,
     CAST(chqtype AS INT64) as chqtype,
     CAST(chqstatus AS INT64) as chqstatus,
     CAST(chqtotal AS FLOAT64) as chqtotal,
@@ -192,14 +255,23 @@ WITH raw_sources AS (
     NULLIF(CAST(TRIM(chqper) AS STRING), '') as chqper,
     NULLIF(CAST(TRIM(chqzon) AS STRING), '') as chqzon,
     NULLIF(CAST(TRIM(chqrcode) AS STRING), '') as chqrcode,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19)) AS chqeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19))
+    ) AS chqeditlk,
     NULLIF(CAST(TRIM(chqkeyuser) AS STRING), '') as chqkeyuser,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19)) AS chqkeydate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqkeydate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19))
+    ) AS chqkeydate,
     CAST(chqdeduct AS FLOAT64) as chqdeduct,
     NULLIF(CAST(TRIM(chqecode) AS STRING), '') as chqecode,
     NULLIF(CAST(TRIM(chqbranch) AS STRING), '') as chqbranch,
     NULLIF(CAST(TRIM(chqmec) AS STRING), '') as chqmec,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19)) AS chqdatev
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatev, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19))
+    ) AS chqdatev
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.chq`
 
   UNION ALL
@@ -210,9 +282,18 @@ WITH raw_sources AS (
     NULLIF(CAST(TRIM(chqbank) AS STRING), '') as chqbank,
     NULLIF(CAST(TRIM(chqacode) AS STRING), '') as chqacode,
     NULLIF(CAST(TRIM(chqcus) AS STRING), '') as chqcus,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19)) AS chqdatec,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19)) AS chqdater,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19)) AS chqdatep,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatec, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatec, 1, 19))
+    ) AS chqdatec,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdater, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdater, 1, 19))
+    ) AS chqdater,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatep, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatep, 1, 19))
+    ) AS chqdatep,
     CAST(chqtype AS INT64) as chqtype,
     CAST(chqstatus AS INT64) as chqstatus,
     CAST(chqtotal AS FLOAT64) as chqtotal,
@@ -229,14 +310,23 @@ WITH raw_sources AS (
     NULLIF(CAST(TRIM(chqper) AS STRING), '') as chqper,
     NULLIF(CAST(TRIM(chqzon) AS STRING), '') as chqzon,
     NULLIF(CAST(TRIM(chqrcode) AS STRING), '') as chqrcode,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19)) AS chqeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqeditlk, 1, 19))
+    ) AS chqeditlk,
     NULLIF(CAST(TRIM(chqkeyuser) AS STRING), '') as chqkeyuser,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19)) AS chqkeydate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqkeydate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqkeydate, 1, 19))
+    ) AS chqkeydate,
     CAST(chqdeduct AS FLOAT64) as chqdeduct,
     NULLIF(CAST(TRIM(chqecode) AS STRING), '') as chqecode,
     NULLIF(CAST(TRIM(chqbranch) AS STRING), '') as chqbranch,
     NULLIF(CAST(TRIM(chqmec) AS STRING), '') as chqmec,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19)) AS chqdatev
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(chqdatev, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(chqdatev, 1, 19))
+    ) AS chqdatev
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.chq`
 ),
 
@@ -246,18 +336,18 @@ all_sources AS (
 )
 
 -------------------------------------------------------------------------
--- ✨ เรียกใช้ UDF ที่เรารับ Parameter เข้าไป สั้นกริ๊บ! ✨
+-- โจ เน€เธฃเธตเธขเธเนเธเน UDF เธ—เธตเนเน€เธฃเธฒเธฃเธฑเธ Parameter เน€เธเนเธฒเนเธ เธชเธฑเนเธเธเธฃเธดเนเธ! โจ
 -------------------------------------------------------------------------
 SELECT 
   * EXCEPT(chqmemo, extracted_data),
-  chqmemo AS chqmemo_raw,               -- 👈 ดึงคอลัมน์ดิบกลับมา แล้วตั้งชื่อเป็น _raw
-  extracted_data.chqmemo AS chqmemo,    -- 👈 เอาข้อความที่ตัดแล้ว (clean) มาใช้เป็น chqmemo แทน
+  chqmemo AS chqmemo_raw,               -- ๐‘ เธ”เธถเธเธเธญเธฅเธฑเธกเธเนเธ”เธดเธเธเธฅเธฑเธเธกเธฒ เนเธฅเนเธงเธ•เธฑเนเธเธเธทเนเธญเน€เธเนเธ _raw
+  extracted_data.chqmemo AS chqmemo,    -- ๐‘ เน€เธญเธฒเธเนเธญเธเธงเธฒเธกเธ—เธตเนเธ•เธฑเธ”เนเธฅเนเธง (clean) เธกเธฒเนเธเนเน€เธเนเธ chqmemo เนเธ—เธ
   extracted_data.extract_text,
   extracted_data.extract_value
 FROM (
   SELECT 
     *,
-    -- โยน 3 Parameters ให้ UDF ตามโครงสร้างที่เราตั้งไว้เลยครับ
+    -- เนเธขเธ 3 Parameters เนเธซเน UDF เธ•เธฒเธกเนเธเธฃเธเธชเธฃเนเธฒเธเธ—เธตเนเน€เธฃเธฒเธ•เธฑเนเธเนเธงเนเน€เธฅเธขเธเธฃเธฑเธ
     `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.EXTRACT_CHQ_DATA`(chqmemo, chqdatec, chqtotal) AS extracted_data
   FROM all_sources
 )

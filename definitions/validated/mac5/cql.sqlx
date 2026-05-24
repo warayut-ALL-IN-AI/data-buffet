@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "incremental",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "create_all_table_raw_mac5_aa05", "create_all_table_raw_mac5_ab01", "create_all_table_raw_mac5_ac02", "create_all_table_raw_mac5_ak02"],
@@ -43,7 +43,10 @@ END;`;
 WITH all_sources AS (
   SELECT
     'ag01' AS company_id,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19)) AS cqldate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(CQLdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19))
+    ) AS cqldate,
     NULLIF(CAST(TRIM(CQLbank) AS STRING), '') AS cqlbank,
     NULLIF(CAST(TRIM(CQLno) AS STRING), '') AS cqlno,
     CAST(CQLsys AS INT64) AS cqlsys,
@@ -65,7 +68,10 @@ WITH all_sources AS (
 
   SELECT
     'aa05' AS company_id,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19)) AS cqldate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(CQLdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19))
+    ) AS cqldate,
     NULLIF(CAST(TRIM(CQLbank) AS STRING), '') AS cqlbank,
     NULLIF(CAST(TRIM(CQLno) AS STRING), '') AS cqlno,
     CAST(CQLsys AS INT64) AS cqlsys,
@@ -87,7 +93,10 @@ WITH all_sources AS (
 
   SELECT
     'ab01' AS company_id,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19)) AS cqldate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(CQLdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19))
+    ) AS cqldate,
     NULLIF(CAST(TRIM(CQLbank) AS STRING), '') AS cqlbank,
     NULLIF(CAST(TRIM(CQLno) AS STRING), '') AS cqlno,
     CAST(CQLsys AS INT64) AS cqlsys,
@@ -109,7 +118,10 @@ WITH all_sources AS (
 
   SELECT
     'ac02' AS company_id,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19)) AS cqldate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(CQLdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19))
+    ) AS cqldate,
     NULLIF(CAST(TRIM(CQLbank) AS STRING), '') AS cqlbank,
     NULLIF(CAST(TRIM(CQLno) AS STRING), '') AS cqlno,
     CAST(CQLsys AS INT64) AS cqlsys,
@@ -131,7 +143,10 @@ WITH all_sources AS (
 
   SELECT
     'ak02' AS company_id,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19)) AS cqldate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(CQLdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(CQLdate, 1, 19))
+    ) AS cqldate,
     NULLIF(CAST(TRIM(CQLbank) AS STRING), '') AS cqlbank,
     NULLIF(CAST(TRIM(CQLno) AS STRING), '') AS cqlno,
     CAST(CQLsys AS INT64) AS cqlsys,

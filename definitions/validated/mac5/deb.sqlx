@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "create_all_table_raw_mac5_aa05", "create_all_table_raw_mac5_ab01", "create_all_table_raw_mac5_ac02", "create_all_table_raw_mac5_ak02"],
@@ -78,7 +78,10 @@ WITH all_sources AS (
     CAST(debbgron3 AS INT64) as debbgron3,
     CAST(debbgron4 AS INT64) as debbgron4,
     CAST(debbgron5 AS INT64) as debbgron5,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debdate, 1, 19)) AS debdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debdate, 1, 19))
+    ) AS debdate,
     CAST(debhide AS INT64) as debhide,
     NULLIF(CAST(TRIM(debfax) AS STRING), '') as debfax,
     NULLIF(CAST(TRIM(debemail) AS STRING), '') as debemail,
@@ -98,12 +101,18 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(debcm9) AS STRING), '') as debcm9,
     NULLIF(CAST(TRIM(debcm10) AS STRING), '') as debcm10,
     NULLIF(CAST(TRIM(debprice) AS STRING), '') as debprice,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditlk, 1, 19)) AS debeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditlk, 1, 19))
+    ) AS debeditlk,
     NULLIF(CAST(TRIM(debrefwe) AS STRING), '') as debrefwe,
     CAST(debbillad AS INT64) as debbillad,
     NULLIF(CAST(TRIM(debsortnt) AS STRING), '') as debsortnt,
     NULLIF(CAST(TRIM(debsortne) AS STRING), '') as debsortne,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditdt, 1, 19)) AS debeditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debeditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditdt, 1, 19))
+    ) AS debeditdt,
     NULLIF(CAST(TRIM(debeditmf) AS STRING), '') as debeditmf,
     CAST(debinex AS INT64) as debinex,
     NULLIF(CAST(TRIM(debsalesp) AS STRING), '') as debsalesp,
@@ -113,7 +122,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(debbusinessdesc) AS STRING), '') as debbusinessdesc,
     CAST(debactive AS INT64) as debactive,
     CAST(debstatus AS INT64) as debstatus,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debexpiredate, 1, 19)) AS debexpiredate
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debexpiredate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debexpiredate, 1, 19))
+    ) AS debexpiredate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.deb`
 
   UNION ALL
@@ -156,7 +168,10 @@ WITH all_sources AS (
     CAST(debbgron3 AS INT64) as debbgron3,
     CAST(debbgron4 AS INT64) as debbgron4,
     CAST(debbgron5 AS INT64) as debbgron5,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debdate, 1, 19)) AS debdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debdate, 1, 19))
+    ) AS debdate,
     CAST(debhide AS INT64) as debhide,
     NULLIF(CAST(TRIM(debfax) AS STRING), '') as debfax,
     NULLIF(CAST(TRIM(debemail) AS STRING), '') as debemail,
@@ -176,12 +191,18 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(debcm9) AS STRING), '') as debcm9,
     NULLIF(CAST(TRIM(debcm10) AS STRING), '') as debcm10,
     NULLIF(CAST(TRIM(debprice) AS STRING), '') as debprice,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditlk, 1, 19)) AS debeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditlk, 1, 19))
+    ) AS debeditlk,
     NULLIF(CAST(TRIM(debrefwe) AS STRING), '') as debrefwe,
     CAST(debbillad AS INT64) as debbillad,
     NULLIF(CAST(TRIM(debsortnt) AS STRING), '') as debsortnt,
     NULLIF(CAST(TRIM(debsortne) AS STRING), '') as debsortne,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditdt, 1, 19)) AS debeditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debeditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditdt, 1, 19))
+    ) AS debeditdt,
     NULLIF(CAST(TRIM(debeditmf) AS STRING), '') as debeditmf,
     CAST(debinex AS INT64) as debinex,
     NULLIF(CAST(TRIM(debsalesp) AS STRING), '') as debsalesp,
@@ -191,7 +212,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(debbusinessdesc) AS STRING), '') as debbusinessdesc,
     CAST(debactive AS INT64) as debactive,
     CAST(debstatus AS INT64) as debstatus,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debexpiredate, 1, 19)) AS debexpiredate
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debexpiredate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debexpiredate, 1, 19))
+    ) AS debexpiredate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.deb`
 
   UNION ALL
@@ -234,7 +258,10 @@ WITH all_sources AS (
     CAST(debbgron3 AS INT64) as debbgron3,
     CAST(debbgron4 AS INT64) as debbgron4,
     CAST(debbgron5 AS INT64) as debbgron5,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debdate, 1, 19)) AS debdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debdate, 1, 19))
+    ) AS debdate,
     CAST(debhide AS INT64) as debhide,
     NULLIF(CAST(TRIM(debfax) AS STRING), '') as debfax,
     NULLIF(CAST(TRIM(debemail) AS STRING), '') as debemail,
@@ -254,12 +281,18 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(debcm9) AS STRING), '') as debcm9,
     NULLIF(CAST(TRIM(debcm10) AS STRING), '') as debcm10,
     NULLIF(CAST(TRIM(debprice) AS STRING), '') as debprice,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditlk, 1, 19)) AS debeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditlk, 1, 19))
+    ) AS debeditlk,
     NULLIF(CAST(TRIM(debrefwe) AS STRING), '') as debrefwe,
     CAST(debbillad AS INT64) as debbillad,
     NULLIF(CAST(TRIM(debsortnt) AS STRING), '') as debsortnt,
     NULLIF(CAST(TRIM(debsortne) AS STRING), '') as debsortne,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditdt, 1, 19)) AS debeditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debeditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditdt, 1, 19))
+    ) AS debeditdt,
     NULLIF(CAST(TRIM(debeditmf) AS STRING), '') as debeditmf,
     CAST(debinex AS INT64) as debinex,
     NULLIF(CAST(TRIM(debsalesp) AS STRING), '') as debsalesp,
@@ -269,7 +302,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(debbusinessdesc) AS STRING), '') as debbusinessdesc,
     CAST(debactive AS INT64) as debactive,
     CAST(debstatus AS INT64) as debstatus,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debexpiredate, 1, 19)) AS debexpiredate
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debexpiredate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debexpiredate, 1, 19))
+    ) AS debexpiredate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.deb`
 
   UNION ALL
@@ -312,7 +348,10 @@ WITH all_sources AS (
     CAST(debbgron3 AS INT64) as debbgron3,
     CAST(debbgron4 AS INT64) as debbgron4,
     CAST(debbgron5 AS INT64) as debbgron5,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debdate, 1, 19)) AS debdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debdate, 1, 19))
+    ) AS debdate,
     CAST(debhide AS INT64) as debhide,
     NULLIF(CAST(TRIM(debfax) AS STRING), '') as debfax,
     NULLIF(CAST(TRIM(debemail) AS STRING), '') as debemail,
@@ -332,12 +371,18 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(debcm9) AS STRING), '') as debcm9,
     NULLIF(CAST(TRIM(debcm10) AS STRING), '') as debcm10,
     NULLIF(CAST(TRIM(debprice) AS STRING), '') as debprice,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditlk, 1, 19)) AS debeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditlk, 1, 19))
+    ) AS debeditlk,
     NULLIF(CAST(TRIM(debrefwe) AS STRING), '') as debrefwe,
     CAST(debbillad AS INT64) as debbillad,
     NULLIF(CAST(TRIM(debsortnt) AS STRING), '') as debsortnt,
     NULLIF(CAST(TRIM(debsortne) AS STRING), '') as debsortne,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditdt, 1, 19)) AS debeditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debeditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditdt, 1, 19))
+    ) AS debeditdt,
     NULLIF(CAST(TRIM(debeditmf) AS STRING), '') as debeditmf,
     CAST(debinex AS INT64) as debinex,
     NULLIF(CAST(TRIM(debsalesp) AS STRING), '') as debsalesp,
@@ -347,7 +392,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(debbusinessdesc) AS STRING), '') as debbusinessdesc,
     CAST(debactive AS INT64) as debactive,
     CAST(debstatus AS INT64) as debstatus,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debexpiredate, 1, 19)) AS debexpiredate
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debexpiredate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debexpiredate, 1, 19))
+    ) AS debexpiredate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.deb`
 
   UNION ALL
@@ -390,7 +438,10 @@ WITH all_sources AS (
     CAST(debbgron3 AS INT64) as debbgron3,
     CAST(debbgron4 AS INT64) as debbgron4,
     CAST(debbgron5 AS INT64) as debbgron5,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debdate, 1, 19)) AS debdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debdate, 1, 19))
+    ) AS debdate,
     CAST(debhide AS INT64) as debhide,
     NULLIF(CAST(TRIM(debfax) AS STRING), '') as debfax,
     NULLIF(CAST(TRIM(debemail) AS STRING), '') as debemail,
@@ -410,12 +461,18 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(debcm9) AS STRING), '') as debcm9,
     NULLIF(CAST(TRIM(debcm10) AS STRING), '') as debcm10,
     NULLIF(CAST(TRIM(debprice) AS STRING), '') as debprice,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditlk, 1, 19)) AS debeditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debeditlk, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditlk, 1, 19))
+    ) AS debeditlk,
     NULLIF(CAST(TRIM(debrefwe) AS STRING), '') as debrefwe,
     CAST(debbillad AS INT64) as debbillad,
     NULLIF(CAST(TRIM(debsortnt) AS STRING), '') as debsortnt,
     NULLIF(CAST(TRIM(debsortne) AS STRING), '') as debsortne,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditdt, 1, 19)) AS debeditdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debeditdt, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debeditdt, 1, 19))
+    ) AS debeditdt,
     NULLIF(CAST(TRIM(debeditmf) AS STRING), '') as debeditmf,
     CAST(debinex AS INT64) as debinex,
     NULLIF(CAST(TRIM(debsalesp) AS STRING), '') as debsalesp,
@@ -425,7 +482,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(debbusinessdesc) AS STRING), '') as debbusinessdesc,
     CAST(debactive AS INT64) as debactive,
     CAST(debstatus AS INT64) as debstatus,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debexpiredate, 1, 19)) AS debexpiredate
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(debexpiredate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(debexpiredate, 1, 19))
+    ) AS debexpiredate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.deb`
 )
 

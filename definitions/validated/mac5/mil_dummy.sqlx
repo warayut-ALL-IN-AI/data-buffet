@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "incremental",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -93,16 +93,28 @@ WITH all_sources AS (
     CAST(MILpmTo AS INT64) AS milpmto,
     CAST(MILtag AS INT64) AS miltag,
     NULLIF(CAST(TRIM(MILlinkVCno) AS STRING), '') AS millinkvcno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILlinkVCdate, 1, 19)) AS millinkvcdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MILlinkVCdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILlinkVCdate, 1, 19))
+    ) AS millinkvcdate,
     NULLIF(CAST(TRIM(MILlinkVCtype) AS STRING), '') AS millinkvctype,
     NULLIF(CAST(TRIM(MILlinkVCdeposit) AS STRING), '') AS millinkvcdeposit,
     CAST(MILlinkVCid AS INT64) AS millinkvcid,
     CAST(MILclearUM AS INT64) AS milclearum,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILexpDATE, 1, 19)) AS milexpdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MILexpDATE, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILexpDATE, 1, 19))
+    ) AS milexpdate,
     NULLIF(CAST(TRIM(MILnotes) AS STRING), '') AS milnotes,
     CAST(MILnotKL AS INT64) AS milnotkl,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILdelvDT, 1, 19)) AS mildelvdt,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILdateSP, 1, 19)) AS mildatesp,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MILdelvDT, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILdelvDT, 1, 19))
+    ) AS mildelvdt,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MILdateSP, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MILdateSP, 1, 19))
+    ) AS mildatesp,
     CAST(MILnumCSP AS FLOAT64) AS milnumcsp,
     CAST(MILnumISP AS INT64) AS milnumisp,
     CAST(MILcost AS FLOAT64) AS milcost,

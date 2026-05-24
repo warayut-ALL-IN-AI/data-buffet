@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "incremental",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -137,22 +137,43 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(MIH2oldrang) AS STRING), '') AS mih2oldrang,
     NULLIF(CAST(TRIM(MIH2oldmotor) AS STRING), '') AS mih2oldmotor,
     NULLIF(CAST(TRIM(MIH2payment1) AS STRING), '') AS mih2payment1,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2paydate1, 1, 19)) AS mih2paydate1,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIH2paydate1, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2paydate1, 1, 19))
+    ) AS mih2paydate1,
     NULLIF(CAST(TRIM(MIH2payment2) AS STRING), '') AS mih2payment2,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2paydate2, 1, 19)) AS mih2paydate2,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIH2paydate2, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2paydate2, 1, 19))
+    ) AS mih2paydate2,
     NULLIF(CAST(TRIM(MIH2payment3) AS STRING), '') AS mih2payment3,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2paydate3, 1, 19)) AS mih2paydate3,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIH2paydate3, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2paydate3, 1, 19))
+    ) AS mih2paydate3,
     NULLIF(CAST(TRIM(MIH2payinstall) AS STRING), '') AS mih2payinstall,
     NULLIF(CAST(TRIM(MIH2billname) AS STRING), '') AS mih2billname,
     NULLIF(CAST(TRIM(MIH2accname) AS STRING), '') AS mih2accname,
     NULLIF(CAST(TRIM(MIH2foottel) AS STRING), '') AS mih2foottel,
     NULLIF(CAST(TRIM(MIH2footfax) AS STRING), '') AS mih2footfax,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2billdate, 1, 19)) AS mih2billdate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2chequedate, 1, 19)) AS mih2chequedate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIH2billdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2billdate, 1, 19))
+    ) AS mih2billdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIH2chequedate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2chequedate, 1, 19))
+    ) AS mih2chequedate,
     NULLIF(CAST(TRIM(MIH2employno) AS STRING), '') AS mih2employno,
     NULLIF(CAST(TRIM(MIH2foreman) AS STRING), '') AS mih2foreman,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2sendto, 1, 19)) AS mih2sendto,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2complete, 1, 19)) AS mih2complete,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIH2sendto, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2sendto, 1, 19))
+    ) AS mih2sendto,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIH2complete, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2complete, 1, 19))
+    ) AS mih2complete,
     NULLIF(CAST(TRIM(MIH2employee) AS STRING), '') AS mih2employee,
     NULLIF(CAST(TRIM(MIH2empaddr) AS STRING), '') AS mih2empaddr,
     NULLIF(CAST(TRIM(MIH2plnhouse) AS STRING), '') AS mih2plnhouse,
@@ -192,8 +213,14 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(MIH2desc) AS STRING), '') AS mih2desc,
     NULLIF(CAST(TRIM(MIH2updateby) AS STRING), '') AS mih2updateby,
     NULLIF(CAST(TRIM(MIH2updatenameT) AS STRING), '') AS mih2updatenamet,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2crdate, 1, 19)) AS mih2crdate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2updatedate, 1, 19)) AS mih2updatedate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIH2crdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2crdate, 1, 19))
+    ) AS mih2crdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIH2updatedate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIH2updatedate, 1, 19))
+    ) AS mih2updatedate,
     CAST(PaymentStatus AS INT64) AS paymentstatus,
     CAST(CondPack AS INT64) AS condpack,
     NULLIF(CAST(TRIM(InstallStatus) AS STRING), '') AS installstatus,
@@ -206,8 +233,14 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(BomInstallStatus) AS STRING), '') AS bominstallstatus,
     CAST(MustInstall AS INT64) AS mustinstall,
     CAST(Direction AS INT64) AS direction,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(POexpireDate, 1, 19)) AS poexpiredate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(InsFinishDate, 1, 19)) AS insfinishdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(POexpireDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(POexpireDate, 1, 19))
+    ) AS poexpiredate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(InsFinishDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(InsFinishDate, 1, 19))
+    ) AS insfinishdate,
     CAST(SendCustHome AS INT64) AS sendcusthome,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM

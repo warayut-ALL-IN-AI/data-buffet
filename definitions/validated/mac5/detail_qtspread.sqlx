@@ -62,8 +62,14 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(total) AS STRING), '') as total,
     NULLIF(CAST(TRIM(uinsert) AS STRING), '') as uinsert,
     NULLIF(CAST(TRIM(uupdate) AS STRING), '') as uupdate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19)) as dinsert,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19)) as dupdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(dinsert, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19))
+    ) as dinsert,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(dupdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19))
+    ) as dupdate,
     NULLIF(CAST(TRIM(status) AS STRING), '') as status,
     NULLIF(CAST(TRIM(link) AS STRING), '') as link,
     NULLIF(CAST(TRIM(type) AS STRING), '') as type,

@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -58,8 +58,14 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(rnomonth) AS STRING), '') as rnomonth,
     CAST(rnorunning AS INT64) as rnorunning,
     NULLIF(CAST(TRIM(rnorunno) AS STRING), '') as rnorunno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(rnocrdate, 1, 19)) AS rnocrdate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(rnoupdatedate, 1, 19)) AS rnoupdatedate
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(rnocrdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(rnocrdate, 1, 19))
+    ) AS rnocrdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(rnoupdatedate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(rnoupdatedate, 1, 19))
+    ) AS rnoupdatedate
 
   FROM
     `${sourceTableRef}`

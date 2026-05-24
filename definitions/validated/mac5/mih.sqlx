@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "incremental",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5", "create_all_table_raw_mac5_aa05", "create_all_table_raw_mac5_ab01", "create_all_table_raw_mac5_ac02", "create_all_table_raw_mac5_ak02"],
@@ -64,7 +64,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(MIHdiscHT1) AS STRING), '') AS mihdischt1,
     NULLIF(CAST(TRIM(MIHdiscHT2) AS STRING), '') AS mihdischt2,
     NULLIF(CAST(TRIM(MIHdelvSite) AS STRING), '') AS mihdelvsite,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdelvDate, 1, 19)) AS mihdelvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdelvDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdelvDate, 1, 19))
+    ) AS mihdelvdate,
     CAST(MIHstanding AS INT64) AS mihstanding,
     CAST(MIHlinkGL AS INT64) AS mihlinkgl,
     CAST(MIHnoUPLINK AS INT64) AS mihnouplink,
@@ -96,36 +99,69 @@ WITH all_sources AS (
     CAST(MIHextraCUT AS INT64) AS mihextracut,
     NULLIF(CAST(TRIM(MIHextraMEM) AS STRING), '') AS mihextramem,
     NULLIF(CAST(TRIM(MIHrecNO) AS STRING), '') AS mihrecno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHrecDATE, 1, 19)) AS mihrecdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHrecDATE, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHrecDATE, 1, 19))
+    ) AS mihrecdate,
     NULLIF(CAST(TRIM(MIHsaveTAG) AS STRING), '') AS mihsavetag,
     NULLIF(CAST(TRIM(MIHkeyUser) AS STRING), '') AS mihkeyuser,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHkeyDate, 1, 19)) AS mihkeydate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHkeyDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHkeyDate, 1, 19))
+    ) AS mihkeydate,
     NULLIF(CAST(TRIM(MIHdocRunNo) AS STRING), '') AS mihdocrunno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateGL, 1, 19)) AS mihdategl,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHduePO, 1, 19)) AS mihduepo,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHeditLK, 1, 19)) AS miheditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateGL, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateGL, 1, 19))
+    ) AS mihdategl,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHduePO, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHduePO, 1, 19))
+    ) AS mihduepo,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHeditLK, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHeditLK, 1, 19))
+    ) AS miheditlk,
     CAST(MIHisCF AS INT64) AS mihiscf,
     CAST(MIHisSP AS INT64) AS mihissp,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS1, 1, 19)) AS mihdates1,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS2, 1, 19)) AS mihdates2,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateS1, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS1, 1, 19))
+    ) AS mihdates1,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateS2, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS2, 1, 19))
+    ) AS mihdates2,
     CAST(MIHnumSI AS INT64) AS mihnumsi,
     CAST(MIHnumSC AS FLOAT64) AS mihnumsc,
     CAST(MIHvatPC AS FLOAT64) AS mihvatpc,
     CAST(MIHincluded AS INT64) AS mihincluded,
     NULLIF(CAST(TRIM(MIHtaxvnos) AS STRING), '') AS mihtaxvnos,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHtaxdate, 1, 19)) AS mihtaxdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHtaxdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHtaxdate, 1, 19))
+    ) AS mihtaxdate,
     CAST(MIHtaxsum AS FLOAT64) AS mihtaxsum,
     CAST(MIHload AS INT64) AS mihload,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHpaidDate, 1, 19)) AS mihpaiddate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHpaidDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHpaidDate, 1, 19))
+    ) AS mihpaiddate,
     NULLIF(CAST(TRIM(MIHbookOrderNum) AS STRING), '') AS mihbookordernum,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHsendDate, 1, 19)) AS mihsenddate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHsendDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHsendDate, 1, 19))
+    ) AS mihsenddate,
     CAST(MIHbl AS INT64) AS mihbl,
     CAST(MIHrpv AS INT64) AS mihrpv,
     CAST(MIHclearCUT AS INT64) AS mihclearcut,
     CAST(MIHsettleCUT AS INT64) AS mihsettlecut,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(ModDate, 1, 19)) AS moddate,
-    NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'฿[^฿]*฿', '')), '') AS mihmemo_new,
-    IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(฿[^฿]*฿)')), '฿00฿') AS memo_extract,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(ModDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(ModDate, 1, 19))
+    ) AS moddate,
+    NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'เธฟ[^เธฟ]*เธฟ', '')), '') AS mihmemo_new,
+    IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(เธฟ[^เธฟ]*เธฟ)')), 'เธฟ00เธฟ') AS memo_extract,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.mih`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
@@ -155,7 +191,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(MIHdiscHT1) AS STRING), '') AS mihdischt1,
     NULLIF(CAST(TRIM(MIHdiscHT2) AS STRING), '') AS mihdischt2,
     NULLIF(CAST(TRIM(MIHdelvSite) AS STRING), '') AS mihdelvsite,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdelvDate, 1, 19)) AS mihdelvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdelvDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdelvDate, 1, 19))
+    ) AS mihdelvdate,
     CAST(MIHstanding AS INT64) AS mihstanding,
     CAST(MIHlinkGL AS INT64) AS mihlinkgl,
     CAST(MIHnoUPLINK AS INT64) AS mihnouplink,
@@ -187,36 +226,66 @@ WITH all_sources AS (
     CAST(MIHextraCUT AS INT64) AS mihextracut,
     NULLIF(CAST(TRIM(MIHextraMEM) AS STRING), '') AS mihextramem,
     NULLIF(CAST(TRIM(MIHrecNO) AS STRING), '') AS mihrecno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHrecDATE, 1, 19)) AS mihrecdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHrecDATE, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHrecDATE, 1, 19))
+    ) AS mihrecdate,
     NULLIF(CAST(TRIM(MIHsaveTAG) AS STRING), '') AS mihsavetag,
     NULLIF(CAST(TRIM(MIHkeyUser) AS STRING), '') AS mihkeyuser,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHkeyDate, 1, 19)) AS mihkeydate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHkeyDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHkeyDate, 1, 19))
+    ) AS mihkeydate,
     NULLIF(CAST(TRIM(MIHdocRunNo) AS STRING), '') AS mihdocrunno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateGL, 1, 19)) AS mihdategl,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHduePO, 1, 19)) AS mihduepo,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHeditLK, 1, 19)) AS miheditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateGL, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateGL, 1, 19))
+    ) AS mihdategl,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHduePO, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHduePO, 1, 19))
+    ) AS mihduepo,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHeditLK, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHeditLK, 1, 19))
+    ) AS miheditlk,
     CAST(MIHisCF AS INT64) AS mihiscf,
     CAST(MIHisSP AS INT64) AS mihissp,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS1, 1, 19)) AS mihdates1,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS2, 1, 19)) AS mihdates2,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateS1, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS1, 1, 19))
+    ) AS mihdates1,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateS2, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS2, 1, 19))
+    ) AS mihdates2,
     CAST(MIHnumSI AS INT64) AS mihnumsi,
     CAST(MIHnumSC AS FLOAT64) AS mihnumsc,
     CAST(MIHvatPC AS FLOAT64) AS mihvatpc,
     CAST(MIHincluded AS INT64) AS mihincluded,
     NULLIF(CAST(TRIM(MIHtaxvnos) AS STRING), '') AS mihtaxvnos,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHtaxdate, 1, 19)) AS mihtaxdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHtaxdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHtaxdate, 1, 19))
+    ) AS mihtaxdate,
     CAST(MIHtaxsum AS FLOAT64) AS mihtaxsum,
     CAST(MIHload AS INT64) AS mihload,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHpaidDate, 1, 19)) AS mihpaiddate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHpaidDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHpaidDate, 1, 19))
+    ) AS mihpaiddate,
     NULLIF(CAST(TRIM(MIHbookOrderNum) AS STRING), '') AS mihbookordernum,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHsendDate, 1, 19)) AS mihsenddate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHsendDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHsendDate, 1, 19))
+    ) AS mihsenddate,
     CAST(MIHbl AS INT64) AS mihbl,
     CAST(MIHrpv AS INT64) AS mihrpv,
     CAST(MIHclearCUT AS INT64) AS mihclearcut,
     CAST(MIHsettleCUT AS INT64) AS mihsettlecut,
     CAST(NULL AS DATETIME) AS moddate,
-    NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'฿[^฿]*฿', '')), '') AS mihmemo_new,
-    IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(฿[^฿]*฿)')), '฿00฿') AS memo_extract,
+    NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'เธฟ[^เธฟ]*เธฟ', '')), '') AS mihmemo_new,
+    IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(เธฟ[^เธฟ]*เธฟ)')), 'เธฟ00เธฟ') AS memo_extract,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.mih`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
@@ -246,7 +315,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(MIHdiscHT1) AS STRING), '') AS mihdischt1,
     NULLIF(CAST(TRIM(MIHdiscHT2) AS STRING), '') AS mihdischt2,
     NULLIF(CAST(TRIM(MIHdelvSite) AS STRING), '') AS mihdelvsite,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdelvDate, 1, 19)) AS mihdelvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdelvDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdelvDate, 1, 19))
+    ) AS mihdelvdate,
     CAST(MIHstanding AS INT64) AS mihstanding,
     CAST(MIHlinkGL AS INT64) AS mihlinkgl,
     CAST(MIHnoUPLINK AS INT64) AS mihnouplink,
@@ -278,36 +350,66 @@ WITH all_sources AS (
     CAST(MIHextraCUT AS INT64) AS mihextracut,
     NULLIF(CAST(TRIM(MIHextraMEM) AS STRING), '') AS mihextramem,
     NULLIF(CAST(TRIM(MIHrecNO) AS STRING), '') AS mihrecno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHrecDATE, 1, 19)) AS mihrecdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHrecDATE, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHrecDATE, 1, 19))
+    ) AS mihrecdate,
     NULLIF(CAST(TRIM(MIHsaveTAG) AS STRING), '') AS mihsavetag,
     NULLIF(CAST(TRIM(MIHkeyUser) AS STRING), '') AS mihkeyuser,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHkeyDate, 1, 19)) AS mihkeydate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHkeyDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHkeyDate, 1, 19))
+    ) AS mihkeydate,
     NULLIF(CAST(TRIM(MIHdocRunNo) AS STRING), '') AS mihdocrunno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateGL, 1, 19)) AS mihdategl,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHduePO, 1, 19)) AS mihduepo,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHeditLK, 1, 19)) AS miheditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateGL, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateGL, 1, 19))
+    ) AS mihdategl,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHduePO, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHduePO, 1, 19))
+    ) AS mihduepo,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHeditLK, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHeditLK, 1, 19))
+    ) AS miheditlk,
     CAST(MIHisCF AS INT64) AS mihiscf,
     CAST(MIHisSP AS INT64) AS mihissp,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS1, 1, 19)) AS mihdates1,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS2, 1, 19)) AS mihdates2,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateS1, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS1, 1, 19))
+    ) AS mihdates1,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateS2, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS2, 1, 19))
+    ) AS mihdates2,
     CAST(MIHnumSI AS INT64) AS mihnumsi,
     CAST(MIHnumSC AS FLOAT64) AS mihnumsc,
     CAST(MIHvatPC AS FLOAT64) AS mihvatpc,
     CAST(MIHincluded AS INT64) AS mihincluded,
     NULLIF(CAST(TRIM(MIHtaxvnos) AS STRING), '') AS mihtaxvnos,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHtaxdate, 1, 19)) AS mihtaxdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHtaxdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHtaxdate, 1, 19))
+    ) AS mihtaxdate,
     CAST(MIHtaxsum AS FLOAT64) AS mihtaxsum,
     CAST(MIHload AS INT64) AS mihload,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHpaidDate, 1, 19)) AS mihpaiddate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHpaidDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHpaidDate, 1, 19))
+    ) AS mihpaiddate,
     NULLIF(CAST(TRIM(MIHbookOrderNum) AS STRING), '') AS mihbookordernum,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHsendDate, 1, 19)) AS mihsenddate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHsendDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHsendDate, 1, 19))
+    ) AS mihsenddate,
     CAST(MIHbl AS INT64) AS mihbl,
     CAST(MIHrpv AS INT64) AS mihrpv,
     CAST(MIHclearCUT AS INT64) AS mihclearcut,
     CAST(MIHsettleCUT AS INT64) AS mihsettlecut,
     CAST(NULL AS DATETIME) AS moddate,
-    NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'฿[^฿]*฿', '')), '') AS mihmemo_new,
-    IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(฿[^฿]*฿)')), '฿00฿') AS memo_extract,
+    NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'เธฟ[^เธฟ]*เธฟ', '')), '') AS mihmemo_new,
+    IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(เธฟ[^เธฟ]*เธฟ)')), 'เธฟ00เธฟ') AS memo_extract,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.mih`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
@@ -337,7 +439,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(MIHdiscHT1) AS STRING), '') AS mihdischt1,
     NULLIF(CAST(TRIM(MIHdiscHT2) AS STRING), '') AS mihdischt2,
     NULLIF(CAST(TRIM(MIHdelvSite) AS STRING), '') AS mihdelvsite,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdelvDate, 1, 19)) AS mihdelvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdelvDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdelvDate, 1, 19))
+    ) AS mihdelvdate,
     CAST(MIHstanding AS INT64) AS mihstanding,
     CAST(MIHlinkGL AS INT64) AS mihlinkgl,
     CAST(MIHnoUPLINK AS INT64) AS mihnouplink,
@@ -369,36 +474,66 @@ WITH all_sources AS (
     CAST(MIHextraCUT AS INT64) AS mihextracut,
     NULLIF(CAST(TRIM(MIHextraMEM) AS STRING), '') AS mihextramem,
     NULLIF(CAST(TRIM(MIHrecNO) AS STRING), '') AS mihrecno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHrecDATE, 1, 19)) AS mihrecdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHrecDATE, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHrecDATE, 1, 19))
+    ) AS mihrecdate,
     NULLIF(CAST(TRIM(MIHsaveTAG) AS STRING), '') AS mihsavetag,
     NULLIF(CAST(TRIM(MIHkeyUser) AS STRING), '') AS mihkeyuser,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHkeyDate, 1, 19)) AS mihkeydate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHkeyDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHkeyDate, 1, 19))
+    ) AS mihkeydate,
     NULLIF(CAST(TRIM(MIHdocRunNo) AS STRING), '') AS mihdocrunno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateGL, 1, 19)) AS mihdategl,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHduePO, 1, 19)) AS mihduepo,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHeditLK, 1, 19)) AS miheditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateGL, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateGL, 1, 19))
+    ) AS mihdategl,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHduePO, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHduePO, 1, 19))
+    ) AS mihduepo,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHeditLK, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHeditLK, 1, 19))
+    ) AS miheditlk,
     CAST(MIHisCF AS INT64) AS mihiscf,
     CAST(MIHisSP AS INT64) AS mihissp,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS1, 1, 19)) AS mihdates1,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS2, 1, 19)) AS mihdates2,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateS1, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS1, 1, 19))
+    ) AS mihdates1,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateS2, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS2, 1, 19))
+    ) AS mihdates2,
     CAST(MIHnumSI AS INT64) AS mihnumsi,
     CAST(MIHnumSC AS FLOAT64) AS mihnumsc,
     CAST(MIHvatPC AS FLOAT64) AS mihvatpc,
     CAST(MIHincluded AS INT64) AS mihincluded,
     NULLIF(CAST(TRIM(MIHtaxvnos) AS STRING), '') AS mihtaxvnos,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHtaxdate, 1, 19)) AS mihtaxdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHtaxdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHtaxdate, 1, 19))
+    ) AS mihtaxdate,
     CAST(MIHtaxsum AS FLOAT64) AS mihtaxsum,
     CAST(MIHload AS INT64) AS mihload,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHpaidDate, 1, 19)) AS mihpaiddate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHpaidDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHpaidDate, 1, 19))
+    ) AS mihpaiddate,
     NULLIF(CAST(TRIM(MIHbookOrderNum) AS STRING), '') AS mihbookordernum,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHsendDate, 1, 19)) AS mihsenddate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHsendDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHsendDate, 1, 19))
+    ) AS mihsenddate,
     CAST(MIHbl AS INT64) AS mihbl,
     CAST(MIHrpv AS INT64) AS mihrpv,
     CAST(MIHclearCUT AS INT64) AS mihclearcut,
     CAST(MIHsettleCUT AS INT64) AS mihsettlecut,
     CAST(NULL AS DATETIME) AS moddate,
-    NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'฿[^฿]*฿', '')), '') AS mihmemo_new,
-    IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(฿[^฿]*฿)')), '฿00฿') AS memo_extract,
+    NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'เธฟ[^เธฟ]*เธฟ', '')), '') AS mihmemo_new,
+    IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(เธฟ[^เธฟ]*เธฟ)')), 'เธฟ00เธฟ') AS memo_extract,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.mih`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
@@ -428,7 +563,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(MIHdiscHT1) AS STRING), '') AS mihdischt1,
     NULLIF(CAST(TRIM(MIHdiscHT2) AS STRING), '') AS mihdischt2,
     NULLIF(CAST(TRIM(MIHdelvSite) AS STRING), '') AS mihdelvsite,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdelvDate, 1, 19)) AS mihdelvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdelvDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdelvDate, 1, 19))
+    ) AS mihdelvdate,
     CAST(MIHstanding AS INT64) AS mihstanding,
     CAST(MIHlinkGL AS INT64) AS mihlinkgl,
     CAST(MIHnoUPLINK AS INT64) AS mihnouplink,
@@ -460,36 +598,66 @@ WITH all_sources AS (
     CAST(MIHextraCUT AS INT64) AS mihextracut,
     NULLIF(CAST(TRIM(MIHextraMEM) AS STRING), '') AS mihextramem,
     NULLIF(CAST(TRIM(MIHrecNO) AS STRING), '') AS mihrecno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHrecDATE, 1, 19)) AS mihrecdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHrecDATE, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHrecDATE, 1, 19))
+    ) AS mihrecdate,
     NULLIF(CAST(TRIM(MIHsaveTAG) AS STRING), '') AS mihsavetag,
     NULLIF(CAST(TRIM(MIHkeyUser) AS STRING), '') AS mihkeyuser,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHkeyDate, 1, 19)) AS mihkeydate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHkeyDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHkeyDate, 1, 19))
+    ) AS mihkeydate,
     NULLIF(CAST(TRIM(MIHdocRunNo) AS STRING), '') AS mihdocrunno,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateGL, 1, 19)) AS mihdategl,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHduePO, 1, 19)) AS mihduepo,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHeditLK, 1, 19)) AS miheditlk,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateGL, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateGL, 1, 19))
+    ) AS mihdategl,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHduePO, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHduePO, 1, 19))
+    ) AS mihduepo,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHeditLK, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHeditLK, 1, 19))
+    ) AS miheditlk,
     CAST(MIHisCF AS INT64) AS mihiscf,
     CAST(MIHisSP AS INT64) AS mihissp,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS1, 1, 19)) AS mihdates1,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS2, 1, 19)) AS mihdates2,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateS1, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS1, 1, 19))
+    ) AS mihdates1,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHdateS2, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHdateS2, 1, 19))
+    ) AS mihdates2,
     CAST(MIHnumSI AS INT64) AS mihnumsi,
     CAST(MIHnumSC AS FLOAT64) AS mihnumsc,
     CAST(MIHvatPC AS FLOAT64) AS mihvatpc,
     CAST(MIHincluded AS INT64) AS mihincluded,
     NULLIF(CAST(TRIM(MIHtaxvnos) AS STRING), '') AS mihtaxvnos,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHtaxdate, 1, 19)) AS mihtaxdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHtaxdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHtaxdate, 1, 19))
+    ) AS mihtaxdate,
     CAST(MIHtaxsum AS FLOAT64) AS mihtaxsum,
     CAST(MIHload AS INT64) AS mihload,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHpaidDate, 1, 19)) AS mihpaiddate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHpaidDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHpaidDate, 1, 19))
+    ) AS mihpaiddate,
     NULLIF(CAST(TRIM(MIHbookOrderNum) AS STRING), '') AS mihbookordernum,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHsendDate, 1, 19)) AS mihsenddate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(MIHsendDate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(MIHsendDate, 1, 19))
+    ) AS mihsenddate,
     CAST(MIHbl AS INT64) AS mihbl,
     CAST(MIHrpv AS INT64) AS mihrpv,
     CAST(MIHclearCUT AS INT64) AS mihclearcut,
     CAST(MIHsettleCUT AS INT64) AS mihsettlecut,
     CAST(NULL AS DATETIME) AS moddate,
-    NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'฿[^฿]*฿', '')), '') AS mihmemo_new,
-    IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(฿[^฿]*฿)')), '฿00฿') AS memo_extract,
+    NULLIF(TRIM(REGEXP_REPLACE(mihmemo, r'เธฟ[^เธฟ]*เธฟ', '')), '') AS mihmemo_new,
+    IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(เธฟ[^เธฟ]*เธฟ)')), 'เธฟ00เธฟ') AS memo_extract,
     PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.mih`
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }

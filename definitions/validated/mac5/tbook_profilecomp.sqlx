@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -89,10 +89,16 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(ppc) AS STRING), '') as ppc,
     NULLIF(CAST(TRIM(pecom) AS STRING), '') as pecom,
     NULLIF(CAST(TRIM(uinsert) AS STRING), '') as uinsert,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19)) AS dinsert,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(dinsert, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dinsert, 1, 19))
+    ) AS dinsert,
     NULLIF(CAST(TRIM(insertby) AS STRING), '') as insertby,
     NULLIF(CAST(TRIM(uupdate) AS STRING), '') as uupdate,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19)) AS dupdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(dupdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(dupdate, 1, 19))
+    ) AS dupdate,
     NULLIF(CAST(TRIM(meccode) AS STRING), '') as meccode,
     NULLIF(CAST(TRIM(contactdebcode) AS STRING), '') as contactdebcode,
     NULLIF(CAST(TRIM(refallkon) AS STRING), '') as refallkon

@@ -1,4 +1,4 @@
-config {
+﻿config {
     type: "table",
     schema: databuffet.VALIDATED_MAC5,
     dependencies: ["validated_schema_mac5", "create_all_table_raw_mac5"],
@@ -55,7 +55,10 @@ WITH all_sources AS (
     NULLIF(CAST(TRIM(cppstkid) AS STRING), '') as cppstkid,
     CAST(cpplinkid AS INT64) as cpplinkid,
     NULLIF(CAST(TRIM(cppvnosid) AS STRING), '') as cppvnosid,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cppdateid, 1, 19)) AS cppdateid,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(cppdateid, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cppdateid, 1, 19))
+    ) AS cppdateid,
     NULLIF(CAST(TRIM(cppcusid) AS STRING), '') as cppcusid,
     NULLIF(CAST(TRIM(cppjob) AS STRING), '') as cppjob,
     NULLIF(CAST(TRIM(cppdep) AS STRING), '') as cppdep,
@@ -76,7 +79,10 @@ WITH all_sources AS (
     CAST(cppcurc AS INT64) as cppcurc,
     CAST(cppexchg AS FLOAT64) as cppexchg,
     CAST(cppcut AS INT64) as cppcut,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cppdelvdate, 1, 19)) AS cppdelvdate,
+    COALESCE(
+      SAFE.PARSE_DATETIME('%b %d %Y %I:%M%p', SUBSTR(cppdelvdate, 1, 19)),
+      SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(cppdelvdate, 1, 19))
+    ) AS cppdelvdate,
     CAST(cpplistno AS INT64) as cpplistno
 
   FROM
