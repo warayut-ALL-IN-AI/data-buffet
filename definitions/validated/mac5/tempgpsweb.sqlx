@@ -55,7 +55,7 @@ WITH all_sources AS (
     ${databuffet.functionData.cleanString('fvehicle')} as fvehicle,
     ${databuffet.functionData.cleanString('fitem')} as fitem,
     ${databuffet.functionData.cleanString('fitem2')} as fitem2,
-    qty2,
+    ${databuffet.functionData.castInt64('qty2')} as qty2,
     ${databuffet.functionData.cleanString('s1')} as s1,
     ${databuffet.functionData.cleanString('s2')} as s2,
     ${databuffet.functionData.cleanString('s3')} as s3,
