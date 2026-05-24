@@ -40,8 +40,8 @@ END;`;
 }
 
 SELECT
-    NULLIF(CAST(TRIM(No_) AS STRING), '') AS row_no,
-    NULLIF(CAST(TRIM(Sale_No_) AS STRING), '') AS sale_no,
+    ${databuffet.cleanString('No_')} AS row_no,
+    ${databuffet.cleanString('Sale_No_')} AS sale_no,
     COALESCE(
         -- 1. ลองแปลงแบบ มม/วว/ปปปป (ค.ศ.) ก่อน เช่น "2/14/1483" -> 1483-02-14
         SAFE.PARSE_DATE('%m/%d/%Y', TRIM(Sale_Date)),
@@ -58,17 +58,17 @@ SELECT
             )
         )
     ) AS sale_date,
-    NULLIF(CAST(TRIM(Branch_Code) AS STRING), '') AS branch_code,
-    NULLIF(CAST(TRIM(Branch_Name) AS STRING), '') AS branch_name,
-    NULLIF(CAST(TRIM(Branch_Short_Name) AS STRING), '') AS branch_short_name,
-    NULLIF(CAST(TRIM(Product_Code) AS STRING), '') AS product_code,
-    NULLIF(CAST(TRIM(Product_Name) AS STRING), '') AS product_name,
-    CAST(Sale_Quantity AS INT64) AS sale_quantity,
+    ${databuffet.cleanString('Branch_Code')} AS branch_code,
+    ${databuffet.cleanString('Branch_Name')} AS branch_name,
+    ${databuffet.cleanString('Branch_Short_Name')} AS branch_short_name,
+    ${databuffet.cleanString('Product_Code')} AS product_code,
+    ${databuffet.cleanString('Product_Name')} AS product_name,
+    ${databuffet.castInt64('Sale_Quantity')} AS sale_quantity,
     CAST(REGEXP_REPLACE(TRIM(Sale_Amount), r"[,\']", '') AS FLOAT64) AS sale_amount,
-    NULLIF(CAST(TRIM(Type) AS STRING), '') AS type,
-    NULLIF(CAST(TRIM(Reference_No_) AS STRING), '') AS reference_no,
-    NULLIF(CAST(TRIM(Deposit_No_) AS STRING), '') AS deposit_no,
-    PARSE_DATE('%Y%m%d', ASATDATE) as ASATDATE,
+    ${databuffet.cleanString('Type')} AS type,
+    ${databuffet.cleanString('Reference_No_')} AS reference_no,
+    ${databuffet.cleanString('Deposit_No_')} AS deposit_no,
+    ${databuffet.parseAsatDate()} as ASATDATE,
 FROM `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}.saleout_gb`
 ${partition_statement}
 

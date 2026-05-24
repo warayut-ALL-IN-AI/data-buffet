@@ -40,21 +40,21 @@ END;`;
 }
 
 SELECT
-    NULLIF(CAST(TRIM(Store) AS STRING), '') as Store,
-    NULLIF(CAST(TRIM(Cat) AS STRING), '') as Cat,
-    NULLIF(CAST(TRIM(Sub_Cat) AS STRING), '') as Sub_Cat,
-    NULLIF(CAST(TRIM(Brand) AS STRING), '') as Brand,
-    NULLIF(CAST(TRIM(SKU) AS STRING), '') as SKU,
-    NULLIF(CAST(TRIM(Barcode) AS STRING), '') as Barcode,
-    NULLIF(CAST(TRIM(Description) AS STRING), '') as Description,
-    NULLIF(CAST(TRIM(Product_Type) AS STRING), '') as Product_Type,
+    ${databuffet.cleanString('Store')} as Store,
+    ${databuffet.cleanString('Cat')} as Cat,
+    ${databuffet.cleanString('Sub_Cat')} as Sub_Cat,
+    ${databuffet.cleanString('Brand')} as Brand,
+    ${databuffet.cleanString('SKU')} as SKU,
+    ${databuffet.cleanString('Barcode')} as Barcode,
+    ${databuffet.cleanString('Description')} as Description,
+    ${databuffet.cleanString('Product_Type')} as Product_Type,
     CAST(Sales_Amount as FLOAT64) as Sales_Amount,
     CAST(Sales_Qty as INT64) as Sales_Qty,
     CAST(Stock_On_Hand as FLOAT64) as Stock_On_Hand,
     CAST(Stock_On_Order as INT64) as Stock_On_Order,
     PARSE_DATE('%Y-%m-%d', TRIM(Last_Sold_Date)) as Last_Sold_Date,
     PARSE_DATE('%Y-%m-%d', TRIM(Last_Receive_Date)) as Last_Receive_Date,
-    PARSE_DATE('%Y%m%d', ASATDATE) as ASATDATE,
+    ${databuffet.parseAsatDate()} as ASATDATE,
 FROM `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}.report_sale_subscription`
 ${partition_statement}
 

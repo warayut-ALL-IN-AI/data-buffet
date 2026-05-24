@@ -52,18 +52,18 @@ END;`;
 }
 
 SELECT
-    CAST(id AS INT64) as id,
-    NULLIF(CAST(TRIM(zipcode_code) AS STRING), '') as zipcode_code,
-    CAST(province_id AS INT64) as province_id,
-    CAST(district_id AS INT64) as district_id,
-    CAST(sub_district_id AS INT64) as sub_district_id,
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.cleanString('zipcode_code')} as zipcode_code,
+    ${databuffet.castInt64('province_id')} as province_id,
+    ${databuffet.castInt64('district_id')} as district_id,
+    ${databuffet.castInt64('sub_district_id')} as sub_district_id,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) as create_date,
-    NULLIF(CAST(TRIM(create_by) AS STRING), '') as create_by,
-    NULLIF(CAST(TRIM(create_by_platform) AS STRING), '') as create_by_platform,
-    NULLIF(CAST(TRIM(update_by_platform) AS STRING), '') as update_by_platform,
+    ${databuffet.cleanString('create_by')} as create_by,
+    ${databuffet.cleanString('create_by_platform')} as create_by_platform,
+    ${databuffet.cleanString('update_by_platform')} as update_by_platform,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19)) as update_date,
-    NULLIF(CAST(TRIM(update_by) AS STRING), '') AS update_by,
-    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
+    ${databuffet.cleanString('update_by')} AS update_by,
+    ${databuffet.parseAsatDate()} AS asatdate,
 
 FROM
   `${sourceTableRef}`

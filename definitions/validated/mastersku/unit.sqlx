@@ -52,13 +52,13 @@ END;`;
 }
 
 SELECT
-  NULLIF(CAST(TRIM(unit_id) AS STRING), '') AS unit_id,
-  NULLIF(CAST(TRIM(unit_type_name) AS STRING), '') AS unit_type_name,
-  NULLIF(CAST(TRIM(unit_name) AS STRING), '') AS unit_name,
+  ${databuffet.cleanString('unit_id')} AS unit_id,
+  ${databuffet.cleanString('unit_type_name')} AS unit_type_name,
+  ${databuffet.cleanString('unit_name')} AS unit_name,
   CAST(unit_is_use AS BOOL) as unit_is_use,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(unit_created_date, 1, 19)) as unit_created_date,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(unit_updated_date, 1, 19)) as unit_updated_date,
-  PARSE_DATE('%Y%m%d', ASATDATE) as asatdate,
+  ${databuffet.parseAsatDate()} as asatdate,
 
 FROM
   `${sourceTableRef}`

@@ -52,16 +52,16 @@ END;`;
 }
 
 SELECT
-  NULLIF(CAST(TRIM(pc_id) AS STRING), '') AS pc_id,
-  NULLIF(CAST(TRIM(pc_prod_id) AS STRING), '') AS pc_prod_id,
-  NULLIF(CAST(TRIM(pc_cat_id) AS STRING), '') AS pc_cat_id,
+  ${databuffet.cleanString('pc_id')} AS pc_id,
+  ${databuffet.cleanString('pc_prod_id')} AS pc_prod_id,
+  ${databuffet.cleanString('pc_cat_id')} AS pc_cat_id,
   CAST(pc_is_ise AS BOOL) AS pc_is_ise,
   CAST(pc_is_active AS BOOL) AS pc_is_active,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pc_created_date, 1, 19)) AS pc_created_date,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(pc_updated_date, 1, 19)) AS pc_updated_date,
-  NULLIF(CAST(TRIM(pc_created_by) AS STRING), '') AS pc_created_by,
-  NULLIF(CAST(TRIM(pc_updated_by) AS STRING), '') AS pc_updated_by,
-  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
+  ${databuffet.cleanString('pc_created_by')} AS pc_created_by,
+  ${databuffet.cleanString('pc_updated_by')} AS pc_updated_by,
+  ${databuffet.parseAsatDate()} AS asatdate,
 
 FROM
   `${sourceTableRef}`

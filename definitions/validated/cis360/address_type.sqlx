@@ -52,21 +52,21 @@ END;`;
 }
 
 SELECT
-    CAST(id AS INT64) as id,
-    NULLIF(CAST(TRIM(address_type_name) AS STRING), '') as address_type_name,
-    NULLIF(CAST(TRIM(address_type_name_en) AS STRING), '') as address_type_name_en,
-    NULLIF(CAST(TRIM(address_type_code) AS STRING), '') as address_type_code,
-    CAST(address_type_order AS INT64) as address_type_order,
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.cleanString('address_type_name')} as address_type_name,
+    ${databuffet.cleanString('address_type_name_en')} as address_type_name_en,
+    ${databuffet.cleanString('address_type_code')} as address_type_code,
+    ${databuffet.castInt64('address_type_order')} as address_type_order,
     CAST(is_constant as BOOL) as is_constant,
     CAST(active_status as BOOL) as active_status,
     CAST(is_delete as BOOL) as is_delete,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) as create_date,
-    NULLIF(CAST(TRIM(create_by) AS STRING), '') as create_by,
-    NULLIF(CAST(TRIM(create_by_platform) AS STRING), '') as create_by_platform,
-    NULLIF(CAST(TRIM(update_by_platform) AS STRING), '') as update_by_platform,
+    ${databuffet.cleanString('create_by')} as create_by,
+    ${databuffet.cleanString('create_by_platform')} as create_by_platform,
+    ${databuffet.cleanString('update_by_platform')} as update_by_platform,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19)) as update_date,
-    NULLIF(CAST(TRIM(update_by) AS STRING), '') AS update_by,
-    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate
+    ${databuffet.cleanString('update_by')} AS update_by,
+    ${databuffet.parseAsatDate()} AS asatdate
 
 FROM
   `${sourceTableRef}`

@@ -52,20 +52,20 @@ END;`;
 }
 
 SELECT
-  NULLIF(CAST(TRIM(bra_id) AS STRING), '') AS bra_id,
-  NULLIF(CAST(TRIM(bra_name) AS STRING), '') AS bra_name,
-  NULLIF(CAST(TRIM(bra_name_th) AS STRING), '') AS bra_name_th,
-  NULLIF(CAST(TRIM(bra_detail) AS STRING), '') AS bra_detail,
-  NULLIF(CAST(TRIM(bra_vendor_id) AS STRING), '') AS bra_vendor_id,
-  NULLIF(CAST(TRIM(bra_logo_name) AS STRING), '') AS bra_logo_name,
-  NULLIF(CAST(TRIM(bra_logo_path) AS STRING), '') AS bra_logo_path,
+  ${databuffet.cleanString('bra_id')} AS bra_id,
+  ${databuffet.cleanString('bra_name')} AS bra_name,
+  ${databuffet.cleanString('bra_name_th')} AS bra_name_th,
+  ${databuffet.cleanString('bra_detail')} AS bra_detail,
+  ${databuffet.cleanString('bra_vendor_id')} AS bra_vendor_id,
+  ${databuffet.cleanString('bra_logo_name')} AS bra_logo_name,
+  ${databuffet.cleanString('bra_logo_path')} AS bra_logo_path,
   CAST(bra_is_use AS BOOL) AS bra_is_use,
   CAST(bra_is_active AS BOOL) AS bra_is_active,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(bra_created_date, 1, 19)) AS bra_created_date,
-  NULLIF(CAST(TRIM(bra_created_by) AS STRING), '') AS bra_created_by,
+  ${databuffet.cleanString('bra_created_by')} AS bra_created_by,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(bra_updated_date, 1, 19)) AS bra_updated_date,
-  NULLIF(CAST(TRIM(bra_updated_by) AS STRING), '') AS bra_updated_by,
-  PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
+  ${databuffet.cleanString('bra_updated_by')} AS bra_updated_by,
+  ${databuffet.parseAsatDate()} AS asatdate,
 FROM
   `${sourceTableRef}`
 ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE(\'Asia/Bangkok\')-1)`) }

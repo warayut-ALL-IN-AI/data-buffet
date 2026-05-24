@@ -40,18 +40,18 @@ END;`;
 }
 
 SELECT
-    NULLIF(CAST(TRIM(VENDOR_ID) AS STRING), '') AS vendor_id,
-    NULLIF(CAST(TRIM(VENDOR_NAME) AS STRING), '') AS vendor_name,
-    NULLIF(CAST(TRIM(BRANCH) AS STRING), '') AS branch,
-    NULLIF(CAST(TRIM(MCH3) AS STRING), '') AS mch3,
-    CAST(UR_COST_AMT AS FLOAT64) AS ur_cost_amt,
-    CAST(T_O AS FLOAT64) AS t_o,
-    CAST(UR_COST_AMT_DEAD AS FLOAT64) AS ur_cost_amt_dead,
-    NULLIF(CAST(TRIM(__Dead) AS STRING), '') AS dead,
-    CAST(T_O_VENDOR AS FLOAT64) AS t_o_vendor,
+    ${databuffet.cleanString('VENDOR_ID')} AS vendor_id,
+    ${databuffet.cleanString('VENDOR_NAME')} AS vendor_name,
+    ${databuffet.cleanString('BRANCH')} AS branch,
+    ${databuffet.cleanString('MCH3')} AS mch3,
+    ${databuffet.castFloat64('UR_COST_AMT')} AS ur_cost_amt,
+    ${databuffet.castFloat64('T_O')} AS t_o,
+    ${databuffet.castFloat64('UR_COST_AMT_DEAD')} AS ur_cost_amt_dead,
+    ${databuffet.cleanString('__Dead')} AS dead,
+    ${databuffet.castFloat64('T_O_VENDOR')} AS t_o_vendor,
     PARSE_DATE('%Y/%m/%d', TRIM(START_DATE)) AS start_date,
     PARSE_DATE('%Y/%m/%d', TRIM(END_DATE)) AS end_date,
-    PARSE_DATE('%Y%m%d', ASATDATE) as ASATDATE,
+    ${databuffet.parseAsatDate()} as ASATDATE,
 FROM `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}.turnover`
 ${partition_statement}
 

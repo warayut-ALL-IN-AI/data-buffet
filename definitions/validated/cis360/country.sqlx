@@ -52,18 +52,18 @@ END;`;
 }
 
 SELECT
-    CAST(id AS INT64) as id,
-    NULLIF(CAST(TRIM(country_name) AS STRING), '') as country_name,
-    NULLIF(CAST(TRIM(country_name_en) AS STRING), '') as country_name_en,
-    NULLIF(CAST(TRIM(country_code) AS STRING), '') as country_code,
+    ${databuffet.castInt64('id')} as id,
+    ${databuffet.cleanString('country_name')} as country_name,
+    ${databuffet.cleanString('country_name_en')} as country_name_en,
+    ${databuffet.cleanString('country_code')} as country_code,
     CAST(is_constant as BOOL) as is_constant,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) as create_date,
-    NULLIF(CAST(TRIM(create_by) AS STRING), '') as create_by,
-    NULLIF(CAST(TRIM(create_by_platform) AS STRING), '') as create_by_platform,
-    NULLIF(CAST(TRIM(update_by_platform) AS STRING), '') as update_by_platform,
+    ${databuffet.cleanString('create_by')} as create_by,
+    ${databuffet.cleanString('create_by_platform')} as create_by_platform,
+    ${databuffet.cleanString('update_by_platform')} as update_by_platform,
     PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19)) as update_date,
-    NULLIF(CAST(TRIM(update_by) AS STRING), '') AS update_by,
-    PARSE_DATE('%Y%m%d', ASATDATE) AS asatdate,
+    ${databuffet.cleanString('update_by')} AS update_by,
+    ${databuffet.parseAsatDate()} AS asatdate,
 
 FROM
   `${sourceTableRef}`

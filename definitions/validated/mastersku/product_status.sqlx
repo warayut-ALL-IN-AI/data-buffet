@@ -52,12 +52,12 @@ END;`;
 }
 
 SELECT
-  NULLIF(CAST(TRIM(ps_id) AS STRING), '') AS ps_id,
-  NULLIF(CAST(TRIM(ps_name) AS STRING), '') AS ps_name,
+  ${databuffet.cleanString('ps_id')} AS ps_id,
+  ${databuffet.cleanString('ps_name')} AS ps_name,
   CAST(ps_is_use AS BOOL) as ps_is_use,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(ps_created_date, 1, 19)) as ps_created_date,
   PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(ps_updated_date, 1, 19)) as ps_updated_date,
-  PARSE_DATE('%Y%m%d', ASATDATE) as asatdate,
+  ${databuffet.parseAsatDate()} as asatdate,
 
 FROM
   `${sourceTableRef}`
