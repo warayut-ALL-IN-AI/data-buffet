@@ -67,11 +67,11 @@ SELECT
     CAST(contact_email AS BOOL) as contact_email,
     CAST(contact_shown_highest_authority as BOOL) as contact_shown_highest_authority,
     CAST(is_delete as BOOL) as is_delete,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) as create_date,
+    ${databuffet.functionData.parseFlexibleDatetime('create_date')} as create_date,
     ${databuffet.functionData.cleanString('create_by')} as create_by,
     ${databuffet.functionData.cleanString('create_by_platform')} as create_by_platform,
     ${databuffet.functionData.cleanString('update_by_platform')} as update_by_platform,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19)) as update_date,
+    ${databuffet.functionData.parseFlexibleDatetime('update_date')} as update_date,
     ${databuffet.functionData.cleanString('update_by')} AS update_by,
     ${databuffet.functionData.parseAsatDate()} AS asatdate,
 

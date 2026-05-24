@@ -74,8 +74,8 @@ SELECT
   ${databuffet.functionData.cleanString('vd_kyc_status')} AS vd_kyc_status,
   CAST(vd_is_active AS BOOL) AS vd_is_active,
   CAST(vd_is_use AS BOOL) AS vd_is_use,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(vd_created_date, 1, 19)) AS vd_created_date,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(vd_updated_date, 1, 19)) AS vd_updated_date,
+  ${databuffet.functionData.parseFlexibleDatetime('vd_created_date')} AS vd_created_date,
+  ${databuffet.functionData.parseFlexibleDatetime('vd_updated_date')} AS vd_updated_date,
   ${databuffet.functionData.parseAsatDate()} AS asatdate,
 
 FROM

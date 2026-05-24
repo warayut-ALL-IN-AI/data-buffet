@@ -61,9 +61,9 @@ SELECT
   ${databuffet.functionData.cleanString('bra_logo_path')} AS bra_logo_path,
   CAST(bra_is_use AS BOOL) AS bra_is_use,
   CAST(bra_is_active AS BOOL) AS bra_is_active,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(bra_created_date, 1, 19)) AS bra_created_date,
+  ${databuffet.functionData.parseFlexibleDatetime('bra_created_date')} AS bra_created_date,
   ${databuffet.functionData.cleanString('bra_created_by')} AS bra_created_by,
-  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(bra_updated_date, 1, 19)) AS bra_updated_date,
+  ${databuffet.functionData.parseFlexibleDatetime('bra_updated_date')} AS bra_updated_date,
   ${databuffet.functionData.cleanString('bra_updated_by')} AS bra_updated_by,
   ${databuffet.functionData.parseAsatDate()} AS asatdate,
 FROM

@@ -55,9 +55,9 @@ SELECT
     ${databuffet.functionData.cleanString('id')} as id,
     ${databuffet.functionData.cleanString('customer_profile_id')} as customer_profile_id,
     ${databuffet.functionData.castInt64('tag_id')} as tag_id,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) as create_date,
+    ${databuffet.functionData.parseFlexibleDatetime('create_date')} as create_date,
     ${databuffet.functionData.cleanString('create_by')} as create_by,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19)) as update_date,
+    ${databuffet.functionData.parseFlexibleDatetime('update_date')} as update_date,
     ${databuffet.functionData.cleanString('update_by')} AS update_by,
     ${databuffet.functionData.parseAsatDate()} AS asatdate,
 

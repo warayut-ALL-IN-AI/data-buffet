@@ -10,23 +10,20 @@ config {
 }
 
 js {
-    // Define table references
     const sourceTable = {
         database: databuffet.DATABASE,
         schema: databuffet.RAW_MAC5_AG01,
         name: name(),
     };
 
-    // Build source table reference
     const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
 
-    // Keep existing logic
     const pk_key = []
 
     let partition_statement, post_operations_statement;
 
     if (pk_key && pk_key.length > 0) {
-        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY ap_snamet desc, ap_snamee desc) = 1`;
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY file_load_datetime desc) = 1`;
         post_operations_statement = `
 BEGIN
     DECLARE retry_count INT64 DEFAULT 0;
@@ -52,18 +49,18 @@ END;`;
 
 WITH all_sources AS (
   SELECT 'ag01' AS company_id,
-    NULLIF(TRIM(fdocument), '') as fdocument,
-  NULLIF(TRIM(fserial_no), '') as fserial_no,
-  NULLIF(TRIM(fcode), '') as fcode,
-  NULLIF(TRIM(fvehicle), '') as fvehicle,
-  NULLIF(TRIM(fitem), '') as fitem,
-  NULLIF(TRIM(fitem2), '') as fitem2,
-  qty2,
-  NULLIF(TRIM(s1), '') as s1,
-  NULLIF(TRIM(s2), '') as s2,
-  NULLIF(TRIM(s3), '') as s3,
-  NULLIF(TRIM(stt), '') as stt,
-  NULLIF(TRIM(username), '') as username
+    ${databuffet.functionData.cleanString('fdocument')} as fdocument,
+    ${databuffet.functionData.cleanString('fserial_no')} as fserial_no,
+    ${databuffet.functionData.cleanString('fcode')} as fcode,
+    ${databuffet.functionData.cleanString('fvehicle')} as fvehicle,
+    ${databuffet.functionData.cleanString('fitem')} as fitem,
+    ${databuffet.functionData.cleanString('fitem2')} as fitem2,
+    qty2,
+    ${databuffet.functionData.cleanString('s1')} as s1,
+    ${databuffet.functionData.cleanString('s2')} as s2,
+    ${databuffet.functionData.cleanString('s3')} as s3,
+    ${databuffet.functionData.cleanString('stt')} as stt,
+    ${databuffet.functionData.cleanString('username')} as username
 
   FROM
     `${sourceTableRef}`

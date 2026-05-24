@@ -57,11 +57,11 @@ SELECT
     ${databuffet.functionData.castInt64('province_id')} as province_id,
     ${databuffet.functionData.castInt64('district_id')} as district_id,
     ${databuffet.functionData.castInt64('sub_district_id')} as sub_district_id,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(create_date, 1, 19)) as create_date,
+    ${databuffet.functionData.parseFlexibleDatetime('create_date')} as create_date,
     ${databuffet.functionData.cleanString('create_by')} as create_by,
     ${databuffet.functionData.cleanString('create_by_platform')} as create_by_platform,
     ${databuffet.functionData.cleanString('update_by_platform')} as update_by_platform,
-    PARSE_DATETIME('%Y-%m-%d %H:%M:%S', SUBSTR(update_date, 1, 19)) as update_date,
+    ${databuffet.functionData.parseFlexibleDatetime('update_date')} as update_date,
     ${databuffet.functionData.cleanString('update_by')} AS update_by,
     ${databuffet.functionData.parseAsatDate()} AS asatdate,
 
