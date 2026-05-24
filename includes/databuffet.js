@@ -1,6 +1,6 @@
 const variables = require("./controller/variables.json")
 const cdcConfig = require("./controller/cdc-config.json")
-const sqlHelpers = require("./sql-helpers")
+const sqlHelpers = require("./controller/function")
 
 
 module.exports = {
