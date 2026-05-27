@@ -1,6 +1,6 @@
 config {
     type: "incremental",
-    schema: databuffet.VALIDATED_SALEOUT,
+    schema: databuffet.VALIDATED_SALEOUT_MDT,
     dependencies: ["validated_schema_saleout", "create_all_table_raw_saleout_mdt"],
     tags: [databuffet.TAG_VALIDATED],
     uniqueKey: ["sale_no", "sale_date", "branch_code", "product_code"],
