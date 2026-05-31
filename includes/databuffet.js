@@ -7,6 +7,7 @@ module.exports = {
     DATABASE: dataform.projectConfig.defaultDatabase,
     RAW_BUCKET: dataform.projectConfig.vars.RAW_BUCKET,
     REGION: dataform.projectConfig.defaultLocation,
+    MDS_BACKFILL_DAYS: dataform.projectConfig.vars.MDS_BACKFILL_DAYS,
     ...variables,
     cdcConfig,
     functionData,

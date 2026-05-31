@@ -49,6 +49,7 @@
     "CDC_DATESET" : "cdc_dataset",
     "PROCESS_DATASET": "process_dataset",
     "FUNCTION_DATASET": "function_dataset",
+    "MDS_DATASET": "mds_dataset",
 
     "GCS_MAC5_AG01": "mac5_ag01",
     "GCS_MAC5_AA05": "mac5_aa05",
