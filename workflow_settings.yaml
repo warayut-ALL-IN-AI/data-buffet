@@ -5,3 +5,4 @@ defaultAssertionDataset: dataform_assertions
 dataformCoreVersion: 3.0.0
 vars:
     RAW_BUCKET: "gs://file-raw-data"
+    MDS_BACKFILL_DAYS: "7"
