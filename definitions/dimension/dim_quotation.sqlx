@@ -1,6 +1,6 @@
 config {
   type: "operations",
-  dependencies: ["dim_project"],
+  dependencies: ["dim_company", "dim_project"],
   tags: [databuffet.TAG_DIM_DAILY],
   hasOutput: true
 }
