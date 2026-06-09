@@ -231,6 +231,7 @@ with chq as (
   where mih.mihType = 'IS'
     and mih.mihcancel = 0
     and PARSE_DATE('%Y%m%d', CONCAT(CAST(mih.mihyear AS STRING), FORMAT('%02d', mih.mihmonth), FORMAT('%02d', mih.mihday))) <= CURRENT_DATE('Asia/Bangkok')
+    and not exists (select 1 from `${CfsClose2024TableRef}` as fix where main.mihVnos = fix.cfsvnosid and main.company_id = 'ag01')
 
 ), main_bs_as_raw as (
   select 
@@ -262,6 +263,7 @@ with chq as (
         where ar_snamet in ('เงินมัดจำรับล่วงหน้า', 'ยกเลิกใบกำกับภาษี', 'ยกเลิกลดหนี้', 'ยกเลิก', 'เงินมัดจำรับล่วงหน้า 214025')
       )
     and PARSE_DATE('%Y%m%d', CONCAT(CAST(mih.mihyear AS STRING), FORMAT('%02d', mih.mihmonth), FORMAT('%02d', mih.mihday))) <= CURRENT_DATE('Asia/Bangkok')
+    and not exists (select 1 from `${CfsClose2024TableRef}` as fix where main.mihVnos = fix.cfsvnosid and main.company_id = 'ag01')
 
 ), main_bs_as as (
   select 
@@ -343,7 +345,8 @@ with chq as (
   left join mir as mir
     on main.CompanyID = mir.company_id
     and main.InvoiceNo = mir.mirbinvno
-  where not exists (select 1 from `${CfsClose2024TableRef}` as fix where main.InvoiceNo = fix.cfsvnosid and main.CompanyID = 'ag01')
+  -- where not exists (select 1 from `${CfsClose2024TableRef}` as fix where main.InvoiceNo = fix.cfsvnosid and main.CompanyID = 'ag01')
+
   union all
   select distinct
     main.* except(TotalAmount, CnAmount, DnAmount), 
@@ -378,7 +381,7 @@ with chq as (
   left join mir as mir
     on main.CompanyID = mir.company_id
     and main.InvoiceNo = mir.mirbinvno
-  where not exists (select 1 from `${CfsClose2024TableRef}` as fix where main.InvoiceNo = fix.cfsvnosid and main.CompanyID = 'ag01')
+  -- where not exists (select 1 from `${CfsClose2024TableRef}` as fix where main.InvoiceNo = fix.cfsvnosid and main.CompanyID = 'ag01')
 
 ), group_data as (
   select distinct
