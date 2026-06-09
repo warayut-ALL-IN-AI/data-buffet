@@ -1,0 +1,84 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    const DimChannelSalesTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimChannelSalesTableRef = `${DimChannelSalesTable.database}.${DimChannelSalesTable.schema}.${DimChannelSalesTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_channel_sales_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(ChannelSaleSK), 0) FROM `${DimChannelSalesTableRef}`);
+
+  MERGE `${DimChannelSalesTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t2.ChannelSaleSK IS NOT NULL THEN t2.ChannelSaleSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.ChannelSaleSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString("t1.companyID")},
+            ${databuffet.functionData.cleanString("t1.ChannelID")}
+        )
+      END) AS ChannelSaleSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+      ${databuffet.functionData.cleanString("t1.ChannelID")} AS ChannelID,
+      ${databuffet.functionData.cleanString("t1.ChannelName")} AS ChannelName
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+    LEFT JOIN `${DimChannelSalesTableRef}` AS t2
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
+      AND ${databuffet.functionData.cleanString("t1.ChannelID")} = t2.ChannelID
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.ChannelSaleSK = S.ChannelSaleSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.ChannelName = S.ChannelName
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      ChannelSaleSK,
+      CompanySK,
+      companyID,
+      ChannelID,
+      ChannelName
+    )
+    VALUES (
+      S.ChannelSaleSK,
+      S.CompanySK,
+      S.companyID,
+      S.ChannelID,
+      S.ChannelName
+    );
+END;

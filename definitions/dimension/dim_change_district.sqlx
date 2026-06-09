@@ -1,0 +1,109 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    const DimChangeDistrictTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimChangeDistrictTableRef = `${DimChangeDistrictTable.database}.${DimChangeDistrictTable.schema}.${DimChangeDistrictTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_change_section_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+}
+
+BEGIN
+  -- DECLARE max_sk INT64 DEFAULT 0;
+
+  -- SET max_sk = (SELECT IFNULL(MAX(ChangeDistrictSK), 0) FROM `${DimChangeDistrictTableRef}`);
+
+  MERGE `${DimChangeDistrictTableRef}` AS T
+  USING (
+    SELECT
+      -- (CASE
+      --   WHEN t2.ChangeDistrictSK IS NOT NULL THEN t2.ChangeDistrictSK
+      --   ELSE max_sk + ROW_NUMBER() OVER(
+      --     PARTITION BY (CASE WHEN t2.ChangeDistrictSK IS NULL THEN 1 ELSE 0 END)
+      --     ORDER BY
+      --       ${databuffet.functionData.cleanString("t1.companyID")},
+      --       ${databuffet.functionData.cleanString("t1.customerCode")},
+      --       ${databuffet.functionData.cleanString("t1.CustomerName")},
+      --       t1.startDate,
+      --       t1.endDate
+      --   )
+      -- END) AS ChangeDistrictSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+      ${databuffet.functionData.cleanString("t1.customerCode")} AS customerCode,
+      ${databuffet.functionData.cleanString("t1.CustomerName")} AS CustomerName,
+      ${databuffet.functionData.cleanString("t1.province")} AS province,
+      ${databuffet.functionData.cleanString("t1.oldSectionID")} AS oldSectionID,
+      ${databuffet.functionData.cleanString("t1.newSectionID")} AS newSectionID,
+      t1.startDate AS startDate,
+      t1.endDate AS endDate
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+    -- LEFT JOIN `${DimChangeDistrictTableRef}` AS t2
+    --   ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
+    --   AND ${databuffet.functionData.cleanString("t1.customerCode")} = t2.customerCode
+    --   AND ${databuffet.functionData.cleanString("t1.CustomerName")} = t2.CustomerName
+    --   AND t1.startDate = t2.startDate
+    --   AND t1.endDate = t2.endDate
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.companyID = S.companyID
+  and T.customerCode = S.customerCode
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.CustomerName = S.CustomerName,
+      T.province = S.province,
+      T.oldSectionID = S.oldSectionID,
+      T.newSectionID = S.newSectionID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      -- ChangeDistrictSK,
+      CompanySK,
+      companyID,
+      customerCode,
+      CustomerName,
+      province,
+      oldSectionID,
+      newSectionID,
+      startDate,
+      endDate
+    )
+    VALUES (
+      -- S.ChangeDistrictSK,
+      S.CompanySK,
+      S.companyID,
+      S.customerCode,
+      S.CustomerName,
+      S.province,
+      S.oldSectionID,
+      S.newSectionID,
+      S.startDate,
+      S.endDate
+    );
+END;

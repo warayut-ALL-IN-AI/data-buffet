@@ -1,0 +1,76 @@
+config {
+  type: "operations",
+  dependencies: [],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    const DimHolidayTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimHolidayTableRef = `${DimHolidayTable.database}.${DimHolidayTable.schema}.${DimHolidayTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_holiday_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+}
+
+BEGIN
+  -- DECLARE max_sk INT64 DEFAULT 0;
+
+  -- SET max_sk = (SELECT IFNULL(MAX(HolidaySK), 0) FROM `${DimHolidayTableRef}`);
+
+  MERGE `${DimHolidayTableRef}` AS T
+  USING (
+    SELECT
+      -- (CASE
+      --   WHEN t2.HolidaySK IS NOT NULL THEN t2.HolidaySK
+      --   ELSE max_sk + ROW_NUMBER() OVER(
+      --     PARTITION BY (CASE WHEN t2.HolidaySK IS NULL THEN 1 ELSE 0 END)
+      --     ORDER BY
+      --       t1.HolidayDate
+      --   )
+      -- END) AS HolidaySK,
+      t1.HolidayDate AS HolidayDate,
+      ${databuffet.functionData.cleanString("t1.HolidayNameTH")} AS HolidayNameTH,
+      ${databuffet.functionData.cleanString("t1.HolidayNameEN")} AS HolidayNameEN,
+      ${databuffet.functionData.castInt64("t1.LongWeekEndFlag")} AS LongWeekEndFlag
+    FROM `${MdsSourceTableRef}` AS t1
+
+    LEFT JOIN `${DimHolidayTableRef}` AS t2
+      ON t1.HolidayDate = t2.HolidayDate
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.HolidayDate = S.HolidayDate
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.HolidayNameTH = S.HolidayNameTH,
+      T.HolidayNameEN = S.HolidayNameEN,
+      T.LongWeekEndFlag = S.LongWeekEndFlag
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      -- HolidaySK,
+      HolidayDate,
+      HolidayNameTH,
+      HolidayNameEN,
+      LongWeekEndFlag
+    )
+    VALUES (
+      -- S.HolidaySK,
+      S.HolidayDate,
+      S.HolidayNameTH,
+      S.HolidayNameEN,
+      S.LongWeekEndFlag
+    );
+END;

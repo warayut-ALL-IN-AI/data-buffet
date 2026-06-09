@@ -1,0 +1,100 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    const DimPaymentTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimPaymentTableRef = `${DimPaymentTable.database}.${DimPaymentTable.schema}.${DimPaymentTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_payment_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(PaymentSK), 0) FROM `${DimPaymentTableRef}`);
+
+  MERGE `${DimPaymentTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t2.PaymentSK IS NOT NULL THEN t2.PaymentSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.PaymentSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString("t1.companyID")},
+            ${databuffet.functionData.cleanString("t1.CodeMemo")}
+        )
+      END) AS PaymentSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+      ${databuffet.functionData.cleanString("t1.CodeMemo")} AS CodeMemo,
+      ${databuffet.functionData.cleanString("t1.PaymentID")} AS PaymentID,
+      ${databuffet.functionData.cleanString("t1.PaymentName")} AS PaymentName,
+      ${databuffet.functionData.cleanString("t1.PaymentMethodEN")} AS PaymentMethodEN,
+      ${databuffet.functionData.cleanString("t1.PaymentMethodTH")} AS PaymentMethodTH,
+      ${databuffet.functionData.cleanString("t1.PaymentType")} AS PaymentType
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+    LEFT JOIN `${DimPaymentTableRef}` AS t2
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
+      AND ${databuffet.functionData.cleanString("t1.CodeMemo")} = t2.CodeMemo
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.PaymentSK = S.PaymentSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.PaymentID = S.PaymentID,
+      T.PaymentName = S.PaymentName,
+      T.PaymentMethodEN = S.PaymentMethodEN,
+      T.PaymentMethodTH = S.PaymentMethodTH,
+      T.PaymentType = S.PaymentType
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      PaymentSK,
+      CompanySK,
+      companyID,
+      CodeMemo,
+      PaymentID,
+      PaymentName,
+      PaymentMethodEN,
+      PaymentMethodTH,
+      PaymentType
+    )
+    VALUES (
+      S.PaymentSK,
+      S.CompanySK,
+      S.companyID,
+      S.CodeMemo,
+      S.PaymentID,
+      S.PaymentName,
+      S.PaymentMethodEN,
+      S.PaymentMethodTH,
+      S.PaymentType
+    );
+END;
