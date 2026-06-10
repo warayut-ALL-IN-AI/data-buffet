@@ -231,7 +231,7 @@ with chq as (
   where mih.mihType = 'IS'
     and mih.mihcancel = 0
     and PARSE_DATE('%Y%m%d', CONCAT(CAST(mih.mihyear AS STRING), FORMAT('%02d', mih.mihmonth), FORMAT('%02d', mih.mihday))) <= CURRENT_DATE('Asia/Bangkok')
-    and not exists (select 1 from `${CfsClose2024TableRef}` as fix where main.mihVnos = fix.cfsvnosid and main.company_id = 'ag01')
+    and not exists (select 1 from `${CfsClose2024TableRef}` as fix where mih.mihVnos = fix.cfsvnosid and mih.company_id = 'ag01')
 
 ), main_bs_as_raw as (
   select 
@@ -263,7 +263,7 @@ with chq as (
         where ar_snamet in ('เงินมัดจำรับล่วงหน้า', 'ยกเลิกใบกำกับภาษี', 'ยกเลิกลดหนี้', 'ยกเลิก', 'เงินมัดจำรับล่วงหน้า 214025')
       )
     and PARSE_DATE('%Y%m%d', CONCAT(CAST(mih.mihyear AS STRING), FORMAT('%02d', mih.mihmonth), FORMAT('%02d', mih.mihday))) <= CURRENT_DATE('Asia/Bangkok')
-    and not exists (select 1 from `${CfsClose2024TableRef}` as fix where main.mihVnos = fix.cfsvnosid and main.company_id = 'ag01')
+    and not exists (select 1 from `${CfsClose2024TableRef}` as fix where mih.mihVnos = fix.cfsvnosid and mih.company_id = 'ag01')
 
 ), main_bs_as as (
   select 
