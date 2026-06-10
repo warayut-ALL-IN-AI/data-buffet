@@ -237,7 +237,7 @@ with chq as (
   select 
     mih.company_id as CompanyID, 
     mih.mihVnos as InvoiceNo,
-    mil.milLinkVcno as InvoiceRef,
+    IF(skip_inv.cfsvnosid is null, mil.milLinkVcno, null) as InvoiceRef,
     mih.mihType as InvoiceType,
     mih.mihCus as CustomerID,
     PARSE_DATE('%Y%m%d', CONCAT(mih.mihYear, FORMAT("%02d", mih.mihMonth),  mih.mihDay)) as InvoiceDate, 
@@ -256,6 +256,9 @@ with chq as (
     and mih.mihYear = mil.milYear
     and mih.mihVnos = mil.milVnos
     and mih.mihCus = mil.milCus
+  left join `${CfsClose2024TableRef}` as skip_inv
+    on mih.company_id = 'ag01'
+    and mil.milLinkVcno = skip_inv.cfsvnosid
   where mih.mihType in ('BS', 'AS')
     and (mih.company_id, mih.mihStatus) not in (
         select DISTINCT AS STRUCT company_id, ar_scode
