@@ -48,7 +48,8 @@ BEGIN
       dim_com.CompanySK,
       ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
       ${databuffet.functionData.cleanString("t1.ChannelCostID")} AS ChannelCostID,
-      ${databuffet.functionData.cleanString("t1.ChannelCostName")} AS ChannelCostName
+      ${databuffet.functionData.cleanString("t1.ChannelCostName")} AS ChannelCostName,
+      t1.id AS MdsId
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
@@ -67,7 +68,8 @@ BEGIN
 
   WHEN MATCHED THEN
     UPDATE SET
-      T.ChannelCostName = S.ChannelCostName
+      T.ChannelCostName = S.ChannelCostName,
+      T.MdsId = S.MdsId
 
   WHEN NOT MATCHED THEN
     INSERT (
@@ -75,13 +77,15 @@ BEGIN
       CompanySK,
       companyID,
       ChannelCostID,
-      ChannelCostName
+      ChannelCostName,
+      MdsId
     )
     VALUES (
       S.ChannelCostSK,
       S.CompanySK,
       S.companyID,
       S.ChannelCostID,
-      S.ChannelCostName
+      S.ChannelCostName,
+      S.MdsId
     );
 END;
