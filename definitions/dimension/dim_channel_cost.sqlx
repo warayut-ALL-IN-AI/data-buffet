@@ -36,6 +36,7 @@ BEGIN
   USING (
     SELECT
       (CASE
+        WHEN t3.ChannelCostSK IS NOT NULL THEN t3.ChannelCostSK
         WHEN t2.ChannelCostSK IS NOT NULL THEN t2.ChannelCostSK
         ELSE max_sk + ROW_NUMBER() OVER(
           PARTITION BY (CASE WHEN t2.ChannelCostSK IS NULL THEN 1 ELSE 0 END)
@@ -54,6 +55,8 @@ BEGIN
     LEFT JOIN `${DimChannelCostTableRef}` AS t2
       ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
       AND ${databuffet.functionData.cleanString("t1.ChannelCostID")} = t2.ChannelCostID
+    LEFT JOIN `${DimChannelCostTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsId
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),

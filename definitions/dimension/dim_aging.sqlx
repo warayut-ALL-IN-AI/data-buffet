@@ -178,7 +178,7 @@ with chq as (
     SUM( IF(e_mir.mirvnos is not null, e_mir.mirsum, IFNULL(mir.mirsum, 0.00)) ) as mirsum,
     MIN( IF(e_mir.mirvnos is not null, e_mir.extract_date, PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday)))) ) as MinReceiveDate,
     MAX( IF(e_mir.mirvnos is not null, e_mir.extract_date, PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday)))) ) as MaxReceiveDate,
-    COUNT(DISTINCT IF(mir.miryear <= 2022 and mih.mihstatus = 7, TRUE, NULL)) as status_complete,
+    COUNT(DISTINCT IF(mir.miryear <= 2023 and exc_status.CompanyID is not null, TRUE, NULL)) as status_complete,
   from ${ref(databuffet.VALIDATED_MAC5, "mir")} as mir
   inner join ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
     on mir.company_id = mih.company_id
@@ -189,16 +189,15 @@ with chq as (
     on mir.company_id = e_mir.company_id
     and mir.mirvnos = e_mir.mirvnos
     and mir.mirbinvno = e_mir.mirbinvno
+left join `${DimStatusNotReceiveTableRef}` as exc_status
+    on mir.company_id = exc_status.CompanyID
+    and mih.mihstatus = exc_status.StatusID
   where mir.mirtype = 'RS'
     and (
-      (mir.miryear <= 2022 and mih.mihstatus = 7)      
+      -- (mir.miryear <= 2022 and mih.mihstatus = 7)
+      ( mir.miryear <= 2023 and exc_status.CompanyID is not null )
       or 
-      not exists (
-        select 1
-        from `${DimStatusNotReceiveTableRef}` as exc_status
-        where mir.company_id = exc_status.CompanyID
-        and mih.mihstatus = exc_status.StatusID
-      )
+      ( exc_status.CompanyID is null )
     )
     and PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday))) <= CURRENT_DATE('Asia/Bangkok')
   group by 1,2
