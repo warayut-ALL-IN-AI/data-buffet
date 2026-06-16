@@ -5,12 +5,12 @@ config {
 }
 
 js {
-    const DimReportTable = {
+    const DimAgingRangTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
         name: name(),
     };
-    const DimReportTableRef = `${DimReportTable.database}.${DimReportTable.schema}.${DimReportTable.name}`;
+    const DimAgingRangTableRef = `${DimAgingRangTable.database}.${DimAgingRangTable.schema}.${DimAgingRangTable.name}`;
 
     const DimCompanyTable = {
         database: databuffet.DATABASE,
@@ -22,7 +22,7 @@ js {
     const MdsSourceTable = {
         database: databuffet.DATABASE,
         schema: "mds_dataset",
-        name: "mds_data_sales_report_group_master",
+        name: "mds_data_aging_rang_master",
     };
     const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
 }
@@ -30,40 +30,36 @@ js {
 BEGIN
   DECLARE max_sk INT64 DEFAULT 0;
 
-  SET max_sk = (SELECT IFNULL(MAX(ReportSK), 0) FROM `${DimReportTableRef}`);
+  SET max_sk = (SELECT IFNULL(MAX(AgingRangSK), 0) FROM `${DimAgingRangTableRef}`);
 
-  MERGE `${DimReportTableRef}` AS T
+  MERGE `${DimAgingRangTableRef}` AS T
   USING (
     SELECT
       (CASE
-        WHEN t3.ReportSK IS NOT NULL THEN t3.ReportSK
-        WHEN t2.ReportSK IS NOT NULL THEN t2.ReportSK
+        WHEN t3.AgingRangSK IS NOT NULL THEN t3.AgingRangSK
+        WHEN t2.AgingRangSK IS NOT NULL THEN t2.AgingRangSK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.ReportSK IS NULL AND t3.ReportSK IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.AgingRangSK IS NULL AND t3.AgingRangSK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
             ${databuffet.functionData.cleanString("t1.companyID")},
-            ${databuffet.functionData.cleanString("t1.ReportID")},
-            ${databuffet.functionData.cleanString("t1.RegionID")},
-            ${databuffet.functionData.cleanString("t1.MarketingGroupID")}
+            ${databuffet.functionData.castInt64("t1.AgingDayMin")},
+            ${databuffet.functionData.castInt64("t1.AgingDayMax")}
         )
-      END) AS ReportSK,
+      END) AS AgingRangSK,
       dim_com.CompanySK,
       ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
-      ${databuffet.functionData.cleanString("t1.ReportID")} AS ReportID,
-      ${databuffet.functionData.cleanString("t1.RegionID")} AS RegionID,
-      ${databuffet.functionData.cleanString("t1.MarketingGroupID")} AS MarketingGroupID,
-      ${databuffet.functionData.cleanString("t1.ReportName1")} AS ReportName1,
-      ${databuffet.functionData.cleanString("t1.ReportName2")} AS ReportName2,
+      ${databuffet.functionData.castInt64("t1.AgingDayMin")} AS AgingDayMin,
+      ${databuffet.functionData.castInt64("t1.AgingDayMax")} AS AgingDayMax,
+      ${databuffet.functionData.cleanString("t1.ReportName")} AS ReportName,
       ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
-    LEFT JOIN `${DimReportTableRef}` AS t2
+    LEFT JOIN `${DimAgingRangTableRef}` AS t2
       ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
-      AND ${databuffet.functionData.cleanString("t1.ReportID")} = t2.ReportID
-      AND ${databuffet.functionData.cleanString("t1.RegionID")} = t2.RegionID
-      AND ${databuffet.functionData.cleanString("t1.MarketingGroupID")} = t2.MarketingGroupID
-    LEFT JOIN `${DimReportTableRef}` AS t3
+      AND ${databuffet.functionData.castInt64("t1.AgingDayMin")} = t2.AgingDayMin
+      AND ${databuffet.functionData.castInt64("t1.AgingDayMax")} = t2.AgingDayMax
+    LEFT JOIN `${DimAgingRangTableRef}` AS t3
       ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
@@ -71,35 +67,32 @@ BEGIN
             INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
           )
   ) AS S
-  ON T.ReportSK = S.ReportSK
+  ON T.AgingRangSK = S.AgingRangSK
 
   WHEN MATCHED THEN
     UPDATE SET
-      T.ReportName1 = S.ReportName1,
-      T.ReportName2 = S.ReportName2,
+      T.AgingDayMin = S.AgingDayMin,
+      T.AgingDayMax = S.AgingDayMax,
+      T.ReportName = S.ReportName,
       T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
-      ReportSK,
+      AgingRangSK,
       CompanySK,
       companyID,
-      ReportID,
-      RegionID,
-      MarketingGroupID,
-      ReportName1,
-      ReportName2,
+      AgingDayMin,
+      AgingDayMax,
+      ReportName,
       MdsID
     )
     VALUES (
-      S.ReportSK,
+      S.AgingRangSK,
       S.CompanySK,
       S.companyID,
-      S.ReportID,
-      S.RegionID,
-      S.MarketingGroupID,
-      S.ReportName1,
-      S.ReportName2,
+      S.AgingDayMin,
+      S.AgingDayMax,
+      S.ReportName,
       S.MdsID
     );
 END;

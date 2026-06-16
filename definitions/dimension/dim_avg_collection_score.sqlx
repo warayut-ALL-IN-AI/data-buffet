@@ -1,0 +1,110 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    const DimAvgCollectionScoreTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimAvgCollectionScoreTableRef = `${DimAvgCollectionScoreTable.database}.${DimAvgCollectionScoreTable.schema}.${DimAvgCollectionScoreTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_custgrade_score_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(AvgCollectSK), 0) FROM `${DimAvgCollectionScoreTableRef}`);
+
+  MERGE `${DimAvgCollectionScoreTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t3.AvgCollectSK IS NOT NULL THEN t3.AvgCollectSK
+        WHEN t2.AvgCollectSK IS NOT NULL THEN t2.AvgCollectSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.AvgCollectSK IS NULL AND t3.AvgCollectSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString("t1.companyID")},
+            ${databuffet.functionData.castFloat64("t1.AvgCollectiondayMin")},
+            ${databuffet.functionData.castFloat64("t1.AvgCollectiondayMax")},
+            t1.StartDate,
+            t1.EndDate
+        )
+      END) AS AvgCollectSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+      ${databuffet.functionData.castFloat64("t1.AvgCollectiondayMin")} AS AvgCollectiondayMin,
+      ${databuffet.functionData.castFloat64("t1.AvgCollectiondayMax")} AS AvgCollectiondayMax,
+      ${databuffet.functionData.castFloat64("t1.Score")} AS Score,
+      t1.StartDate,
+      t1.EndDate,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+    LEFT JOIN `${DimAvgCollectionScoreTableRef}` AS t2
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
+      AND ${databuffet.functionData.castFloat64("t1.AvgCollectiondayMin")} = t2.AvgCollectiondayMin
+      AND ${databuffet.functionData.castFloat64("t1.AvgCollectiondayMax")} = t2.AvgCollectiondayMax
+      AND t1.StartDate = t2.StartDate
+      AND t1.EndDate = t2.EndDate
+    LEFT JOIN `${DimAvgCollectionScoreTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.AvgCollectSK = S.AvgCollectSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.AvgCollectiondayMin = S.AvgCollectiondayMin,
+      T.AvgCollectiondayMax = S.AvgCollectiondayMax,
+      T.Score = S.Score,
+      T.StartDate = S.StartDate,
+      T.EndDate = S.EndDate,
+      T.MdsID = S.MdsID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      AvgCollectSK, 
+      CompanySK, 
+      CompanyID, 
+      AvgCollectiondayMin, 
+      AvgCollectiondayMax, 
+      Score, 
+      StartDate, 
+      EndDate,
+      MdsID
+    )
+    VALUES (
+      S.AvgCollectSK, 
+      S.CompanySK, 
+      S.CompanyID, 
+      S.AvgCollectiondayMin, 
+      S.AvgCollectiondayMax, 
+      S.Score, 
+      S.StartDate, 
+      S.EndDate,
+      S.MdsID
+    );
+END;

@@ -1,0 +1,58 @@
+config {
+    type: "table",
+    schema: databuffet.TAG_DIM_DAILY,
+    dependencies: [ 
+                    "dim_company", "dim_department"
+                ],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
+    uniqueKey: ["DepartmentSK"],
+    bigquery: {
+        clusterBy: ["DepartmentSK"]
+    },
+}
+
+js {
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const DimDepartmentTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_department",
+    };
+    const DimDepartmentTableRef = `${DimDepartmentTable.database}.${DimDepartmentTable.schema}.${DimDepartmentTable.name}`;
+
+}
+
+SELECT
+    ROW_NUMBER() OVER (ORDER BY dim_com.CompanySK, t1.DepartmentID) AS DepartmentSK,
+    NULL AS SectionSK,
+    NULL AS SectionManagerSK,
+    NULL AS RegionSK,
+    NULL AS RegionManagerSK,
+    NULL AS DirectorSK,
+    dim_com.CompanySK,
+    dim_com.companyID,
+    t1.RegionID,
+    t1.SectionID,
+    t1.DepartmentID,
+    t1.DepartmentName,
+  FROM (
+    SELECT
+      *
+    FROM `${DimDepartmentTableRef}`
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY CompanyID, DepartmentID ORDER BY StartDate DESC, EndDate DESC) = 1
+  ) as t1
+  LEFT JOIN `${DimCompanyTableRef}` as dim_com
+    on t1.CompanyID = dim_com.CompanyID
+
+
+pre_operations {
+}
+
+post_operations {
+}

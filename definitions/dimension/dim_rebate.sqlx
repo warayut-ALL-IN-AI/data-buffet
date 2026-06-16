@@ -37,9 +37,10 @@ BEGIN
   USING (
     SELECT
       (CASE
+        WHEN t3.RebateSK IS NOT NULL THEN t3.RebateSK
         WHEN t2.RebateSK IS NOT NULL THEN t2.RebateSK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.RebateSK IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.RebateSK IS NULL AND t3.RebateSK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
             ${databuffet.functionData.cleanString('t1.companyID')},
             ${databuffet.functionData.cleanString('t1.rebate')},
@@ -53,7 +54,8 @@ BEGIN
       ${databuffet.functionData.cleanString('t1.status')}     AS status,
       ${databuffet.functionData.cleanString('t1.type')}       AS type,
       ${databuffet.functionData.cleanString('t1.salesExc')}   AS salesExc,
-      ${databuffet.functionData.cleanString('t1.accExc')}     AS accExc
+      ${databuffet.functionData.cleanString('t1.accExc')}     AS accExc,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsRebateTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString('t1.companyID')} = dim_com.companyID
@@ -61,6 +63,8 @@ BEGIN
       ON  ${databuffet.functionData.cleanString('t1.companyID')} = t2.companyID
       AND ${databuffet.functionData.cleanString('t1.rebate')}    = t2.rebate
       AND ${databuffet.functionData.cleanString('t1.status')}    = t2.status
+    LEFT JOIN `${DimRebateTableRef}` AS t3
+      ON  ${databuffet.functionData.cleanString('t1.id')} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),
@@ -74,15 +78,20 @@ BEGIN
       T.rebateName = S.rebateName,
       T.type       = S.type,
       T.salesExc   = S.salesExc,
-      T.accExc     = S.accExc
+      T.accExc     = S.accExc,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
       RebateSK, CompanySK,
-      companyID, rebate, rebateName, status, type, salesExc, accExc
+      companyID, rebate, rebateName, 
+      status, type, salesExc, accExc, 
+      MdsID
     )
     VALUES (
       S.RebateSK, S.CompanySK,
-      S.companyID, S.rebate, S.rebateName, S.status, S.type, S.salesExc, S.accExc
+      S.companyID, S.rebate, S.rebateName, 
+      S.status, S.type, S.salesExc, S.accExc, 
+      S.MdsID
     );
 END;

@@ -36,9 +36,10 @@ BEGIN
   USING (
     SELECT
       (CASE
+        WHEN t3.CollectSK IS NOT NULL THEN t3.CollectSK
         WHEN t2.CollectSK IS NOT NULL THEN t2.CollectSK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.CollectSK IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.CollectSK IS NULL AND t3.CollectSK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
             ${databuffet.functionData.cleanString("t1.CompanyID")},
             ${databuffet.functionData.castInt64("t1.Year")},
@@ -54,7 +55,8 @@ BEGIN
       ${databuffet.functionData.cleanString("t1.CustomerName")} AS CustomerName,
       ${databuffet.functionData.cleanString("t1.Actions")} AS Actions,
       ${databuffet.functionData.cleanString("t1.Justification")} AS Justification,
-      ${databuffet.functionData.cleanString("t1.Responsible")} AS Responsible
+      ${databuffet.functionData.cleanString("t1.Responsible")} AS Responsible,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.CompanyID")} = dim_com.companyID
@@ -63,6 +65,8 @@ BEGIN
       AND ${databuffet.functionData.castInt64("t1.Year")} = t2.Year
       AND ${databuffet.functionData.castInt64("t1.Month")} = t2.Month
       AND ${databuffet.functionData.castInt64("t1.CustomerID")} = t2.CustomerID
+    LEFT JOIN `${DimCollectionStatusTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),

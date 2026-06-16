@@ -36,12 +36,14 @@ BEGIN
   USING (
     SELECT
       (CASE
+        WHEN t3.GuaranteeSK IS NOT NULL THEN t3.GuaranteeSK
         WHEN t2.GuaranteeSK IS NOT NULL THEN t2.GuaranteeSK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.GuaranteeSK IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.GuaranteeSK IS NULL AND t3.GuaranteeSK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
             ${databuffet.functionData.cleanString("t1.CompanyID")},
-            ${databuffet.functionData.cleanString("t1.CustomerCode")}
+            ${databuffet.functionData.cleanString("t1.CustomerCode")},
+            ${databuffet.functionData.cleanString("t1.BankName")}
         )
       END) AS GuaranteeSK,
       dim_com.CompanySK,
@@ -56,13 +58,17 @@ BEGIN
       ${databuffet.functionData.cleanString("t1.Remarks")} AS Remarks,
       ${databuffet.functionData.cleanString("t1.Address")} AS Address,
       ${databuffet.functionData.cleanString("t1.PhoneNumber")} AS PhoneNumber,
-      ${databuffet.functionData.cleanString("t1.FAX")} AS FAX
+      ${databuffet.functionData.cleanString("t1.FAX")} AS FAX,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.CompanyID")} = dim_com.companyID
     LEFT JOIN `${DimGuaranteeTableRef}` AS t2
       ON ${databuffet.functionData.cleanString("t1.CompanyID")} = t2.CompanyID
       AND ${databuffet.functionData.cleanString("t1.CustomerCode")} = t2.CustomerCode
+      AND IFNULL(${databuffet.functionData.cleanString("t1.BankName")}, '') = IFNULL(t2.CustomerCode, '')
+    LEFT JOIN `${DimGuaranteeTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),
@@ -82,7 +88,8 @@ BEGIN
       T.Remarks = S.Remarks,
       T.Address = S.Address,
       T.PhoneNumber = S.PhoneNumber,
-      T.FAX = S.FAX
+      T.FAX = S.FAX,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
@@ -99,7 +106,8 @@ BEGIN
       Remarks,
       Address,
       PhoneNumber,
-      FAX
+      FAX,
+      MdsID
     )
     VALUES (
       S.GuaranteeSK,
@@ -115,6 +123,7 @@ BEGIN
       S.Remarks,
       S.Address,
       S.PhoneNumber,
-      S.FAX
+      S.FAX,
+      S.MdsID
     );
 END;

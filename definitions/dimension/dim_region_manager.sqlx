@@ -1,0 +1,124 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    const DimRegionManagerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimRegionManagerTableRef = `${DimRegionManagerTable.database}.${DimRegionManagerTable.schema}.${DimRegionManagerTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_sales_region_manager_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(RegionManagerSK), 0) FROM `${DimRegionManagerTableRef}`);
+
+  MERGE `${DimRegionManagerTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t3.RegionManagerSK IS NOT NULL THEN t3.RegionManagerSK
+        WHEN t2.RegionManagerSK IS NOT NULL THEN t2.RegionManagerSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.RegionManagerSK IS NULL AND t3.RegionManagerSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString("t1.companyID")},
+            ${databuffet.functionData.cleanString("t1.RegionID")},
+            ${databuffet.functionData.cleanString("t1.SubRegionID")},
+            t1.StartDate,
+            t1.EndDate
+        )
+      END) AS RegionManagerSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+      ${databuffet.functionData.cleanString("t1.RegionID")} AS RegionID,
+      ${databuffet.functionData.cleanString("t1.SubRegionID")} AS SubRegionID,
+      ${databuffet.functionData.cleanString("t1.RegionName")} AS RegionName,
+      ${databuffet.functionData.cleanString("t1.RegionManagerEmployeeID")} AS RegionManagerEmployeeID,
+      ${databuffet.functionData.cleanString("t1.RegionManagerName")} AS RegionManagerName,
+      ${databuffet.functionData.cleanString("t1.RegionManagerSurname")} AS RegionManagerSurname,
+      ${databuffet.functionData.cleanString("t1.RegionManagerNickname")} AS RegionManagerNickname,
+      t1.StartDate AS StartDate,
+      t1.EndDate AS EndDate,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+    LEFT JOIN `${DimRegionManagerTableRef}` AS t2
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
+      AND ${databuffet.functionData.cleanString("t1.RegionID")} = t2.RegionID
+      AND ${databuffet.functionData.cleanString("t1.SubRegionID")} = t2.SubRegionID
+      AND t1.StartDate = t2.StartDate
+      AND t1.EndDate = t2.EndDate
+    LEFT JOIN `${DimRegionManagerTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.RegionManagerSK = S.RegionManagerSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.RegionName = S.RegionName,
+      T.RegionManagerEmployeeID = S.RegionManagerEmployeeID,
+      T.RegionManagerName = S.RegionManagerName,
+      T.RegionManagerSurname = S.RegionManagerSurname,
+      T.RegionManagerNickname = S.RegionManagerNickname,
+      T.StartDate = S.StartDate,
+      T.EndDate = S.EndDate,
+      T.MdsID = S.MdsID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      RegionManagerSK,
+      CompanySK,
+      companyID,
+      RegionID,
+      SubRegionID,
+      RegionName,
+      RegionManagerEmployeeID,
+      RegionManagerName,
+      RegionManagerSurname,
+      RegionManagerNickname,
+      StartDate,
+      EndDate,
+      MdsID
+    )
+    VALUES (
+      S.RegionManagerSK,
+      S.CompanySK,
+      S.companyID,
+      S.RegionID,
+      S.SubRegionID,
+      S.RegionName,
+      S.RegionManagerEmployeeID,
+      S.RegionManagerName,
+      S.RegionManagerSurname,
+      S.RegionManagerNickname,
+      S.StartDate,
+      S.EndDate,
+      S.MdsID
+    );
+END;

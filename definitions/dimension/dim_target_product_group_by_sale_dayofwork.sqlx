@@ -1,0 +1,204 @@
+config {
+    type: "table",
+    schema: databuffet.TAG_DIM_DAILY,
+    dependencies: [ 
+                    "dim_sale_representative", "dim_department",
+                    "dim_region", "dim_region_manager",
+                    "dim_section", "dim_section_manager",
+                    "dim_director", "dim_calendar",
+                    "dim_rate_target", "dim_target_product_group",
+                    "dim_target_product_group_by_sale", 
+
+                ],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
+    uniqueKey: ["TargetBySaleDayofworkSK"],
+    bigquery: {
+        clusterBy: ["TargetBySaleDayofworkSK"]
+    },
+}
+
+js {
+    const DimSourceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimSourceTableRef = `${DimSourceTable.database}.${DimSourceTable.schema}.${DimSourceTable.name}`;
+
+    const DimCalendarTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_calendar",
+    };
+    const DimCalendarTableRef = `${DimCalendarTable.database}.${DimCalendarTable.schema}.${DimCalendarTable.name}`;
+
+    const DimTargetProductGroupTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_target_product_group_by_sale",
+    };
+    const DimTargetProductGroupTableRef = `${DimTargetProductGroupTable.database}.${DimTargetProductGroupTable.schema}.${DimTargetProductGroupTable.name}`;
+
+    const DimSaleRepTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative",
+    };
+    const DimSaleRepTableRef = `${DimSaleRepTable.database}.${DimSaleRepTable.schema}.${DimSaleRepTable.name}`;
+
+    const DimDepartmentTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_department",
+    };
+    const DimDepartmentTableRef = `${DimDepartmentTable.database}.${DimDepartmentTable.schema}.${DimDepartmentTable.name}`;
+
+    const DimRegionTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region",
+    };
+    const DimRegionTableRef = `${DimRegionTable.database}.${DimRegionTable.schema}.${DimRegionTable.name}`;
+
+    const DimRegionManagerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region_manager",
+    };
+    const DimRegionManagerTableRef = `${DimRegionManagerTable.database}.${DimRegionManagerTable.schema}.${DimRegionManagerTable.name}`;
+
+    const DimSectionTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section",
+    };
+    const DimSectionTableRef = `${DimSectionTable.database}.${DimSectionTable.schema}.${DimSectionTable.name}`;
+
+    const DimSectionManagerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_manager",
+    };
+    const DimSectionManagerTableRef = `${DimSectionManagerTable.database}.${DimSectionManagerTable.schema}.${DimSectionManagerTable.name}`;
+
+    const DimDirectorTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_director",
+    };
+    const DimDirectorTableRef = `${DimDirectorTable.database}.${DimDirectorTable.schema}.${DimDirectorTable.name}`;
+
+}
+
+with tab_dm as (
+  select Date, Year, MonthNumber, Day, HolidayFlag
+  from `${DimCalendarTableRef}`
+
+), tab_sum_dm as (
+  select Year, MonthNumber, count(distinct Day) as total_day
+  from tab_dm
+  where HolidayFlag = 'No'
+  group by 1,2
+
+), final as (
+  SELECT 
+    dm.Date,
+    tbc.*, 
+    dm.Day, 
+    sum_dm.total_day,
+    (CASE
+      WHEN HolidayFlag = 'Yes' THEN 0.0
+      ELSE TRUNC((tbc.CalAmt / sum_dm.total_day), 10)
+    END) as Amt_New,
+    (CASE
+      WHEN HolidayFlag = 'Yes' THEN 0
+      ELSE TRUNC((tbc.CalQty / sum_dm.total_day), 10)
+    END) as Qty_New,
+  FROM `${DimTargetProductGroupTableRef}` as tbc
+  LEFT JOIN tab_dm as dm
+    ON tbc.Year = dm.Year
+      and FORMAT('%02d', tbc.Month) = dm.MonthNumber
+  LEFT JOIN tab_sum_dm as sum_dm
+    ON sum_dm.YEAR = dm.YEAR
+      and sum_dm.MonthNumber = dm.MonthNumber
+
+), final2 as (
+  SELECT DISTINCT
+    salerep.SaleRepSK,
+    dep.DepartmentSK,
+    reg.RegionSK,
+    reg_m.RegionManagerSK,
+    dir.DirectorSK,
+    sec.SectionSK,
+    sec_m.SectionManagerSK,
+    final.*
+    -- count(1)
+  FROM final
+  left join `${DimSaleRepTableRef}` as salerep
+    on final.Date between salerep.StartDate and salerep.EndDate
+      and final.employeeid = salerep.employeeid
+      and final.DepartmentID = salerep.DepartmentID
+      and final.CompanySK = salerep.CompanySK
+
+  left join `${DimDepartmentTableRef}` as dep
+    on final.Date between dep.StartDate and dep.EndDate
+      and salerep.DepartmentID = dep.DepartmentID
+      and salerep.CompanySK = dep.CompanySK
+
+  left join `${DimRegionTableRef}` as reg
+    on final.Date between reg.StartDate and reg.EndDate 
+      and (CASE 
+        WHEN reg.RegionID != reg.SubRegionID
+          THEN dep.RegionID = reg.RegionID and dep.SectionID = reg.SubRegionID
+        ELSE dep.RegionID = reg.RegionID
+      END)
+      and dep.CompanySK = reg.CompanySK
+
+  left join `${DimDirectorTableRef}` as dir
+    on final.Date between dir.StartDate and dir.EndDate
+      and reg.DirectorID = dir.DirectorID
+      and reg.CompanySK = dir.CompanySK
+
+  left join `${DimSectionTableRef}` as sec
+    on final.Date between sec.StartDate and sec.EndDate 
+      and dep.SectionID = sec.SectionID
+      and dep.CompanySK = sec.CompanySK
+
+  left join `${DimRegionManagerTableRef}` as reg_m
+    on final.Date between reg_m.StartDate and reg_m.EndDate 
+      and reg.RegionID = reg_m.RegionID
+      and reg.SubRegionID = reg_m.SubRegionID
+      and reg.CompanySK = reg_m.CompanySK
+      
+      -- and (CASE 
+      --   WHEN reg_m.RegionID != reg_m.SubRegionID
+      --     THEN reg.RegionID = reg_m.RegionID and reg.SubRegionID = reg_m.SubRegionID
+      --   ELSE reg.RegionID = reg_m.RegionID
+      -- END)
+
+  left join `${DimSectionManagerTableRef}` as sec_m
+    on final.Date between sec_m.StartDate and sec_m.EndDate 
+      and dep.SectionID = sec_m.SectionID
+      and dep.CompanySK = sec_m.CompanySK
+    
+  -- where salerep.SaleRepSK = 42
+)
+  SELECT 
+    row_number() over(order by Year, Month, Day, TargetBySaleSK) as TargetBySaleDayofworkSK, 
+    COALESCE(final2.SaleRepSK, salerep.SaleRepSK) as SaleRepSK,
+    final2.* except(SaleRepSK)
+  FROM final2
+  
+  left join `${DimSaleRepTableRef}` as salerep
+    on final2.Date between salerep.StartDate and salerep.EndDate
+      and final2.employeeid = salerep.employeeid
+      and salerep.DepartmentID is null
+      and final2.SaleRepSK is null
+      and final2.CompanySK = salerep.CompanySK
+
+
+pre_operations {
+}
+
+post_operations {
+}

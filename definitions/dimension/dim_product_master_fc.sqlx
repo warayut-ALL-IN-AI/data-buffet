@@ -36,12 +36,13 @@ BEGIN
   USING (
     SELECT
       (CASE
+        WHEN t3.ProductMasterFcSK IS NOT NULL THEN t3.ProductMasterFcSK
         WHEN t2.ProductMasterFcSK IS NOT NULL THEN t2.ProductMasterFcSK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.ProductMasterFcSK IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.ProductMasterFcSK IS NULL AND t3.ProductMasterFcSK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
             ${databuffet.functionData.cleanString("t1.companyID")},
-            ${databuffet.functionData.cleanString("t1.ProductIDOldMac5")}
+            ${databuffet.functionData.cleanString("t1.Barcode")}
         )
       END) AS ProductMasterFcSK,
       dim_com.CompanySK,
@@ -82,13 +83,16 @@ BEGIN
       ${databuffet.functionData.cleanString("t1.UnitConversions")} AS UnitConversions,
       ${databuffet.functionData.cleanString("t1.ToUnit")} AS ToUnit,
       ${databuffet.functionData.cleanString("t1.SalesUnit")} AS SalesUnit,
-      ${databuffet.functionData.cleanString("t1.PackSize")} AS PackSize
+      ${databuffet.functionData.cleanString("t1.PackSize")} AS PackSize,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
     LEFT JOIN `${DimProductMasterFcTableRef}` AS t2
       ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
-      AND ${databuffet.functionData.cleanString("t1.ProductIDOldMac5")} = t2.ProductIDOldMac5
+      AND ${databuffet.functionData.cleanString("t1.Barcode")} = t2.ProductIDOldMac5
+    LEFT JOIN `${DimProductMasterFcTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),
@@ -134,7 +138,8 @@ BEGIN
       T.UnitConversions = S.UnitConversions,
       T.ToUnit = S.ToUnit,
       T.SalesUnit = S.SalesUnit,
-      T.PackSize = S.PackSize
+      T.PackSize = S.PackSize,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
@@ -177,7 +182,8 @@ BEGIN
       UnitConversions,
       ToUnit,
       SalesUnit,
-      PackSize
+      PackSize,
+      MdsID
     )
     VALUES (
       S.ProductMasterFcSK,
@@ -219,6 +225,7 @@ BEGIN
       S.UnitConversions,
       S.ToUnit,
       S.SalesUnit,
-      S.PackSize
+      S.PackSize,
+      S.MdsID
     );
 END;

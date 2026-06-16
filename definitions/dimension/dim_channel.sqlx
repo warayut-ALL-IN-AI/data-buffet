@@ -36,9 +36,10 @@ BEGIN
   USING (
     SELECT
       (CASE
+        WHEN t3.ChannelSK IS NOT NULL THEN t3.ChannelSK
         WHEN t2.ChannelSK IS NOT NULL THEN t2.ChannelSK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.ChannelSK IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.ChannelSK IS NULL AND t3.ChannelSK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
             ${databuffet.functionData.cleanString("t1.companyID")},
             ${databuffet.functionData.cleanString("t1.DepCode")}
@@ -68,13 +69,16 @@ BEGIN
       ${databuffet.functionData.cleanString("t1.ChannelDDepartment02")} AS ChannelDDepartment02,
       ${databuffet.functionData.cleanString("t1.ChannelDDivision03")} AS ChannelDDivision03,
       ${databuffet.functionData.cleanString("t1.ChannelDSubDivision04")} AS ChannelDSubDivision04,
-      ${databuffet.functionData.cleanString("t1.DummyChannel")} AS DummyChannel
+      ${databuffet.functionData.cleanString("t1.DummyChannel")} AS DummyChannel,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
     LEFT JOIN `${DimChannelTableRef}` AS t2
       ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
       AND ${databuffet.functionData.cleanString("t1.DepCode")} = t2.DepCode
+    LEFT JOIN `${DimChannelTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),
@@ -106,7 +110,8 @@ BEGIN
       T.ChannelDDepartment02 = S.ChannelDDepartment02,
       T.ChannelDDivision03 = S.ChannelDDivision03,
       T.ChannelDSubDivision04 = S.ChannelDSubDivision04,
-      T.DummyChannel = S.DummyChannel
+      T.DummyChannel = S.DummyChannel,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
@@ -135,7 +140,8 @@ BEGIN
       ChannelDDepartment02,
       ChannelDDivision03,
       ChannelDSubDivision04,
-      DummyChannel
+      DummyChannel,
+      MdsID
     )
     VALUES (
       S.ChannelSK,
@@ -163,6 +169,7 @@ BEGIN
       S.ChannelDDepartment02,
       S.ChannelDDivision03,
       S.ChannelDSubDivision04,
-      S.DummyChannel
+      S.DummyChannel,
+      S.MdsID
     );
 END;

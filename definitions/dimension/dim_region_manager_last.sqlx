@@ -1,0 +1,56 @@
+config {
+    type: "table",
+    schema: databuffet.TAG_DIM_DAILY,
+    dependencies: [ 
+                    "dim_company", "dim_region_manager"
+                ],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
+    uniqueKey: ["DirectorSK"],
+    bigquery: {
+        clusterBy: ["DirectorSK"]
+    },
+}
+
+js {
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const DimRegionManagerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region_manager",
+    };
+    const DimRegionManagerTableRef = `${DimRegionManagerTable.database}.${DimRegionManagerTable.schema}.${DimRegionManagerTable.name}`;
+
+}
+
+SELECT
+    ROW_NUMBER() OVER (ORDER BY dim_com.CompanySK, t1.RegionID, t1.SubRegionID) AS RegionManagerSK,
+    dim_com.CompanySK,
+    dim_com.companyID,
+    t1.RegionID,
+    t1.SubRegionID,
+    t1.RegionName,
+    t1.RegionManagerEmployeeID,
+    t1.RegionManagerName,
+    t1.RegionManagerSurname,
+    t1.RegionManagerNickname,
+  FROM (
+    SELECT
+      *
+    FROM `${DimRegionManagerTableRef}`
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY CompanyID, RegionID, SubRegionID ORDER BY StartDate DESC, EndDate DESC) = 1
+  ) as t1
+  LEFT JOIN `${DimCompanyTableRef}` as dim_com
+    on t1.CompanyID = dim_com.CompanyID
+
+
+pre_operations {
+}
+
+post_operations {
+}

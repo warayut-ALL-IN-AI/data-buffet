@@ -38,6 +38,7 @@ BEGIN
   USING (
     SELECT
       (CASE
+        WHEN t3.NotReceiveSK IS NOT NULL THEN t3.NotReceiveSK
         WHEN t2.NotReceiveSK IS NOT NULL THEN t2.NotReceiveSK
         ELSE max_sk + ROW_NUMBER() OVER(
           PARTITION BY (CASE WHEN t2.NotReceiveSK IS NULL THEN 1 ELSE 0 END)
@@ -50,13 +51,16 @@ BEGIN
       ${databuffet.functionData.cleanString("t1.CompanyID")} AS CompanyID,
       ${databuffet.functionData.castInt64("t1.StatusID")} AS StatusID,
       ${databuffet.functionData.cleanString("t1.StatusNameTH")} AS StatusNameTH,
-      ${databuffet.functionData.cleanString("t1.StatusNameENG")} AS StatusNameENG
+      ${databuffet.functionData.cleanString("t1.StatusNameENG")} AS StatusNameENG,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     -- LEFT JOIN `${DimCompanyTableRef}` AS dim_com
     --   ON ${databuffet.functionData.cleanString("t1.CompanyID")} = dim_com.companyID
     LEFT JOIN `${DimStatusNotReceiveTableRef}` AS t2
       ON ${databuffet.functionData.cleanString("t1.CompanyID")} = t2.CompanyID
       AND ${databuffet.functionData.castInt64("t1.StatusID")} = t2.StatusID
+    LEFT JOIN `${DimStatusNotReceiveTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),
@@ -68,7 +72,8 @@ BEGIN
   WHEN MATCHED THEN
     UPDATE SET
       T.StatusNameTH = S.StatusNameTH,
-      T.StatusNameENG = S.StatusNameENG
+      T.StatusNameENG = S.StatusNameENG,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
@@ -77,7 +82,8 @@ BEGIN
       CompanyID,
       StatusID,
       StatusNameTH,
-      StatusNameENG
+      StatusNameENG,
+      MdsID
     )
     VALUES (
       S.NotReceiveSK,
@@ -85,6 +91,7 @@ BEGIN
       S.CompanyID,
       S.StatusID,
       S.StatusNameTH,
-      S.StatusNameENG
+      S.StatusNameENG,
+      S.MdsID
     );
 END;

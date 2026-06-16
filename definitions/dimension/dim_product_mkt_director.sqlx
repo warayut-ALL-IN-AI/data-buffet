@@ -37,9 +37,10 @@ BEGIN
   USING (
     SELECT
       (CASE
+        WHEN t3.ProductMktDirectorSK IS NOT NULL THEN t3.ProductMktDirectorSK
         WHEN t2.ProductMktDirectorSK IS NOT NULL THEN t2.ProductMktDirectorSK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.ProductMktDirectorSK IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.ProductMktDirectorSK IS NULL AND t3.ProductMktDirectorSK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
             ${databuffet.functionData.cleanString("t1.CompanyID")},
             ${databuffet.functionData.cleanString("t1.TypeMarketingID")}
@@ -52,13 +53,16 @@ BEGIN
       ${databuffet.functionData.cleanString("t1.Name")} AS Name,
       ${databuffet.functionData.cleanString("t1.Surname")} AS Surname,
       t1.StartDate AS StartDate,
-      t1.EndDate AS EndDate
+      t1.EndDate AS EndDate,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.CompanyID")} = dim_com.companyID
     LEFT JOIN `${DimProductMktDirectorTableRef}` AS t2
       ON ${databuffet.functionData.cleanString("t1.CompanyID")} = t2.CompanyID
       AND ${databuffet.functionData.cleanString("t1.TypeMarketingID")} = t2.TypeMarketingID
+    LEFT JOIN `${DimProductMktDirectorTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),
@@ -73,7 +77,8 @@ BEGIN
       T.Name = S.Name,
       T.Surname = S.Surname,
       T.StartDate = S.StartDate,
-      T.EndDate = S.EndDate
+      T.EndDate = S.EndDate,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
@@ -85,7 +90,8 @@ BEGIN
       Name,
       Surname,
       StartDate,
-      EndDate
+      EndDate,
+      MdsID
     )
     VALUES (
       S.ProductMktDirectorSK,
@@ -96,6 +102,7 @@ BEGIN
       S.Name,
       S.Surname,
       S.StartDate,
-      S.EndDate
+      S.EndDate,
+      S.MdsID
     );
 END;

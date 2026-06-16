@@ -36,9 +36,10 @@ BEGIN
   USING (
     SELECT
       (CASE
+        WHEN t3.ChannelSaleSK IS NOT NULL THEN t3.ChannelSaleSK
         WHEN t2.ChannelSaleSK IS NOT NULL THEN t2.ChannelSaleSK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.ChannelSaleSK IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.ChannelSaleSK IS NULL AND t3.ChannelSaleSK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
             ${databuffet.functionData.cleanString("t1.companyID")},
             ${databuffet.functionData.cleanString("t1.ChannelID")}
@@ -47,13 +48,16 @@ BEGIN
       dim_com.CompanySK,
       ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
       ${databuffet.functionData.cleanString("t1.ChannelID")} AS ChannelID,
-      ${databuffet.functionData.cleanString("t1.ChannelName")} AS ChannelName
+      ${databuffet.functionData.cleanString("t1.ChannelName")} AS ChannelName,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
     LEFT JOIN `${DimChannelSalesTableRef}` AS t2
       ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
       AND ${databuffet.functionData.cleanString("t1.ChannelID")} = t2.ChannelID
+    LEFT JOIN `${DimChannelSalesTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsId
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),
@@ -64,7 +68,8 @@ BEGIN
 
   WHEN MATCHED THEN
     UPDATE SET
-      T.ChannelName = S.ChannelName
+      T.ChannelName = S.ChannelName,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
@@ -72,13 +77,15 @@ BEGIN
       CompanySK,
       companyID,
       ChannelID,
-      ChannelName
+      ChannelName,
+      MdsID
     )
     VALUES (
       S.ChannelSaleSK,
       S.CompanySK,
       S.companyID,
       S.ChannelID,
-      S.ChannelName
+      S.ChannelName,
+      S.MdsID
     );
 END;

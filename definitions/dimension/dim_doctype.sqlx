@@ -49,7 +49,8 @@ BEGIN
       ${databuffet.functionData.cleanString("t1.AccountCategory")} AS AccountCategory,
       ${databuffet.functionData.cleanString("t1.Code")} AS Code,
       ${databuffet.functionData.cleanString("t1.DescriptionEN")} AS DescriptionEN,
-      ${databuffet.functionData.cleanString("t1.DescriptionTH")} AS DescriptionTH
+      ${databuffet.functionData.cleanString("t1.DescriptionTH")} AS DescriptionTH,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
@@ -69,7 +70,8 @@ BEGIN
     UPDATE SET
       T.AccountCategory = S.AccountCategory,
       T.DescriptionEN = S.DescriptionEN,
-      T.DescriptionTH = S.DescriptionTH
+      T.DescriptionTH = S.DescriptionTH,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
@@ -79,7 +81,8 @@ BEGIN
       AccountCategory,
       Code,
       DescriptionEN,
-      DescriptionTH
+      DescriptionTH,
+      MdsID
     )
     VALUES (
       -- S.DoctypeSK,
@@ -88,6 +91,7 @@ BEGIN
       S.AccountCategory,
       S.Code,
       S.DescriptionEN,
-      S.DescriptionTH
+      S.DescriptionTH,
+      S.MdsID
     );
 END;

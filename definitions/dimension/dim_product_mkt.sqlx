@@ -36,9 +36,10 @@ BEGIN
   USING (
     SELECT
       (CASE
+        WHEN t3.ProductMktSK IS NOT NULL THEN t3.ProductMktSK
         WHEN t2.ProductMktSK IS NOT NULL THEN t2.ProductMktSK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.ProductMktSK IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.ProductMktSK IS NULL AND t3.ProductMktSK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
             ${databuffet.functionData.cleanString("t1.CompanyID")},
             ${databuffet.functionData.cleanString("t1.TypeMarketingID")},
@@ -56,7 +57,8 @@ BEGIN
       ${databuffet.functionData.cleanString("t1.SubMarketingID")} AS SubMarketingID,
       ${databuffet.functionData.cleanString("t1.SubMarketing")} AS SubMarketing,
       ${databuffet.functionData.cleanString("t1.SegmentID")} AS SegmentID,
-      ${databuffet.functionData.cleanString("t1.Segment")} AS Segment
+      ${databuffet.functionData.cleanString("t1.Segment")} AS Segment,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.CompanyID")} = dim_com.companyID
@@ -66,6 +68,8 @@ BEGIN
       AND ${databuffet.functionData.cleanString("t1.MarketingGroupID")} = t2.MarketingGroupID
       AND ${databuffet.functionData.cleanString("t1.SubMarketingID")} = t2.SubMarketingID
       AND ${databuffet.functionData.cleanString("t1.SegmentID")} = t2.SegmentID
+    LEFT JOIN `${DimProductMktTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),
@@ -79,7 +83,8 @@ BEGIN
       T.TypeMarketing = S.TypeMarketing,
       T.MarketingGroup = S.MarketingGroup,
       T.SubMarketing = S.SubMarketing,
-      T.Segment = S.Segment
+      T.Segment = S.Segment,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
@@ -93,7 +98,8 @@ BEGIN
       SubMarketingID,
       SubMarketing,
       SegmentID,
-      Segment
+      Segment,
+      MdsID
     )
     VALUES (
       S.ProductMktSK,
@@ -106,6 +112,7 @@ BEGIN
       S.SubMarketingID,
       S.SubMarketing,
       S.SegmentID,
-      S.Segment
+      S.Segment,
+      S.MdsID
     );
 END;

@@ -1,6 +1,15 @@
 config {
   type: "operations",
-  dependencies: ["curated_mih", "curated_mil", "dim_product_master", "dim_customer", "dim_sale_representative", "dim_sale_representative_last"],
+  dependencies: [
+                  "curated_mih", "curated_mil", "dim_product_master", "dim_payment",
+                  "dim_customer", "dim_cost_stk", "dim_cost_group", "dim_channel",
+                  "dim_change_district", "dim_channel_cost",
+                  "dim_stk_mkt", "dim_product_mkt",
+                  "dim_target_product_group_by_sale_dayofwork",
+                  "dim_sale_representative", "dim_department", "dim_director",
+                  "dim_region", "dim_region_manager", 
+                  "dim_section", "dim_section_manager"                  
+                ],
   tags: [databuffet.TAG_FACT_DAILY],
 }
 

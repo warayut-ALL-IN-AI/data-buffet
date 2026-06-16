@@ -36,9 +36,10 @@ BEGIN
   USING (
     SELECT
       (CASE
+        WHEN t3.PaymentSK IS NOT NULL THEN t3.PaymentSK
         WHEN t2.PaymentSK IS NOT NULL THEN t2.PaymentSK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.PaymentSK IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.PaymentSK IS NULL AND t3.PaymentSK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
             ${databuffet.functionData.cleanString("t1.companyID")},
             ${databuffet.functionData.cleanString("t1.CodeMemo")}
@@ -51,13 +52,16 @@ BEGIN
       ${databuffet.functionData.cleanString("t1.PaymentName")} AS PaymentName,
       ${databuffet.functionData.cleanString("t1.PaymentMethodEN")} AS PaymentMethodEN,
       ${databuffet.functionData.cleanString("t1.PaymentMethodTH")} AS PaymentMethodTH,
-      ${databuffet.functionData.cleanString("t1.PaymentType")} AS PaymentType
+      ${databuffet.functionData.cleanString("t1.PaymentType")} AS PaymentType,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
     LEFT JOIN `${DimPaymentTableRef}` AS t2
       ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
       AND ${databuffet.functionData.cleanString("t1.CodeMemo")} = t2.CodeMemo
+    LEFT JOIN `${DimPaymentTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),
@@ -72,7 +76,8 @@ BEGIN
       T.PaymentName = S.PaymentName,
       T.PaymentMethodEN = S.PaymentMethodEN,
       T.PaymentMethodTH = S.PaymentMethodTH,
-      T.PaymentType = S.PaymentType
+      T.PaymentType = S.PaymentType,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
@@ -84,7 +89,8 @@ BEGIN
       PaymentName,
       PaymentMethodEN,
       PaymentMethodTH,
-      PaymentType
+      PaymentType,
+      MdsID
     )
     VALUES (
       S.PaymentSK,
@@ -95,6 +101,7 @@ BEGIN
       S.PaymentName,
       S.PaymentMethodEN,
       S.PaymentMethodTH,
-      S.PaymentType
+      S.PaymentType,
+      S.MdsID
     );
 END;

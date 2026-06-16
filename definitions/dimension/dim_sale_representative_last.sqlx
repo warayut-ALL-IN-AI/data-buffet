@@ -1,18 +1,24 @@
 config {
-  type: "operations",
-  dependencies: ["dim_company"],
-  tags: [databuffet.TAG_DIM_DAILY],
-  hasOutput: true
+    type: "table",
+    schema: databuffet.TAG_DIM_DAILY,
+    dependencies: [ 
+                    "dim_company", "dim_sale_representative"
+                  ],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
+    uniqueKey: ["SaleRepSK"],
+    bigquery: {
+        clusterBy: ["SaleRepSK"]
+    },
 }
 
 js {
-    // Define table references
     const DimSaleRepLastTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
         name: name(),
     };
     const DimSaleRepLastTableRef = `${DimSaleRepLastTable.database}.${DimSaleRepLastTable.schema}.${DimSaleRepLastTable.name}`;
+
 
     const DimCompanyTable = {
         database: databuffet.DATABASE,
@@ -21,8 +27,50 @@ js {
     };
     const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
 
+    const DimSaleRepTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative",
+    };
+    const DimSaleRepTableRef = `${DimSaleRepTable.database}.${DimSaleRepTable.schema}.${DimSaleRepTable.name}`;
+
 }
 
+SELECT
+    ROW_NUMBER() OVER (ORDER BY dim_com.CompanySK, t1.DepartmentID, t1.EmployeeID, t1.DepCode, t1.CostChannelID, t1.ProvinceID) AS SaleRepSK,
+    NULL AS DepartmentSK,
+    NULL AS SectionSK,
+    NULL AS SectionManagerSK,
+    NULL AS RegionSK,
+    NULL AS RegionManagerSK,
+    NULL AS SaleRepSK,
+    dim_com.CompanySK,
+    dim_com.companyID,
+
+    t1.DepartmentID,
+    t1.EmployeeID,
+    t1.EmployeeName,
+    t1.EmployeeSurname,
+    t1.EmployeeNickname,
+    t1.DepCode,
+    t1.CostChannelID,
+    t1.ProvinceID,
+    t1.ChangeSectionFlag,
+    t1.CustomerFlag
+  FROM (
+    SELECT
+      *
+    FROM `${DimSaleRepTableRef}`
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY CompanyID, DepartmentID, EmployeeID, DepCode, CostChannelID, ProvinceID ORDER BY StartDate DESC, EndDate DESC) = 1
+  ) as t1
+  LEFT JOIN `${DimCompanyTableRef}` as dim_com
+    on t1.CompanyID = dim_com.CompanyID
+
+
+pre_operations {
+}
+
+post_operations {
 BEGIN
   DECLARE max_sk INT64 DEFAULT 0;
   SET max_sk = (SELECT IFNULL(MAX(SaleRepSK), 0) FROM `${DimSaleRepLastTableRef}`);
@@ -102,3 +150,5 @@ BEGIN
       S.ProvinceID, S.ChangeSectionFlag
     );
 END;
+
+}

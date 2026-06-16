@@ -39,7 +39,8 @@ BEGIN
       t1.HolidayDate AS HolidayDate,
       ${databuffet.functionData.cleanString("t1.HolidayNameTH")} AS HolidayNameTH,
       ${databuffet.functionData.cleanString("t1.HolidayNameEN")} AS HolidayNameEN,
-      ${databuffet.functionData.castInt64("t1.LongWeekEndFlag")} AS LongWeekEndFlag
+      ${databuffet.functionData.castInt64("t1.LongWeekEndFlag")} AS LongWeekEndFlag,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
 
     LEFT JOIN `${DimHolidayTableRef}` AS t2
@@ -56,7 +57,8 @@ BEGIN
     UPDATE SET
       T.HolidayNameTH = S.HolidayNameTH,
       T.HolidayNameEN = S.HolidayNameEN,
-      T.LongWeekEndFlag = S.LongWeekEndFlag
+      T.LongWeekEndFlag = S.LongWeekEndFlag,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
@@ -64,13 +66,15 @@ BEGIN
       HolidayDate,
       HolidayNameTH,
       HolidayNameEN,
-      LongWeekEndFlag
+      LongWeekEndFlag,
+      MdsID
     )
     VALUES (
       -- S.HolidaySK,
       S.HolidayDate,
       S.HolidayNameTH,
       S.HolidayNameEN,
-      S.LongWeekEndFlag
+      S.LongWeekEndFlag,
+      S.MdsID
     );
 END;

@@ -5,12 +5,12 @@ config {
 }
 
 js {
-    const DimChannelFinanceTable = {
+    const DimSectionTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
         name: name(),
     };
-    const DimChannelFinanceTableRef = `${DimChannelFinanceTable.database}.${DimChannelFinanceTable.schema}.${DimChannelFinanceTable.name}`;
+    const DimSectionTableRef = `${DimSectionTable.database}.${DimSectionTable.schema}.${DimSectionTable.name}`;
 
     const DimCompanyTable = {
         database: databuffet.DATABASE,
@@ -22,7 +22,7 @@ js {
     const MdsSourceTable = {
         database: databuffet.DATABASE,
         schema: "mds_dataset",
-        name: "mds_data_channel_finance_master",
+        name: "mds_data_sales_section_master",
     };
     const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
 }
@@ -30,62 +30,74 @@ js {
 BEGIN
   DECLARE max_sk INT64 DEFAULT 0;
 
-  SET max_sk = (SELECT IFNULL(MAX(ChannelFinanceSK), 0) FROM `${DimChannelFinanceTableRef}`);
+  SET max_sk = (SELECT IFNULL(MAX(SectionSK), 0) FROM `${DimSectionTableRef}`);
 
-  MERGE `${DimChannelFinanceTableRef}` AS T
+  MERGE `${DimSectionTableRef}` AS T
   USING (
     SELECT
       (CASE
-        WHEN t3.ChannelFinanceSK IS NOT NULL THEN t3.ChannelFinanceSK
-        WHEN t2.ChannelFinanceSK IS NOT NULL THEN t2.ChannelFinanceSK
+        WHEN t3.SectionSK IS NOT NULL THEN t3.SectionSK
+        WHEN t2.SectionSK IS NOT NULL THEN t2.SectionSK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.ChannelFinanceSK IS NULL AND t3.ChannelFinanceSK IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.SectionSK IS NULL AND t3.SectionSK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
             ${databuffet.functionData.cleanString("t1.companyID")},
-            ${databuffet.functionData.cleanString("t1.ChannelIDFinance")}
+            ${databuffet.functionData.cleanString("t1.SectionID")},
+            t1.StartDate,
+            t1.EndDate
         )
-      END) AS ChannelFinanceSK,
+      END) AS SectionSK,
       dim_com.CompanySK,
       ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
-      ${databuffet.functionData.cleanString("t1.ChannelIDFinance")} AS ChannelIDFinance,
-      ${databuffet.functionData.cleanString("t1.ChannelNameFinance")} AS ChannelNameFinance,
+      ${databuffet.functionData.cleanString("t1.SectionID")} AS SectionID,
+      ${databuffet.functionData.cleanString("t1.SectionName")} AS SectionName,
+      t1.StartDate AS StartDate,
+      t1.EndDate AS EndDate,
       ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
-    LEFT JOIN `${DimChannelFinanceTableRef}` AS t2
+    LEFT JOIN `${DimSectionTableRef}` AS t2
       ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
-      AND ${databuffet.functionData.cleanString("t1.ChannelIDFinance")} = t2.ChannelIDFinance
-    LEFT JOIN `${DimChannelFinanceTableRef}` AS t3
-      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsId
+      AND ${databuffet.functionData.cleanString("t1.SectionID")} = t2.SectionID
+      AND t1.StartDate = t2.StartDate
+      AND t1.EndDate = t2.EndDate
+    LEFT JOIN `${DimSectionTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),
             INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
           )
   ) AS S
-  ON T.ChannelFinanceSK = S.ChannelFinanceSK
+  ON T.SectionSK = S.SectionSK
 
   WHEN MATCHED THEN
     UPDATE SET
-      T.ChannelNameFinance = S.ChannelNameFinance,
-      T.MdsId = S.MdsId
+      T.SectionName = S.SectionName,
+      T.StartDate = S.StartDate,
+      T.EndDate = S.EndDate,
+      T.MdsID = S.MdsID 
 
   WHEN NOT MATCHED THEN
     INSERT (
-      ChannelFinanceSK,
+      SectionSK,
       CompanySK,
       companyID,
-      ChannelIDFinance,
-      ChannelNameFinance,
-      MdsId
+      SectionID,
+      SectionName,
+      StartDate,
+      EndDate,
+      MdsID
     )
     VALUES (
-      S.ChannelFinanceSK,
+      S.SectionSK,
       S.CompanySK,
       S.companyID,
-      S.ChannelIDFinance,
-      S.ChannelNameFinance,
-      MdsId
+      S.SectionID,
+      S.SectionName,
+      S.StartDate,
+      S.EndDate,
+      S.MdsID
     );
 END;

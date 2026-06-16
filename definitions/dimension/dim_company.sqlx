@@ -23,55 +23,62 @@ js {
 BEGIN
   DECLARE max_sk INT64 DEFAULT 0;
 
-  SET max_sk = (SELECT IFNULL(MAX(`CompanySK`), 0) FROM `${DimCompanyTableRef}`);
+  SET max_sk = (SELECT IFNULL(MAX(CompanySK), 0) FROM `${DimCompanyTableRef}`);
 
   MERGE `${DimCompanyTableRef}` AS T
   USING (
     SELECT
       (CASE
-        WHEN t2.`CompanySK` IS NOT NULL THEN t2.`CompanySK`
+        WHEN t3.CompanySK IS NOT NULL THEN t3.CompanySK
+        WHEN t2.CompanySK IS NOT NULL THEN t2.CompanySK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.`CompanySK` IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.CompanySK IS NULL AND t3.CompanySK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
-            NULLIF(TRIM(t1.`CompanyID`), ''),
-            NULLIF(TRIM(t1.`CompanyCode`), '')
+            ${databuffet.functionData.cleanString("t1.CompanyID")},
+            ${databuffet.functionData.cleanString("t1.CompanyCode")}
         )
-      END) AS `CompanySK`,
-      NULLIF(TRIM(t1.`CompanyID`), '') AS `CompanyID`,
-      NULLIF(TRIM(t1.`CompanyCode`), '') AS `CompanyCode`,
-      NULLIF(TRIM(t1.`CompanyNameTH`), '') AS `CompanyNameTH`,
-      NULLIF(TRIM(t1.`CompanyNameEN`), '') AS `CompanyNameEN`
+      END) AS CompanySK,
+      ${databuffet.functionData.cleanString("t1.CompanyID")} AS CompanyID,
+      ${databuffet.functionData.cleanString("t1.CompanyCode")} AS CompanyCode,
+      ${databuffet.functionData.cleanString("t1.CompanyNameTH")} AS CompanyNameTH,
+      ${databuffet.functionData.cleanString("t1.CompanyNameEN")} AS CompanyNameEN,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
 
     LEFT JOIN `${DimCompanyTableRef}` AS t2
-      ON NULLIF(TRIM(t1.`CompanyID`), '') = t2.`CompanyID`
-      AND NULLIF(TRIM(t1.`CompanyCode`), '') = t2.`CompanyCode`
+      ON ${databuffet.functionData.cleanString("t1.CompanyID")} = t2.CompanyID
+      AND ${databuffet.functionData.cleanString("t1.CompanyCode")} = t2.CompanyCode
+    LEFT JOIN `${DimCompanyTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),
             INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
           )
   ) AS S
-  ON T.`CompanySK` = S.`CompanySK`
+  ON T.CompanySK = S.CompanySK
 
   WHEN MATCHED THEN
     UPDATE SET
-      T.`CompanyNameTH` = S.`CompanyNameTH`,
-      T.`CompanyNameEN` = S.`CompanyNameEN`
+      T.CompanyNameTH = S.CompanyNameTH,
+      T.CompanyNameEN = S.CompanyNameEN,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
-      `CompanySK`,
-      `CompanyID`,
-      `CompanyCode`,
-      `CompanyNameTH`,
-      `CompanyNameEN`
+      CompanySK,
+      CompanyID,
+      CompanyCode,
+      CompanyNameTH,
+      CompanyNameEN,
+      MdsID
     )
     VALUES (
-      S.`CompanySK`,
-      S.`CompanyID`,
-      S.`CompanyCode`,
-      S.`CompanyNameTH`,
-      S.`CompanyNameEN`
+      S.CompanySK,
+      S.CompanyID,
+      S.CompanyCode,
+      S.CompanyNameTH,
+      S.CompanyNameEN,
+      S.MdsID
     );
 END;

@@ -38,9 +38,10 @@ BEGIN
   USING (
     SELECT
       (CASE
+        WHEN t3.StkMktSK IS NOT NULL THEN t3.StkMktSK
         WHEN t2.StkMktSK IS NOT NULL THEN t2.StkMktSK
         ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.StkMktSK IS NULL THEN 1 ELSE 0 END)
+          PARTITION BY (CASE WHEN t2.StkMktSK IS NULL AND t3.StkMktSK IS NULL THEN 1 ELSE 0 END)
           ORDER BY
             ${databuffet.functionData.cleanString("t1.companyID")},
             ${databuffet.functionData.cleanString("t1.StkCode")}
@@ -56,13 +57,16 @@ BEGIN
       ${databuffet.functionData.cleanString("t1.SubMarketingID")} AS SubMarketingID,
       ${databuffet.functionData.cleanString("t1.SubMarketing")} AS SubMarketing,
       ${databuffet.functionData.cleanString("t1.SegmentID")} AS SegmentID,
-      ${databuffet.functionData.cleanString("t1.Segment")} AS Segment
+      ${databuffet.functionData.cleanString("t1.Segment")} AS Segment,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
     FROM `${MdsSourceTableRef}` AS t1
     LEFT JOIN `${DimCompanyTableRef}` AS dim_com
       ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
     LEFT JOIN `${DimStkMktTableRef}` AS t2
       ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
       AND ${databuffet.functionData.cleanString("t1.StkCode")} = t2.StkCode
+    LEFT JOIN `${DimStkMktTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
     WHERE t1.is_active = TRUE
       AND DATE(t1.updated_at) >= DATE_SUB(
             CURRENT_DATE("Asia/Bangkok"),
@@ -80,7 +84,8 @@ BEGIN
       T.SubMarketingID = S.SubMarketingID,
       T.SubMarketing = S.SubMarketing,
       T.SegmentID = S.SegmentID,
-      T.Segment = S.Segment
+      T.Segment = S.Segment,
+      T.MdsID = S.MdsID
 
   WHEN NOT MATCHED THEN
     INSERT (
@@ -95,7 +100,8 @@ BEGIN
       SubMarketingID,
       SubMarketing,
       SegmentID,
-      Segment
+      Segment,
+      MdsID
     )
     VALUES (
       S.StkMktSK,
@@ -109,13 +115,18 @@ BEGIN
       S.SubMarketingID,
       S.SubMarketing,
       S.SegmentID,
-      S.Segment
+      S.Segment,
+      S.MdsID
     );
     
 
   -- 2. ใช้ INSERT INTO พร้อมกับกรองเฉพาะข้อมูลที่ยังไม่เคยมีใน Dim
   INSERT INTO `${DimStkMktTableRef}` 
-  (StkMktSK, CompanySK, companyID, StkCode, Size, Color, MarketingGroupID, MarketingGroup, SubMarketingID, SubMarketing, SegmentID, Segment)
+  (StkMktSK, CompanySK, companyID, StkCode, Size, Color, 
+  MarketingGroupID, MarketingGroup, 
+  SubMarketingID, SubMarketing, 
+  SegmentID, Segment, 
+  MdsID)
   
   SELECT
     -- คำนวณ SK ใหม่ต่อจากค่าสูงสุดเดิม
@@ -130,7 +141,8 @@ BEGIN
     '9999' AS SubMarketingID,
     'Waiting Master' AS SubMarketing,
     '99999' AS SegmentID,
-    'Waiting Master' AS Segment
+    'Waiting Master' AS Segment,
+    CAST(NULL AS STRING) as MdsID,
   FROM (
     -- ดึงรายการ stkcode ทั้งหมดจาก Source
     SELECT DISTINCT stkcode, company_id
