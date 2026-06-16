@@ -1,10 +1,10 @@
 config {
     type: "table",
-    schema: databuffet.TAG_DIM_DAILY,
+    schema: databuffet.DIMENSION_TABLE,
     dependencies: [ 
                     "dim_company", "dim_department"
                 ],
-    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_FULL],
+    tags: [databuffet.TAG_DIM_DAILY],
     uniqueKey: ["DepartmentSK"],
     bigquery: {
         clusterBy: ["DepartmentSK"]
