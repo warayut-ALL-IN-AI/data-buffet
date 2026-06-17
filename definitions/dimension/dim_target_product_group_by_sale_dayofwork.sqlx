@@ -2,10 +2,7 @@ config {
     type: "table",
     schema: databuffet.DIMENSION_TABLE,
     dependencies: [ 
-                    "dim_sale_representative", "dim_department",
-                    "dim_region", "dim_region_manager",
-                    "dim_section", "dim_section_manager",
-                    "dim_director", "dim_calendar",
+                    "update_sk_sale_rep_group", "dim_calendar",
                     "dim_rate_target", "dim_target_product_group",
                     "dim_target_product_group_by_sale", 
 
