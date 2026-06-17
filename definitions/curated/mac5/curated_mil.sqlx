@@ -74,7 +74,8 @@ SELECT
   asatdate as asatdate,
   '100.00%' as percent_sale
 FROM ${ref(databuffet.VALIDATED_MAC5, "mil")}
-${ when(incremental(), `WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+WHERE IFNULL(milvnos, '') != ''
+  ${ when(incremental(), `AND asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
 
 
 post_operations {
@@ -86,6 +87,7 @@ post_operations {
         mil.*, mil.milPer as milPer_raw
       FROM ${ref(databuffet.VALIDATED_MAC5, "mil")} AS mil
       WHERE mil.company_id = 'ag01'
+        and IFNULL(mil.milvnos, '') != ''
       QUALIFY row_number() over(partition by mil.company_id, mil.milType, mil.milVnos, mil.milListno order by mil.asatdate desc) = 1
 
     ), filter_mih2 AS (

@@ -105,6 +105,7 @@ WITH mih_raw as (
     LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "ap_s")} as ap_s
         ON mih.company_id = ap_s.company_id 
         AND mih.mihstatus = ap_s.ap_scode
+    WHERE IFNULL(mih.mihvnos, '') != ''
 
 ), mih2_raw as (
     SELECT *
@@ -134,7 +135,8 @@ LEFT JOIN mih2_raw as mih2
         AND mih.company_id = mih2.company_id
 
 WHERE mih.company_id = 'ag01'
-${ when(incremental(), `AND mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+    and IFNULL(mih.mihvnos, '') != ''
+    ${ when(incremental(), `AND mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
 
 UNION ALL
 
@@ -142,4 +144,5 @@ SELECT
     mih.*
 FROM mih_raw as mih
 WHERE mih.company_id != 'ag01'
-${ when(incremental(), `AND mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+    AND IFNULL(mih.mihvnos, '') != ''
+    ${ when(incremental(), `AND mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
