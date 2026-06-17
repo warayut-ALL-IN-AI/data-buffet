@@ -495,7 +495,9 @@ WITH all_sources AS (
   ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
 )
 
-SELECT * FROM all_sources
+SELECT * 
+FROM all_sources
+WHERE IFNULL(mihvnos, '') != ''
 ${partition_statement}
 
 pre_operations {

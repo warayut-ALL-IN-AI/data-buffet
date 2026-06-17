@@ -203,7 +203,7 @@ LEFT JOIN cte_mih as mih
   and mil.miltype = mih.mihtype
   and mil.milvnos = mih.mihvnos
   and mil.milcus = mih.mihcus
-
+WHERE IFNULL(${databuffet.functionData.cleanString('MILvnos')}, '') != ''
 ${partition_statement}
 
 pre_operations {
