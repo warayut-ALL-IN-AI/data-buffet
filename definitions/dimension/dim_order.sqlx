@@ -34,8 +34,8 @@ BEGIN
             company_id, miltype, milvnos, milstk, milQuan, milSum, millinkvcno
         from ${ref(databuffet.CURATED_MAC5, 'curated_mil')} as mil
         where mil.miltype in ('PS', 'IS')
-            and mil.asatdate >= current_date('Asia/Bangkok')-1
             and PARSE_DATE('%Y%m%d', CONCAT(mil.milYear, FORMAT("%02d", mil.milMonth), FORMAT("%02d", mil.milDay))) >= DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR)
+            and mil.asatdate >= current_date('Asia/Bangkok')-1
     ),
     main_table as (
         select

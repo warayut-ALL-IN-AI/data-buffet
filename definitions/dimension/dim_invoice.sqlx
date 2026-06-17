@@ -57,9 +57,9 @@ BEGIN
         WHERE mih.mihType = 'IS'
           and mih.mihRef1 is not null
           and mih.mihCancel <> -1
-          and mih.asatdate >= current_date('Asia/Bangkok')-1
           and PARSE_DATE('%Y%m%d', CONCAT(mih.mihYear, FORMAT("%02d", mih.mihMonth), FORMAT("%02d", mih.mihDay))) >= DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR)
-        --   and mih.company_id = 'ag01'
+          and mih.asatdate >= current_date('Asia/Bangkok')-1
+          --   and mih.company_id = 'ag01'
     ),
     mih_raw2 as (
         SELECT
@@ -78,8 +78,8 @@ BEGIN
         left join ${ref(databuffet.VALIDATED_MAC5, 'ap_s')} as ap_s
           on mih.mihStatus = ap_s.ap_scode
           AND mih.company_id = ap_s.company_id
-        WHERE mih.asatdate >= current_date('Asia/Bangkok')-1
-          and PARSE_DATE('%Y%m%d', CONCAT(mih.mihYear, FORMAT("%02d", mih.mihMonth), FORMAT("%02d", mih.mihDay))) >= DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR)
+        WHERE PARSE_DATE('%Y%m%d', CONCAT(mih.mihYear, FORMAT("%02d", mih.mihMonth), FORMAT("%02d", mih.mihDay))) >= DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR)
+          and mih.asatdate >= current_date('Asia/Bangkok')-1
             -- and mih.company_id = 'ag01'
 
     ),
