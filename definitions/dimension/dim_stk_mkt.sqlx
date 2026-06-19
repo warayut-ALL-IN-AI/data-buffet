@@ -120,6 +120,8 @@ BEGIN
     );
     
 
+  SET max_sk = (SELECT IFNULL(MAX(`StkMktSK`), 0) FROM `${DimStkMktTableRef}`);
+
   -- 2. ใช้ INSERT INTO พร้อมกับกรองเฉพาะข้อมูลที่ยังไม่เคยมีใน Dim
   INSERT INTO `${DimStkMktTableRef}` 
   (StkMktSK, CompanySK, companyID, StkCode, Size, Color, 
