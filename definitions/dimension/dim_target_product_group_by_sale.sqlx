@@ -3,6 +3,7 @@ config {
     schema: databuffet.DIMENSION_TABLE,
     dependencies: [ 
                     "dim_product_mkt", "dim_report",
+                    "dim_rate_target", "dim_target_product_group",
                     "update_sk_sale_rep_group"
                 ],
     tags: [databuffet.TAG_DIM_DAILY],
