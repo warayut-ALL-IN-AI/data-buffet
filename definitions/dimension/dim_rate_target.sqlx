@@ -134,4 +134,9 @@ BEGIN
       S.Percent,
       S.MdsID
     );
+
+  DELETE FROM `${DimRateTargetTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

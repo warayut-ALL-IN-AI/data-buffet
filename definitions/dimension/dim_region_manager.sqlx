@@ -121,4 +121,9 @@ BEGIN
       S.EndDate,
       S.MdsID
     );
+
+  DELETE FROM `${DimRegionManagerTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

@@ -107,4 +107,9 @@ BEGIN
       S.EndDate,
       S.MdsID
     );
+
+  DELETE FROM `${DimAvgCollectionScoreTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

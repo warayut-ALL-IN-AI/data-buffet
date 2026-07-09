@@ -109,4 +109,9 @@ BEGIN
       S.EndDate,
       S.MdsID
     );
+
+  DELETE FROM `${DimRegionTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

@@ -94,4 +94,9 @@ BEGIN
       S.DescriptionTH,
       S.MdsID
     );
+
+  DELETE FROM `${DimDoctypeTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

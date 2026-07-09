@@ -115,4 +115,9 @@ BEGIN
       S.Segment,
       S.MdsID
     );
+
+  DELETE FROM `${DimProductMktTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

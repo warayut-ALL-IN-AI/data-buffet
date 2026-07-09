@@ -134,4 +134,9 @@ BEGIN
       S.Qty,
       S.MdsID
     );
+
+  DELETE FROM `${DimTargetProductGroupTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

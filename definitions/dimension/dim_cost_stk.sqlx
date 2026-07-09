@@ -118,4 +118,9 @@ BEGIN
       S.EndDate,
       S.MdsID
     );
+
+  DELETE FROM `${DimCostStkTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

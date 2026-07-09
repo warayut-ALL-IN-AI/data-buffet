@@ -102,4 +102,9 @@ BEGIN
       S.ReportName2,
       S.MdsID
     );
+
+  DELETE FROM `${DimReportTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

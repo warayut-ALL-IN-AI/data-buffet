@@ -88,4 +88,9 @@ BEGIN
       S.ChannelCostName,
       S.MdsId
     );
+
+  DELETE FROM `${DimChannelCostTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

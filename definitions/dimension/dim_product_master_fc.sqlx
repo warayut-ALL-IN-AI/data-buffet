@@ -228,4 +228,9 @@ BEGIN
       S.PackSize,
       S.MdsID
     );
+
+  DELETE FROM `${DimProductMasterFcTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

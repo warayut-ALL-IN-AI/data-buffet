@@ -88,4 +88,9 @@ BEGIN
       S.ChannelNameFinance,
       MdsId
     );
+
+  DELETE FROM `${DimChannelFinanceTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

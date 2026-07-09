@@ -92,4 +92,9 @@ BEGIN
       S.Brand,
       S.MdsID
     );
+
+  DELETE FROM `${DimWaterPacTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

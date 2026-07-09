@@ -107,4 +107,9 @@ BEGIN
       S.Justification,
       S.Responsible
     );
+
+  DELETE FROM `${DimCollectionStatusTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

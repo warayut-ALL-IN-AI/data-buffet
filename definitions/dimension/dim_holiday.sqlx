@@ -77,4 +77,9 @@ BEGIN
       S.LongWeekEndFlag,
       S.MdsID
     );
+
+  DELETE FROM `${DimHolidayTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

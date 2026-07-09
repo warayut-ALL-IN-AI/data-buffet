@@ -94,4 +94,9 @@ BEGIN
       S.StatusNameENG,
       S.MdsID
     );
+
+  DELETE FROM `${DimStatusNotReceiveTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

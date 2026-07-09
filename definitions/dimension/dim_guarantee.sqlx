@@ -126,4 +126,9 @@ BEGIN
       S.FAX,
       S.MdsID
     );
+
+  DELETE FROM `${DimGuaranteeTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

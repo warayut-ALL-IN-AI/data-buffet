@@ -104,4 +104,9 @@ BEGIN
       S.PaymentType,
       S.MdsID
     );
+
+  DELETE FROM `${DimPaymentTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;

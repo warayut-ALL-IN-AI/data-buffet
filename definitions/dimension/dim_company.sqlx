@@ -81,4 +81,9 @@ BEGIN
       S.CompanyNameEN,
       S.MdsID
     );
+
+  DELETE FROM `${DimCompanyTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
 END;
