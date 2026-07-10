@@ -94,4 +94,9 @@ BEGIN
       S.status, S.type, S.salesExc, S.accExc, 
       S.MdsID
     );
+
+  DELETE FROM `${DimRebateTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsRebateTableRef}` WHERE is_active = FALSE
+  );
 END;
