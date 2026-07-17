@@ -1,6 +1,6 @@
 config {
   type: "operations",
-  dependencies: ["dim_company"],
+  dependencies: ["dim_company", "dim_department_last", "dim_director_last"],
   tags: [databuffet.TAG_DIM_DAILY],
 }
 
@@ -139,4 +139,62 @@ BEGIN
   WHERE MdsID IN (
     SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
   );
+
 END;
+
+-- BEGIN
+--     DECLARE static_count BIGNUMERIC;
+--     DECLARE max_total_employee BIGNUMERIC;
+
+--     -- 1. สร้าง Temp Table หลักสำหรับ MDT เท่านั้น
+--     CREATE OR REPLACE TEMP TABLE mdt_base_data AS
+--     SELECT 
+--         rate.employeeid,
+--         rate.departmentid,
+--         rate.year,
+--         rate.month
+--     FROM `databuffet-nonprd.dimension_table.dim_rate_target` AS rate
+--     INNER JOIN `databuffet-nonprd.dimension_table.dim_department_last` AS dep 
+--         ON rate.DepartmentID = dep.DepartmentID
+--     INNER JOIN `databuffet-nonprd.dimension_table.dim_director_last` AS dir 
+--         ON dep.DirectorSK = dir.DirectorSK
+--     WHERE dir.DirectorName = 'MDT';
+
+--     -- หาค่า count ของเดือนที่เป็น NULL
+--     SET static_count = (
+--         SELECT ( CAST(COUNT(DISTINCT CONCAT(employeeid, '-', departmentid)) AS BIGNUMERIC) / CAST(6 AS BIGNUMERIC) )
+--         FROM mdt_base_data
+--         WHERE month IS NULL
+--     );
+
+--     -- 2. คำนวณค่ารายเดือนและหาค่า MAX
+--     CREATE OR REPLACE TEMP TABLE monthly_summary AS
+--     SELECT 
+--         year, 
+--         month,
+--         ( CAST(COUNT(DISTINCT CONCAT(employeeid, '-', departmentid)) AS BIGNUMERIC) / CAST(6 AS BIGNUMERIC) ) + static_count AS total_val
+--     FROM mdt_base_data
+--     WHERE month IS NOT NULL
+--     GROUP BY 1, 2;
+
+--     -- อัปเดตรายเดือน
+--     UPDATE `databuffet-nonprd.dimension_table.dim_rate_target` AS target
+--     SET target.Percent = (CAST(100 AS BIGNUMERIC) / CAST(src.total_val AS BIGNUMERIC))
+--     FROM monthly_summary AS src
+--     WHERE target.year = src.year
+--         AND target.month = src.month
+--         AND target.DepartmentID IN (SELECT DISTINCT departmentid FROM mdt_base_data);
+
+--     -- หาค่า max ของของทุกเดือน
+--     SET max_total_employee = (SELECT MAX(total_val) FROM monthly_summary);
+
+--     -- อัปเดตแถว NULL (ใช้ค่า MAX)
+--     UPDATE `databuffet-nonprd.dimension_table.dim_rate_target` AS target
+--     SET target.Percent = ( CAST(100 AS BIGNUMERIC) / max_total_employee )
+--     WHERE target.month IS NULL
+--         AND target.DepartmentID IN (SELECT DISTINCT departmentid FROM mdt_base_data);
+
+--     -- 3. ล้าง Temp Tables
+--     DROP TABLE IF EXISTS mdt_base_data;
+--     DROP TABLE IF EXISTS monthly_summary;
+-- END;
