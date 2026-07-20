@@ -3,6 +3,9 @@ config {
   schema: databuffet.DIMENSION_TABLE,
   dependencies: [],
   tags: [databuffet.TAG_DIM_DAILY],
+  bigquery: {
+    clusterBy: ["HolidayDate", "LongWeekEndFlag"]
+  },
 }
 
 js {

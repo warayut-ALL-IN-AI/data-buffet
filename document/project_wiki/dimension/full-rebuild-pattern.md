@@ -79,7 +79,9 @@ Verified 2026-07-20 (repo scan + live BQ + 90-day query history):
 - `dim_stk_mkt` — `UNION ALL` of mds block and 'Waiting Master' placeholders
   (anti-join `NOT EXISTS` against the mds CTE; `MdsID NULL`).
 - `dim_doctype`, `dim_holiday` — no SK column at all (plain SELECT, no ROW_NUMBER,
-  no uniqueKey/clusterBy).
+  no uniqueKey) but they DO keep `bigquery.clusterBy` matching the pre-existing
+  tables' clustering — `CREATE OR REPLACE TABLE` fails if the clustering spec differs
+  from the live table (hit on the first night, 2026-07-21).
 - `dim_status_not_receive` — dim_company join still commented out (as before).
 - `dim_rate_target` — extra deps `dim_department_last`/`dim_director_last` + a real
   `post_operations` block that reallocates `Percent` for MDT departments after the

@@ -26,8 +26,12 @@ every distinct `stkcode` from `ref(databuffet.VALIDATED_MAC5, "stk")` that
 
 Full-rebuild files (since 2026-07-20) that intentionally have **no SK column**:
 plain SELECT of natural columns + MdsID, `WHERE is_active = TRUE`, no ROW_NUMBER,
-no uniqueKey/clusterBy. (Historically their SK machinery was commented out and they
+no uniqueKey. (Historically their SK machinery was commented out and they
 MERGEd on natural keys.) `dim_holiday` has `dependencies: []`.
+Both keep `bigquery.clusterBy` matching the pre-existing BigQuery tables
+(`HolidayDate, LongWeekEndFlag` / `AccountCategory, Code`) — required because
+`CREATE OR REPLACE TABLE` cannot change an existing table's clustering spec
+(first-night failure 2026-07-21, fixed by adding the clusterBy back).
 
 ## `dim_rate_target` — MDT percent reallocation in post_operations (activated 2026-07-20)
 
