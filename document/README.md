@@ -58,9 +58,11 @@ project_wiki/
 
 ## Diagrams — `diagrams/`
 
-- [diagrams/pipeline_lineage.md](diagrams/pipeline_lineage.md) — **graph lineage เต็มระบบ**
-  (Mermaid, render ได้บน GitHub/VSCode) แสดงทุกตาราง 229 objects จัดกลุ่มตาม layer,
-  edge = source → consumer, node ที่ pause เป็นเส้นประจาง
+- [diagrams/pipeline_lineage.md](diagrams/pipeline_lineage.md) — **graph lineage**
+  (Mermaid, render บน GitHub/VSCode) แบ่งเป็น 4 view ที่อ่านได้: (1) layer overview
+  (2) star schema fact←dim (3) dimension backbone (4) source→model — edge = source →
+  consumer, node ที่ pause เป็นเส้นประจาง (scaffolding initial/*_schema_* ตัดออกจาก
+  view รายละเอียดเพื่อไม่ให้เกิน 500-edge cap ของ GitHub)
 - **Auto-generated** จาก [diagrams/generate_lineage.py](diagrams/generate_lineage.py)
   ซึ่ง parse `dependencies` + `ref()` จาก `.sqlx` จริง → กราฟเป็นปัจจุบันเสมอ
   รัน: `python3 document/diagrams/generate_lineage.py` (pre-commit hook รันให้อัตโนมัติ
