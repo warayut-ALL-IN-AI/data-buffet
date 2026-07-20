@@ -38,7 +38,7 @@ js {
     
     const DimChannelTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_VIEW
+        schema: databuffet.DIMENSION_VIEW,
         name: "view_dim_channel",
     };
     const DimChannelTableRef = `${DimChannelTable.database}.${DimChannelTable.schema}.${DimChannelTable.name}`;
