@@ -42,7 +42,7 @@ SELECT
     SELECT
       *
     FROM `${DimSectionManagerTableRef}`
-    -- WHERE CURRENT_DATE('Asia/Bangkok') between StartDate and EndDate
+    WHERE CURRENT_DATE('Asia/Bangkok') between StartDate and EndDate
     QUALIFY ROW_NUMBER() OVER (PARTITION BY CompanyID, SectionID ORDER BY EndDate DESC, StartDate DESC) = 1
   ) as t1
   LEFT JOIN `${DimCompanyTableRef}` as dim_com
