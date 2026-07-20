@@ -1,6 +1,6 @@
 # Known Issues & Gotchas
 
-รวมจุดที่รู้แล้วว่า "เป็นแบบนี้โดยตั้งใจ" หรือ "ต้องระวัง" — อัปเดตล่าสุด 2026-07-10
+รวมจุดที่รู้แล้วว่า "เป็นแบบนี้โดยตั้งใจ" หรือ "ต้องระวัง" — อัปเดตล่าสุด 2026-07-20
 
 ## คำสะกดผิดที่เป็น identifier จริง (ห้ามแก้)
 
@@ -10,26 +10,6 @@
 | `includes/controller/variables.json` | `CDC_DATESET` | คีย์ constant (ค่า `cdc_dataset` ถูกต้อง) |
 | MASTERSKU JSON | `prdDiminsionData`, `SpeciFeild`, `dimFeild` | field จริงในข้อมูล |
 | `FactOrderSk` vs `FactOrderSK` | casing ไม่คงที่ในไฟล์เดียวกัน | ใช้ตามที่ไฟล์นั้นใช้ |
-
-## เอกสารเก่าที่ล้าสมัย
-
-**อัปเดต 2026-07-10**: `.claude/` ถูกล้างและสร้างใหม่ทั้งชุดแล้ว — ลบ `knowledge/`,
-root guides 10 ไฟล์ และ skills/agents แบบเก่า (format ใช้ไม่ได้จริง) ทิ้ง แล้วแทนด้วย
-skills/agents ที่มี frontmatter ถูกต้องและชี้เข้า `document/` — `.claude/CLAUDE.md`
-เขียนใหม่แล้วเช่นกัน ย่อหน้าด้านล่างเก็บไว้เป็นประวัติว่าของเก่าผิดตรงไหน:
-
-ของเก่า (`knowledge/`, skills แบบเก่า) เขียนจาก design เก่า มีข้อผิดพลาดสำคัญ:
-
-- อ้าง `includes/controller/primary-keys.json` และ `databuffet.primaryKeys` — **ไม่มีไฟล์นี้**
-  (PK นิยามในแต่ละไฟล์: `uniqueKey` + `pk_key`)
-- ใช้ accessor `databuffet.SCHEMA_VALIDATED_MAC5` — ของจริงคือ `databuffet.VALIDATED_MAC5`
-- บอกว่า fact มีตารางเดียว (`fact_transaction`) — ของจริงมี 6 ไฟล์
-- ไม่พูดถึง dimension/CDC/process layer และ source SALEOUT_MDT
-- อ้าง tag `fact`, `assertions` — ไม่มีจริง
-- ตัวเลขจำนวนไฟล์ผิดหมด
-
-**แหล่งที่ถูกต้อง**: `README.md` (root) + `document/project_wiki/`
-ส่วน root README มีจุดเดียวที่เพี้ยน: บอก "15 dims" (ของจริง 59 ไฟล์)
 
 ## พฤติกรรมที่ตั้งใจ (อย่า "แก้")
 
@@ -41,9 +21,9 @@ skills/agents ที่มี frontmatter ถูกต้องและชี�
   ยกเว้นที่ยกเว้นไว้ ดู `project_wiki/dimension/full-rebuild-pattern.md`
   - **ยกเว้น 2 ตัวที่ยังเป็น MERGE + tombstone**: `dim_company` (CompanySK ฝังถาวรใน
     dims/facts ทั้งระบบ) และ `dim_aging_rang` (AgingRangSK freeze ใน dim_aging_history)
-  - **เงื่อนไขค้าง**: `dim_collection_status` rebuild ได้ต่อเมื่อ `fact_mir_vs`/`fact_mir_rs`
-    (นอก repo, มีคนใช้จริง) ถูกย้ายเป็น daily full rebuild ที่รันหลัง dims — user
-    รับไปทำเอง (ณ 2026-07-20 ยังไม่เสร็จ)
+  - **เงื่อนไขปิดแล้ว (2026-07-20)**: `fact_mir_vs`/`fact_mir_rs` (+ `fact_chq`)
+    ถูกย้ายเข้า repo เป็น `type: "table"` tag `fact_daily` (rebuild เต็มทุกคืน หลัง
+    dims) — `dim_collection_status` rebuild ได้อย่างปลอดภัยแล้ว
 - **Hard delete tombstone ใน mds MERGE dims** (ตัดสินใจ 2026-07-10 — ปัจจุบันเหลือ
   ใช้กับ dim_company + dim_aging_rang เท่านั้น): row ที่ mds `is_active = FALSE`
   ถูกลบจริงจาก dim โดยไม่เช็ก FK ปลายทาง; DELETE ไม่มี date filter (ตั้งใจ)

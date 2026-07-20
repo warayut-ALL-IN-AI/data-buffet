@@ -1,0 +1,75 @@
+config {
+    type: "table",
+    schema: databuffet.FACT_TABLE,
+    dependencies: ["dim_customer", "dim_company"],
+    tags: [databuffet.TAG_FACT_DAILY],
+    uniqueKey: ["FactChqSK"],
+    bigquery: {
+        clusterBy: ["FactChqSK"]
+    },
+}
+
+js {
+    // Define table references
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+}
+
+select
+  row_number() over(order by chq.company_id, chq.chqno, cql.cqlcus, cql.cqlvnos) as FactChqSK,
+  dim_cus.CustomerSK,
+  dim_com.CompanySK,
+  chq.company_id,
+  chq.chqno,
+  chq.chqbank,
+  chq.chqacode,
+  chq.chqcus,
+  chq.chqdatec,
+  chq.chqdater,
+  chq.chqdatep,
+  chq.chqtype,
+
+  (CASE
+    WHEN chq.chqstatus = 1 THEN 'Cleared'
+    WHEN chq.chqstatus = 2 THEN 'Bounced'
+    WHEN chq.chqstatus = 3 THEN 'Due'
+    ELSE CAST(null as STRING)
+  END) AS chqstatus,
+
+  (CASE
+    WHEN chq.chqstatusn = 1 THEN 'POST'
+    WHEN chq.chqstatusn = 2 THEN 'PASS'
+    WHEN chq.chqstatusn = 3 THEN 'เคลียร์แล้ว'
+    WHEN chq.chqstatusn = 4 THEN 'ยังไม่เคลียร์'
+    WHEN chq.chqstatusn = 5 THEN 'ปรับปรุงแล้ว'
+    WHEN chq.chqstatusn = 6 THEN 'ยกเลิกใบสำคัญ'
+    ELSE CAST(null as STRING)
+  END) AS chqstatusn,
+
+  chq.chqtotal,
+  chq.chqmemo,
+  chq.chqgl,
+  cql.cqlvnos
+from ${ref(databuffet.VALIDATED_MAC5, "chq")} as chq
+left join ${ref(databuffet.VALIDATED_MAC5, "cql")} as cql
+  on chq.chqno = cql.cqlno
+  and chq.chqcus = cql.cqlcus
+  and chq.chqtotal = cql.cqlsuml
+  and chq.company_id = cql.company_id
+left join `${DimCustomerTableRef}` as dim_cus
+  on dim_cus.debcode = chq.chqcus
+  and dim_cus.companyID = chq.company_id
+left join `${DimCompanyTableRef}` as dim_com
+  on chq.company_id = dim_com.companyID
+where cql.cqlbook = 0

@@ -36,7 +36,7 @@
 
 | เอกสาร | เนื้อหา |
 |---|---|
-| [operations/known-issues.md](operations/known-issues.md) | คำผิดที่ห้ามแก้, เอกสารเก่าที่ล้าสมัย, พฤติกรรมตั้งใจ, หนี้เทคนิค |
+| [operations/known-issues.md](operations/known-issues.md) | คำผิดที่ห้ามแก้, พฤติกรรมตั้งใจ, หนี้เทคนิค |
 
 ## LLM Wiki — `project_wiki/`
 

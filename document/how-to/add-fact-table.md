@@ -4,7 +4,7 @@
 
 | Pattern | เหมาะกับ | ตัวอย่างจริง |
 |---|---|---|
-| **Dataform `type: "table"`** | rebuild ทั้งก้อนได้ ข้อมูลไม่ใหญ่มาก | `fact_order`, `fact_invoice` |
+| **Dataform `type: "table"`** | rebuild ทั้งก้อนได้ ข้อมูลไม่ใหญ่มาก | `fact_order`, `fact_invoice`, `fact_chq`, `fact_mir_vs`, `fact_mir_rs` |
 | **`CREATE OR REPLACE TABLE AS`** (operations) | rebuild ทั้งก้อน + ต้องใช้ BigQuery scripting | `fact_delivery`, `fact_quotation`, `fact_transaction_delivery` |
 | **TEMP → DELETE → INSERT upsert** (operations) | ตารางใหญ่ อัปเดตเฉพาะช่วง + retention | `fact_transcation` |
 

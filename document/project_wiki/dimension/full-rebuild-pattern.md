@@ -58,7 +58,7 @@ post_operations {}
 
 Verified 2026-07-20 (repo scan + live BQ + 90-day query history):
 
-- All SK consumers re-derive daily: 6 facts (rebuild/full-window upsert — verified
+- All SK consumers re-derive daily: 9 facts (rebuild/full-window upsert — verified
   `fact_transcation` covers its whole 4-year window nightly with **0 orphan rows**),
   `dim_*_last`, `dim_target_product_group_by_sale(_dayofwork)`,
   `update_sk_sale_rep_group`; `dim_product_master` and the two grade dims refresh
@@ -67,9 +67,10 @@ Verified 2026-07-20 (repo scan + live BQ + 90-day query history):
 - **Rules that follow**: never persist these SKs outside the daily pipeline; joins
   across days are invalid; any NEW consumer that stores these SKs must itself be
   rebuilt daily (and run after `dimension_daily`).
-- **Condition attached to `dim_collection_status`**: `fact_mir_vs`/`fact_mir_rs`
-  (outside this repo, actively queried) store `CollectSK` — the user committed to
-  moving them to a daily full rebuild that runs after dims.
+- **Condition attached to `dim_collection_status` — satisfied 2026-07-20**:
+  `fact_mir_vs`/`fact_mir_rs` (which store `CollectSK`) plus `fact_chq` were brought
+  into the repo as `type: "table"` daily full rebuilds tagged `fact_daily`
+  (see [fact/fact-layer.md](../fact/fact-layer.md)).
 
 ## Special files within the 34
 

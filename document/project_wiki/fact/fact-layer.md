@@ -1,6 +1,6 @@
 # Fact Layer — `definitions/fact/`
 
-> **LLM context**: 6 files, all in dataset `fact_table` (`databuffet.FACT_TABLE`),
+> **LLM context**: 9 files, all in dataset `fact_table` (`databuffet.FACT_TABLE`),
 > all tagged `fact_daily`. Three distinct materialization patterns — there is **no MERGE**
 > in the fact layer. Dimension tables are referenced by raw string interpolation
 > (`${...TableRef}`) + `dependencies[]`, while curated/validated sources use `${ref()}`.
@@ -16,6 +16,9 @@
 | `fact_transaction_delivery.sqlx` | `fact_transaction_delivery` | operations | `CREATE OR REPLACE TABLE AS` | — | `mix_date` / `FactTransDeliverySK` | 4-year window |
 | `fact_delivery.sqlx` | `fact_delivery` | operations | `CREATE OR REPLACE TABLE AS` | — | (no partition) / `FactDeliverySK` | full refresh |
 | `fact_transcation.sqlx` | `fact_transcation` | operations | **TEMP → DELETE → INSERT upsert** | `milVnos, milType, CompanySK` | `mix_date` / `FactTranscationSK` | DELETE < 4-year trunc-to-year |
+| `fact_chq.sqlx` | `fact_chq` | table | Dataform-managed rebuild | — (uniqueKey `FactChqSK`) | (no partition) / `FactChqSK` | full refresh |
+| `fact_mir_vs.sqlx` | `fact_mir_vs` | table | Dataform-managed rebuild | — (uniqueKey `BillingSK`) | (no partition) / `BillingSK, InvoiceSK, CustomerSK` | full refresh |
+| `fact_mir_rs.sqlx` | `fact_mir_rs` | table | Dataform-managed rebuild | — (uniqueKey `ReceiveSK`) | (no partition) / `ReceiveSK, FactChqSK, InvoiceSK` | full refresh |
 
 ## Dimension SK joins per fact
 
@@ -27,6 +30,19 @@
 | `fact_transaction_delivery` | dim_invoice, dim_product_master, dim_company — source `curated_mil` (type='IS') |
 | `fact_delivery` | dim_delivery, dim_company, + `fact_transaction_delivery` — sources `ttrip_document, ttrip, tdelivery, deb, curated_mih, curated_mil`; Thai delivery-status labels |
 | `fact_transcation` | ~20 dims (see below) — source `onetime.Transaction_Data_Mart` |
+| `fact_chq` | dim_customer, dim_company — sources `validated_mac5.chq + cql` (`cqlbook = 0`); Thai cheque-status labels |
+| `fact_mir_vs` | dim_invoice (deduped `QUALIFY`), dim_customer, dim_collection_status, dim_company — sources `validated_mac5.mir/mie` + `curated_mih` (mirtype `'VS'`, `mihcancel = 0`) |
+| `fact_mir_rs` | same dims as `fact_mir_vs` + `fact_mir_vs` (BillingSK) + **FULL JOIN** `fact_chq` (FactChqSK) — mirtype `'RS'` |
+
+> `fact_chq` / `fact_mir_vs` / `fact_mir_rs` were migrated into the repo **2026-07-20**
+> (previously ad-hoc SQL, last rebuilt May 2026). They rebuild fully every night —
+> this is what makes it safe for them to store `CollectSK` from the daily-rebuild
+> `dim_collection_status` (see the condition in
+> [dimension/full-rebuild-pattern.md](../dimension/full-rebuild-pattern.md)).
+> Build order via `dependencies[]`: dims → `fact_chq` → `fact_mir_vs` → `fact_mir_rs`;
+> `dim_aging` (dimension_daily) reads `fact_mir_vs` and declares it as a dependency.
+> Their SKs (`FactChqSK`, `BillingSK`, `ReceiveSK`) are ROW_NUMBER-based and regenerate
+> daily — never persist them across days.
 
 ## `fact_transcation` walkthrough (canonical upsert fact)
 

@@ -41,7 +41,7 @@ GCS AVRO files (gs://file-raw-data)
         ▼                              ▼
 ┌─────────────────┐            ┌─────────────────┐
 │ DIMENSION       │            │ FACT            │
-│ (59 files, SCD) │◄───────────│ (6 fact tables) │
+│ (59 files, SCD) │◄───────────│ (9 fact tables) │
 └─────────────────┘            └─────────────────┘
    definitions/dimension/         definitions/fact/
         ▲
@@ -60,7 +60,7 @@ Supporting pipelines:
 | **Validated** | `definitions/validated/` | 131 | Clean, cast, dedup; one table per source object |
 | **Curated** | `definitions/curated/` | 5 | Business-ready joins, enrichment, JSON parsing |
 | **Dimension** | `definitions/dimension/` | 59 | Conformed dimensions with surrogate keys (MERGE + SCD intervals) |
-| **Fact** | `definitions/fact/` | 6 | Star-schema fact tables joined to dimensions (4-year retention) |
+| **Fact** | `definitions/fact/` | 9 | Star-schema fact tables joined to dimensions (4-year retention) |
 | **CDC** | `definitions/cdc/` | 2 | Config-driven change log over validated tables |
 | **Process** | `definitions/process/` | 1 | AI address parsing consumed by dims/facts |
 
@@ -93,7 +93,8 @@ definitions/
 ├── dimension/        # dim_company (DAG root), 35 more mds dims, dim_customer,
 │                     # dim_invoice, dim_order, *_last snapshots, dim_calendar, ...
 ├── fact/             # fact_invoice, fact_order, fact_delivery, fact_quotation,
-│                     # fact_transaction_delivery, fact_transcation (sic — real name)
+│                     # fact_transaction_delivery, fact_transcation (sic — real name),
+│                     # fact_chq, fact_mir_vs, fact_mir_rs (AR billing/receive chain)
 ├── cdc/              # cdc_schema, cdc_change_log
 └── process/          # deb_address_data (AI.GENERATE address parsing)
 
@@ -274,7 +275,8 @@ it for `CompanySK`. MERGE pattern & invariants:
 
 ### Fact — star-schema joins to dimensions (no MERGE)
 Three materialization styles: Dataform `type: "table"` rebuilds (`fact_order`,
-`fact_invoice`), `CREATE OR REPLACE TABLE AS` scripts (`fact_delivery`,
+`fact_invoice`, and — added 2026-07-20 — the AR chain `fact_chq` → `fact_mir_vs` →
+`fact_mir_rs`), `CREATE OR REPLACE TABLE AS` scripts (`fact_delivery`,
 `fact_quotation`, `fact_transaction_delivery`), and TEMP → DELETE → INSERT upsert
 (`fact_transcation`, keyed on `milVnos, milType, CompanySK`). Facts join dimension
 surrogate keys, derive `mix_date` from `milYear/Month/Day`, and keep a rolling

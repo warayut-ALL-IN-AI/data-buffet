@@ -22,7 +22,7 @@ CURATED      definitions/curated/     Business joins, JSON parsing, split-sale (
       ├────────────────────────────┐
       ▼                            ▼
 DIMENSION    definitions/dimension/ FACT    definitions/fact/
-(59 files — MERGE + SK)      ◄──── (6 files — star-schema joins)
+(59 files — SK dims)         ◄──── (9 files — star-schema joins)
 
 Side pipelines:
   CDC      definitions/cdc/       change log driven by cdc-config.json (2 files)

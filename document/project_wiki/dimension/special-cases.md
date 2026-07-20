@@ -72,5 +72,7 @@ weekend/holiday/long-weekend flags via window functions; TEMP → DELETE matchin
 ## `dim_aging` — the monster
 
 ~500 lines; AR aging engine over many validated/curated MAC5 tables, a history table
-(`dim_aging_history`), a view (`view_dim_aging`), `fact_mir_vs`, and
-`onetime.cfsinvclose2024`. Read it fully before touching; it is not template-shaped.
+(`dim_aging_history`), a view (`view_dim_aging`), `fact_mir_vs` (repo-managed since
+2026-07-20 and declared in `dependencies[]` — see
+[fact/fact-layer.md](../fact/fact-layer.md)), and `onetime.cfsinvclose2024`.
+Read it fully before touching; it is not template-shaped.
