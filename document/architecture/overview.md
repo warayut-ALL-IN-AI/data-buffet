@@ -43,17 +43,23 @@ GCS AVRO files  gs://file-raw-data  (Hive partition: ASATDATE=YYYYMMDD)
 
 ## จุดสำคัญเชิงออกแบบ
 
-### Surrogate key (SK)
-Fact กับ dimension join กันด้วย SK ที่ dimension เป็นคนออก (`max_sk + ROW_NUMBER()`)
-SK ต้อง**คงที่ตลอดชีวิต** ของ entity — MERGE ใช้ dual self-join (natural key + MdsID)
-เพื่อรักษา SK เดิมเสมอ ดูรายละเอียด:
-[project_wiki/dimension/merge-sk-pattern.md](../project_wiki/dimension/merge-sk-pattern.md)
+### Surrogate key (SK) — 2 ระบบ (ตั้งแต่ 2026-07-20)
+- **SK เสถียร** (MERGE dims: `dim_company`, `dim_aging_rang` + lake dims 10 ตัว):
+  ออกด้วย `max_sk + ROW_NUMBER()` + dual self-join รักษา SK เดิมตลอดชีพ —
+  ห้าม regenerate เด็ดขาด ดู
+  [project_wiki/dimension/merge-sk-pattern.md](../project_wiki/dimension/merge-sk-pattern.md)
+- **SK รายวัน** (mds dims 34 ตัว — ปั้น full ใหม่ทุกวัน): `ROW_NUMBER()` ออกเลขใหม่
+  ทุกคืน — consumer ทุกตัว re-derive รายวัน (ตรวจครบแล้ว) **ห้าม persist SK
+  พวกนี้ข้ามวัน** ดู
+  [project_wiki/dimension/full-rebuild-pattern.md](../project_wiki/dimension/full-rebuild-pattern.md)
 
-### mds_dataset และ soft delete
-ตาราง `mds_data_*_master` ทุกตัวมี `id`, `is_active`, `updated_at`
-- MERGE อ่านเฉพาะ `is_active = TRUE` และ `updated_at` ภายใน `MDS_BACKFILL_DAYS` (1 วัน)
-- ท้ายทุกไฟล์ MERGE มี DELETE ลบ row ใน dim ที่ต้นทาง `is_active = FALSE`
-  (ตัดสินใจใช้ hard delete เมื่อ 2026-07-10)
+### mds_dataset และการจัดการ delete/overwrite
+ตาราง `mds_data_*_master` ทุกตัวมี `id` (UUID), `is_active`, `updated_at`
+และรองรับ **overwrite import** (ล้างแล้วลงใหม่ = id ใหม่หมด)
+- **dims 34 ตัว (full rebuild)**: อ่านเฉพาะ `is_active = TRUE` ทั้งตารางทุกคืน —
+  soft delete และ overwrite import หายเองอัตโนมัติ (ตัดสินใจ 2026-07-20)
+- **dims 2 ตัว (MERGE)**: window `MDS_BACKFILL_DAYS` (1 วัน) + tombstone DELETE
+  ลบ row ที่ต้นทาง `is_active = FALSE` (hard delete, ตัดสินใจ 2026-07-10)
 
 ### MAC5 multi-company
 5 บริษัท (ag01/aa05/ab01/ac02/ak02) → raw dataset แยกกัน → validated รวมด้วย

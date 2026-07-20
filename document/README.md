@@ -62,5 +62,5 @@ project_wiki/
 - เพิ่ม dimension ใหม่ → เพิ่มแถวใน `project_wiki/dimension/inventory.md`
 - ตัดสินใจเชิงออกแบบใหม่ (เช่น hard delete 2026-07-10) → บันทึกใน
   `operations/known-issues.md` + หน้า pattern ที่เกี่ยว
-- **อย่าอัปเดต** `.claude/knowledge/` และ `.claude/CLAUDE.md` ตามเอกสารชุดนี้โดยไม่ตรวจ —
-  ไฟล์พวกนั้นล้าสมัยและมีข้อผิดพลาด (รายการอยู่ใน known-issues.md)
+- `.claude/` ถูกสร้างใหม่ 2026-07-10 ให้ชี้เข้าเอกสารชุดนี้แล้ว (CLAUDE.md, skills,
+  agents) — `knowledge/` เก่าถูกลบ ถ้าแก้ pattern ให้ใช้ skill `/update-docs` ช่วย sync

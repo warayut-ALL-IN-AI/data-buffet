@@ -1,17 +1,15 @@
 config {
-  type: "operations",
+  type: "table",
+  schema: databuffet.DIMENSION_TABLE,
   dependencies: ["dim_company"],
   tags: [databuffet.TAG_DIM_DAILY],
+  uniqueKey: ["PaymentReceiveSK"],
+  bigquery: {
+    clusterBy: ["PaymentReceiveSK"],
+  },
 }
 
 js {
-    const DimPaymentReceiveScoreTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: name(),
-    };
-    const DimPaymentReceiveScoreTableRef = `${DimPaymentReceiveScoreTable.database}.${DimPaymentReceiveScoreTable.schema}.${DimPaymentReceiveScoreTable.name}`;
-
     const DimCompanyTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -27,89 +25,28 @@ js {
     const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
 }
 
-BEGIN
-  DECLARE max_sk INT64 DEFAULT 0;
-
-  SET max_sk = (SELECT IFNULL(MAX(PaymentReceiveSK), 0) FROM `${DimPaymentReceiveScoreTableRef}`);
-
-  MERGE `${DimPaymentReceiveScoreTableRef}` AS T
-  USING (
-    SELECT
-      (CASE
-        WHEN t3.PaymentReceiveSK IS NOT NULL THEN t3.PaymentReceiveSK
-        WHEN t2.PaymentReceiveSK IS NOT NULL THEN t2.PaymentReceiveSK
-        ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.PaymentReceiveSK IS NULL AND t3.PaymentReceiveSK IS NULL THEN 1 ELSE 0 END)
-          ORDER BY
-            ${databuffet.functionData.cleanString("t1.companyID")},
-            ${databuffet.functionData.castFloat64("t1.PaymentReceivedMin")},
-            ${databuffet.functionData.castFloat64("t1.PaymentReceivedMax")},
-            t1.StartDate,
-            t1.EndDate
-        )
-      END) AS PaymentReceiveSK,
-      dim_com.CompanySK,
-      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
-      ${databuffet.functionData.castFloat64("t1.PaymentReceivedMin")} AS PaymentReceivedMin,
-      ${databuffet.functionData.castFloat64("t1.PaymentReceivedMax")} AS PaymentReceivedMax,
-      ${databuffet.functionData.castFloat64("t1.Score")} AS Score,
+SELECT
+  ROW_NUMBER() OVER(
+    ORDER BY
+      ${databuffet.functionData.cleanString("t1.companyID")},
+      ${databuffet.functionData.castFloat64("t1.PaymentReceivedMin")},
+      ${databuffet.functionData.castFloat64("t1.PaymentReceivedMax")},
       t1.StartDate,
-      t1.EndDate,
-      ${databuffet.functionData.cleanString("t1.id")} as MdsID
-    FROM `${MdsSourceTableRef}` AS t1
-    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
-      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
-    LEFT JOIN `${DimPaymentReceiveScoreTableRef}` AS t2
-      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
-      AND ${databuffet.functionData.castFloat64("t1.PaymentReceivedMin")} = t2.PaymentReceivedMin
-      AND ${databuffet.functionData.castFloat64("t1.PaymentReceivedMax")} = t2.PaymentReceivedMax
-      AND t1.StartDate = t2.StartDate
-      AND t1.EndDate = t2.EndDate
-    LEFT JOIN `${DimPaymentReceiveScoreTableRef}` AS t3
-      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
-    WHERE t1.is_active = TRUE
-      AND DATE(t1.updated_at) >= DATE_SUB(
-            CURRENT_DATE("Asia/Bangkok"),
-            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
-          )
-  ) AS S
-  ON T.PaymentReceiveSK = S.PaymentReceiveSK
+      t1.EndDate
+  ) AS PaymentReceiveSK,
+  dim_com.CompanySK,
+  ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+  ${databuffet.functionData.castFloat64("t1.PaymentReceivedMin")} AS PaymentReceivedMin,
+  ${databuffet.functionData.castFloat64("t1.PaymentReceivedMax")} AS PaymentReceivedMax,
+  ${databuffet.functionData.castFloat64("t1.Score")} AS Score,
+  t1.StartDate,
+  t1.EndDate,
+  ${databuffet.functionData.cleanString("t1.id")} as MdsID
+FROM `${MdsSourceTableRef}` AS t1
+LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+  ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+WHERE t1.is_active = TRUE
 
-  WHEN MATCHED THEN
-    UPDATE SET
-      T.PaymentReceivedMin = S.PaymentReceivedMin,
-      T.PaymentReceivedMax = S.PaymentReceivedMax,
-      T.Score = S.Score,
-      T.StartDate = S.StartDate,
-      T.EndDate = S.EndDate,
-      T.MdsID = S.MdsID
+pre_operations {}
 
-  WHEN NOT MATCHED THEN
-    INSERT (
-      PaymentReceiveSK, 
-      CompanySK, 
-      CompanyID, 
-      PaymentReceivedMin, 
-      PaymentReceivedMax, 
-      Score, 
-      StartDate, 
-      EndDate,
-      MdsID
-    )
-    VALUES (
-      S.PaymentReceiveSK, 
-      S.CompanySK, 
-      S.CompanyID, 
-      S.PaymentReceivedMin, 
-      S.PaymentReceivedMax, 
-      S.Score, 
-      S.StartDate, 
-      S.EndDate,
-      S.MdsID
-    );
-
-  DELETE FROM `${DimPaymentReceiveScoreTableRef}`
-  WHERE MdsID IN (
-    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
-  );
-END;
+post_operations {}

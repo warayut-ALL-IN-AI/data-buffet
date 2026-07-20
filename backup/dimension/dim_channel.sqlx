@@ -1,0 +1,180 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    const DimChannelTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimChannelTableRef = `${DimChannelTable.database}.${DimChannelTable.schema}.${DimChannelTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_channel_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(ChannelSK), 0) FROM `${DimChannelTableRef}`);
+
+  MERGE `${DimChannelTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t3.ChannelSK IS NOT NULL THEN t3.ChannelSK
+        WHEN t2.ChannelSK IS NOT NULL THEN t2.ChannelSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.ChannelSK IS NULL AND t3.ChannelSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString("t1.companyID")},
+            ${databuffet.functionData.cleanString("t1.DepCode")}
+        )
+      END) AS ChannelSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+      ${databuffet.functionData.cleanString("t1.DepCode")} AS DepCode,
+      ${databuffet.functionData.cleanString("t1.DepGroup")} AS DepGroup,
+      ${databuffet.functionData.cleanString("t1.DepDesct")} AS DepDesct,
+      ${databuffet.functionData.cleanString("t1.DepDesce")} AS DepDesce,
+      ${databuffet.functionData.cleanString("t1.ChannelGroup")} AS ChannelGroup,
+      ${databuffet.functionData.cleanString("t1.ChannelSubGroupName1")} AS ChannelSubGroupName1,
+      ${databuffet.functionData.cleanString("t1.ChannelSubGroupName2")} AS ChannelSubGroupName2,
+      ${databuffet.functionData.cleanString("t1.ChannelSubGroupName3")} AS ChannelSubGroupName3,
+      ${databuffet.functionData.cleanString("t1.ChannelID")} AS ChannelID,
+      ${databuffet.functionData.cleanString("t1.ChannelName")} AS ChannelName,
+      ${databuffet.functionData.cleanString("t1.ChannelCostID")} AS ChannelCostID,
+      ${databuffet.functionData.cleanString("t1.ChannelCostName")} AS ChannelCostName,
+      ${databuffet.functionData.cleanString("t1.ChannelGroupFinance")} AS ChannelGroupFinance,
+      ${databuffet.functionData.cleanString("t1.ChannelSubGroupFinance1")} AS ChannelSubGroupFinance1,
+      ${databuffet.functionData.cleanString("t1.ChannelSubGroupFinance2")} AS ChannelSubGroupFinance2,
+      ${databuffet.functionData.cleanString("t1.ChannelSubGroupFinance3")} AS ChannelSubGroupFinance3,
+      ${databuffet.functionData.cleanString("t1.ChannelIDFinance")} AS ChannelIDFinance,
+      ${databuffet.functionData.cleanString("t1.ChannelNameFinance")} AS ChannelNameFinance,
+      ${databuffet.functionData.cleanString("t1.ChannelDSite01")} AS ChannelDSite01,
+      ${databuffet.functionData.cleanString("t1.ChannelDDepartment02")} AS ChannelDDepartment02,
+      ${databuffet.functionData.cleanString("t1.ChannelDDivision03")} AS ChannelDDivision03,
+      ${databuffet.functionData.cleanString("t1.ChannelDSubDivision04")} AS ChannelDSubDivision04,
+      ${databuffet.functionData.cleanString("t1.DummyChannel")} AS DummyChannel,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+    LEFT JOIN `${DimChannelTableRef}` AS t2
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
+      AND ${databuffet.functionData.cleanString("t1.DepCode")} = t2.DepCode
+    LEFT JOIN `${DimChannelTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.ChannelSK = S.ChannelSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.DepGroup = S.DepGroup,
+      T.DepDesct = S.DepDesct,
+      T.DepDesce = S.DepDesce,
+      T.ChannelGroup = S.ChannelGroup,
+      T.ChannelSubGroupName1 = S.ChannelSubGroupName1,
+      T.ChannelSubGroupName2 = S.ChannelSubGroupName2,
+      T.ChannelSubGroupName3 = S.ChannelSubGroupName3,
+      T.ChannelID = S.ChannelID,
+      T.ChannelName = S.ChannelName,
+      T.ChannelCostID = S.ChannelCostID,
+      T.ChannelCostName = S.ChannelCostName,
+      T.ChannelGroupFinance = S.ChannelGroupFinance,
+      T.ChannelSubGroupFinance1 = S.ChannelSubGroupFinance1,
+      T.ChannelSubGroupFinance2 = S.ChannelSubGroupFinance2,
+      T.ChannelSubGroupFinance3 = S.ChannelSubGroupFinance3,
+      T.ChannelIDFinance = S.ChannelIDFinance,
+      T.ChannelNameFinance = S.ChannelNameFinance,
+      T.ChannelDSite01 = S.ChannelDSite01,
+      T.ChannelDDepartment02 = S.ChannelDDepartment02,
+      T.ChannelDDivision03 = S.ChannelDDivision03,
+      T.ChannelDSubDivision04 = S.ChannelDSubDivision04,
+      T.DummyChannel = S.DummyChannel,
+      T.MdsID = S.MdsID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      ChannelSK,
+      CompanySK,
+      companyID,
+      DepCode,
+      DepGroup,
+      DepDesct,
+      DepDesce,
+      ChannelGroup,
+      ChannelSubGroupName1,
+      ChannelSubGroupName2,
+      ChannelSubGroupName3,
+      ChannelID,
+      ChannelName,
+      ChannelCostID,
+      ChannelCostName,
+      ChannelGroupFinance,
+      ChannelSubGroupFinance1,
+      ChannelSubGroupFinance2,
+      ChannelSubGroupFinance3,
+      ChannelIDFinance,
+      ChannelNameFinance,
+      ChannelDSite01,
+      ChannelDDepartment02,
+      ChannelDDivision03,
+      ChannelDSubDivision04,
+      DummyChannel,
+      MdsID
+    )
+    VALUES (
+      S.ChannelSK,
+      S.CompanySK,
+      S.companyID,
+      S.DepCode,
+      S.DepGroup,
+      S.DepDesct,
+      S.DepDesce,
+      S.ChannelGroup,
+      S.ChannelSubGroupName1,
+      S.ChannelSubGroupName2,
+      S.ChannelSubGroupName3,
+      S.ChannelID,
+      S.ChannelName,
+      S.ChannelCostID,
+      S.ChannelCostName,
+      S.ChannelGroupFinance,
+      S.ChannelSubGroupFinance1,
+      S.ChannelSubGroupFinance2,
+      S.ChannelSubGroupFinance3,
+      S.ChannelIDFinance,
+      S.ChannelNameFinance,
+      S.ChannelDSite01,
+      S.ChannelDDepartment02,
+      S.ChannelDDivision03,
+      S.ChannelDSubDivision04,
+      S.DummyChannel,
+      S.MdsID
+    );
+
+  DELETE FROM `${DimChannelTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
+END;

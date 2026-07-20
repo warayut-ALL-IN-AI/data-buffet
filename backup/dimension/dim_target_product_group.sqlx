@@ -1,0 +1,142 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    const DimTargetProductGroupTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimTargetProductGroupTableRef = `${DimTargetProductGroupTable.database}.${DimTargetProductGroupTable.schema}.${DimTargetProductGroupTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_sales_target_by_product_group_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(TargetProductGroupSK), 0) FROM `${DimTargetProductGroupTableRef}`);
+
+  MERGE `${DimTargetProductGroupTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t3.TargetProductGroupSK IS NOT NULL THEN t3.TargetProductGroupSK
+        WHEN t2.TargetProductGroupSK IS NOT NULL THEN t2.TargetProductGroupSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.TargetProductGroupSK IS NULL AND t3.TargetProductGroupSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString("t1.companyID")},
+            ${databuffet.functionData.castInt64("t1.Year")},
+            ${databuffet.functionData.castInt64("t1.Month")},
+            ${databuffet.functionData.cleanString("t1.MarketingGroupID")},
+            ${databuffet.functionData.cleanString("t1.SubMarketingID")},
+            ${databuffet.functionData.cleanString("t1.SegmentID")},
+            ${databuffet.functionData.cleanString("t1.ChannelTargetGroup")},
+            ${databuffet.functionData.cleanString("t1.TargetID")}
+        )
+      END) AS TargetProductGroupSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+      ${databuffet.functionData.castInt64("t1.Year")} AS Year,
+      ${databuffet.functionData.castInt64("t1.Month")} AS Month,
+      ${databuffet.functionData.cleanString("t1.MarketingGroupID")} AS MarketingGroupID,
+      ${databuffet.functionData.cleanString("t1.MarketingGroupName")} AS MarketingGroupName,
+      ${databuffet.functionData.cleanString("t1.SubMarketingID")} AS SubMarketingID,
+      ${databuffet.functionData.cleanString("t1.SubMarketingName")} AS SubMarketingName,
+      ${databuffet.functionData.cleanString("t1.SegmentID")} AS SegmentID,
+      ${databuffet.functionData.cleanString("t1.SegmentName")} AS SegmentName,
+      ${databuffet.functionData.cleanString("t1.ChannelTargetGroup")} AS ChannelTargetGroup,
+      ${databuffet.functionData.cleanString("t1.TargetID")} AS TargetID,
+      ${databuffet.functionData.castFloat64("t1.Amt")} AS Amt,
+      ${databuffet.functionData.castFloat64("t1.Qty")} AS Qty,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+    LEFT JOIN `${DimTargetProductGroupTableRef}` AS t2
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
+      AND ${databuffet.functionData.castInt64("t1.Year")} = t2.Year
+      AND ${databuffet.functionData.castInt64("t1.Month")} = t2.Month
+      AND ${databuffet.functionData.cleanString("t1.MarketingGroupID")} = t2.MarketingGroupID
+      AND ${databuffet.functionData.cleanString("t1.SubMarketingID")} = t2.SubMarketingID
+      AND ${databuffet.functionData.cleanString("t1.SegmentID")} = t2.SegmentID
+      AND ${databuffet.functionData.cleanString("t1.ChannelTargetGroup")} = t2.ChannelTargetGroup
+      AND ${databuffet.functionData.cleanString("t1.TargetID")} = t2.TargetID
+    LEFT JOIN `${DimTargetProductGroupTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.TargetProductGroupSK = S.TargetProductGroupSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.MarketingGroupName = S.MarketingGroupName,
+      T.SubMarketingName = S.SubMarketingName,
+      T.SegmentName = S.SegmentName,
+      T.Amt = S.Amt,
+      T.Qty = S.Qty,
+      T.MdsID = S.MdsID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      TargetProductGroupSK,
+      CompanySK,
+      companyID,
+      Year,
+      Month,
+      MarketingGroupID,
+      MarketingGroupName,
+      SubMarketingID,
+      SubMarketingName,
+      SegmentID,
+      SegmentName,
+      ChannelTargetGroup,
+      TargetID,
+      Amt,
+      Qty,
+      MdsID
+    )
+    VALUES (
+      S.TargetProductGroupSK,
+      S.CompanySK,
+      S.companyID,
+      S.Year,
+      S.Month,
+      S.MarketingGroupID,
+      S.MarketingGroupName,
+      S.SubMarketingID,
+      S.SubMarketingName,
+      S.SegmentID,
+      S.SegmentName,
+      S.ChannelTargetGroup,
+      S.TargetID,
+      S.Amt,
+      S.Qty,
+      S.MdsID
+    );
+
+  DELETE FROM `${DimTargetProductGroupTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
+END;

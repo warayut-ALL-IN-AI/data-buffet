@@ -109,10 +109,15 @@ post_operations { ${ when(!incremental(), post_operations_statement) } }
 
 PK เป็น `NOT ENFORCED` — เป็น hint ให้ optimizer ไม่ใช่ constraint จริง
 
-## 8. Dimension MERGE (สรุปย่อ)
+## 8. Dimension patterns (สรุปย่อ)
 
-ดูฉบับเต็ม: [project_wiki/dimension/merge-sk-pattern.md](../project_wiki/dimension/merge-sk-pattern.md)
+**Default — full rebuild** (mds dims 34 ตัว):
+[project_wiki/dimension/full-rebuild-pattern.md](../project_wiki/dimension/full-rebuild-pattern.md)
+`type: "table"` → SELECT เดียว: `ROW_NUMBER() OVER(ORDER BY natural key)` AS SK →
+join dim_company → `WHERE is_active = TRUE` → `MdsID` ปิดท้าย — SK ใหม่ทุกวัน
 
+**Legacy — MERGE SK เสถียร** (dim_company, dim_aging_rang + lake dims):
+[project_wiki/dimension/merge-sk-pattern.md](../project_wiki/dimension/merge-sk-pattern.md)
 ลำดับใน `BEGIN...END`: `DECLARE max_sk` → `SET max_sk` → `MERGE` (CASE t3→t2→ใหม่)
 → `WHEN MATCHED UPDATE` (เฉพาะ attribute, ห้ามแตะ key) → `WHEN NOT MATCHED INSERT`
 → **DELETE row ที่ mds `is_active = FALSE`** → `END;`
@@ -128,8 +133,9 @@ PK เป็น `NOT ENFORCED` — เป็น hint ให้ optimizer ไม�
 | ห้าม | เพราะ |
 |---|---|
 | hardcode ชื่อ dataset/project | ต้องผ่าน `databuffet.*` เพื่อย้าย environment ได้ |
-| แก้/regenerate SK เดิม | fact เก็บ SK แล้ว ข้อมูลจะชี้ผิด |
+| แก้/regenerate SK ของ MERGE dims | fact/dim อื่น persist SK พวกนั้นไว้ ข้อมูลจะชี้ผิด |
+| persist SK ของ full-rebuild dims ข้ามวัน | SK ออกเลขใหม่ทุกคืน — consumer ใหม่ต้อง rebuild รายวันตาม |
 | `CURRENT_DATE()` ไม่ระบุ timezone | เที่ยงคืน UTC ≠ เที่ยงคืนไทย ข้อมูลคลาดวัน |
 | แก้คำผิด `fact_transcation`, `CDC_DATESET`, `prdDiminsionData` | เป็น identifier จริงใน BigQuery |
 | ใส่ dependency ของตารางที่อ่านผ่าน `ref()` ซ้ำ | graph ซ้ำซ้อน สับสน |
-| ลืม DELETE ท้าย mds dim ใหม่ | row ที่ถูก soft-delete จะค้างตลอดไป |
+| ลืม DELETE ท้าย mds dim แบบ MERGE (dim_company/dim_aging_rang) | row ที่ถูก soft-delete จะค้างตลอดไป |

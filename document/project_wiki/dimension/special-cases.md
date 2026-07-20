@@ -3,34 +3,44 @@
 > **LLM context**: Deviations from the canonical MERGE pattern. Check this page before
 > editing any of these files with a bulk/mechanical change.
 
-## `dim_sale_representative` — two BEGIN blocks
+## `dim_sale_representative` — UNION of two sources (rebuilt daily since 2026-07-20)
 
-- **Block 1**: standard mds MERGE (`mds_data_sales_representative_master`, dual t2/t3
-  dedup) — the mds-inactive DELETE lives at the end of **this block only**.
-- **Block 2**: re-reads `max_sk`, then MERGEs in sales reps found only in the ledger:
-  CTE `raw_per` reads `ref(databuffet.VALIDATED_MAC5, 'per')`, parses `pernamet` via
-  `REGEXP_EXTRACT` into name/surname/nickname, sets DepartmentID/DepCode/etc. to NULL,
-  `StartDate = '1900-01-01'`, `EndDate = '2499-12-31'`. Self-join matches on
-  `EmployeeID + CompanySK AND t2.DepartmentID IS NULL`. These rows have **no MdsID**
-  → never touched by the tombstone DELETE.
+Full-rebuild file with two CTE sources UNION ALL'd, single `ROW_NUMBER()` over the union:
+- **`mds_rep`**: reps from `mds_data_sales_representative_master` (full org structure,
+  StartDate/EndDate intervals, MdsID populated).
+- **`ledger_rep`**: per-employees from `ref(databuffet.VALIDATED_MAC5, 'per')` —
+  `pernamet` parsed via `REGEXP_EXTRACT` into name/surname/nickname;
+  DepartmentID/DepCode/CostChannelID/ProvinceID/flags = NULL;
+  sentinel dates `1900-01-01` → `2499-12-31`; `MdsID = NULL`.
+SK ordering puts mds rows first (`CASE WHEN MdsID IS NULL THEN 1 ELSE 0 END`).
 
-## `dim_stk_mkt` — 'Waiting Master' placeholders
+## `dim_stk_mkt` — 'Waiting Master' placeholders (rebuilt daily since 2026-07-20)
 
-After the standard MERGE: re-read `max_sk`, then `INSERT INTO ... SELECT` every distinct
-`stkcode` from `ref(databuffet.VALIDATED_MAC5, "stk")` that `NOT EXISTS` in the dim,
-with `MarketingGroupID='999'`, `SubMarketingID='9999'`, `SegmentID='99999'`, names
-`'Waiting Master'`, and **`MdsID = NULL`**. NULL MdsID means the tombstone DELETE
-(`WHERE MdsID IN (...)`) can never match them — safe by construction.
+Full-rebuild file: CTE `mds_mkt` (active mds rows) UNION ALL CTE `waiting_master` —
+every distinct `stkcode` from `ref(databuffet.VALIDATED_MAC5, "stk")` that
+`NOT EXISTS` in `mds_mkt` (matched on StkCode + companyID), with
+`MarketingGroupID='999'`, `SubMarketingID='9999'`, `SegmentID='99999'`, names
+`'Waiting Master'`, `MdsID = NULL`. Single `ROW_NUMBER()` over the union.
 
-## `dim_doctype` / `dim_holiday` — commented-out SK
+## `dim_doctype` / `dim_holiday` — no surrogate key
 
-The full SK machinery (`DECLARE max_sk`, CASE/ROW_NUMBER, t2 join, SK in INSERT) is
-present but commented out with `--`. They MERGE on the **natural key** instead:
-- `dim_doctype`: `ON T.companyID = S.companyID AND T.Code = S.Code`
-- `dim_holiday`: `ON T.HolidayDate = S.HolidayDate`
+Full-rebuild files (since 2026-07-20) that intentionally have **no SK column**:
+plain SELECT of natural columns + MdsID, `WHERE is_active = TRUE`, no ROW_NUMBER,
+no uniqueKey/clusterBy. (Historically their SK machinery was commented out and they
+MERGEd on natural keys.) `dim_holiday` has `dependencies: []`.
 
-No populated surrogate key in the target tables. Both still have the MdsID column and
-the tombstone DELETE.
+## `dim_rate_target` — MDT percent reallocation in post_operations (activated 2026-07-20)
+
+The only full-rebuild mds dim with a real `post_operations { BEGIN ... END }` block:
+after the daily rebuild it recomputes `Percent` for departments under director
+'MDT' — temp `mdt_base_data` (rows joined to `dim_department_last` →
+`dim_director_last`, filter `DirectorName = 'MDT'`), head-count per month
+(`COUNT(DISTINCT employee-dept) / 6` + share of NULL-month rows), then two UPDATEs
+on `${self()}` (per-month rows, and NULL-month rows using the max total).
+This is why its `dependencies` include `dim_department_last`, `dim_director_last`
+**and `update_sk_sale_rep_group`** — `dim_department_last.DirectorSK` is created as
+NULL and backfilled by `update_sk_sale_rep_group`, so the post_op must run after
+that backfill or the MDT join matches nothing.
 
 ## `dim_change_district` — mds-sourced but not a MERGE
 

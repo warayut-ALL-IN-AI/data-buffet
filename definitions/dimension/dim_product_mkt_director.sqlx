@@ -1,17 +1,15 @@
 config {
-  type: "operations",
+  type: "table",
+  schema: databuffet.DIMENSION_TABLE,
   dependencies: ["dim_company"],
   tags: [databuffet.TAG_DIM_DAILY],
+  uniqueKey: ["ProductMktDirectorSK"],
+  bigquery: {
+    clusterBy: ["ProductMktDirectorSK"],
+  },
 }
 
 js {
-    const DimProductMktDirectorTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: name(),
-    };
-    const DimProductMktDirectorTableRef = `${DimProductMktDirectorTable.database}.${DimProductMktDirectorTable.schema}.${DimProductMktDirectorTable.name}`;
-
     const DimCompanyTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -25,89 +23,29 @@ js {
         name: "mds_data_product_marketing_director_master",
     };
     const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
-    
+
 }
 
-BEGIN
-  DECLARE max_sk INT64 DEFAULT 0;
+SELECT
+  ROW_NUMBER() OVER(
+    ORDER BY
+      ${databuffet.functionData.cleanString("t1.CompanyID")},
+      ${databuffet.functionData.cleanString("t1.TypeMarketingID")}
+  ) AS ProductMktDirectorSK,
+  dim_com.CompanySK,
+  ${databuffet.functionData.cleanString("t1.CompanyID")} AS CompanyID,
+  ${databuffet.functionData.cleanString("t1.TypeMarketingID")} AS TypeMarketingID,
+  ${databuffet.functionData.cleanString("t1.TypeMarketing")} AS TypeMarketing,
+  ${databuffet.functionData.cleanString("t1.Name")} AS Name,
+  ${databuffet.functionData.cleanString("t1.Surname")} AS Surname,
+  t1.StartDate AS StartDate,
+  t1.EndDate AS EndDate,
+  ${databuffet.functionData.cleanString("t1.id")} as MdsID
+FROM `${MdsSourceTableRef}` AS t1
+LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+  ON ${databuffet.functionData.cleanString("t1.CompanyID")} = dim_com.companyID
+WHERE t1.is_active = TRUE
 
-  SET max_sk = (SELECT IFNULL(MAX(ProductMktDirectorSK), 0) FROM `${DimProductMktDirectorTableRef}`);
+pre_operations {}
 
-  MERGE `${DimProductMktDirectorTableRef}` AS T
-  USING (
-    SELECT
-      (CASE
-        WHEN t3.ProductMktDirectorSK IS NOT NULL THEN t3.ProductMktDirectorSK
-        WHEN t2.ProductMktDirectorSK IS NOT NULL THEN t2.ProductMktDirectorSK
-        ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.ProductMktDirectorSK IS NULL AND t3.ProductMktDirectorSK IS NULL THEN 1 ELSE 0 END)
-          ORDER BY
-            ${databuffet.functionData.cleanString("t1.CompanyID")},
-            ${databuffet.functionData.cleanString("t1.TypeMarketingID")}
-        )
-      END) AS ProductMktDirectorSK,
-      dim_com.CompanySK,
-      ${databuffet.functionData.cleanString("t1.CompanyID")} AS CompanyID,
-      ${databuffet.functionData.cleanString("t1.TypeMarketingID")} AS TypeMarketingID,
-      ${databuffet.functionData.cleanString("t1.TypeMarketing")} AS TypeMarketing,
-      ${databuffet.functionData.cleanString("t1.Name")} AS Name,
-      ${databuffet.functionData.cleanString("t1.Surname")} AS Surname,
-      t1.StartDate AS StartDate,
-      t1.EndDate AS EndDate,
-      ${databuffet.functionData.cleanString("t1.id")} as MdsID
-    FROM `${MdsSourceTableRef}` AS t1
-    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
-      ON ${databuffet.functionData.cleanString("t1.CompanyID")} = dim_com.companyID
-    LEFT JOIN `${DimProductMktDirectorTableRef}` AS t2
-      ON ${databuffet.functionData.cleanString("t1.CompanyID")} = t2.CompanyID
-      AND ${databuffet.functionData.cleanString("t1.TypeMarketingID")} = t2.TypeMarketingID
-    LEFT JOIN `${DimProductMktDirectorTableRef}` AS t3
-      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
-    WHERE t1.is_active = TRUE
-      AND DATE(t1.updated_at) >= DATE_SUB(
-            CURRENT_DATE("Asia/Bangkok"),
-            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
-          )
-  ) AS S
-  ON T.ProductMktDirectorSK = S.ProductMktDirectorSK
-
-  WHEN MATCHED THEN
-    UPDATE SET
-      T.TypeMarketing = S.TypeMarketing,
-      T.Name = S.Name,
-      T.Surname = S.Surname,
-      T.StartDate = S.StartDate,
-      T.EndDate = S.EndDate,
-      T.MdsID = S.MdsID
-
-  WHEN NOT MATCHED THEN
-    INSERT (
-      ProductMktDirectorSK,
-      CompanySK,
-      CompanyID,
-      TypeMarketingID,
-      TypeMarketing,
-      Name,
-      Surname,
-      StartDate,
-      EndDate,
-      MdsID
-    )
-    VALUES (
-      S.ProductMktDirectorSK,
-      S.CompanySK,
-      S.CompanyID,
-      S.TypeMarketingID,
-      S.TypeMarketing,
-      S.Name,
-      S.Surname,
-      S.StartDate,
-      S.EndDate,
-      S.MdsID
-    );
-
-  DELETE FROM `${DimProductMktDirectorTableRef}`
-  WHERE MdsID IN (
-    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
-  );
-END;
+post_operations {}

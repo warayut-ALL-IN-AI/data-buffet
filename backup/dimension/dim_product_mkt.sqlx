@@ -1,0 +1,123 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    const DimProductMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimProductMktTableRef = `${DimProductMktTable.database}.${DimProductMktTable.schema}.${DimProductMktTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_product_marketing_name_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(ProductMktSK), 0) FROM `${DimProductMktTableRef}`);
+
+  MERGE `${DimProductMktTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t3.ProductMktSK IS NOT NULL THEN t3.ProductMktSK
+        WHEN t2.ProductMktSK IS NOT NULL THEN t2.ProductMktSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.ProductMktSK IS NULL AND t3.ProductMktSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString("t1.CompanyID")},
+            ${databuffet.functionData.cleanString("t1.TypeMarketingID")},
+            ${databuffet.functionData.cleanString("t1.MarketingGroupID")},
+            ${databuffet.functionData.cleanString("t1.SubMarketingID")},
+            ${databuffet.functionData.cleanString("t1.SegmentID")}
+        )
+      END) AS ProductMktSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.CompanyID")} AS CompanyID,
+      ${databuffet.functionData.cleanString("t1.TypeMarketingID")} AS TypeMarketingID,
+      ${databuffet.functionData.cleanString("t1.TypeMarketing")} AS TypeMarketing,
+      ${databuffet.functionData.cleanString("t1.MarketingGroupID")} AS MarketingGroupID,
+      ${databuffet.functionData.cleanString("t1.MarketingGroup")} AS MarketingGroup,
+      ${databuffet.functionData.cleanString("t1.SubMarketingID")} AS SubMarketingID,
+      ${databuffet.functionData.cleanString("t1.SubMarketing")} AS SubMarketing,
+      ${databuffet.functionData.cleanString("t1.SegmentID")} AS SegmentID,
+      ${databuffet.functionData.cleanString("t1.Segment")} AS Segment,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.CompanyID")} = dim_com.companyID
+    LEFT JOIN `${DimProductMktTableRef}` AS t2
+      ON ${databuffet.functionData.cleanString("t1.CompanyID")} = t2.CompanyID
+      AND IFNULL(${databuffet.functionData.cleanString("t1.TypeMarketingID")}, '') = IFNULL(t2.TypeMarketingID, '')
+      AND ${databuffet.functionData.cleanString("t1.MarketingGroupID")} = t2.MarketingGroupID
+      AND ${databuffet.functionData.cleanString("t1.SubMarketingID")} = t2.SubMarketingID
+      AND ${databuffet.functionData.cleanString("t1.SegmentID")} = t2.SegmentID
+    LEFT JOIN `${DimProductMktTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.ProductMktSK = S.ProductMktSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.TypeMarketing = S.TypeMarketing,
+      T.MarketingGroup = S.MarketingGroup,
+      T.SubMarketing = S.SubMarketing,
+      T.Segment = S.Segment,
+      T.MdsID = S.MdsID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      ProductMktSK,
+      CompanySK,
+      CompanyID,
+      TypeMarketingID,
+      TypeMarketing,
+      MarketingGroupID,
+      MarketingGroup,
+      SubMarketingID,
+      SubMarketing,
+      SegmentID,
+      Segment,
+      MdsID
+    )
+    VALUES (
+      S.ProductMktSK,
+      S.CompanySK,
+      S.CompanyID,
+      S.TypeMarketingID,
+      S.TypeMarketing,
+      S.MarketingGroupID,
+      S.MarketingGroup,
+      S.SubMarketingID,
+      S.SubMarketing,
+      S.SegmentID,
+      S.Segment,
+      S.MdsID
+    );
+
+  DELETE FROM `${DimProductMktTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
+END;

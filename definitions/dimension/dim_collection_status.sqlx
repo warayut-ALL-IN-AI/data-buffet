@@ -1,17 +1,15 @@
 config {
-  type: "operations",
+  type: "table",
+  schema: databuffet.DIMENSION_TABLE,
   dependencies: ["dim_company"],
   tags: [databuffet.TAG_DIM_DAILY],
+  uniqueKey: ["CollectSK"],
+  bigquery: {
+    clusterBy: ["CollectSK"],
+  },
 }
 
 js {
-    const DimCollectionStatusTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: name(),
-    };
-    const DimCollectionStatusTableRef = `${DimCollectionStatusTable.database}.${DimCollectionStatusTable.schema}.${DimCollectionStatusTable.name}`;
-
     const DimCompanyTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -27,89 +25,29 @@ js {
     const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
 }
 
-BEGIN
-  DECLARE max_sk INT64 DEFAULT 0;
+SELECT
+  ROW_NUMBER() OVER(
+    ORDER BY
+      ${databuffet.functionData.cleanString("t1.CompanyID")},
+      ${databuffet.functionData.castInt64("t1.Year")},
+      ${databuffet.functionData.castInt64("t1.Month")},
+      ${databuffet.functionData.castInt64("t1.CustomerID")}
+  ) AS CollectSK,
+  dim_com.CompanySK,
+  ${databuffet.functionData.cleanString("t1.CompanyID")} AS CompanyID,
+  ${databuffet.functionData.castInt64("t1.Year")} AS Year,
+  ${databuffet.functionData.castInt64("t1.Month")} AS Month,
+  ${databuffet.functionData.castInt64("t1.CustomerID")} AS CustomerID,
+  ${databuffet.functionData.cleanString("t1.CustomerName")} AS CustomerName,
+  ${databuffet.functionData.cleanString("t1.Actions")} AS Actions,
+  ${databuffet.functionData.cleanString("t1.Justification")} AS Justification,
+  ${databuffet.functionData.cleanString("t1.Responsible")} AS Responsible,
+  ${databuffet.functionData.cleanString("t1.id")} as MdsID
+FROM `${MdsSourceTableRef}` AS t1
+LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+  ON ${databuffet.functionData.cleanString("t1.CompanyID")} = dim_com.companyID
+WHERE t1.is_active = TRUE
 
-  SET max_sk = (SELECT IFNULL(MAX(CollectSK), 0) FROM `${DimCollectionStatusTableRef}`);
+pre_operations {}
 
-  MERGE `${DimCollectionStatusTableRef}` AS T
-  USING (
-    SELECT
-      (CASE
-        WHEN t3.CollectSK IS NOT NULL THEN t3.CollectSK
-        WHEN t2.CollectSK IS NOT NULL THEN t2.CollectSK
-        ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.CollectSK IS NULL AND t3.CollectSK IS NULL THEN 1 ELSE 0 END)
-          ORDER BY
-            ${databuffet.functionData.cleanString("t1.CompanyID")},
-            ${databuffet.functionData.castInt64("t1.Year")},
-            ${databuffet.functionData.castInt64("t1.Month")},
-            ${databuffet.functionData.castInt64("t1.CustomerID")}
-        )
-      END) AS CollectSK,
-      dim_com.CompanySK,
-      ${databuffet.functionData.cleanString("t1.CompanyID")} AS CompanyID,
-      ${databuffet.functionData.castInt64("t1.Year")} AS Year,
-      ${databuffet.functionData.castInt64("t1.Month")} AS Month,
-      ${databuffet.functionData.castInt64("t1.CustomerID")} AS CustomerID,
-      ${databuffet.functionData.cleanString("t1.CustomerName")} AS CustomerName,
-      ${databuffet.functionData.cleanString("t1.Actions")} AS Actions,
-      ${databuffet.functionData.cleanString("t1.Justification")} AS Justification,
-      ${databuffet.functionData.cleanString("t1.Responsible")} AS Responsible,
-      ${databuffet.functionData.cleanString("t1.id")} as MdsID
-    FROM `${MdsSourceTableRef}` AS t1
-    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
-      ON ${databuffet.functionData.cleanString("t1.CompanyID")} = dim_com.companyID
-    LEFT JOIN `${DimCollectionStatusTableRef}` AS t2
-      ON ${databuffet.functionData.cleanString("t1.CompanyID")} = t2.CompanyID
-      AND ${databuffet.functionData.castInt64("t1.Year")} = t2.Year
-      AND ${databuffet.functionData.castInt64("t1.Month")} = t2.Month
-      AND ${databuffet.functionData.castInt64("t1.CustomerID")} = t2.CustomerID
-    LEFT JOIN `${DimCollectionStatusTableRef}` AS t3
-      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
-    WHERE t1.is_active = TRUE
-      AND DATE(t1.updated_at) >= DATE_SUB(
-            CURRENT_DATE("Asia/Bangkok"),
-            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
-          )
-  ) AS S
-  ON T.CollectSK = S.CollectSK
-
-  WHEN MATCHED THEN
-    UPDATE SET
-      T.CustomerName = S.CustomerName,
-      T.Actions = S.Actions,
-      T.Justification = S.Justification,
-      T.Responsible = S.Responsible
-
-  WHEN NOT MATCHED THEN
-    INSERT (
-      CollectSK,
-      CompanySK,
-      CompanyID,
-      Year,
-      Month,
-      CustomerID,
-      CustomerName,
-      Actions,
-      Justification,
-      Responsible
-    )
-    VALUES (
-      S.CollectSK,
-      S.CompanySK,
-      S.CompanyID,
-      S.Year,
-      S.Month,
-      S.CustomerID,
-      S.CustomerName,
-      S.Actions,
-      S.Justification,
-      S.Responsible
-    );
-
-  DELETE FROM `${DimCollectionStatusTableRef}`
-  WHERE MdsID IN (
-    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
-  );
-END;
+post_operations {}

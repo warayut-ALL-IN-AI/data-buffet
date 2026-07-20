@@ -1,0 +1,200 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company", "dim_department_last", "dim_director_last"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    const DimRateTargetTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimRateTargetTableRef = `${DimRateTargetTable.database}.${DimRateTargetTable.schema}.${DimRateTargetTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_target_rate_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(RateTargetSK), 0) FROM `${DimRateTargetTableRef}`);
+
+  MERGE `${DimRateTargetTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t3.RateTargetSK IS NOT NULL THEN t3.RateTargetSK
+        WHEN t2.RateTargetSK IS NOT NULL THEN t2.RateTargetSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.RateTargetSK IS NULL AND t3.RateTargetSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString("t1.companyID")},
+            ${databuffet.functionData.castInt64("t1.Year")},
+            ${databuffet.functionData.castInt64("t1.Month")},
+            ${databuffet.functionData.cleanString("t1.ProductGroupID")},
+            ${databuffet.functionData.cleanString("t1.TargetID")},
+            ${databuffet.functionData.cleanString("t1.TargetDepartmentID")},
+            ${databuffet.functionData.cleanString("t1.DepartmentID")},
+            ${databuffet.functionData.cleanString("t1.EmployeeID")}
+        )
+      END) AS RateTargetSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+      ${databuffet.functionData.castInt64("t1.Year")} AS Year,
+      ${databuffet.functionData.castInt64("t1.Month")} AS Month,
+      ${databuffet.functionData.cleanString("t1.ProductGroupID")} AS ProductGroupID,
+      ${databuffet.functionData.cleanString("t1.ProductGroupName")} AS ProductGroupName,
+      ${databuffet.functionData.cleanString("t1.TargetID")} AS TargetID,
+      ${databuffet.functionData.cleanString("t1.TargetName")} AS TargetName,
+      ${databuffet.functionData.cleanString("t1.TargetDepartmentID")} AS TargetDepartmentID,
+      ${databuffet.functionData.cleanString("t1.TargetDepartmentName")} AS TargetDepartmentName,
+      ${databuffet.functionData.cleanString("t1.DepartmentID")} AS DepartmentID,
+      ${databuffet.functionData.cleanString("t1.EmployeeID")} AS EmployeeID,
+      ${databuffet.functionData.cleanString("t1.EmployeeName")} AS EmployeeName,
+      ${databuffet.functionData.castFloat64("t1.Percent")} AS Percent,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+    LEFT JOIN `${DimRateTargetTableRef}` AS t2
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
+      AND ${databuffet.functionData.castInt64("t1.Year")} = t2.Year
+      AND ${databuffet.functionData.castInt64("t1.Month")} = t2.Month
+      AND ${databuffet.functionData.cleanString("t1.ProductGroupID")} = t2.ProductGroupID
+      AND ${databuffet.functionData.cleanString("t1.TargetID")} = t2.TargetID
+      AND ${databuffet.functionData.cleanString("t1.TargetDepartmentID")} = t2.TargetDepartmentID
+      AND ${databuffet.functionData.cleanString("t1.DepartmentID")} = t2.DepartmentID
+      AND ${databuffet.functionData.cleanString("t1.EmployeeID")} = t2.EmployeeID
+    LEFT JOIN `${DimRateTargetTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsId
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.RateTargetSK = S.RateTargetSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.ProductGroupName = S.ProductGroupName,
+      T.TargetName = S.TargetName,
+      T.TargetDepartmentName = S.TargetDepartmentName,
+      T.EmployeeName = S.EmployeeName,
+      T.Percent = S.Percent,
+      T.MdsID = S.MdsID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      RateTargetSK,
+      CompanySK,
+      companyID,
+      Year,
+      Month,
+      ProductGroupID,
+      ProductGroupName,
+      TargetID,
+      TargetName,
+      TargetDepartmentID,
+      TargetDepartmentName,
+      DepartmentID,
+      EmployeeID,
+      EmployeeName,
+      Percent,
+      MdsID
+    )
+    VALUES (
+      S.RateTargetSK,
+      S.CompanySK,
+      S.companyID,
+      S.Year,
+      S.Month,
+      S.ProductGroupID,
+      S.ProductGroupName,
+      S.TargetID,
+      S.TargetName,
+      S.TargetDepartmentID,
+      S.TargetDepartmentName,
+      S.DepartmentID,
+      S.EmployeeID,
+      S.EmployeeName,
+      S.Percent,
+      S.MdsID
+    );
+
+  DELETE FROM `${DimRateTargetTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
+
+END;
+
+-- BEGIN
+--     DECLARE static_count BIGNUMERIC;
+--     DECLARE max_total_employee BIGNUMERIC;
+
+--     -- 1. สร้าง Temp Table หลักสำหรับ MDT เท่านั้น
+--     CREATE OR REPLACE TEMP TABLE mdt_base_data AS
+--     SELECT 
+--         rate.employeeid,
+--         rate.departmentid,
+--         rate.year,
+--         rate.month
+--     FROM `databuffet-nonprd.dimension_table.dim_rate_target` AS rate
+--     INNER JOIN `databuffet-nonprd.dimension_table.dim_department_last` AS dep 
+--         ON rate.DepartmentID = dep.DepartmentID
+--     INNER JOIN `databuffet-nonprd.dimension_table.dim_director_last` AS dir 
+--         ON dep.DirectorSK = dir.DirectorSK
+--     WHERE dir.DirectorName = 'MDT';
+
+--     -- หาค่า count ของเดือนที่เป็น NULL
+--     SET static_count = (
+--         SELECT ( CAST(COUNT(DISTINCT CONCAT(employeeid, '-', departmentid)) AS BIGNUMERIC) / CAST(6 AS BIGNUMERIC) )
+--         FROM mdt_base_data
+--         WHERE month IS NULL
+--     );
+
+--     -- 2. คำนวณค่ารายเดือนและหาค่า MAX
+--     CREATE OR REPLACE TEMP TABLE monthly_summary AS
+--     SELECT 
+--         year, 
+--         month,
+--         ( CAST(COUNT(DISTINCT CONCAT(employeeid, '-', departmentid)) AS BIGNUMERIC) / CAST(6 AS BIGNUMERIC) ) + static_count AS total_val
+--     FROM mdt_base_data
+--     WHERE month IS NOT NULL
+--     GROUP BY 1, 2;
+
+--     -- อัปเดตรายเดือน
+--     UPDATE `databuffet-nonprd.dimension_table.dim_rate_target` AS target
+--     SET target.Percent = (CAST(100 AS BIGNUMERIC) / CAST(src.total_val AS BIGNUMERIC))
+--     FROM monthly_summary AS src
+--     WHERE target.year = src.year
+--         AND target.month = src.month
+--         AND target.DepartmentID IN (SELECT DISTINCT departmentid FROM mdt_base_data);
+
+--     -- หาค่า max ของของทุกเดือน
+--     SET max_total_employee = (SELECT MAX(total_val) FROM monthly_summary);
+
+--     -- อัปเดตแถว NULL (ใช้ค่า MAX)
+--     UPDATE `databuffet-nonprd.dimension_table.dim_rate_target` AS target
+--     SET target.Percent = ( CAST(100 AS BIGNUMERIC) / max_total_employee )
+--     WHERE target.month IS NULL
+--         AND target.DepartmentID IN (SELECT DISTINCT departmentid FROM mdt_base_data);
+
+--     -- 3. ล้าง Temp Tables
+--     DROP TABLE IF EXISTS mdt_base_data;
+--     DROP TABLE IF EXISTS monthly_summary;
+-- END;

@@ -1,9 +1,12 @@
-# The MDS MERGE + Surrogate-Key Pattern (canonical)
+# The MDS MERGE + Surrogate-Key Pattern (legacy — 2 files only)
 
-> **LLM context**: This is the most important pattern in the project — 36 dimension
-> files follow it. Target tables pre-exist in BigQuery (`type: "operations"`; Dataform
-> does not create them). Reference implementation: `definitions/dimension/dim_company.sqlx`
-> (root) or `dim_waterpac.sqlx` (typical child).
+> **LLM context**: ⚠️ Since **2026-07-20** this pattern applies to only **2 files**:
+> `dim_company` and `dim_aging_rang` — the two dims whose SKs are persisted downstream
+> and must stay stable forever. The other 34 mds dims were converted to the
+> [full-rebuild pattern](full-rebuild-pattern.md), which is now the default for new
+> mds dims. Target tables of MERGE dims pre-exist in BigQuery (`type: "operations"`;
+> Dataform does not create them). Reference implementation:
+> `definitions/dimension/dim_company.sqlx`.
 
 ## Skeleton
 

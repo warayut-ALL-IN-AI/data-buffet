@@ -1,17 +1,15 @@
 config {
-  type: "operations",
+  type: "table",
+  schema: databuffet.DIMENSION_TABLE,
   dependencies: ["dim_company"],
   tags: [databuffet.TAG_DIM_DAILY],
+  uniqueKey: ["ChannelCostSK"],
+  bigquery: {
+    clusterBy: ["ChannelCostSK"],
+  },
 }
 
 js {
-    const DimChannelCostTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: name(),
-    };
-    const DimChannelCostTableRef = `${DimChannelCostTable.database}.${DimChannelCostTable.schema}.${DimChannelCostTable.name}`;
-
     const DimCompanyTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -27,70 +25,22 @@ js {
     const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
 }
 
-BEGIN
-  DECLARE max_sk INT64 DEFAULT 0;
+SELECT
+  ROW_NUMBER() OVER(
+    ORDER BY
+      ${databuffet.functionData.cleanString("t1.companyID")},
+      ${databuffet.functionData.cleanString("t1.ChannelCostID")}
+  ) AS ChannelCostSK,
+  dim_com.CompanySK,
+  ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+  ${databuffet.functionData.cleanString("t1.ChannelCostID")} AS ChannelCostID,
+  ${databuffet.functionData.cleanString("t1.ChannelCostName")} AS ChannelCostName,
+  ${databuffet.functionData.cleanString("t1.id")} as MdsID
+FROM `${MdsSourceTableRef}` AS t1
+LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+  ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+WHERE t1.is_active = TRUE
 
-  SET max_sk = (SELECT IFNULL(MAX(ChannelCostSK), 0) FROM `${DimChannelCostTableRef}`);
+pre_operations {}
 
-  MERGE `${DimChannelCostTableRef}` AS T
-  USING (
-    SELECT
-      (CASE
-        WHEN t3.ChannelCostSK IS NOT NULL THEN t3.ChannelCostSK
-        WHEN t2.ChannelCostSK IS NOT NULL THEN t2.ChannelCostSK
-        ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.ChannelCostSK IS NULL AND t3.ChannelCostSK IS NULL THEN 1 ELSE 0 END)
-          ORDER BY
-            ${databuffet.functionData.cleanString("t1.companyID")},
-            ${databuffet.functionData.cleanString("t1.ChannelCostID")}
-        )
-      END) AS ChannelCostSK,
-      dim_com.CompanySK,
-      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
-      ${databuffet.functionData.cleanString("t1.ChannelCostID")} AS ChannelCostID,
-      ${databuffet.functionData.cleanString("t1.ChannelCostName")} AS ChannelCostName,
-      ${databuffet.functionData.cleanString("t1.id")} as MdsID
-    FROM `${MdsSourceTableRef}` AS t1
-    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
-      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
-    LEFT JOIN `${DimChannelCostTableRef}` AS t2
-      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
-      AND ${databuffet.functionData.cleanString("t1.ChannelCostID")} = t2.ChannelCostID
-    LEFT JOIN `${DimChannelCostTableRef}` AS t3
-      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsId
-    WHERE t1.is_active = TRUE
-      AND DATE(t1.updated_at) >= DATE_SUB(
-            CURRENT_DATE("Asia/Bangkok"),
-            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
-          )
-  ) AS S
-  ON T.ChannelCostSK = S.ChannelCostSK
-
-  WHEN MATCHED THEN
-    UPDATE SET
-      T.ChannelCostName = S.ChannelCostName,
-      T.MdsId = S.MdsId
-
-  WHEN NOT MATCHED THEN
-    INSERT (
-      ChannelCostSK,
-      CompanySK,
-      companyID,
-      ChannelCostID,
-      ChannelCostName,
-      MdsId
-    )
-    VALUES (
-      S.ChannelCostSK,
-      S.CompanySK,
-      S.companyID,
-      S.ChannelCostID,
-      S.ChannelCostName,
-      S.MdsId
-    );
-
-  DELETE FROM `${DimChannelCostTableRef}`
-  WHERE MdsID IN (
-    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
-  );
-END;
+post_operations {}

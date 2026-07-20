@@ -1,6 +1,6 @@
 config {
   type: "operations",
-  dependencies: [],
+  dependencies: ["dim_company"],
   tags: [databuffet.TAG_DIM_DAILY],
   hasOutput: true
 }
@@ -13,20 +13,159 @@ js {
         name: name(),
     };
     const DimSaleRepTableRef = `${DimSaleRepTable.database}.${DimSaleRepTable.schema}.${DimSaleRepTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_sales_representative_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+    
 }
 
-MERGE `${DimSaleRepTableRef}` T
-USING (
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(SaleRepSK), 0) FROM `${DimSaleRepTableRef}`);
+
+  MERGE `${DimSaleRepTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t3.SaleRepSK IS NOT NULL THEN t3.SaleRepSK
+        WHEN t2.SaleRepSK IS NOT NULL THEN t2.SaleRepSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.SaleRepSK IS NULL AND t3.SaleRepSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString("t1.companyID")},
+            ${databuffet.functionData.cleanString("t1.DepartmentID")},
+            ${databuffet.functionData.cleanString("t1.EmployeeID")},
+            ${databuffet.functionData.cleanString("t1.DepCode")},
+            ${databuffet.functionData.cleanString("t1.CostChannelID")},
+            ${databuffet.functionData.cleanString("t1.ProvinceID")},
+            t1.StartDate,
+            t1.EndDate
+        )
+      END) AS SaleRepSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+      ${databuffet.functionData.cleanString("t1.DepartmentID")} AS DepartmentID,
+      ${databuffet.functionData.cleanString("t1.EmployeeID")} AS EmployeeID,
+      ${databuffet.functionData.cleanString("t1.EmployeeName")} AS EmployeeName,
+      ${databuffet.functionData.cleanString("t1.EmployeeSurname")} AS EmployeeSurname,
+      ${databuffet.functionData.cleanString("t1.EmployeeNickname")} AS EmployeeNickname,
+      ${databuffet.functionData.cleanString("t1.DepCode")} AS DepCode,
+      ${databuffet.functionData.cleanString("t1.CostChannelID")} AS CostChannelID,
+      ${databuffet.functionData.cleanString("t1.ProvinceID")} AS ProvinceID,
+      ${databuffet.functionData.cleanString("t1.ChangeSectionFlag")} AS ChangeSectionFlag,
+      ${databuffet.functionData.cleanString("t1.CustomerFlag")} AS CustomerFlag,
+      t1.StartDate AS StartDate,
+      t1.EndDate AS EndDate,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+    LEFT JOIN `${DimSaleRepTableRef}` AS t2
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
+      AND ${databuffet.functionData.cleanString("t1.DepartmentID")} = t2.DepartmentID
+      AND ${databuffet.functionData.cleanString("t1.EmployeeID")} = t2.EmployeeID
+      AND IFNULL(${databuffet.functionData.cleanString("t1.DepCode")}, '') = IFNULL(t2.DepCode, '')
+      AND IFNULL(${databuffet.functionData.cleanString("t1.CostChannelID")}, '') = IFNULL(t2.CostChannelID, '')
+      AND IFNULL(${databuffet.functionData.cleanString("t1.ProvinceID")}, '') = IFNULL(t2.ProvinceID, '')
+      AND t1.StartDate = t2.StartDate
+      AND t1.EndDate = t2.EndDate
+    LEFT JOIN `${DimSaleRepTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.SaleRepSK = S.SaleRepSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.EmployeeName = S.EmployeeName,
+      T.EmployeeSurname = S.EmployeeSurname,
+      T.EmployeeNickname = S.EmployeeNickname,
+      T.ChangeSectionFlag = S.ChangeSectionFlag,
+      T.CustomerFlag = S.CustomerFlag,    
+      T.StartDate = S.StartDate,
+      T.EndDate = S.EndDate,
+      T.MdsID = S.MdsID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      SaleRepSK,
+      CompanySK,
+      companyID,
+      DepartmentID,
+      EmployeeID,
+      EmployeeName,
+      EmployeeSurname,
+      EmployeeNickname,
+      DepCode,
+      CostChannelID,
+      ProvinceID,
+      ChangeSectionFlag,
+      CustomerFlag,
+      StartDate,
+      EndDate,
+      MdsID
+    )
+    VALUES (
+      S.SaleRepSK,
+      S.CompanySK,
+      S.companyID,
+      S.DepartmentID,
+      S.EmployeeID,
+      S.EmployeeName,
+      S.EmployeeSurname,
+      S.EmployeeNickname,
+      S.DepCode,
+      S.CostChannelID,
+      S.ProvinceID,
+      S.ChangeSectionFlag,
+      S.CustomerFlag,
+      S.StartDate,
+      S.EndDate,
+      S.MdsID
+    );
+
+  DELETE FROM `${DimSaleRepTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
+END;
+
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+  SET max_sk = (SELECT IFNULL(MAX(SaleRepSK), 0) FROM `${DimSaleRepTableRef}`);
+
+  MERGE `${DimSaleRepTableRef}` AS T
+  USING (
     WITH raw_per AS (
         SELECT DISTINCT
+            company_id,
             percode as EmployeeID,
             TRIM(REGEXP_REPLACE(pernamet, r'\s+', ' ')) as pernamet
         FROM ${ref(databuffet.VALIDATED_MAC5, 'per')} as per
-        WHERE per.company_id = 'ag01'
+        -- WHERE per.company_id = 'ag01'
 
     ),
     source_combined AS (
-        SELECT 
+        SELECT
+            dim_com.CompanySK,
+            dim_com.companyID,
             EmployeeID,
             REGEXP_EXTRACT(pernamet, r'^([^\s]+)') AS EmployeeName,
             REGEXP_EXTRACT(pernamet, r'\s([^\s(]+)') AS EmployeeSurname,
@@ -39,57 +178,53 @@ USING (
             DATE('1900-01-01') AS StartDate,
             DATE('2499-12-31') AS EndDate
         FROM raw_per
+        LEFT JOIN `${DimCompanyTableRef}` as dim_com
+            on raw_per.company_id = dim_com.companyID
 
-    ),
-    target_max AS (
-        SELECT IFNULL(MAX(SaleRepSK), 0) as max_sk 
-        FROM `${DimSaleRepTableRef}`
-
-    ),
-    prepared_source AS (
-        SELECT 
-            S.*,
-            T.SaleRepSK as existing_sk,
-            (CASE 
-                WHEN T.EmployeeID IS NULL THEN 
-                    ROW_NUMBER() OVER (
-                        PARTITION BY (CASE WHEN T.EmployeeID IS NULL THEN 1 ELSE 0 END) 
-                        ORDER BY S.EmployeeID
-                    )
-                ELSE NULL 
-            END) as rn_new
-        FROM source_combined S
-        LEFT JOIN `${DimSaleRepTableRef}` T
-          ON S.EmployeeID = T.EmployeeID 
-          AND T.DepartmentID IS NULL
     )
 
     SELECT
-        src.*,
         (CASE
-            WHEN existing_sk IS NOT NULL THEN existing_sk
-            ELSE (SELECT max_sk FROM target_max) + rn_new
-        END) as final_SaleRepSK
-    FROM prepared_source src
-) S
-ON T.EmployeeID = S.EmployeeID 
-   AND T.DepartmentID IS NULL
+            WHEN t2.SaleRepSK IS NOT NULL THEN t2.SaleRepSK
+            ELSE max_sk + ROW_NUMBER() OVER(PARTITION BY (CASE WHEN t2.EmployeeID IS NULL THEN 1 ELSE 0 END) ORDER BY t1.CompanySK, t1.EmployeeID)
+        END) AS SaleRepSK,
+        t1.CompanySK,
+        t1.companyID,
+        t1.EmployeeID,
+        t1.EmployeeName,
+        t1.EmployeeSurname,
+        t1.EmployeeNickname,
+        t1.DepartmentID,
+        t1.DepCode,
+        t1.CostChannelID,
+        t1.ProvinceID,
+        t1.ChangeSectionFlag,
+        t1.StartDate,
+        t1.EndDate
+    FROM source_combined AS t1
+    LEFT JOIN `${DimSaleRepTableRef}` AS t2
+      ON t1.EmployeeID = t2.EmployeeID
+      AND t2.DepartmentID IS NULL
+      AND t1.CompanySK = t2.CompanySK
+  ) AS S
+  ON T.SaleRepSK = S.SaleRepSK
 
-WHEN MATCHED THEN
-  UPDATE SET 
-    T.EmployeeName = S.EmployeeName,
-    T.EmployeeSurname = S.EmployeeSurname,
-    T.EmployeeNickname = S.EmployeeNickname
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.EmployeeName = S.EmployeeName,
+      T.EmployeeSurname = S.EmployeeSurname,
+      T.EmployeeNickname = S.EmployeeNickname
 
-WHEN NOT MATCHED THEN
-  INSERT (
-    SaleRepSK, DepartmentID, EmployeeID, EmployeeName, EmployeeSurname,
-    EmployeeNickname, DepCode, CostChannelID, ProvinceID,
-    ChangeSectionFlag, StartDate, EndDate
-  )
-  VALUES (
-    S.final_SaleRepSK,
-    S.DepartmentID, S.EmployeeID, S.EmployeeName, S.EmployeeSurname,
-    S.EmployeeNickname, S.DepCode, S.CostChannelID, S.ProvinceID,
-    S.ChangeSectionFlag, S.StartDate, S.EndDate
-  );
+  WHEN NOT MATCHED THEN
+    INSERT (
+      SaleRepSK, CompanySK, companyID, DepartmentID, EmployeeID, EmployeeName, EmployeeSurname,
+      EmployeeNickname, DepCode, CostChannelID, ProvinceID,
+      ChangeSectionFlag, StartDate, EndDate
+    )
+    VALUES (
+      S.SaleRepSK, S.CompanySK, S.companyID,
+      S.DepartmentID, S.EmployeeID, S.EmployeeName, S.EmployeeSurname,
+      S.EmployeeNickname, S.DepCode, S.CostChannelID, S.ProvinceID,
+      S.ChangeSectionFlag, S.StartDate, S.EndDate
+    );
+END;

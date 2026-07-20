@@ -1,17 +1,15 @@
 config {
-  type: "operations",
+  type: "table",
+  schema: databuffet.DIMENSION_TABLE,
   dependencies: ["dim_company"],
   tags: [databuffet.TAG_DIM_DAILY],
+  uniqueKey: ["ContactSK"],
+  bigquery: {
+    clusterBy: ["ContactSK"],
+  },
 }
 
 js {
-    const DimContactScoreTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: name(),
-    };
-    const DimContactScoreTableRef = `${DimContactScoreTable.database}.${DimContactScoreTable.schema}.${DimContactScoreTable.name}`;
-
     const DimCompanyTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -27,89 +25,28 @@ js {
     const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
 }
 
-BEGIN
-  DECLARE max_sk INT64 DEFAULT 0;
-
-  SET max_sk = (SELECT IFNULL(MAX(ContactSK), 0) FROM `${DimContactScoreTableRef}`);
-
-  MERGE `${DimContactScoreTableRef}` AS T
-  USING (
-    SELECT
-      (CASE
-        WHEN t3.ContactSK IS NOT NULL THEN t3.ContactSK
-        WHEN t2.ContactSK IS NOT NULL THEN t2.ContactSK
-        ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.ContactSK IS NULL AND t3.ContactSK IS NULL THEN 1 ELSE 0 END)
-          ORDER BY
-            ${databuffet.functionData.cleanString("t1.companyID")},
-            ${databuffet.functionData.castFloat64("t1.ContactYearMin")},
-            ${databuffet.functionData.castFloat64("t1.ContactYearMax")},
-            t1.StartDate,
-            t1.EndDate
-        )
-      END) AS ContactSK,
-      dim_com.CompanySK,
-      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
-      ${databuffet.functionData.castFloat64("t1.ContactYearMin")} AS ContactYearMin,
-      ${databuffet.functionData.castFloat64("t1.ContactYearMax")} AS ContactYearMax,
-      ${databuffet.functionData.castFloat64("t1.Score")} AS Score,
+SELECT
+  ROW_NUMBER() OVER(
+    ORDER BY
+      ${databuffet.functionData.cleanString("t1.companyID")},
+      ${databuffet.functionData.castFloat64("t1.ContactYearMin")},
+      ${databuffet.functionData.castFloat64("t1.ContactYearMax")},
       t1.StartDate,
-      t1.EndDate,
-      ${databuffet.functionData.cleanString("t1.id")} as MdsID
-    FROM `${MdsSourceTableRef}` AS t1
-    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
-      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
-    LEFT JOIN `${DimContactScoreTableRef}` AS t2
-      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
-      AND ${databuffet.functionData.castFloat64("t1.ContactYearMin")} = t2.ContactYearMin
-      AND ${databuffet.functionData.castFloat64("t1.ContactYearMax")} = t2.ContactYearMax
-      AND t1.StartDate = t2.StartDate
-      AND t1.EndDate = t2.EndDate
-    LEFT JOIN `${DimContactScoreTableRef}` AS t3
-      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
-    WHERE t1.is_active = TRUE
-      AND DATE(t1.updated_at) >= DATE_SUB(
-            CURRENT_DATE("Asia/Bangkok"),
-            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
-          )
-  ) AS S
-  ON T.ContactSK = S.ContactSK
+      t1.EndDate
+  ) AS ContactSK,
+  dim_com.CompanySK,
+  ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+  ${databuffet.functionData.castFloat64("t1.ContactYearMin")} AS ContactYearMin,
+  ${databuffet.functionData.castFloat64("t1.ContactYearMax")} AS ContactYearMax,
+  ${databuffet.functionData.castFloat64("t1.Score")} AS Score,
+  t1.StartDate,
+  t1.EndDate,
+  ${databuffet.functionData.cleanString("t1.id")} as MdsID
+FROM `${MdsSourceTableRef}` AS t1
+LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+  ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+WHERE t1.is_active = TRUE
 
-  WHEN MATCHED THEN
-    UPDATE SET
-      T.ContactYearMin = S.ContactYearMin,
-      T.ContactYearMax = S.ContactYearMax,
-      T.Score = S.Score,
-      T.StartDate = S.StartDate,
-      T.EndDate = S.EndDate,
-      T.MdsID = S.MdsID
+pre_operations {}
 
-  WHEN NOT MATCHED THEN
-    INSERT (
-      ContactSK, 
-      CompanySK, 
-      CompanyID, 
-      ContactYearMin, 
-      ContactYearMax, 
-      Score, 
-      StartDate, 
-      EndDate,
-      MdsID
-    )
-    VALUES (
-      S.ContactSK, 
-      S.CompanySK, 
-      S.CompanyID, 
-      S.ContactYearMin, 
-      S.ContactYearMax, 
-      S.Score, 
-      S.StartDate, 
-      S.EndDate,
-      S.MdsID
-    );
-
-  DELETE FROM `${DimContactScoreTableRef}`
-  WHERE MdsID IN (
-    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
-  );
-END;
+post_operations {}

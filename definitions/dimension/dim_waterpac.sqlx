@@ -1,17 +1,15 @@
 config {
-  type: "operations",
+  type: "table",
+  schema: databuffet.DIMENSION_TABLE,
   dependencies: ["dim_company"],
   tags: [databuffet.TAG_DIM_DAILY],
+  uniqueKey: ["WaterPacSK"],
+  bigquery: {
+    clusterBy: ["WaterPacSK"],
+  },
 }
 
 js {
-    const DimWaterPacTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: name(),
-    };
-    const DimWaterPacTableRef = `${DimWaterPacTable.database}.${DimWaterPacTable.schema}.${DimWaterPacTable.name}`;
-
     const DimCompanyTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -27,74 +25,23 @@ js {
     const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
 }
 
-BEGIN
-  DECLARE max_sk INT64 DEFAULT 0;
+SELECT
+  ROW_NUMBER() OVER(
+    ORDER BY
+      ${databuffet.functionData.cleanString("t1.CompanyID")},
+      ${databuffet.functionData.cleanString("t1.WaterPacCode")}
+  ) AS WaterPacSK,
+  dim_com.CompanySK,
+  ${databuffet.functionData.cleanString("t1.CompanyID")} AS CompanyID,
+  ${databuffet.functionData.cleanString("t1.WaterPacCode")} AS WaterPacCode,
+  ${databuffet.functionData.cleanString("t1.WaterPacName")} AS WaterPacName,
+  ${databuffet.functionData.cleanString("t1.Brand")} AS Brand,
+  ${databuffet.functionData.cleanString("t1.id")} AS MdsID
+FROM `${MdsSourceTableRef}` AS t1
+LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+  ON ${databuffet.functionData.cleanString("t1.CompanyID")} = dim_com.companyID
+WHERE t1.is_active = TRUE
 
-  SET max_sk = (SELECT IFNULL(MAX(WaterPacSK), 0) FROM `${DimWaterPacTableRef}`);
+pre_operations {}
 
-  MERGE `${DimWaterPacTableRef}` AS T
-  USING (
-    SELECT
-      (CASE
-        WHEN t3.WaterPacSK IS NOT NULL THEN t3.WaterPacSK
-        WHEN t2.WaterPacSK IS NOT NULL THEN t2.WaterPacSK
-        ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.WaterPacSK IS NULL AND t3.WaterPacSK IS NULL THEN 1 ELSE 0 END)
-          ORDER BY
-            ${databuffet.functionData.cleanString("t1.CompanyID")},
-            ${databuffet.functionData.cleanString("t1.WaterPacCode")}
-        )
-      END) AS WaterPacSK,
-      dim_com.CompanySK,
-      ${databuffet.functionData.cleanString("t1.CompanyID")} AS CompanyID,
-      ${databuffet.functionData.cleanString("t1.WaterPacCode")} AS WaterPacCode, 
-      ${databuffet.functionData.cleanString("t1.WaterPacName")} AS WaterPacName, 
-      ${databuffet.functionData.cleanString("t1.Brand")} AS Brand,
-      ${databuffet.functionData.cleanString("t1.id")} as MdsID
-    FROM `${MdsSourceTableRef}` AS t1
-    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
-      ON ${databuffet.functionData.cleanString("t1.CompanyID")} = dim_com.companyID
-    LEFT JOIN `${DimWaterPacTableRef}` AS t2
-      ON ${databuffet.functionData.cleanString("t1.CompanyID")} = t2.CompanyID
-      AND ${databuffet.functionData.cleanString("t1.WaterPacCode")} = t2.WaterPacCode
-    LEFT JOIN `${DimWaterPacTableRef}` AS t3
-      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
-    WHERE t1.is_active = TRUE
-      AND DATE(t1.updated_at) >= DATE_SUB(
-            CURRENT_DATE("Asia/Bangkok"),
-            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
-          )
-  ) AS S
-  ON T.WaterPacSK = S.WaterPacSK
-
-  WHEN MATCHED THEN
-    UPDATE SET
-      T.WaterPacName = S.WaterPacName,
-      T.Brand = S.Brand,
-      T.MdsID = S.MdsID
-
-  WHEN NOT MATCHED THEN
-    INSERT (
-      WaterPacSK,
-      CompanySK,
-      CompanyID,
-      WaterPacCode,
-      WaterPacName,
-      Brand,
-      MdsID
-    )
-    VALUES (
-      S.WaterPacSK,
-      S.CompanySK,
-      S.CompanyID,
-      S.WaterPacCode,
-      S.WaterPacName,
-      S.Brand,
-      S.MdsID
-    );
-
-  DELETE FROM `${DimWaterPacTableRef}`
-  WHERE MdsID IN (
-    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
-  );
-END;
+post_operations {}

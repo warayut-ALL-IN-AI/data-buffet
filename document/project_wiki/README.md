@@ -13,8 +13,8 @@
 | Understand a source system / raw data | [overview/source-systems.md](overview/source-systems.md), [initial/initial-layer.md](initial/initial-layer.md) |
 | Add/edit a validated table | [validated/validated-layer.md](validated/validated-layer.md), [validated/source-inventory.md](validated/source-inventory.md) |
 | Add/edit a curated table | [curated/curated-layer.md](curated/curated-layer.md) |
-| Add/edit a dimension | [dimension/dimension-layer.md](dimension/dimension-layer.md) → [dimension/merge-sk-pattern.md](dimension/merge-sk-pattern.md) → [dimension/special-cases.md](dimension/special-cases.md) |
-| mds soft-delete / is_active handling | [dimension/mds-delete-pattern.md](dimension/mds-delete-pattern.md) |
+| Add/edit a dimension | [dimension/dimension-layer.md](dimension/dimension-layer.md) → [dimension/full-rebuild-pattern.md](dimension/full-rebuild-pattern.md) (default) / [dimension/merge-sk-pattern.md](dimension/merge-sk-pattern.md) (stable-SK legacy) → [dimension/special-cases.md](dimension/special-cases.md) |
+| mds soft-delete / is_active / overwrite import | [dimension/full-rebuild-pattern.md](dimension/full-rebuild-pattern.md); tombstone (2 MERGE dims only): [dimension/mds-delete-pattern.md](dimension/mds-delete-pattern.md) |
 | Which dim owns which SK | [dimension/inventory.md](dimension/inventory.md) |
 | Add/edit a fact | [fact/fact-layer.md](fact/fact-layer.md) |
 | CDC / change tracking | [cdc-process/cdc.md](cdc-process/cdc.md) |
@@ -27,19 +27,24 @@
 1. Timezone is always `Asia/Bangkok`.
 2. Strings pass through `cleanString` (empty → NULL); use `functionData` helpers, not raw casts.
 3. Never hardcode dataset names/tags — use `databuffet.*` constants.
-4. Surrogate keys are stable forever; never regenerate an existing SK.
-5. `type: "operations"` targets (all MERGE dims, `fact_transcation`) pre-exist in
+4. SK stability is per-pattern: MERGE dims (`dim_company`, `dim_aging_rang`, lake dims)
+   have SKs that are stable forever — never regenerate them. The 34 full-rebuild mds
+   dims regenerate SKs daily — never persist those SKs across days.
+5. `type: "operations"` targets (MERGE dims, `fact_transcation`) pre-exist in
    BigQuery — Dataform does not create them.
 6. Preserve load-bearing typos verbatim: `fact_transcation`, `CDC_DATESET`, `prdDiminsionData`.
-7. mds MERGE dims must end with the inactive-row DELETE before `END;`.
+7. mds **MERGE** dims (dim_company, dim_aging_rang) must end with the inactive-row
+   DELETE before `END;` — full-rebuild dims need no tombstone.
 8. `dim_company` is the DAG root; mds dims list it in `dependencies`.
 
-## Known stale docs elsewhere in the repo
+## Companion tooling
 
-`.claude/CLAUDE.md`, `.claude/knowledge/*.md`, and `.claude/skills/add-*.md` predate the
-current code and contain errors: they reference a nonexistent
-`includes/controller/primary-keys.json` and `databuffet.primaryKeys`, use wrong
-`SCHEMA_*`-prefixed accessors, describe a single `fact_transaction` table, omit the
-dimension/CDC/process layers and the SALEOUT_MDT source, and cite tags (`fact`,
-`assertions`) that don't exist. The root `README.md` is accurate except it says
-"15 dims" (actual: 59 files). **This wiki supersedes them.**
+`.claude/` was rebuilt 2026-07-10 to point into this wiki: `CLAUDE.md` (session
+context), skills (`add-initial-table`, `add-validated-table`, `add-curated-table`,
+`add-dimension`, `add-fact-table`, `dataform-run`, `enable-cdc`,
+`backfill-dimension`, `fk-integrity-scan`, `data-quality-check`, `update-docs`)
+and agents (`dataform-expert`, `data-architect`, `bigquery-optimizer`,
+`data-quality-auditor`). The old `.claude/knowledge/` and root scaffold guides were
+deleted as stale — the historical error list is preserved in
+`document/operations/known-issues.md`. Root `README.md` was rewritten the same day
+and is accurate.

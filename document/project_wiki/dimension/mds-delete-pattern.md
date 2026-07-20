@@ -1,8 +1,12 @@
 # MDS Inactive-Row DELETE (tombstone) Pattern
 
-> **LLM context**: Implemented 2026-07-10 across all 34 MERGE-based mds dim files
-> (commit `e64a62d` on `dev`/`nonprod`). Design decision: **hard DELETE, no downstream
-> FK checks** — chosen explicitly over a soft-delete `IsActive` flag.
+> **LLM context**: ⚠️ Scope shrank on **2026-07-20**: 34 mds dims were converted to
+> [full daily rebuild](full-rebuild-pattern.md) (rebuild from `is_active = TRUE`
+> makes the tombstone unnecessary), so this pattern now applies to only the **2
+> remaining MERGE dims: `dim_company` and `dim_aging_rang`**.
+> History: implemented 2026-07-10 across all then-MERGE mds dims (commit `e64a62d`).
+> Design decision: **hard DELETE, no downstream FK checks** — chosen explicitly over
+> a soft-delete `IsActive` flag.
 
 ## The problem it solves
 

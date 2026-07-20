@@ -36,7 +36,7 @@ Side pipelines:
 | Initial | `raw_*`, `function_dataset` | operations (external tables, UDFs) | [initial/initial-layer.md](../initial/initial-layer.md) |
 | Validated | `validated_*` | incremental / table + QUALIFY dedup | [validated/validated-layer.md](../validated/validated-layer.md) |
 | Curated | `curated_*` | incremental + post_operations | [curated/curated-layer.md](../curated/curated-layer.md) |
-| Dimension | `dimension_table`, `dimension_view` | operations MERGE (SK) / table rebuild | [dimension/dimension-layer.md](../dimension/dimension-layer.md) |
+| Dimension | `dimension_table`, `dimension_view` | table rebuild (34 mds + 10 other) / operations MERGE (2 mds + 10 lake) | [dimension/dimension-layer.md](../dimension/dimension-layer.md) |
 | Fact | `fact_table`, `fact_view` | table rebuild / operations upsert | [fact/fact-layer.md](../fact/fact-layer.md) |
 | CDC | `cdc_dataset` | operations (config-generated) | [cdc-process/cdc.md](../cdc-process/cdc.md) |
 | Process | `process_dataset` | incremental (AI.GENERATE) | [cdc-process/process.md](../cdc-process/process.md) |
@@ -61,7 +61,9 @@ Side pipelines:
 3. **Config through `databuffet.*`** — no hardcoded dataset names/tags
    (exception: `"mds_dataset"` is a string literal in most dim files).
 4. **`type: "operations"` tables are NOT created by Dataform** — they must pre-exist
-   in BigQuery (dimension MERGE targets, `fact_transcation`).
+   in BigQuery (the 12 MERGE dims, `fact_transcation`). The 34 full-rebuild mds dims
+   are Dataform-managed tables whose **SKs regenerate daily** (see
+   [dimension/full-rebuild-pattern.md](../dimension/full-rebuild-pattern.md)).
 5. **Load-bearing typos** — keep verbatim: `fact_transcation` (table + file),
    `CDC_DATESET` (variables.json key), `prdDiminsionData` (JSON field).
 6. **No Dataform assertions exist** — quality is enforced via casting, QUALIFY dedup,

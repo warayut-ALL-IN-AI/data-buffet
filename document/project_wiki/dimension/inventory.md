@@ -1,10 +1,16 @@
 # Dimension Inventory — all 59 files
 
-> **LLM context**: SK = surrogate key column; NK = natural/business key (t2 self-join /
-> MERGE ON). Most dims also carry `CompanySK` FK from `dim_company`.
-> Groups: (a) mds MERGE, (b) lake MERGE, (c) full rebuild, (e) other.
+> **LLM context**: SK = surrogate key column; NK = natural/business key. Most dims
+> carry `CompanySK` FK from `dim_company`.
+> Groups since 2026-07-20: (a) mds **full daily rebuild** (34 — SKs regenerate daily),
+> (a2) mds MERGE legacy (2), (b) lake MERGE (10), (c) other full rebuild (10), (e) other (3).
 
-## Group (a) — MERGE from mds_dataset (36)
+## Group (a) — mds dims (36 total: 34 full rebuild + 2 MERGE legacy)
+
+> Since 2026-07-20 every dim in this table is a **daily full rebuild**
+> ([full-rebuild-pattern.md](full-rebuild-pattern.md)) — natural key drives the
+> `ROW_NUMBER()` ordering — **except `dim_company` and `dim_aging_rang`** which keep
+> the MERGE + tombstone pattern and stable SKs.
 
 | File | SK | Natural key | mds source table |
 |---|---|---|---|

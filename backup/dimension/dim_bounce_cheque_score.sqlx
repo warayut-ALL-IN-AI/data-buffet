@@ -1,0 +1,115 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    const DimBounceChequeScoreTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimBounceChequeScoreTableRef = `${DimBounceChequeScoreTable.database}.${DimBounceChequeScoreTable.schema}.${DimBounceChequeScoreTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_custgrade_cheque_score_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(BounceChequeSK), 0) FROM `${DimBounceChequeScoreTableRef}`);
+
+  MERGE `${DimBounceChequeScoreTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t3.BounceChequeSK IS NOT NULL THEN t3.BounceChequeSK
+        WHEN t2.BounceChequeSK IS NOT NULL THEN t2.BounceChequeSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.BounceChequeSK IS NULL AND t3.BounceChequeSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString("t1.companyID")},
+            ${databuffet.functionData.castFloat64("t1.BouncedChequeMin")},
+            ${databuffet.functionData.castFloat64("t1.BouncedChequeMax")},
+            t1.StartDate,
+            t1.EndDate
+        )
+      END) AS BounceChequeSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+      ${databuffet.functionData.castFloat64("t1.BouncedChequeMin")} AS BouncedChequeMin,
+      ${databuffet.functionData.castFloat64("t1.BouncedChequeMax")} AS BouncedChequeMax,
+      ${databuffet.functionData.castFloat64("t1.Score")} AS Score,
+      t1.StartDate,
+      t1.EndDate,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+    LEFT JOIN `${DimBounceChequeScoreTableRef}` AS t2
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
+      AND ${databuffet.functionData.castFloat64("t1.BouncedChequeMin")} = t2.BouncedChequeMin
+      AND ${databuffet.functionData.castFloat64("t1.BouncedChequeMax")} = t2.BouncedChequeMax
+      AND t1.StartDate = t2.StartDate
+      AND t1.EndDate = t2.EndDate
+    LEFT JOIN `${DimBounceChequeScoreTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.BounceChequeSK = S.BounceChequeSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.BouncedChequeMin = S.BouncedChequeMin,
+      T.BouncedChequeMax = S.BouncedChequeMax,
+      T.Score = S.Score,
+      T.StartDate = S.StartDate,
+      T.EndDate = S.EndDate,
+      T.MdsID = S.MdsID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      BounceChequeSK, 
+      CompanySK, 
+      CompanyID, 
+      BouncedChequeMin, 
+      BouncedChequeMax, 
+      Score, 
+      StartDate, 
+      EndDate,
+      MdsID
+    )
+    VALUES (
+      S.BounceChequeSK, 
+      S.CompanySK, 
+      S.CompanyID, 
+      S.BouncedChequeMin, 
+      S.BouncedChequeMax, 
+      S.Score, 
+      S.StartDate, 
+      S.EndDate,
+      S.MdsID
+    );
+
+  DELETE FROM `${DimBounceChequeScoreTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
+END;

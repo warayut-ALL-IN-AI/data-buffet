@@ -5,13 +5,14 @@
 > uses `dimension_yearly`; `dimension_monthly` is defined but unused.
 > `dim_company` is the DAG root — nearly every dim depends on it and carries `CompanySK`.
 
-## Pattern groups
+## Pattern groups (regrouped 2026-07-20)
 
 | Group | Count | Files | Detail |
 |---|---|---|---|
-| (a) MERGE from `mds_dataset` | 36 | 32 standard + 4 deviations (`dim_sale_representative`, `dim_stk_mkt`, `dim_doctype`, `dim_holiday`) | [merge-sk-pattern.md](merge-sk-pattern.md), [mds-delete-pattern.md](mds-delete-pattern.md), [special-cases.md](special-cases.md) |
-| (b) MERGE from lake (validated/curated) | 10 | `dim_customer, dim_invoice, dim_order, dim_delivery, dim_project, dim_quotation, dim_product_master, dim_customer_grade, dim_group_customer, dim_group_customer_grade` | Same skeleton, `ref()` sources, **no mds DELETE** |
-| (c) Full-rebuild `type: "table"` | 10 | `dim_change_district`, 7× `*_last` snapshots, `dim_target_product_group_by_sale`, `..._dayofwork` | Inline `ROW_NUMBER()` SK, self-heals daily |
+| (a) **Full daily rebuild from `mds_dataset`** — the default | 34 | all mds dims except dim_company/dim_aging_rang; specials: `dim_sale_representative`, `dim_stk_mkt` (UNION blocks), `dim_doctype`/`dim_holiday` (no SK) | [full-rebuild-pattern.md](full-rebuild-pattern.md) — **SKs regenerate daily, not stable across days** |
+| (a2) MERGE from `mds_dataset` (legacy) | 2 | `dim_company` (SK persisted everywhere), `dim_aging_rang` (SK frozen in dim_aging_history) | [merge-sk-pattern.md](merge-sk-pattern.md), [mds-delete-pattern.md](mds-delete-pattern.md) |
+| (b) MERGE from lake (validated/curated) | 10 | `dim_customer, dim_invoice, dim_order, dim_delivery, dim_project, dim_quotation, dim_product_master, dim_customer_grade, dim_group_customer, dim_group_customer_grade` | Same MERGE skeleton, `ref()` sources, **no mds DELETE** |
+| (c) Other full-rebuild `type: "table"` | 10 | `dim_change_district`, 7× `*_last` snapshots, `dim_target_product_group_by_sale`, `..._dayofwork` | Inline `ROW_NUMBER()` SK, self-heals daily |
 | (e) Other operations | 3 | `dim_calendar` (date spine, yearly), `dim_aging` (~500-line AR aging engine), `update_sk_sale_rep_group` (UPDATE-only SK backfill) | |
 
 No `type: "view"` files exist here — `view_dim_aging` (dimension_view) and
@@ -33,9 +34,12 @@ config { type: "table", schema: databuffet.DIMENSION_TABLE,
 ```
 Single top-level SELECT, SK = `ROW_NUMBER() OVER (ORDER BY ...)` — **SKs are NOT stable
 across runs** for this group. The `*_last` tables select the current SCD row per
-entity via `QUALIFY ... ORDER BY StartDate DESC, EndDate DESC = 1` and pre-declare
+entity: filter `WHERE CURRENT_DATE('Asia/Bangkok') BETWEEN StartDate AND EndDate`
+(enabled 2026-07-20 — only versions effective today) then
+`QUALIFY ... ORDER BY StartDate DESC, EndDate DESC = 1`; they pre-declare
 downstream SK FK columns as NULL, which `update_sk_sale_rep_group` backfills with
-UPDATE statements afterward.
+UPDATE statements afterward. (Ledger-rep sentinel rows 1900-01-01→2499-12-31 always
+pass the filter.)
 
 `dim_target_product_group_by_sale_dayofwork` is a large daily full-rebuild joining
 `dim_calendar` (working-day expansion) — it **self-heals** after upstream deletes.

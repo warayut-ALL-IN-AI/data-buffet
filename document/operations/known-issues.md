@@ -11,10 +11,14 @@
 | MASTERSKU JSON | `prdDiminsionData`, `SpeciFeild`, `dimFeild` | field จริงในข้อมูล |
 | `FactOrderSk` vs `FactOrderSK` | casing ไม่คงที่ในไฟล์เดียวกัน | ใช้ตามที่ไฟล์นั้นใช้ |
 
-## เอกสารเก่าที่ล้าสมัย (อย่าเชื่อ)
+## เอกสารเก่าที่ล้าสมัย
 
-`.claude/CLAUDE.md`, `.claude/knowledge/*.md`, `.claude/skills/add-*.md` เขียนจาก
-design เก่า มีข้อผิดพลาดสำคัญ:
+**อัปเดต 2026-07-10**: `.claude/` ถูกล้างและสร้างใหม่ทั้งชุดแล้ว — ลบ `knowledge/`,
+root guides 10 ไฟล์ และ skills/agents แบบเก่า (format ใช้ไม่ได้จริง) ทิ้ง แล้วแทนด้วย
+skills/agents ที่มี frontmatter ถูกต้องและชี้เข้า `document/` — `.claude/CLAUDE.md`
+เขียนใหม่แล้วเช่นกัน ย่อหน้าด้านล่างเก็บไว้เป็นประวัติว่าของเก่าผิดตรงไหน:
+
+ของเก่า (`knowledge/`, skills แบบเก่า) เขียนจาก design เก่า มีข้อผิดพลาดสำคัญ:
 
 - อ้าง `includes/controller/primary-keys.json` และ `databuffet.primaryKeys` — **ไม่มีไฟล์นี้**
   (PK นิยามในแต่ละไฟล์: `uniqueKey` + `pk_key`)
@@ -29,10 +33,20 @@ design เก่า มีข้อผิดพลาดสำคัญ:
 
 ## พฤติกรรมที่ตั้งใจ (อย่า "แก้")
 
-- **Hard delete ใน mds dims** (ตัดสินใจ 2026-07-10): row ที่ mds `is_active = FALSE`
-  ถูกลบจริงจาก dim โดยไม่เช็ก FK ปลายทาง — สแกน ณ วันตัดสินใจพบ SK ค้าง 0 แถว
-  ผลข้างเคียงที่ยอมรับ: fact อาจถือ SK กำพร้า / entity ที่ reactivate ได้ SK ใหม่
-- **DELETE ไม่มี date filter** — ตั้งใจสแกน mds ทั้งตาราง (ตารางเล็ก)
+- **mds dims 34 ตัวเป็น full daily rebuild** (ตัดสินใจ 2026-07-20): แปลงจาก MERGE
+  เป็น `type: "table"` ปั้นใหม่ทุกวันจาก `is_active = TRUE` — **SK ออกเลขใหม่ทุกวัน
+  ห้าม persist SK พวกนี้ข้ามวัน** เหตุผล: mds มี overwrite import mode (ล้างแล้วลง
+  ใหม่ id ใหม่หมด) ซึ่ง MERGE pattern รับมือไม่ครบ (zombie rows) ตรวจ consumer ครบ
+  ทุกตัวแล้ว (repo + BQ + query history 90 วัน): ทุก consumer re-derive รายวัน
+  ยกเว้นที่ยกเว้นไว้ ดู `project_wiki/dimension/full-rebuild-pattern.md`
+  - **ยกเว้น 2 ตัวที่ยังเป็น MERGE + tombstone**: `dim_company` (CompanySK ฝังถาวรใน
+    dims/facts ทั้งระบบ) และ `dim_aging_rang` (AgingRangSK freeze ใน dim_aging_history)
+  - **เงื่อนไขค้าง**: `dim_collection_status` rebuild ได้ต่อเมื่อ `fact_mir_vs`/`fact_mir_rs`
+    (นอก repo, มีคนใช้จริง) ถูกย้ายเป็น daily full rebuild ที่รันหลัง dims — user
+    รับไปทำเอง (ณ 2026-07-20 ยังไม่เสร็จ)
+- **Hard delete tombstone ใน mds MERGE dims** (ตัดสินใจ 2026-07-10 — ปัจจุบันเหลือ
+  ใช้กับ dim_company + dim_aging_rang เท่านั้น): row ที่ mds `is_active = FALSE`
+  ถูกลบจริงจาก dim โดยไม่เช็ก FK ปลายทาง; DELETE ไม่มี date filter (ตั้งใจ)
 - **`dim_doctype` / `dim_holiday` ไม่มี SK** — โค้ด SK ถูก comment ไว้ MERGE ด้วย
   natural key แทน
 - **`dim_stk_mkt` มี row 'Waiting Master'** (`MdsID = NULL`, MarketingGroupID='999') —

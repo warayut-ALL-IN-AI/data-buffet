@@ -1,0 +1,102 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    // Define table references
+    const DimRebateTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimRebateTableRef = `${DimRebateTable.database}.${DimRebateTable.schema}.${DimRebateTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsRebateTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.MDS_DATASET,
+        name: "mds_data_sales_kpi_condition_master",
+    };
+    const MdsRebateTableRef = `${MdsRebateTable.database}.${MdsRebateTable.schema}.${MdsRebateTable.name}`;
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(RebateSK), 0) FROM `${DimRebateTableRef}`);
+
+  MERGE `${DimRebateTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t3.RebateSK IS NOT NULL THEN t3.RebateSK
+        WHEN t2.RebateSK IS NOT NULL THEN t2.RebateSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.RebateSK IS NULL AND t3.RebateSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString('t1.companyID')},
+            ${databuffet.functionData.cleanString('t1.rebate')},
+            ${databuffet.functionData.cleanString('t1.status')}
+        )
+      END) AS RebateSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString('t1.companyID')}  AS companyID,
+      ${databuffet.functionData.cleanString('t1.rebate')}     AS rebate,
+      ${databuffet.functionData.cleanString('t1.rebateName')} AS rebateName,
+      ${databuffet.functionData.cleanString('t1.status')}     AS status,
+      ${databuffet.functionData.cleanString('t1.type')}       AS type,
+      ${databuffet.functionData.cleanString('t1.salesExc')}   AS salesExc,
+      ${databuffet.functionData.cleanString('t1.accExc')}     AS accExc,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
+    FROM `${MdsRebateTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString('t1.companyID')} = dim_com.companyID
+    LEFT JOIN `${DimRebateTableRef}` AS t2
+      ON  ${databuffet.functionData.cleanString('t1.companyID')} = t2.companyID
+      AND ${databuffet.functionData.cleanString('t1.rebate')}    = t2.rebate
+      AND ${databuffet.functionData.cleanString('t1.status')}    = t2.status
+    LEFT JOIN `${DimRebateTableRef}` AS t3
+      ON  ${databuffet.functionData.cleanString('t1.id')} = t3.MdsID
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.RebateSK = S.RebateSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.rebateName = S.rebateName,
+      T.type       = S.type,
+      T.salesExc   = S.salesExc,
+      T.accExc     = S.accExc,
+      T.MdsID = S.MdsID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      RebateSK, CompanySK,
+      companyID, rebate, rebateName, 
+      status, type, salesExc, accExc, 
+      MdsID
+    )
+    VALUES (
+      S.RebateSK, S.CompanySK,
+      S.companyID, S.rebate, S.rebateName, 
+      S.status, S.type, S.salesExc, S.accExc, 
+      S.MdsID
+    );
+
+  DELETE FROM `${DimRebateTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsRebateTableRef}` WHERE is_active = FALSE
+  );
+END;

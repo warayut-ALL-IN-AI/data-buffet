@@ -1,0 +1,170 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    // Define table references
+    const DimStkMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimStkMktTableRef = `${DimStkMktTable.database}.${DimStkMktTable.schema}.${DimStkMktTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: 'dim_company',
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_product_market_group_by_product_id_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(`StkMktSK`), 0) FROM `${DimStkMktTableRef}`);
+
+  MERGE `${DimStkMktTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t3.StkMktSK IS NOT NULL THEN t3.StkMktSK
+        WHEN t2.StkMktSK IS NOT NULL THEN t2.StkMktSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.StkMktSK IS NULL AND t3.StkMktSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString("t1.companyID")},
+            ${databuffet.functionData.cleanString("t1.StkCode")}
+        )
+      END) AS StkMktSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+      ${databuffet.functionData.cleanString("t1.StkCode")} AS StkCode,
+      ${databuffet.functionData.cleanString("t1.Size")} AS Size,
+      ${databuffet.functionData.cleanString("t1.Color")} AS Color,
+      ${databuffet.functionData.cleanString("t1.MarketingGroupID")} AS MarketingGroupID,
+      ${databuffet.functionData.cleanString("t1.MarketingGroup")} AS MarketingGroup,
+      ${databuffet.functionData.cleanString("t1.SubMarketingID")} AS SubMarketingID,
+      ${databuffet.functionData.cleanString("t1.SubMarketing")} AS SubMarketing,
+      ${databuffet.functionData.cleanString("t1.SegmentID")} AS SegmentID,
+      ${databuffet.functionData.cleanString("t1.Segment")} AS Segment,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+    LEFT JOIN `${DimStkMktTableRef}` AS t2
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
+      AND ${databuffet.functionData.cleanString("t1.StkCode")} = t2.StkCode
+    LEFT JOIN `${DimStkMktTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.StkMktSK = S.StkMktSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.Size = S.Size,
+      T.Color = S.Color,
+      T.MarketingGroupID = S.MarketingGroupID,
+      T.MarketingGroup = S.MarketingGroup,
+      T.SubMarketingID = S.SubMarketingID,
+      T.SubMarketing = S.SubMarketing,
+      T.SegmentID = S.SegmentID,
+      T.Segment = S.Segment,
+      T.MdsID = S.MdsID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      StkMktSK,
+      CompanySK,
+      companyID,
+      StkCode,
+      Size,
+      Color,
+      MarketingGroupID,
+      MarketingGroup,
+      SubMarketingID,
+      SubMarketing,
+      SegmentID,
+      Segment,
+      MdsID
+    )
+    VALUES (
+      S.StkMktSK,
+      S.CompanySK,
+      S.companyID,
+      S.StkCode,
+      S.Size,
+      S.Color,
+      S.MarketingGroupID,
+      S.MarketingGroup,
+      S.SubMarketingID,
+      S.SubMarketing,
+      S.SegmentID,
+      S.Segment,
+      S.MdsID
+    );
+    
+
+  SET max_sk = (SELECT IFNULL(MAX(`StkMktSK`), 0) FROM `${DimStkMktTableRef}`);
+
+  -- 2. ใช้ INSERT INTO พร้อมกับกรองเฉพาะข้อมูลที่ยังไม่เคยมีใน Dim
+  INSERT INTO `${DimStkMktTableRef}` 
+  (StkMktSK, CompanySK, companyID, StkCode, Size, Color, 
+  MarketingGroupID, MarketingGroup, 
+  SubMarketingID, SubMarketing, 
+  SegmentID, Segment, 
+  MdsID)
+  
+  SELECT
+    -- คำนวณ SK ใหม่ต่อจากค่าสูงสุดเดิม
+    max_sk + ROW_NUMBER() OVER(ORDER BY t1.stkcode) AS StkMktSK,
+    dim_com.CompanySK, 
+    dim_com.companyID,
+    t1.stkcode AS StkCode,
+    CAST(NULL AS STRING) AS Size,
+    CAST(NULL AS STRING) AS Color,
+    '999' AS MarketingGroupID,
+    'Waiting Master' AS MarketingGroup,
+    '9999' AS SubMarketingID,
+    'Waiting Master' AS SubMarketing,
+    '99999' AS SegmentID,
+    'Waiting Master' AS Segment,
+    CAST(NULL AS STRING) as MdsID,
+  FROM (
+    -- ดึงรายการ stkcode ทั้งหมดจาก Source
+    SELECT DISTINCT stkcode, company_id
+    FROM ${ref(databuffet.VALIDATED_MAC5, "stk")}
+    -- WHERE company_id = 'ag01'
+  ) AS t1
+  left join `${DimCompanyTableRef}` as dim_com
+    on t1.company_id = dim_com.companyID
+  -- กรองออกเฉพาะรายการที่มีอยู่ใน Dimension Table แล้ว
+  WHERE NOT EXISTS (
+    select 1 
+    from `${DimStkMktTableRef}` as t2
+    where t1.stkcode = t2.StkCode
+      and t1.company_id = t2.companyID
+  )
+  ;
+
+
+  DELETE FROM `${DimStkMktTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
+END;

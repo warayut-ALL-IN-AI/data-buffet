@@ -55,12 +55,15 @@ document/            เอกสาร (โฟลเดอร์นี้)
 
 1. **Timezone Bangkok เสมอ** — `CURRENT_DATE('Asia/Bangkok')`
 2. **String ทุกตัวผ่าน `cleanString`** — `''` ต้องกลายเป็น `NULL`
-3. **SK ห้ามเปลี่ยน** — fact เก็บ SK ไว้แล้ว การ regenerate SK = ข้อมูลพัง
-4. **ตาราง `type: "operations"` Dataform ไม่สร้างให้** — dim MERGE ทั้งหมดและ
+3. **SK มี 2 ระบบ** — dim แบบ MERGE (`dim_company`, `dim_aging_rang`, lake dims):
+   SK คงที่ตลอดชีพ ห้าม regenerate / dim mds แบบ full rebuild (34 ตัว): SK ออกเลขใหม่
+   ทุกวัน **ห้ามเก็บข้ามวัน**
+4. **ตาราง `type: "operations"` Dataform ไม่สร้างให้** — dim แบบ MERGE และ
    `fact_transcation` ต้องมีตารางอยู่ก่อน
 5. **คำผิดที่ห้ามแก้** (เป็นชื่อจริงใน BigQuery): `fact_transcation`, `CDC_DATESET`,
    `prdDiminsionData`
-6. dim ที่มาจาก mds ต้องจบด้วย DELETE row ที่ `is_active = FALSE` ก่อน `END;`
+6. dim mds แบบ MERGE (2 ตัว) ต้องจบด้วย DELETE row ที่ `is_active = FALSE` ก่อน `END;`
+   (แบบ full rebuild ไม่ต้อง)
 
 ## 6. อ่านต่อ
 

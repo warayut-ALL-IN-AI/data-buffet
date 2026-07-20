@@ -1,17 +1,15 @@
 config {
-  type: "operations",
+  type: "table",
+  schema: databuffet.DIMENSION_TABLE,
   dependencies: ["dim_company"],
   tags: [databuffet.TAG_DIM_DAILY],
+  uniqueKey: ["SectionManagerSK"],
+  bigquery: {
+    clusterBy: ["SectionManagerSK"],
+  },
 }
 
 js {
-    const DimSectionManagerTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: name(),
-    };
-    const DimSectionManagerTableRef = `${DimSectionManagerTable.database}.${DimSectionManagerTable.schema}.${DimSectionManagerTable.name}`;
-
     const DimCompanyTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -27,98 +25,30 @@ js {
     const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
 }
 
-BEGIN
-  DECLARE max_sk INT64 DEFAULT 0;
+SELECT
+  ROW_NUMBER() OVER(
+    ORDER BY
+      ${databuffet.functionData.cleanString("t1.companyID")},
+      ${databuffet.functionData.cleanString("t1.SectionID")},
+      t1.StartDate,
+      t1.EndDate
+  ) AS SectionManagerSK,
+  dim_com.CompanySK,
+  ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+  ${databuffet.functionData.cleanString("t1.SectionID")} AS SectionID,
+  ${databuffet.functionData.cleanString("t1.SectionName")} AS SectionName,
+  ${databuffet.functionData.cleanString("t1.SectionManagerEmployeeID")} AS SectionManagerEmployeeID,
+  ${databuffet.functionData.cleanString("t1.SectionManagerName")} AS SectionManagerName,
+  ${databuffet.functionData.cleanString("t1.SectionManagerSurname")} AS SectionManagerSurname,
+  ${databuffet.functionData.cleanString("t1.SectionManagerNickname")} AS SectionManagerNickname,
+  t1.StartDate AS StartDate,
+  t1.EndDate AS EndDate,
+  ${databuffet.functionData.cleanString("t1.id")} as MdsID
+FROM `${MdsSourceTableRef}` AS t1
+LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+  ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+WHERE t1.is_active = TRUE
 
-  SET max_sk = (SELECT IFNULL(MAX(SectionManagerSK), 0) FROM `${DimSectionManagerTableRef}`);
+pre_operations {}
 
-  MERGE `${DimSectionManagerTableRef}` AS T
-  USING (
-    SELECT
-      (CASE
-        WHEN t3.SectionManagerSK IS NOT NULL THEN t3.SectionManagerSK
-        WHEN t2.SectionManagerSK IS NOT NULL THEN t2.SectionManagerSK
-        ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.SectionManagerSK IS NULL AND t3.SectionManagerSK IS NULL THEN 1 ELSE 0 END)
-          ORDER BY
-            ${databuffet.functionData.cleanString("t1.companyID")},
-            ${databuffet.functionData.cleanString("t1.SectionID")},
-            t1.StartDate,
-            t1.EndDate
-        )
-      END) AS SectionManagerSK,
-      dim_com.CompanySK,
-      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
-      ${databuffet.functionData.cleanString("t1.SectionID")} AS SectionID,
-      ${databuffet.functionData.cleanString("t1.SectionName")} AS SectionName,
-      ${databuffet.functionData.cleanString("t1.SectionManagerEmployeeID")} AS SectionManagerEmployeeID,
-      ${databuffet.functionData.cleanString("t1.SectionManagerName")} AS SectionManagerName,
-      ${databuffet.functionData.cleanString("t1.SectionManagerSurname")} AS SectionManagerSurname,
-      ${databuffet.functionData.cleanString("t1.SectionManagerNickname")} AS SectionManagerNickname,
-      t1.StartDate AS StartDate,
-      t1.EndDate AS EndDate,      
-      ${databuffet.functionData.cleanString("t1.id")} as MdsID
-    FROM `${MdsSourceTableRef}` AS t1
-    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
-      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
-    LEFT JOIN `${DimSectionManagerTableRef}` AS t2
-      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
-      AND ${databuffet.functionData.cleanString("t1.SectionID")} = t2.SectionID
-      AND t1.StartDate = t2.StartDate
-      AND t1.EndDate = t2.EndDate
-    LEFT JOIN `${DimSectionManagerTableRef}` AS t3
-      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
-    WHERE t1.is_active = TRUE
-      AND DATE(t1.updated_at) >= DATE_SUB(
-            CURRENT_DATE("Asia/Bangkok"),
-            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
-          )
-  ) AS S
-  ON T.SectionManagerSK = S.SectionManagerSK
-
-  WHEN MATCHED THEN
-    UPDATE SET
-      T.SectionName = S.SectionName,
-      T.SectionManagerEmployeeID = S.SectionManagerEmployeeID,
-      T.SectionManagerName = S.SectionManagerName,
-      T.SectionManagerSurname = S.SectionManagerSurname,
-      T.SectionManagerNickname = S.SectionManagerNickname,
-      T.StartDate = S.StartDate,
-      T.EndDate = S.EndDate,
-      T.MdsID = S.MdsID
-
-  WHEN NOT MATCHED THEN
-    INSERT (
-      SectionManagerSK,
-      CompanySK,
-      companyID,
-      SectionID,
-      SectionName,
-      SectionManagerEmployeeID,
-      SectionManagerName,
-      SectionManagerSurname,
-      SectionManagerNickname,
-      StartDate,
-      EndDate,
-      MdsID
-    )
-    VALUES (
-      S.SectionManagerSK,
-      S.CompanySK,
-      S.companyID,
-      S.SectionID,
-      S.SectionName,
-      S.SectionManagerEmployeeID,
-      S.SectionManagerName,
-      S.SectionManagerSurname,
-      S.SectionManagerNickname,
-      S.StartDate,
-      S.EndDate,
-      S.MdsID
-    );
-
-  DELETE FROM `${DimSectionManagerTableRef}`
-  WHERE MdsID IN (
-    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
-  );
-END;
+post_operations {}

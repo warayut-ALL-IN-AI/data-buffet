@@ -1,0 +1,116 @@
+config {
+  type: "operations",
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_DIM_DAILY],
+}
+
+js {
+    const DimDirectorTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: name(),
+    };
+    const DimDirectorTableRef = `${DimDirectorTable.database}.${DimDirectorTable.schema}.${DimDirectorTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const MdsSourceTable = {
+        database: databuffet.DATABASE,
+        schema: "mds_dataset",
+        name: "mds_data_sales_director_master",
+    };
+    const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
+}
+
+BEGIN
+  DECLARE max_sk INT64 DEFAULT 0;
+
+  SET max_sk = (SELECT IFNULL(MAX(DirectorSK), 0) FROM `${DimDirectorTableRef}`);
+
+  MERGE `${DimDirectorTableRef}` AS T
+  USING (
+    SELECT
+      (CASE
+        WHEN t3.DirectorSK IS NOT NULL THEN t3.DirectorSK
+        WHEN t2.DirectorSK IS NOT NULL THEN t2.DirectorSK
+        ELSE max_sk + ROW_NUMBER() OVER(
+          PARTITION BY (CASE WHEN t2.DirectorSK IS NULL AND t3.DirectorSK IS NULL THEN 1 ELSE 0 END)
+          ORDER BY
+            ${databuffet.functionData.cleanString("t1.companyID")},
+            ${databuffet.functionData.cleanString("t1.DirectorID")},
+            t1.StartDate,
+            t1.EndDate
+        )
+      END) AS DirectorSK,
+      dim_com.CompanySK,
+      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+      ${databuffet.functionData.cleanString("t1.DirectorID")} AS DirectorID,
+      ${databuffet.functionData.cleanString("t1.DirectorName")} AS DirectorName,
+      ${databuffet.functionData.cleanString("t1.DirectorOfSalesID")} AS DirectorOfSalesID,
+      ${databuffet.functionData.cleanString("t1.DirectorOfSalesName")} AS DirectorOfSalesName,
+      t1.StartDate AS StartDate,
+      t1.EndDate AS EndDate,
+      ${databuffet.functionData.cleanString("t1.id")} as MdsID
+    FROM `${MdsSourceTableRef}` AS t1
+    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+    LEFT JOIN `${DimDirectorTableRef}` AS t2
+      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
+      AND ${databuffet.functionData.cleanString("t1.DirectorID")} = t2.DirectorID
+      AND t1.StartDate = t2.StartDate
+      AND t1.EndDate = t2.EndDate
+    LEFT JOIN `${DimDirectorTableRef}` AS t3
+      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
+    WHERE t1.is_active = TRUE
+      AND DATE(t1.updated_at) >= DATE_SUB(
+            CURRENT_DATE("Asia/Bangkok"),
+            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
+          )
+  ) AS S
+  ON T.DirectorSK = S.DirectorSK
+
+  WHEN MATCHED THEN
+    UPDATE SET
+      T.DirectorName = S.DirectorName,
+      T.DirectorOfSalesID = S.DirectorOfSalesID,
+      T.DirectorOfSalesName = S.DirectorOfSalesName,
+      T.StartDate = S.StartDate,
+      T.EndDate = S.EndDate,
+      T.MdsID = S.MdsID
+
+  WHEN NOT MATCHED THEN
+    INSERT (
+      DirectorSK,
+      CompanySK,
+      companyID,
+      DirectorID,
+      DirectorName,
+      DirectorOfSalesID,
+      DirectorOfSalesName,
+      StartDate,
+      EndDate,
+      MdsID
+    )
+    VALUES (
+      S.DirectorSK,
+      S.CompanySK,
+      S.companyID,
+      S.DirectorID,
+      S.DirectorName,
+      S.DirectorOfSalesID,
+      S.DirectorOfSalesName,
+      S.StartDate,
+      S.EndDate,
+      S.MdsID
+    );
+
+  DELETE FROM `${DimDirectorTableRef}`
+  WHERE MdsID IN (
+    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
+  );
+END;

@@ -1,17 +1,15 @@
 config {
-  type: "operations",
+  type: "table",
+  schema: databuffet.DIMENSION_TABLE,
   dependencies: ["dim_company"],
   tags: [databuffet.TAG_DIM_DAILY],
+  uniqueKey: ["ReportSK"],
+  bigquery: {
+    clusterBy: ["ReportSK"],
+  },
 }
 
 js {
-    const DimReportTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: name(),
-    };
-    const DimReportTableRef = `${DimReportTable.database}.${DimReportTable.schema}.${DimReportTable.name}`;
-
     const DimCompanyTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -27,84 +25,27 @@ js {
     const MdsSourceTableRef = `${MdsSourceTable.database}.${MdsSourceTable.schema}.${MdsSourceTable.name}`;
 }
 
-BEGIN
-  DECLARE max_sk INT64 DEFAULT 0;
+SELECT
+  ROW_NUMBER() OVER(
+    ORDER BY
+      ${databuffet.functionData.cleanString("t1.companyID")},
+      ${databuffet.functionData.cleanString("t1.ReportID")},
+      ${databuffet.functionData.cleanString("t1.RegionID")},
+      ${databuffet.functionData.cleanString("t1.MarketingGroupID")}
+  ) AS ReportSK,
+  dim_com.CompanySK,
+  ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
+  ${databuffet.functionData.cleanString("t1.ReportID")} AS ReportID,
+  ${databuffet.functionData.cleanString("t1.RegionID")} AS RegionID,
+  ${databuffet.functionData.cleanString("t1.MarketingGroupID")} AS MarketingGroupID,
+  ${databuffet.functionData.cleanString("t1.ReportName1")} AS ReportName1,
+  ${databuffet.functionData.cleanString("t1.ReportName2")} AS ReportName2,
+  ${databuffet.functionData.cleanString("t1.id")} as MdsID
+FROM `${MdsSourceTableRef}` AS t1
+LEFT JOIN `${DimCompanyTableRef}` AS dim_com
+  ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
+WHERE t1.is_active = TRUE
 
-  SET max_sk = (SELECT IFNULL(MAX(ReportSK), 0) FROM `${DimReportTableRef}`);
+pre_operations {}
 
-  MERGE `${DimReportTableRef}` AS T
-  USING (
-    SELECT
-      (CASE
-        WHEN t3.ReportSK IS NOT NULL THEN t3.ReportSK
-        WHEN t2.ReportSK IS NOT NULL THEN t2.ReportSK
-        ELSE max_sk + ROW_NUMBER() OVER(
-          PARTITION BY (CASE WHEN t2.ReportSK IS NULL AND t3.ReportSK IS NULL THEN 1 ELSE 0 END)
-          ORDER BY
-            ${databuffet.functionData.cleanString("t1.companyID")},
-            ${databuffet.functionData.cleanString("t1.ReportID")},
-            ${databuffet.functionData.cleanString("t1.RegionID")},
-            ${databuffet.functionData.cleanString("t1.MarketingGroupID")}
-        )
-      END) AS ReportSK,
-      dim_com.CompanySK,
-      ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
-      ${databuffet.functionData.cleanString("t1.ReportID")} AS ReportID,
-      ${databuffet.functionData.cleanString("t1.RegionID")} AS RegionID,
-      ${databuffet.functionData.cleanString("t1.MarketingGroupID")} AS MarketingGroupID,
-      ${databuffet.functionData.cleanString("t1.ReportName1")} AS ReportName1,
-      ${databuffet.functionData.cleanString("t1.ReportName2")} AS ReportName2,
-      ${databuffet.functionData.cleanString("t1.id")} as MdsID
-    FROM `${MdsSourceTableRef}` AS t1
-    LEFT JOIN `${DimCompanyTableRef}` AS dim_com
-      ON ${databuffet.functionData.cleanString("t1.companyID")} = dim_com.companyID
-    LEFT JOIN `${DimReportTableRef}` AS t2
-      ON ${databuffet.functionData.cleanString("t1.companyID")} = t2.companyID
-      AND ${databuffet.functionData.cleanString("t1.ReportID")} = t2.ReportID
-      AND ${databuffet.functionData.cleanString("t1.RegionID")} = t2.RegionID
-      AND ${databuffet.functionData.cleanString("t1.MarketingGroupID")} = t2.MarketingGroupID
-    LEFT JOIN `${DimReportTableRef}` AS t3
-      ON ${databuffet.functionData.cleanString("t1.id")} = t3.MdsID
-    WHERE t1.is_active = TRUE
-      AND DATE(t1.updated_at) >= DATE_SUB(
-            CURRENT_DATE("Asia/Bangkok"),
-            INTERVAL ${databuffet.MDS_BACKFILL_DAYS} DAY
-          )
-  ) AS S
-  ON T.ReportSK = S.ReportSK
-
-  WHEN MATCHED THEN
-    UPDATE SET
-      T.ReportName1 = S.ReportName1,
-      T.ReportName2 = S.ReportName2,
-      T.MdsID = S.MdsID
-
-  WHEN NOT MATCHED THEN
-    INSERT (
-      ReportSK,
-      CompanySK,
-      companyID,
-      ReportID,
-      RegionID,
-      MarketingGroupID,
-      ReportName1,
-      ReportName2,
-      MdsID
-    )
-    VALUES (
-      S.ReportSK,
-      S.CompanySK,
-      S.companyID,
-      S.ReportID,
-      S.RegionID,
-      S.MarketingGroupID,
-      S.ReportName1,
-      S.ReportName2,
-      S.MdsID
-    );
-
-  DELETE FROM `${DimReportTableRef}`
-  WHERE MdsID IN (
-    SELECT id FROM `${MdsSourceTableRef}` WHERE is_active = FALSE
-  );
-END;
+post_operations {}
