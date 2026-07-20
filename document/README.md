@@ -56,10 +56,21 @@ project_wiki/
 └── operations/    running-and-troubleshooting.md
 ```
 
+## Diagrams — `diagrams/`
+
+- [diagrams/pipeline_lineage.md](diagrams/pipeline_lineage.md) — **graph lineage เต็มระบบ**
+  (Mermaid, render ได้บน GitHub/VSCode) แสดงทุกตาราง 229 objects จัดกลุ่มตาม layer,
+  edge = source → consumer, node ที่ pause เป็นเส้นประจาง
+- **Auto-generated** จาก [diagrams/generate_lineage.py](diagrams/generate_lineage.py)
+  ซึ่ง parse `dependencies` + `ref()` จาก `.sqlx` จริง → กราฟเป็นปัจจุบันเสมอ
+  รัน: `python3 document/diagrams/generate_lineage.py` (pre-commit hook รันให้อัตโนมัติ
+  เมื่อ commit แตะ `definitions/*.sqlx`) — **ห้ามแก้ `pipeline_lineage.md` ด้วยมือ**
+
 ## การดูแลเอกสารชุดนี้
 
 - แก้ pattern ใน layer ไหน → อัปเดตหน้า wiki ของ layer นั้น + how-to ที่เกี่ยว
 - เพิ่ม dimension ใหม่ → เพิ่มแถวใน `project_wiki/dimension/inventory.md`
+- เปลี่ยนอะไรใน `definitions/` → regenerate lineage graph (pre-commit ทำให้อัตโนมัติ)
 - ตัดสินใจเชิงออกแบบใหม่ (เช่น hard delete 2026-07-10) → บันทึกใน
   `operations/known-issues.md` + หน้า pattern ที่เกี่ยว
 - `.claude/` ถูกสร้างใหม่ 2026-07-10 ให้ชี้เข้าเอกสารชุดนี้แล้ว (CLAUDE.md, skills,
