@@ -56,7 +56,9 @@ SELECT
     t1.CostChannelID,
     t1.ProvinceID,
     t1.ChangeSectionFlag,
-    t1.CustomerFlag
+    t1.CustomerFlag,
+    t1.StartDate,
+    t1.EndDate,
   FROM (
     SELECT
       *
@@ -142,13 +144,13 @@ BEGIN
       SaleRepSK, DepartmentSK, SectionSK, SectionManagerSK, RegionSK,
       RegionManagerSK, DirectorSK, CompanySK, companyID, DepartmentID, EmployeeID, EmployeeName,
       EmployeeSurname, EmployeeNickname, DepCode, CostChannelID,
-      ProvinceID, ChangeSectionFlag
+      ProvinceID, ChangeSectionFlag, StartDate, EndDate
     )
     VALUES (
       S.SaleRepSK, NULL, NULL, NULL, NULL,
       NULL, NULL, S.CompanySK, S.companyID, S.DepartmentID, S.EmployeeID, S.EmployeeName,
       S.EmployeeSurname, S.EmployeeNickname, S.DepCode, S.CostChannelID,
-      S.ProvinceID, S.ChangeSectionFlag
+      S.ProvinceID, S.ChangeSectionFlag, NULL, NULL
     );
 END;
 

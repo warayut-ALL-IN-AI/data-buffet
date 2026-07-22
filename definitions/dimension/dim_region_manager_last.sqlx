@@ -39,6 +39,8 @@ SELECT
     t1.RegionManagerName,
     t1.RegionManagerSurname,
     t1.RegionManagerNickname,
+    t1.StartDate, 
+    t1.EndDate,
   FROM (
     SELECT
       *

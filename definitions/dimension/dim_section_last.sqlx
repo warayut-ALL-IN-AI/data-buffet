@@ -38,6 +38,8 @@ SELECT
     dim_com.companyID,
     t1.SectionID,
     t1.SectionName,
+    t1.StartDate, 
+    t1.EndDate,
   FROM (
     SELECT
       *

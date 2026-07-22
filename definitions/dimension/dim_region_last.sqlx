@@ -38,6 +38,8 @@ SELECT
     t1.RegionID,
     t1.SubRegionID,
     t1.RegionName,
+    t1.StartDate, 
+    t1.EndDate,
   FROM (
     SELECT
       *

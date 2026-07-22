@@ -38,6 +38,8 @@ SELECT
     t1.SectionManagerName,
     t1.SectionManagerSurname,
     t1.SectionManagerNickname,
+    t1.StartDate, 
+    t1.EndDate,
   FROM (
     SELECT
       *

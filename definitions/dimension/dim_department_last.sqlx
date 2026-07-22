@@ -41,6 +41,8 @@ SELECT
     t1.SectionID,
     t1.DepartmentID,
     t1.DepartmentName,
+    t1.StartDate, 
+    t1.EndDate,
   FROM (
     SELECT
       *

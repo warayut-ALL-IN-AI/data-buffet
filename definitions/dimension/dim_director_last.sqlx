@@ -36,6 +36,8 @@ SELECT
     t1.DirectorName, 
     t1.DirectorOfSalesID, 
     t1.DirectorOfSalesName, 
+    t1.StartDate, 
+    t1.EndDate,
   FROM (
     SELECT
       *
