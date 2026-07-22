@@ -35,11 +35,12 @@ config { type: "table", schema: databuffet.DIMENSION_TABLE,
 Single top-level SELECT, SK = `ROW_NUMBER() OVER (ORDER BY ...)` — **SKs are NOT stable
 across runs** for this group. The `*_last` tables select the current SCD row per
 entity: filter `WHERE CURRENT_DATE('Asia/Bangkok') BETWEEN StartDate AND EndDate`
-(enabled 2026-07-20 — only versions effective today) then
+(enabled 2026-07-22 — only versions effective today) then
 `QUALIFY ... ORDER BY StartDate DESC, EndDate DESC = 1`; they pre-declare
 downstream SK FK columns as NULL, which `update_sk_sale_rep_group` backfills with
-UPDATE statements afterward. (Ledger-rep sentinel rows 1900-01-01→2499-12-31 always
-pass the filter.)
+UPDATE statements afterward, and carry `StartDate`/`EndDate` through as output
+columns (also inserted by the `dim_sale_representative_last` MERGE). (Ledger-rep
+sentinel rows 1900-01-01→2499-12-31 always pass the filter.)
 
 `dim_target_product_group_by_sale_dayofwork` is a large daily full-rebuild joining
 `dim_calendar` (working-day expansion) — it **self-heals** after upstream deletes.
