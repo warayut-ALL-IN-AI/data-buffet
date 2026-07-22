@@ -8,9 +8,11 @@ resolution for name collisions). It then emits pipeline_lineage.md with a few
 focused views instead of one giant graph:
 
   1. Layer overview      — the medallion + star-schema map with live counts
-  2. Star schema         — every fact and what feeds it (dim/curated -> fact)
-  3. Dimension backbone  — dim -> dim build order (dim_company is the root)
-  4. Source -> model     — validated/curated -> dimension/fact data flow
+  2. Execution / run order — the tag-driven orchestration (nightly / yearly /
+                            bootstrap) with live object-per-tag counts
+  3. Star schema         — every fact and what feeds it (dim/curated -> fact)
+  4. Dimension backbone  — dim -> dim build order (dim_company is the root)
+  5. Source -> model     — validated/curated -> dimension/fact data flow
 
 Operational scaffolding (the `initial` layer: create_all_* / drop_all_*, and the
 `*_schema_*` schema-declaration objects) is excluded from views 2-4 — it adds
@@ -26,6 +28,93 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 DEFS = REPO / "definitions"
 OUT = Path(__file__).resolve().parent / "pipeline_lineage.md"
+TOPIC_OUT = Path(__file__).resolve().parent / "topic_flows.md"
+
+# Subject-area groupings. Each topic's members are the data objects whose bare
+# name matches any pattern; the generator then draws the members plus their direct
+# upstream feeders (what .sqlx builds them) and any fact they feed. Patterns match
+# on the bare object name (regex). Keep this list in sync when a new domain of
+# tables is added — the coverage check at the end of main() flags any dim/fact/
+# curated object not claimed by a topic.
+TOPICS = [
+    ("sale-org", "Sales org hierarchy — โครงสร้างองค์กรขาย (แผนก/ภาค/ผจก./เซล)", [
+        r"^dim_department(_last)?$",
+        r"^dim_section(_manager)?(_last)?$",
+        r"^dim_region(_manager)?(_last)?$",
+        r"^dim_director(_last)?$",
+        r"^dim_sale_representative(_last)?$",
+        r"^update_sk_sale_rep_group$",
+        r"^dim_change_district$",
+        r"^dim_company$",
+    ]),
+    ("target", "Sales target / quota — เป้าการขาย", [
+        r"^dim_target_product_group(_by_sale(_dayofwork)?)?$",
+        r"^dim_rate_target$",
+        r"^dim_report$",
+    ]),
+    ("customer", "Customer & scoring — ลูกค้า/เกรด/สกอร์", [
+        r"^dim_customer(_grade)?$",
+        r"^dim_group_customer(_grade)?$",
+        r"^dim_avg_collection_score$",
+        r"^dim_bounce_cheque_score$",
+        r"^dim_contact_score$",
+        r"^dim_payment_receive_score$",
+        r"^dim_weight_score$",
+        r"^dim_grade$",
+    ]),
+    ("ar-aging", "Accounts receivable / aging — ลูกหนี้/อายุหนี้", [
+        r"^dim_aging(_rang)?$",
+        r"^dim_collection_status$",
+        r"^dim_status_not_receive$",
+        r"^dim_guarantee$",
+        r"^fact_chq$",
+        r"^fact_mir_(vs|rs)$",
+    ]),
+    ("product", "Product master & marketing — สินค้า", [
+        r"^dim_product_master(_fc)?$",
+        r"^dim_product_mkt(_director)?$",
+        r"^dim_stk_mkt$",
+        r"^dim_rebate$",
+        r"^curated_product$",
+        r"^product_for_aisearch$",
+    ]),
+    ("sales-txn", "Sales transactions — ยอดขาย/ออเดอร์/อินวอยซ์ (fact หลัก)", [
+        r"^fact_transcation$",
+        r"^fact_order$",
+        r"^fact_invoice$",
+        r"^dim_order$",
+        r"^dim_invoice$",
+        r"^dim_payment$",
+        r"^curated_mih$",
+        r"^curated_mil$",
+    ]),
+    ("delivery", "Delivery / logistics — การจัดส่ง", [
+        r"^fact_delivery$",
+        r"^fact_transaction_delivery$",
+        r"^dim_delivery$",
+    ]),
+    ("quotation", "Quotation / project — ใบเสนอราคา/โปรเจกต์", [
+        r"^fact_quotation$",
+        r"^dim_quotation$",
+        r"^dim_project$",
+        r"^curated_tbook_quotation$",
+    ]),
+    ("channel", "Sales channel — ช่องทางขาย", [
+        r"^dim_channel(_cost|_finance|_sales)?$",
+    ]),
+    ("cost", "Cost — ต้นทุน", [
+        r"^dim_cost_group$",
+        r"^dim_cost_stk$",
+    ]),
+    ("calendar", "Calendar / date spine — ปฏิทิน/วันหยุด", [
+        r"^dim_calendar$",
+        r"^dim_holiday$",
+    ]),
+    ("reference", "Reference / misc — ตารางอ้างอิงอื่นๆ", [
+        r"^dim_doctype$",
+        r"^dim_waterpac$",
+    ]),
+]
 
 LAYER_ORDER = ["initial", "validated", "curated", "dimension", "fact", "cdc", "process"]
 LAYER_STYLE = {
@@ -39,6 +128,8 @@ LAYER_STYLE = {
 }
 
 DEP_ARRAY_RE = re.compile(r"dependencies\s*:\s*\[(.*?)\]", re.DOTALL)
+TAGS_ARRAY_RE = re.compile(r"tags\s*:\s*\[(.*?)\]", re.DOTALL)
+TAG_TOKEN_RE = re.compile(r"databuffet\.(TAG_[A-Z_]+)")
 QUOTED_RE = re.compile(r"""['"]([^'"]+)['"]""")
 REF_RE = re.compile(r"ref\(([^)]*)\)")
 CONFIG_RE = re.compile(r"^\s*config\s*\{", re.MULTILINE)
@@ -62,6 +153,12 @@ def parse_file(path: Path):
 
     paused = CONFIG_RE.search(text) is None and "config {" in text.replace("-- ", "")
 
+    tags = set()
+    if not paused:
+        tm = TAGS_ARRAY_RE.search(text)
+        if tm:
+            tags.update(TAG_TOKEN_RE.findall(tm.group(1)))
+
     bare_deps = set()
     m = DEP_ARRAY_RE.search(text)
     if m:
@@ -76,7 +173,7 @@ def parse_file(path: Path):
         hint = dataset_to_subdir(first_arg) if "." in first_arg else None
         ref_deps.add((hint, quoted[-1]))
 
-    return name, layer, subdir, paused, bare_deps, ref_deps
+    return name, layer, subdir, paused, bare_deps, ref_deps, tags
 
 
 def esc(label):
@@ -127,6 +224,78 @@ def mermaid_block(nodes, node_meta, edges, direction="LR"):
     return "\n".join(lines)
 
 
+def build_topic_flows(node_meta, data_edges, layer_of, is_scaffold):
+    """Return (markdown, covered_set). One focused subgraph per TOPICS entry:
+    members (the topic's own objects) + direct upstream feeders + facts they feed."""
+    preds, succs = {}, {}
+    for s, d in data_edges:
+        succs.setdefault(s, set()).add(d)
+        preds.setdefault(d, set()).add(s)
+
+    parts = []
+    covered = set()
+    for key, title, patterns in TOPICS:
+        pats = [re.compile(p) for p in patterns]
+        members = sorted(
+            nid for nid, (layer, paused, label) in node_meta.items()
+            if any(p.search(label) for p in pats)
+        )
+        if not members:
+            parts.append(f"## {title}\n\n_No matching objects in the repo yet._")
+            continue
+        covered.update(members)
+        mset = set(members)
+        feeders = {s for m in members for s in preds.get(m, ()) if s not in mset}
+        consumers = {
+            d for m in members for d in succs.get(m, ())
+            if d not in mset and layer_of[d] == "fact"
+        }
+        nodeset = mset | feeders | consumers
+        edges = {(s, d) for s, d in data_edges if s in nodeset and d in nodeset}
+
+        block = [f"## {title}"]
+        member_list = ", ".join(f"`{node_meta[m][2]}`" for m in members)
+        block.append(f"**Objects in this topic ({len(members)}):** {member_list}")
+        if feeders:
+            feed_list = ", ".join(
+                f"`{lbl}`" for lbl in sorted(node_meta[f][2] for f in feeders)
+            )
+            block.append(f"**Fed by ({len(feeders)}):** {feed_list}")
+        block.append(mermaid_block(nodeset, node_meta, edges))
+        parts.append("\n\n".join(block))
+
+    topic_worthy = {
+        nid for nid, (layer, paused, label) in node_meta.items()
+        if layer in ("dimension", "fact", "curated") and not is_scaffold(nid)
+    }
+    uncovered = sorted(node_meta[n][2] for n in topic_worthy - covered)
+    toc = "\n".join(f"{i}. {title}" for i, (_, title, _) in enumerate(TOPICS, 1))
+
+    header = f"""# Topic Flows (subject-area views)
+
+> ⚠️ **Auto-generated — do not edit by hand.** Regenerate with
+> `python document/diagrams/generate_lineage.py`. Topic membership is defined by the
+> `TOPICS` list in `generate_lineage.py`; the nodes and edges are parsed from the
+> real `.sqlx` files, so each view always matches the code.
+
+Each section is one business subject. It shows the topic's own objects (members),
+the `.sqlx` that feed them (direct upstream, any layer), and any `fact_*` they feed.
+Edges point **source → consumer**; paused objects render dashed. Node colours are by
+layer (validated/curated/dimension/fact/…) as in
+[pipeline_lineage.md](pipeline_lineage.md).
+
+**Topics ({len(TOPICS)}):**
+
+{toc}
+
+**Uncovered dim/fact/curated objects (not in any topic):** {', '.join(f'`{u}`' for u in uncovered) if uncovered else '—'}
+
+---
+
+"""
+    return header + "\n\n---\n\n".join(parts) + "\n", covered
+
+
 def main():
     files = [parse_file(p) for p in sorted(DEFS.rglob("*.sqlx"))]
 
@@ -137,11 +306,14 @@ def main():
     node_meta = {}      # node_id -> (layer, paused, label)
     by_name = {}        # bare name -> {subdir: node_id}
     meta = {}           # node_id -> (subdir, paused, bare_deps, ref_deps)
-    for name, layer, subdir, paused, bare_deps, ref_deps in files:
+    tag_counts = {}     # TAG_* constant -> number of (non-paused) objects
+    for name, layer, subdir, paused, bare_deps, ref_deps, tags in files:
         node_id = name if name_counts[name] == 1 else f"{name}__{subdir}"
         node_meta[node_id] = (layer, paused, name)
         by_name.setdefault(name, {})[subdir] = node_id
         meta[node_id] = (subdir, paused, bare_deps, ref_deps)
+        for t in tags:
+            tag_counts[t] = tag_counts.get(t, 0) + 1
 
     def resolve(dep_name, hint):
         cands = by_name.get(dep_name)
@@ -236,6 +408,51 @@ flowchart LR
   class P process;
 ```"""
 
+    # ---- View 2: execution / run order (tag-driven orchestration) ----
+    def tc(tag):
+        return tag_counts.get(tag, 0)
+
+    execution = f"""```mermaid
+flowchart TB
+  subgraph boot["Bootstrap - run once / on schema change"]
+    I["initial | {tc('TAG_INITIAL')} objects<br/>external tables + UDFs<br/>tag: initial"]
+  end
+
+  subgraph nightly["Nightly run - Asia/Bangkok (top to bottom = run order)"]
+    direction TB
+    V["validated | {tc('TAG_VALIDATED')}<br/>clean - cast - dedup<br/>tags: validated_incremental ({tc('TAG_VALIDATED_INCREMENTAL')}) / validated_full ({tc('TAG_VALIDATED_FULL')})"]
+    C["curated | {tc('TAG_CURATED')}<br/>business joins<br/>tag: curated"]
+    D["dimension_daily | {tc('TAG_DIM_DAILY')}<br/>SK + SCD rebuild<br/>tag: dimension_daily"]
+    Fd["fact_daily | {tc('TAG_FACT_DAILY')}<br/>star-schema load<br/>tag: fact_daily"]
+    CDC["cdc | {tc('TAG_CDC')}<br/>change log<br/>tag: cdc"]
+    P["process | {tc('TAG_PROCESS')}<br/>AI.GENERATE - gated on today's CDC changes<br/>tag: process"]
+    V --> C --> D --> Fd
+    V --> CDC --> P
+  end
+
+  subgraph yearly["Yearly"]
+    Dy["dimension_yearly | {tc('TAG_DIM_YEARLY')}<br/>dim_calendar date spine<br/>tag: dimension_yearly"]
+  end
+
+  I -.->|first build| V
+  Dy -.->|date spine| D
+
+  classDef boot fill:#e0e0e0,stroke:#9e9e9e,color:#111;
+  classDef val fill:#cfe8ff,stroke:#4a90d9,color:#111;
+  classDef cur fill:#a8d5ff,stroke:#2f6fb0,color:#111;
+  classDef dim fill:#ffe0b3,stroke:#d98f2f,color:#111;
+  classDef fct fill:#c6f5c6,stroke:#3fa63f,color:#111;
+  classDef cdc fill:#f0d0f0,stroke:#b060b0,color:#111;
+  classDef proc fill:#f5c6c6,stroke:#c04040,color:#111;
+  class I boot;
+  class V val;
+  class C cur;
+  class D,Dy dim;
+  class Fd fct;
+  class CDC cdc;
+  class P proc;
+```"""
+
     doc = f"""# Pipeline Lineage
 
 > ⚠️ **Auto-generated — do not edit by hand.** Regenerate after any change to
@@ -263,7 +480,17 @@ The medallion → star-schema map. Counts are live.
 
 ---
 
-## 2. Star schema — what feeds each fact
+## 2. Execution / run order
+
+The tag-driven orchestration: what runs, in what order, on what cadence. Counts are
+the number of (non-paused) objects carrying each tag. Solid arrows = run order;
+dashed = a prerequisite from another cadence.
+
+{execution}
+
+---
+
+## 3. Star schema — what feeds each fact
 
 Every `fact_*` table and the dimensions / curated tables it joins.
 
@@ -271,7 +498,7 @@ Every `fact_*` table and the dimensions / curated tables it joins.
 
 ---
 
-## 3. Dimension backbone — build order
+## 4. Dimension backbone — build order
 
 `dim_company` is the DAG root; the `_last` snapshots feed `update_sk_sale_rep_group`
 and the target-by-sale chain. Only `dimension → dimension` edges are shown.
@@ -280,7 +507,7 @@ and the target-by-sale chain. Only `dimension → dimension` edges are shown.
 
 ---
 
-## 4. Source → model
+## 5. Source → model
 
 How `validated` / `curated` tables flow into dimensions and facts (scaffolding
 excluded). This is the densest view — open it on GitHub or mermaid.live to zoom.
@@ -294,6 +521,16 @@ excluded). This is the densest view — open it on GitHub or mermaid.live to zoo
     print(f"  view3 dims:   nodes={len(dim_connected)} edges={len(dim_edges)}")
     print(f"  view4 source: nodes={len(src_nodes)} edges={len(src_edges)}")
     print(f"  paused={len(paused_labels)}")
+
+    topic_doc, covered = build_topic_flows(node_meta, data_edges, layer_of, is_scaffold)
+    TOPIC_OUT.write_text(topic_doc, encoding="utf-8")
+    topic_worthy = {
+        nid for nid, (layer, paused, label) in node_meta.items()
+        if layer in ("dimension", "fact", "curated") and not is_scaffold(nid)
+    }
+    print(f"Wrote {TOPIC_OUT.relative_to(REPO)}")
+    print(f"  topics={len(TOPICS)} covered={len(covered)}/{len(topic_worthy)} "
+          f"uncovered={len(topic_worthy - covered)}")
 
 
 if __name__ == "__main__":

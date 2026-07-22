@@ -56,7 +56,56 @@ flowchart LR
 
 ---
 
-## 2. Star schema — what feeds each fact
+## 2. Execution / run order
+
+The tag-driven orchestration: what runs, in what order, on what cadence. Counts are
+the number of (non-paused) objects carrying each tag. Solid arrows = run order;
+dashed = a prerequisite from another cadence.
+
+```mermaid
+flowchart TB
+  subgraph boot["Bootstrap - run once / on schema change"]
+    I["initial | 11 objects<br/>external tables + UDFs<br/>tag: initial"]
+  end
+
+  subgraph nightly["Nightly run - Asia/Bangkok (top to bottom = run order)"]
+    direction TB
+    V["validated | 135<br/>clean - cast - dedup<br/>tags: validated_incremental (48) / validated_full (73)"]
+    C["curated | 8<br/>business joins<br/>tag: curated"]
+    D["dimension_daily | 58<br/>SK + SCD rebuild<br/>tag: dimension_daily"]
+    Fd["fact_daily | 6<br/>star-schema load<br/>tag: fact_daily"]
+    CDC["cdc | 2<br/>change log<br/>tag: cdc"]
+    P["process | 1<br/>AI.GENERATE - gated on today's CDC changes<br/>tag: process"]
+    V --> C --> D --> Fd
+    V --> CDC --> P
+  end
+
+  subgraph yearly["Yearly"]
+    Dy["dimension_yearly | 1<br/>dim_calendar date spine<br/>tag: dimension_yearly"]
+  end
+
+  I -.->|first build| V
+  Dy -.->|date spine| D
+
+  classDef boot fill:#e0e0e0,stroke:#9e9e9e,color:#111;
+  classDef val fill:#cfe8ff,stroke:#4a90d9,color:#111;
+  classDef cur fill:#a8d5ff,stroke:#2f6fb0,color:#111;
+  classDef dim fill:#ffe0b3,stroke:#d98f2f,color:#111;
+  classDef fct fill:#c6f5c6,stroke:#3fa63f,color:#111;
+  classDef cdc fill:#f0d0f0,stroke:#b060b0,color:#111;
+  classDef proc fill:#f5c6c6,stroke:#c04040,color:#111;
+  class I boot;
+  class V val;
+  class C cur;
+  class D,Dy dim;
+  class Fd fct;
+  class CDC cdc;
+  class P proc;
+```
+
+---
+
+## 3. Star schema — what feeds each fact
 
 Every `fact_*` table and the dimensions / curated tables it joins.
 
@@ -167,7 +216,7 @@ flowchart LR
 
 ---
 
-## 3. Dimension backbone — build order
+## 4. Dimension backbone — build order
 
 `dim_company` is the DAG root; the `_last` snapshots feed `update_sk_sale_rep_group`
 and the target-by-sale chain. Only `dimension → dimension` edges are shown.
@@ -342,7 +391,7 @@ flowchart LR
 
 ---
 
-## 4. Source → model
+## 5. Source → model
 
 How `validated` / `curated` tables flow into dimensions and facts (scaffolding
 excluded). This is the densest view — open it on GitHub or mermaid.live to zoom.
