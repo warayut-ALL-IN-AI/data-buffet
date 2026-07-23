@@ -81,11 +81,11 @@ post_operations {
     -- 1. สร้าง Temp Table หลักสำหรับ MDT เท่านั้น
     CREATE OR REPLACE TEMP TABLE mdt_base_data AS
     SELECT
+      rate.year,
+      rate.month,
+      rate.targetid,
       rate.employeeid,
       rate.departmentid,
-      rate.targetid,
-      rate.year,
-      rate.month
     FROM ${self()} AS rate
     INNER JOIN `${DimDepartmentLastTableRef}` AS dep
       ON rate.DepartmentID = dep.DepartmentID
@@ -106,11 +106,10 @@ post_operations {
       year,
       month,
       targetid,
-      departmentid, 
-      (CAST(COUNT(DISTINCT employeeid) AS BIGNUMERIC) / CAST(6 AS BIGNUMERIC)) AS total_val
+      ( CAST( COUNT( DISTINCT CONCAT(employeeid, '-', departmentid) ) AS BIGNUMERIC ) ) AS total_val
     FROM mdt_base_data
     WHERE month IS NOT NULL
-    GROUP BY 1, 2, 3, 4;
+    GROUP BY 1, 2, 3;
 
     -- อัปเดตรายเดือน
     UPDATE ${self()} AS target
@@ -118,8 +117,7 @@ post_operations {
     FROM monthly_summary AS src
     WHERE target.year = src.year
       AND target.month = src.month
-      AND target.TargetID = src.targetid
-      AND target.DepartmentID = src.departmentid;
+      AND target.TargetID = src.targetid;
 
     -- หาค่า max ของของทุกเดือน
     -- SET max_total_employee = (SELECT MAX(total_val) FROM monthly_summary);
