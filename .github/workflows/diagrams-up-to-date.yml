@@ -1,0 +1,43 @@
+name: Diagrams up-to-date
+
+# Guarantees the generated lineage/topic diagrams always match the code.
+# Runs the generator and fails if pipeline_lineage.md or topic_flows.md would
+# change — i.e. someone edited definitions/ (dependencies, ref(), tags) or the
+# generator without regenerating. This is the repo-level backstop for the
+# local pre-commit hook (which lives in the git-ignored .claude/ and is per-machine).
+
+on:
+  pull_request:
+    paths:
+      - "definitions/**"
+      - "document/diagrams/generate_lineage.py"
+      - ".github/workflows/diagrams-up-to-date.yml"
+  push:
+    branches: [dev, nonprod, prod]
+    paths:
+      - "definitions/**"
+      - "document/diagrams/generate_lineage.py"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Regenerate diagrams
+        run: python document/diagrams/generate_lineage.py
+
+      - name: Fail if diagrams are out of date
+        run: |
+          if ! git diff --quiet -- document/diagrams/pipeline_lineage.md document/diagrams/topic_flows.md; then
+            echo "::error::Diagrams are out of date. Run 'python document/diagrams/generate_lineage.py' and commit the result."
+            echo ""
+            echo "Diff:"
+            git --no-pager diff -- document/diagrams/pipeline_lineage.md document/diagrams/topic_flows.md
+            exit 1
+          fi
+          echo "✅ Diagrams match the code."

@@ -19,7 +19,7 @@ Operational scaffolding (the `initial` layer: create_all_* / drop_all_*, and the
 hundreds of noise edges and no data-lineage value. GitHub caps Mermaid at 500
 edges per diagram, so each view is kept well under that.
 
-Usage:  python3 document/diagrams/generate_lineage.py   (run from anywhere)
+Usage:  python document/diagrams/generate_lineage.py   (python3 on Linux/Mac; run from anywhere)
 """
 
 import re
@@ -456,9 +456,11 @@ flowchart TB
     doc = f"""# Pipeline Lineage
 
 > ⚠️ **Auto-generated — do not edit by hand.** Regenerate after any change to
-> `definitions/` with `python3 document/diagrams/generate_lineage.py` (the local
-> pre-commit hook does this automatically). The script parses every `.sqlx`
-> (`dependencies: [...]` + inline `ref(...)`), so the views always match the repo.
+> `definitions/` with `python document/diagrams/generate_lineage.py` (`python3` on
+> Linux/Mac). The local pre-commit hook does this automatically when a commit stages
+> `definitions/*.sqlx`. The script parses every `.sqlx` (`dependencies: [...]` +
+> inline `ref(...)` + `tags: [...]`), so the views — and `topic_flows.md` — always
+> match the repo.
 
 **Objects: {total}** — """ + " · ".join(
         f"{ly} {counts[ly]}" for ly in LAYER_ORDER if counts[ly]

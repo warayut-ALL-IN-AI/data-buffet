@@ -50,8 +50,20 @@ python document/diagrams/generate_lineage.py
 ```
 
 > On this machine use `python` (Python 3.14); `python3` is not on PATH. The local
-> pre-commit hook runs this automatically when the tooling is present.
+> pre-commit hook runs this automatically when a commit stages `definitions/*.sqlx`.
 
 The script needs only the Python standard library — no dependencies, no BigQuery
 access. It always reflects the current repo state, so the views cannot drift from the
 code as long as it is re-run.
+
+### What keeps these in sync
+
+| Mechanism | Scope | Guarantee |
+|---|---|---|
+| Manual `python …/generate_lineage.py` + commit | anyone | authoritative — the diagram files are tracked in git |
+| Local pre-commit hook (`.claude/hooks/pre-commit.sh`) | per-machine (`.claude/` is git-ignored, **not** shared) | regenerates + stages both files when a commit touches `definitions/*.sqlx` |
+| CI: [`.github/workflows/diagrams-up-to-date.yml`](../../.github/workflows/diagrams-up-to-date.yml) | repo-wide, all contributors | **fails the PR/push** if the committed diagrams don't match a fresh run |
+
+So diagrams do **not** update on their own — but the CI check makes an out-of-date
+diagram a hard failure, so a change to `definitions/` that alters the flow can't merge
+without the regenerated diagrams alongside it.
