@@ -75,7 +75,7 @@ pre_operations {}
 
 post_operations {
   BEGIN
-    DECLARE static_count BIGNUMERIC;
+    -- DECLARE static_count BIGNUMERIC;
     DECLARE max_total_employee BIGNUMERIC;
 
     -- 1. สร้าง Temp Table หลักสำหรับ MDT เท่านั้น
@@ -93,21 +93,22 @@ post_operations {
     WHERE dir.DirectorName = 'MDT';
 
     -- หาค่า count ของเดือนที่เป็น NULL
-    SET static_count = (
-      SELECT (CAST(COUNT(DISTINCT CONCAT(employeeid, '-', departmentid)) AS BIGNUMERIC) / CAST(6 AS BIGNUMERIC))
-      FROM mdt_base_data
-      WHERE month IS NULL
-    );
+    -- SET static_count = (
+    --   SELECT (CAST(COUNT(DISTINCT CONCAT(employeeid, '-', departmentid)) AS BIGNUMERIC) / CAST(6 AS BIGNUMERIC))
+    --   FROM mdt_base_data
+    --   WHERE month IS NULL
+    -- );
 
     -- 2. คำนวณค่ารายเดือนและหาค่า MAX
     CREATE OR REPLACE TEMP TABLE monthly_summary AS
     SELECT
       year,
       month,
-      (CAST(COUNT(DISTINCT CONCAT(employeeid, '-', departmentid)) AS BIGNUMERIC) / CAST(6 AS BIGNUMERIC)) + static_count AS total_val
+      departmentid, 
+      (CAST(COUNT(DISTINCT employeeid) AS BIGNUMERIC) / CAST(6 AS BIGNUMERIC)) AS total_val
     FROM mdt_base_data
     WHERE month IS NOT NULL
-    GROUP BY 1, 2;
+    GROUP BY 1, 2, 3;
 
     -- อัปเดตรายเดือน
     UPDATE ${self()} AS target
@@ -115,16 +116,16 @@ post_operations {
     FROM monthly_summary AS src
     WHERE target.year = src.year
       AND target.month = src.month
-      AND target.DepartmentID IN (SELECT DISTINCT departmentid FROM mdt_base_data);
+      AND target.DepartmentID = src.departmentid;
 
     -- หาค่า max ของของทุกเดือน
-    SET max_total_employee = (SELECT MAX(total_val) FROM monthly_summary);
+    -- SET max_total_employee = (SELECT MAX(total_val) FROM monthly_summary);
 
     -- อัปเดตแถว NULL (ใช้ค่า MAX)
-    UPDATE ${self()} AS target
-    SET target.Percent = (CAST(100 AS BIGNUMERIC) / max_total_employee)
-    WHERE target.month IS NULL
-      AND target.DepartmentID IN (SELECT DISTINCT departmentid FROM mdt_base_data);
+    -- UPDATE ${self()} AS target
+    -- SET target.Percent = (CAST(100 AS BIGNUMERIC) / max_total_employee)
+    -- WHERE target.month IS NULL
+    --   AND target.DepartmentID IN (SELECT DISTINCT departmentid FROM mdt_base_data);
 
     -- 3. ล้าง Temp Tables
     DROP TABLE IF EXISTS mdt_base_data;
