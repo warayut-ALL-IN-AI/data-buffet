@@ -83,6 +83,7 @@ post_operations {
     SELECT
       rate.employeeid,
       rate.departmentid,
+      rate.targetid,
       rate.year,
       rate.month
     FROM ${self()} AS rate
@@ -104,11 +105,12 @@ post_operations {
     SELECT
       year,
       month,
+      targetid,
       departmentid, 
       (CAST(COUNT(DISTINCT employeeid) AS BIGNUMERIC) / CAST(6 AS BIGNUMERIC)) AS total_val
     FROM mdt_base_data
     WHERE month IS NOT NULL
-    GROUP BY 1, 2, 3;
+    GROUP BY 1, 2, 3, 4;
 
     -- อัปเดตรายเดือน
     UPDATE ${self()} AS target
@@ -116,6 +118,7 @@ post_operations {
     FROM monthly_summary AS src
     WHERE target.year = src.year
       AND target.month = src.month
+      AND target.TargetID = src.targetid
       AND target.DepartmentID = src.departmentid;
 
     -- หาค่า max ของของทุกเดือน
