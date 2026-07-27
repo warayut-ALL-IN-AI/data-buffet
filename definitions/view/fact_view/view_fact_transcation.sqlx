@@ -53,9 +53,10 @@ with dim_calendar as (
 ), fact_transaction as (
   select
     (CASE 
-      WHEN trans.companyID != 'ag01' THEN null
-      WHEN trans.companyID = 'ag01' and cast(format_date('%Y%m', trans.mix_date) as int64) > 202601 THEN null
-      WHEN trans.companyID = 'ag01' and map_inv.SectionID is not null THEN 'Yes'
+      WHEN trans.companyID not in ('ag01', 'ab01') THEN null
+      WHEN trans.companyID in ('ag01', 'ab01') and map_inv.FlagMustUser = True THEN 'Yes'
+      WHEN trans.companyID in ('ag01', 'ab01') and cast(format_date('%Y%m', trans.mix_date) as int64) > 202601 THEN null
+      WHEN trans.companyID in ('ag01', 'ab01') and map_inv.SectionID is not null THEN 'Yes'
       ELSE 'No'
     END) as FlagMappingInvoice, 
     map_inv.SectionID as SectionMappingID,
@@ -75,7 +76,7 @@ with dim_calendar as (
   left join `${databuffet.DATABASE}.${databuffet.ONETIME}.mapping_invoice` as map_inv
     on trans.milPer = TRIM(map_inv.milPer)
     and trans.milVnos = TRIM(map_inv.milVnos)
-    and trans.companyID = 'ag01'
+    and trans.companyID = TRIM(map_inv.CompanyID)
 
   -- guarantee
   -- left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_guarantee` as gur
