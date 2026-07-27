@@ -15,13 +15,15 @@
 >   query time depends on the underlying *tables* having data, not on when the view DDL
 >   ran. This is why an existing table (`fact_transcation`) can read a view
 >   (`dimension_view.view_dim_channel`) without a Dataform dependency and still work.
-> - `dependencies[]` lists only **real Dataform actions** (unique `.sqlx` basenames).
->   External sources (`mds_dataset.*`, `onetime.mapping_invoice`,
->   `process_dataset.RLS_Customer360`, `process_dataset.mih_address_data`), UDFs
->   (`function_dataset.fn_*` — created together by `create_all_function`, not separate
->   actions), and tables not built by this repo (`dim_districts`, `dim_provinces`,
->   `dim_geographies`, `dim_sub_districts`, `dim_aging_history`, `dim_product_rebate`)
->   are **referenced by interpolation but not listed as dependencies** (they pre-exist).
+> - `dependencies[]` lists only Dataform actions that are **not** read through `${ref()}`
+>   — i.e. dims, facts and upstream views (unique `.sqlx` basenames). Two exclusions:
+>   1. **`validated_*` / `curated_*` are read via `${ref()}` and must NOT be listed**
+>      — Dataform wires those edges itself (double-listing is banned by coding-standard §10).
+>   2. Things this repo does not build are interpolated but not listed (they pre-exist):
+>      `mds_dataset.*`, `onetime.mapping_invoice`, `process_dataset.RLS_Customer360`,
+>      `process_dataset.mih_address_data`, UDFs (`function_dataset.fn_*` — created together
+>      by `create_all_function`, not separate actions), and `dim_districts`, `dim_provinces`,
+>      `dim_geographies`, `dim_sub_districts`, `dim_aging_history`, `dim_product_rebate`.
 
 ## Pattern
 

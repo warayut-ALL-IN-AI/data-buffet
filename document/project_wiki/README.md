@@ -17,7 +17,7 @@
 | mds soft-delete / is_active / overwrite import | [dimension/full-rebuild-pattern.md](dimension/full-rebuild-pattern.md); tombstone (2 MERGE dims only): [dimension/mds-delete-pattern.md](dimension/mds-delete-pattern.md) |
 | Which dim owns which SK | [dimension/inventory.md](dimension/inventory.md) |
 | Add/edit a fact | [fact/fact-layer.md](fact/fact-layer.md) |
-| Add/edit a view (presentation layer) | [view/view-layer.md](view/view-layer.md) |
+| Add/edit a view (presentation layer) | [view/view-layer.md](view/view-layer.md), how-to: `document/how-to/add-view.md` |
 | CDC / change tracking | [cdc-process/cdc.md](cdc-process/cdc.md) |
 | AI address parsing | [cdc-process/process.md](cdc-process/process.md) |
 | Config, tags, helpers | [includes/databuffet-js.md](includes/databuffet-js.md), [includes/variables.md](includes/variables.md), [includes/function-data.md](includes/function-data.md), [includes/cdc-config.md](includes/cdc-config.md) |
