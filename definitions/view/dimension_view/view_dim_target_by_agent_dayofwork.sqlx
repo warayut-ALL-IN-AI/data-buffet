@@ -1,0 +1,112 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["dim_calendar", "dim_target_product_group_by_sale", "dim_sale_representative", "dim_department", "dim_region", "dim_director", "dim_section", "dim_region_manager", "dim_section_manager"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+with tab_dm as (
+  select Date, Year, MonthNumber, Day, HolidayFlag
+  from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_calendar`
+
+), tab_sum_dm as (
+  select Year, MonthNumber, count(distinct Day) as total_day
+  from tab_dm
+  where HolidayFlag = 'No'
+  group by 1,2
+
+), final as (
+  SELECT 
+    dm.Date,
+    tbc.*, 
+    dm.Day, 
+    sum_dm.total_day,
+    (CASE
+      WHEN HolidayFlag = 'Yes' THEN 0.0
+      ELSE TRUNC((tbc.CalAmt / sum_dm.total_day), 10)
+    END) as Amt_New,
+    (CASE
+      WHEN HolidayFlag = 'Yes' THEN 0
+      ELSE TRUNC((tbc.CalQty / sum_dm.total_day), 10)
+    END) as Qty_New,
+  FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_target_product_group_by_sale` as tbc
+  LEFT JOIN tab_dm as dm
+    ON tbc.Year = dm.Year
+      and FORMAT('%02d', tbc.Month) = dm.MonthNumber
+  LEFT JOIN tab_sum_dm as sum_dm
+    ON sum_dm.YEAR = dm.YEAR
+      and sum_dm.MonthNumber = dm.MonthNumber
+
+), final2 as (
+  SELECT DISTINCT
+    salerep.SaleRepSK,
+    dep.DepartmentSK,
+    reg.RegionSK,
+    reg_m.RegionManagerSK,
+    dir.DirectorSK,
+    sec.SectionSK,
+    sec_m.SectionManagerSK,
+    final.*
+    -- count(1)
+  FROM final
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative` as salerep
+    on final.Date between salerep.StartDate and salerep.EndDate
+      and final.employeeid = salerep.employeeid
+      and final.DepartmentID = salerep.DepartmentID
+      and final.CompanySK = salerep.CompanySK
+
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_department` as dep
+    on final.Date between dep.StartDate and dep.EndDate
+      and salerep.DepartmentID = dep.DepartmentID
+      and salerep.CompanySK = dep.CompanySK
+
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region` as reg
+    on final.Date between reg.StartDate and reg.EndDate 
+      and (CASE 
+        WHEN reg.RegionID != reg.SubRegionID
+          THEN dep.RegionID = reg.RegionID and dep.SectionID = reg.SubRegionID
+        ELSE dep.RegionID = reg.RegionID
+      END)
+      and dep.CompanySK = reg.CompanySK
+
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_director` as dir
+    on final.Date between dir.StartDate and dir.EndDate
+      and reg.DirectorID = dir.DirectorID
+      and reg.CompanySK = dir.CompanySK
+
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section` as sec
+    on final.Date between sec.StartDate and sec.EndDate 
+      and dep.SectionID = sec.SectionID
+      and dep.CompanySK = sec.CompanySK
+
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region_manager` as reg_m
+    on final.Date between reg_m.StartDate and reg_m.EndDate 
+      and reg.RegionID = reg_m.RegionID
+      and reg.SubRegionID = reg_m.SubRegionID
+      and reg.CompanySK = reg_m.CompanySK
+      
+      -- and (CASE 
+      --   WHEN reg_m.RegionID != reg_m.SubRegionID
+      --     THEN reg.RegionID = reg_m.RegionID and reg.SubRegionID = reg_m.SubRegionID
+      --   ELSE reg.RegionID = reg_m.RegionID
+      -- END)
+
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section_manager` as sec_m
+    on final.Date between sec_m.StartDate and sec_m.EndDate 
+      and dep.SectionID = sec_m.SectionID
+      and dep.CompanySK = sec_m.CompanySK
+    
+  -- where salerep.SaleRepSK = 42
+)
+  SELECT 
+    row_number() over(order by Year, Month, Day, TargetBySaleSK) as TargetBySaleDayofworkSK, 
+    COALESCE(final2.SaleRepSK, salerep.SaleRepSK) as SaleRepSK,
+    final2.* except(SaleRepSK)
+  FROM final2
+  
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative` as salerep
+    on final2.Date between salerep.StartDate and salerep.EndDate
+      and final2.employeeid = salerep.employeeid
+      and salerep.DepartmentID is null
+      and final2.SaleRepSK is null
+      and final2.CompanySK = salerep.CompanySK

@@ -1,0 +1,197 @@
+config {
+  type: "view",
+  schema: databuffet.FACT_VIEW,
+  dependencies: ["chq", "cql", "mir", "curated_mih", "dim_status_not_receive", "ar_s", "view_dim_aging", "dim_aging_rang", "dim_invoice", "fact_mir_vs"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+with chq as (
+  SELECT
+    cql.company_id, cql.cqlvnos,
+    max(ex.extract_date) as extract_date, 
+    sum(ex.extract_amount) as extract_amount
+  FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.chq` as chq
+  , UNNEST(extract_value) as ex
+  INNER JOIN (
+    select distinct company_id, cqlno, cqlvnos, 
+    from `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.cql`
+  ) as cql 
+    ON chq.chqno = cql.cqlno 
+    and chq.company_id = cql.company_id
+  WHERE ex.extract_date is not null
+    and ex.extract_date <= CURRENT_DATE('Asia/Bangkok')
+  group by 1,2
+
+), normal_mir_summary AS (
+  SELECT 
+    company_id,
+    mirbinvno,
+    SUM(mirsum) as total_normal_paid
+  FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.mir`
+  WHERE mirtype = 'RS'
+    AND (company_id, mirvnos) NOT IN (
+       SELECT AS STRUCT company_id, cqlvnos 
+       FROM chq
+    )
+    AND PARSE_DATE('%Y%m%d', CONCAT(CAST(miryear AS STRING), FORMAT('%02d', mirmonth), FORMAT('%02d', mirday))) <= CURRENT_DATE('Asia/Bangkok')
+  GROUP BY 1,2
+
+), edit_mir_raw AS (
+  SELECT 
+    mir.company_id,
+    mir.mirbinvno, 
+    mir.mirbinvdate,
+    mir.mirvnos, 
+    (COALESCE(mih.mihnetsum, 0) - COALESCE(norm.total_normal_paid, 0)) as adjusted_mihnetsum,
+    ri.extract_date, 
+    ri.extract_amount
+  FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.mir` as mir
+  INNER JOIN chq as ri 
+    ON mir.company_id = ri.company_id 
+    and mir.mirvnos = ri.cqlvnos
+  LEFT JOIN `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih` as mih
+    ON mir.company_id = mih.company_id
+    AND mir.mirbinvno = mih.mihvnos
+    AND mir.mirbinvtype = mih.mihtype
+  LEFT JOIN normal_mir_summary as norm
+    ON mir.company_id = norm.company_id
+    AND mir.mirbinvno = norm.mirbinvno
+  WHERE mir.mirtype = 'RS'
+    AND PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday))) <= CURRENT_DATE('Asia/Bangkok')
+
+), running_calculations AS (
+  SELECT 
+    *,
+    SUM(adjusted_mihnetsum) OVER (PARTITION BY company_id, mirvnos ORDER BY mirbinvdate, mirbinvno) as accum_mihnetsum,
+    COALESCE(SUM(adjusted_mihnetsum) OVER (PARTITION BY company_id, mirvnos ORDER BY mirbinvdate, mirbinvno 
+              ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) as cut_accum_amount
+  FROM edit_mir_raw
+
+), edit_mir as (
+  SELECT
+    company_id,
+    mirbinvno,
+    mirvnos,
+    extract_date,
+    ROUND(
+      GREATEST(0, LEAST(adjusted_mihnetsum, extract_amount - cut_accum_amount)), 
+      2
+    ) as mirsum,
+
+    -- company_id,
+    -- mirbinvno,
+    -- mirbinvdate,
+    -- mirvnos,
+    -- ปรับปัดเศษ 2 ตำแหน่งในส่วนแสดงผล
+    -- ROUND(adjusted_mihnetsum, 2) as adjusted_mihnetsum,
+    -- extract_date,
+    -- ROUND(extract_amount, 2) as extract_amount,
+    -- ROUND(accum_mihnetsum, 2) as accum_mihnetsum,
+    -- ROUND(cut_accum_amount, 2) as cut_accum_amount,
+    
+    -- คำนวณยอดจ่ายและปัดเศษ
+    -- ROUND(
+    --   GREATEST(0, LEAST(adjusted_mihnetsum, extract_amount - cut_accum_amount)), 
+    --   2
+    -- ) as mirsum,
+    
+    -- คำนวณยอดคงเหลือและปัดเศษ
+    -- ROUND(
+    --   adjusted_mihnetsum - GREATEST(0, LEAST(adjusted_mihnetsum, extract_amount - cut_accum_amount)), 
+    --   2
+    -- ) as new_outstanding
+  FROM running_calculations
+
+), mir as (
+  select 
+    mir.company_id,
+    mir.mirvnos,
+    mih.mihstatus,
+    ar.ar_snamet,
+    mir.mirbinvno,
+    mir.mirsum as mirsum_raw,
+    ( IF(e_mir.mirvnos is not null, e_mir.mirsum, IFNULL(mir.mirsum, 0.00)) ) as mirsum,
+    ( IF(e_mir.mirvnos is not null, e_mir.extract_date, PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday)))) ) as ReceiveDate,
+    -- COUNT(DISTINCT IF(mir.miryear <= 2022 and mih.mihstatus = 7, TRUE, NULL)) as status_complete,
+    ( IF(e_mir.mirvnos is not null, true, false) ) as FlagChaReject, 
+    (
+      (mir.miryear <= 2022 and mih.mihstatus = 7)      
+      or 
+      not exists (
+        select 1
+        from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_status_not_receive` as exc_status
+        where mir.company_id = exc_status.CompanyID
+        and mih.mihstatus = exc_status.StatusID
+      )
+    ) as FlagUse,
+  from `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.mir` as mir
+  inner join `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih` as mih
+    on mir.company_id = mih.company_id
+    and mir.mirvnos = mih.mihvnos
+    and mir.mirtype = mih.mihtype
+    and mih.mihcancel = 0
+  left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ar_s` as ar
+    on mir.company_id = ar.company_id
+    and mih.mihstatus = ar.ar_scode
+  left join edit_mir as e_mir
+    on mir.company_id = e_mir.company_id
+    and mir.mirvnos = e_mir.mirvnos
+    and mir.mirbinvno = e_mir.mirbinvno
+  where mir.mirtype = 'RS'
+    -- and 
+    and PARSE_DATE('%Y%m%d', CONCAT(CAST(mir.miryear AS STRING), FORMAT('%02d', mir.mirmonth), FORMAT('%02d', mir.mirday))) <= CURRENT_DATE('Asia/Bangkok')
+    -- and mir.mirbinvno in ('H6601000337')
+  -- group by 1,2
+
+), agg_mir as (
+  select 
+    company_id, mirbinvno, -- count(1) as total_row,
+    ARRAY_AGG(
+      CONCAT(
+        IFNULL(CONCAT( IF(FlagUse = true, '(Y) ', '(N) '), CAST(mirvnos AS STRING) ), ''), ' / ', 
+        IFNULL(CAST(ReceiveDate AS STRING), ''), ' / ', 
+        IFNULL(CONCAT('(',  mihstatus , ') ', IFNULL(ar_snamet , '') ) , '')
+      )
+      ORDER BY ReceiveDate ASC
+    ) as array_information,
+    
+    ARRAY_AGG(
+      CONCAT(
+        IFNULL(CONCAT( IF(FlagUse = true, '(Y) ', '(N) '), CAST(mirvnos AS STRING) ), ''), ' / ', 
+        IFNULL(CAST(FORMAT("%'.2f", mirsum_raw) as STRING), ''), ' / ', 
+        IF(FlagChaReject = true, 'เช็คเด้ง', 'เช็คปกติ'), 
+        IF(FlagChaReject = true, concat(' / ', IFNULL(CAST(FORMAT("%'.2f", mirsum) as STRING), '') ), '')
+      )
+      ORDER BY ReceiveDate ASC
+    ) as array_amt
+  from mir
+  group by 1,2
+
+)
+  select
+    t1.* except(AgingRangSK, AgingSK, BillingSK, CustomerSK, InvoiceSK, CompanySK, ChannelSK, ChannelFinanceSK, ChannelSaleSK, ChannelCostSK),
+    dim_inv.mihRef2 as PoNumber, 
+    rg.ReportName,
+    bil.mirdesc,
+    bil.mirnotes,
+    -- t2.total_row,
+    (
+      SELECT STRING_AGG(CONCAT(CAST(idx + 1 AS STRING), '. ', item), '\n' ORDER BY idx)
+      FROM UNNEST(t2.array_information) as item WITH OFFSET as idx --ดึงค่า index ออกมาตรงนี้ (เริ่มจาก 0)
+    ) as ri_information,
+    (
+      SELECT STRING_AGG(CONCAT(CAST(idx + 1 AS STRING), '. ', item), '\n' ORDER BY idx)
+      FROM UNNEST(t2.array_amt) as item WITH OFFSET as idx --ดึงค่า index ออกมาตรงนี้ (เริ่มจาก 0)
+    ) as ri_amt
+  from `${databuffet.DATABASE}.${databuffet.DIMENSION_VIEW}.view_dim_aging` as t1
+  left join agg_mir as t2
+    on t1.companyID = t2.company_id
+    and t1.cfsVnosID = t2.mirbinvno
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_aging_rang` as rg
+    on t1.AgingRangSK = rg.AgingRangSK
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_invoice` as dim_inv
+    on t1.InvoiceSK = dim_inv.InvoiceSK
+  left join `${databuffet.DATABASE}.${databuffet.FACT_TABLE}.fact_mir_vs` as bil
+    on t1.BillingSK = bil.BillingSK
+  where t1.GroupFlagComplete = 'Non-Completed'
+  --and t1.cfsVnosID = 'TME68070004'

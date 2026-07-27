@@ -1,0 +1,24 @@
+config {
+  type: "view",
+  schema: databuffet.FACT_VIEW,
+  dependencies: ["curated_mih", "fact_mir_rs", "dim_aging", "ar_s"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+with t3 as (
+  select company_id, mihtype, mihvnos, mihcancel, mihstatus
+  from `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih`
+
+)
+
+select t2.AgingSK, t1.*  ,t3.mihcancel , t3.mihstatus , ars.ar_snamet
+from `${databuffet.DATABASE}.${databuffet.FACT_TABLE}.fact_mir_rs` as t1
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_aging` as t2
+  on t1.mirbinvno = t2.cfsvnosid
+  and t1.company_id = t2.CompanyID
+
+left join t3 on t3.mihvnos = t1.mirvnos
+    and t3.mihtype = t1.mirtype
+    and t3.company_id = t1.company_id
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ar_s` ars on t3.mihstatus = ars.ar_scode 
+    and t3.company_id = ars.company_id

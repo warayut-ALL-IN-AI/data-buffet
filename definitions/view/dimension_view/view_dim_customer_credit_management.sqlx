@@ -1,0 +1,31 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["dim_customer", "dim_customer_grade"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+WITH dim_customer as (
+  SELECT 
+    CustomerSK,
+    CompanySK,
+    companyID,
+    debcode, 
+    deblimit,
+    debcreditterm, 
+    debmemo,
+    Customer_CM_Grade  
+  FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_customer`
+
+), dim_customer_grade as (
+  select * 
+  from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_customer_grade`
+  qualify row_number() over(partition by CustomerSK order by CustomerGradeSK desc) = 1
+
+)
+  select cust_grade.CustomerGradeSK, cust.* except(Customer_CM_Grade), 
+    cust_grade.InvoiceGrade as Invoice_Customer_CM_Grade, 
+    cust_grade.DueGrade as Due_Customer_CM_Grade
+  from dim_customer as cust
+  left join dim_customer_grade as cust_grade
+    on cust.CustomerSK = cust_grade.CustomerSK

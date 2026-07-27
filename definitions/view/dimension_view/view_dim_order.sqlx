@@ -1,0 +1,25 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["dim_order", "mih2"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+SELECT 
+  ord.*,
+  `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_order_type`(ord.mihref2) as OrderType,
+  mih2.mih2pos as CustomerShipTo,
+
+from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_order` as ord
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.mih2` as mih2
+  on ord.companyID = mih2.company_id
+  and ord.mihDay = mih2.mih2day
+  and ord.mihMonth = mih2.mih2month
+  and ord.mihYear = mih2.mih2year
+  and ord.mihType = mih2.mih2type
+  and ord.mihCus = mih2.mih2cus
+  and ord.mihVnos = mih2.mih2vnos
+  
+-- where OrderSK = 1007301
+
+qualify row_number() over(partition by OrderSK order by mih2.mih2pos desc) = 1

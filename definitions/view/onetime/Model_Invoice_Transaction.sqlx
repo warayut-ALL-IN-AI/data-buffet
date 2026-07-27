@@ -1,0 +1,144 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["view_fact_transcation", "dim_sale_representative_last", "dim_department_last", "dim_section_last", "dim_section_manager_last", "dim_region_manager_last", "dim_region_last", "dim_director_last", "dim_product_master", "dim_product_mkt", "view_dim_customer", "dim_invoice", "dim_payment", "dim_doctype", "dim_channel", "dim_channel_cost", "dim_report"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+select      
+      Sales_Tran.mix_date as InvoiceDate
+      ,Sales_Tran.milYear as InvoiceYear
+      ,Sales_Tran.milMonth as InvoiceMonth
+      ,Sales_Tran.milday as InvoiceDay
+      ,Sales_Tran.milvnos as InvoiceNo
+      ,DocType.Code as InvoiceType
+      ,DocType.DescriptionEN as InvoiceTypeName
+      ,inv.mihStatus as InvoiceStatusID
+      ,inv.StatusDesc as InvoiceStatusName
+      ,case when inv.mihCancel = -1 then 'Yes' else 'No' end as InvoiceCancel 
+      ,Payment.PaymentID
+      ,Payment.PaymentName
+      ,Payment.PaymentType
+      ,Channel.ChannelCostID
+      ,Channel.ChannelCostName
+      ,Channel.ChannelID as ChannelSaleID
+      ,Channel.ChannelName as ChannelSaleName
+      ,Channel.ChannelGroup as ChannelSaleGroup
+      ,Channel.ChannelSubGroupName1 as ChannelSaleSubGroup1
+      ,Channel.ChannelSubGroupName2 as ChannelSaleSubGroup2
+      ,Channel.ChannelIDFinance as ChannelFinanceID
+      ,Channel.ChannelNameFinance as ChannelFinanceName
+      ,Channel.ChannelGroupFinance as ChannelFinanceGroup
+      ,Channel.ChannelSubGroupFinance1 as ChannelFinanceSubGroup1
+      ,Channel.ChannelSubGroupFinance2 as ChannelFinanceSubGroup2
+      ,Channel.ChannelSubGroupFinance3 as ChannelFinanceSubGroup3
+      ,Channel.ChannelDSite01 as ChannelD01Site
+      ,Channel.ChannelDDepartment02 as ChannelD02Department
+      ,Channel.ChannelDDivision03 as ChannelD03Division
+      ,Channel.ChannelDSubDivision04 as ChannelD04SubDivision
+      ,Sales_Tran.milJob as Job
+      ,SalesPer.EmployeeID as SalesRepID
+      ,CONCAT(IFNULL(SalesPer.EmployeeName,''),' ',IFNULL(SalesPer.EmployeeSurname,'')) as SalesRepNameSurname
+      ,Sales_Tran.milDep as DepartmentCode
+      ,SalesPer.DepartmentID as TeamID
+      ,SalesPer.DepartmentName as TeamName
+      ,Section.SectionID
+      ,Section.SectionName
+      ,CONCAT(IFNULL(SectionM.SectionManagerName,''),' ',IFNULL(SectionM.SectionManagerSurname,'')) as SectionManagerNameSurname
+      ,Region.RegionID
+      ,Region.RegionName 
+      ,CONCAT(IFNULL(RegionM.RegionManagerName,''), ' ', IFNULL(RegionM.RegionManagerSurname,'')) as RegionManagerNameSurname
+      ,director.DirectorID
+      ,director.DirectorName
+      ,director.DirectorOfSalesName as DirectorSalesNameSurname
+      ,Sales_Tran.FlagSaleExc as FlagSaleKPIExclude
+      ,Sales_Tran.FlagAccExc as FlagSalesFiananceExclude
+      ,Sales_Tran.FlagSCG as SCGSalesType
+      ,Sales_Tran.milstk as Product
+      ,ProductMaster.ProductMac5Description as ProductName
+      ,ProductMkt.MarketingGroupID
+      ,ProductMkt.MarketingGroup as MarketingGroupName
+      ,ProductMkt.SubMarketingID
+      ,ProductMkt.SubMarketing as SubMarketingName
+      ,ProductMkt.SegmentID
+      ,ProductMkt.Segment as SegmentName
+      ,Sales_Tran.milsum as NetSalesExcVat
+      ,Sales_Tran.milsum_incvat as NetSalesIncVat
+      ,Sales_Tran.milQuan as Quantity
+      ,Sales_Tran.milDisca as DiscountAmountExcVat
+      ,Sales_Tran.mildisca_incvat as DiscountAmountIncVat
+      ,Sales_Tran.milCog as GrossAmountExcVat
+      ,Sales_Tran.milcog_incvat as GrossAmountIncVat
+      ,Sales_Tran.productpercent as ProductCostPercent
+      ,Sales_Tran.DepositExcVat
+      ,Sales_Tran.DepositIncVat
+      ,Sales_Tran.milcus as CustomerID
+      ,Customer.debnamet as CustomerName
+      ,Customer.SubDistrict
+      ,Customer.District
+      ,Customer.Province
+      ,Report.ReportID
+      ,Report.ReportName1
+      ,Report.ReportName2
+      ,Sales_Tran.TargetBySaleDayofworkSK
+
+      
+      from `${databuffet.DATABASE}.${databuffet.FACT_VIEW}.view_fact_transcation` Sales_Tran
+
+left join (
+      select Sales_Rep.*, Department.DepartmentName 
+      from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative_last` as Sales_Rep
+      left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_department_last` as Department 
+            on Sales_Rep.DepartmentSK = Department.DepartmentSK
+            and Sales_Rep.CompanySK = Department.CompanySK
+) SalesPer on Sales_Tran.SaleRepSKLast = SalesPer.SaleRepSK
+      and Sales_Tran.CompanySK = SalesPer.CompanySK
+
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section_last` as Section 
+      on Sales_Tran.ChangeSectionSKLast = Section.SectionSK
+      and Sales_Tran.CompanySK = Section.CompanySK
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section_manager_last` as SectionM 
+      on  Sales_Tran.SectionManagerSKLast = SectionM.SectionManagerSK
+      and Sales_Tran.CompanySK = SectionM.CompanySK
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region_manager_last` as RegionM 
+      on  Sales_Tran.RegionManagerSKLast = RegionM.RegionManagerSK
+      and Sales_Tran.CompanySK = RegionM.CompanySK
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region_last` as Region 
+      on  Sales_Tran.RegionSKLast = Region.RegionSK
+      and Sales_Tran.CompanySK = Region.CompanySK
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_director_last` as director 
+      on  Sales_Tran.DirectorSKLast = director.DirectorSK
+      and Sales_Tran.CompanySK = director.CompanySK
+
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_master` as ProductMaster 
+      on  Sales_Tran.milstk = ProductMaster.ProductCode
+      and Sales_Tran.CompanySK = ProductMaster.CompanySK
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_mkt` as ProductMkt 
+      on  Sales_Tran.ProductMktSK = ProductMkt.ProductMktSK
+      and Sales_Tran.CompanySK = ProductMkt.CompanySK
+
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_VIEW}.view_dim_customer` as Customer 
+      on  Sales_Tran.milCus = Customer.debcode
+      and Sales_Tran.CompanySK = Customer.CompanySK
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_invoice` as inv 
+      on Sales_Tran.invoiceSK = inv.InvoiceSK
+      and Sales_Tran.CompanySK = inv.CompanySK
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_payment` as Payment 
+      on Sales_Tran.PaymentSK = Payment.PaymentSK
+      and Sales_Tran.CompanySK = Payment.CompanySK
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_doctype` as DocType 
+      on Sales_Tran.milType = DocType.Code
+      and Sales_Tran.CompanySK = DocType.CompanySK
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_channel` as Channel 
+      on Sales_Tran.ChannelSK = Channel.ChannelSK
+      and Sales_Tran.CompanySK = Channel.CompanySK
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_channel_cost` as ChannelCost 
+      on Sales_Tran.ChannelCostSK = ChannelCost.ChannelCostSK
+      and Sales_Tran.CompanySK = ChannelCost.CompanySK
+
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_report` as Report
+      on Sales_Tran.ReportSK = Report.ReportSK
+      and Sales_Tran.CompanySK = Report.CompanySK
+
+where Sales_Tran.milYear in (2024,2025,2026) and Sales_Tran.milvnos is not null
+      and Sales_Tran.CompanySK = 4

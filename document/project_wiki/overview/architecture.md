@@ -23,6 +23,13 @@ CURATED      definitions/curated/     Business joins, JSON parsing, split-sale (
       ▼                            ▼
 DIMENSION    definitions/dimension/ FACT    definitions/fact/
 (59 files — SK dims)         ◄──── (9 files — star-schema joins)
+      │                            │
+      └──────────────┬─────────────┘
+                     ▼
+VIEW         definitions/view/      Presentation views (type: "view") for Power BI /
+(42 files)                          data marts / RLS. schema stays dimension_view,
+                                    fact_view, onetime, process_dataset,
+                                    bridge_dataset (folder ≠ target dataset)
 
 Side pipelines:
   CDC      definitions/cdc/       change log driven by cdc-config.json (2 files)
@@ -40,6 +47,7 @@ Side pipelines:
 | Fact | `fact_table`, `fact_view` | table rebuild / operations upsert | [fact/fact-layer.md](../fact/fact-layer.md) |
 | CDC | `cdc_dataset` | operations (config-generated) | [cdc-process/cdc.md](../cdc-process/cdc.md) |
 | Process | `process_dataset` | incremental (AI.GENERATE) | [cdc-process/process.md](../cdc-process/process.md) |
+| View | `dimension_view`, `fact_view`, `onetime`, `process_dataset`, `bridge_dataset` | `type: "view"` (presentation; folder ≠ target dataset) | [view/view-layer.md](../view/view-layer.md) |
 
 ## External inputs NOT managed by this repo
 
@@ -51,8 +59,15 @@ Side pipelines:
 - **`dim_company` exists in `dimension_table`** and has a `dim_company.sqlx`, but note
   the repo README's caveat about dependencies — most dims list `dim_company` in
   `dependencies` and it is the DAG root.
-- Views `dimension_view.view_dim_aging`, `process_dataset.view_deb_address_data`
-  are referenced but not defined in `definitions/`.
+- **`onetime` also holds externally-loaded base tables** consumed by views but not
+  built here: `onetime.mapping_invoice`, `onetime.Transaction_Data_Mart` is now a
+  Dataform view but reads such bases. Likewise `process_dataset.mih_address_data` and
+  `process_dataset.RLS_Customer360`, and geo dims `dim_districts` / `dim_provinces` /
+  `dim_geographies` / `dim_sub_districts`, `dim_aging_history`, `dim_product_rebate`
+  — referenced by views but **not** built by any `.sqlx`.
+- **View layer now defined** (2026-07-24): the 42 views under `definitions/view/`
+  (e.g. `view_dim_aging`, `view_deb_address_data`) are Dataform-managed as of the view
+  migration. See [view/view-layer.md](../view/view-layer.md).
 
 ## Critical global conventions
 

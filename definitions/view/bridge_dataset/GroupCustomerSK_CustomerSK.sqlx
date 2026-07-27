@@ -1,0 +1,14 @@
+config {
+  type: "view",
+  schema: databuffet.BRIDGE,
+  dependencies: ["dim_group_customer", "dim_customer"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+select distinct
+  group_cust.GroupCustomerSK, 
+  cust.CustomerSK
+from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_group_customer` as group_cust
+full join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_customer` as cust
+  on group_cust.companySK = cust.companySK
+  and group_cust.debgroup = ifnull(cust.debgroup, cust.debcode)

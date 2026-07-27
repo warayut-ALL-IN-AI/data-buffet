@@ -1,0 +1,60 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["dim_product_master", "dim_product_mkt", "dim_rebate", "dim_waterpac"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+with final as (
+  SELECT 
+    pd.*,
+    IFNULL(rebate.salesExc, 'No') as FlagSalesExc,
+    IFNULL(rebate.accExc, 'No') as FlagAccExc,
+    
+    -- ARRAY_REVERSE(
+    --   SPLIT(REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\1'), '|')
+    -- )[SAFE_OFFSET(0)] AS WaterPac,
+    (CASE
+      WHEN REGEXP_CONTAINS(ProductCode, r'/([PU])') THEN
+        ARRAY_REVERSE(SPLIT(REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\1'), '|'))[SAFE_OFFSET(0)]
+      ELSE NULL
+    END) as WaterPac,
+    (CASE
+      WHEN REGEXP_CONTAINS(ProductCode1, r'/([PU])') THEN
+        ARRAY_REVERSE(SPLIT(REGEXP_REPLACE(ProductCode1, r'/([PU])', r'|\1'), '|'))[SAFE_OFFSET(0)]
+      ELSE NULL
+    END) as WaterPac1,
+
+    pm.MarketingGroupID,
+    pm.SubMarketing,
+    pm.SegmentID
+
+  FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_master` as pd
+  LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_mkt` as pm
+    on pd.CompanySK = pm.CompanySK
+    and pd.ProductMktSK = pm.ProductMktSK
+  LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_rebate` as rebate
+    on pd.ProductCode = rebate.rebate
+    and pd.CompanySK = rebate.CompanySK
+    and rebate.status = 'Product'
+  -- WHERE ProductMac5Description like '%P07%'
+
+)
+  SELECT
+    -- pd.WaterPac,
+    -- WaterPac, WaterPac1, MarketingGroupID, SubMarketing, SegmentID,
+    pd.* except(WaterPac, WaterPac1, MarketingGroupID, SubMarketing, SegmentID),
+    (CASE 
+      WHEN pd.SegmentID in ('00111', '00112') THEN IF(wp.WaterPacSK is not null, wp.WaterPacName, 'WaterPac')
+      WHEN pd.MarketingGroupID = '002' THEN pd.SubMarketing
+      ELSE 'OTHERS'
+    END) as PumpSegment
+  FROM final as pd
+  LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_waterpac` as wp
+    on pd.CompanySK = wp.CompanySK
+    and (CASE 
+          WHEN pd.WaterPac is not null THEN pd.WaterPac = wp.WaterPacCode
+          WHEN pd.WaterPac1 is not null THEN pd.WaterPac1 = wp.WaterPacCode
+        END)
+
+  -- WHERE ProductCode in ('8858802724714', '8858802725162') or ProductCode in ('HY-39/LG-900L/P11', 'HY-37/RD-1000L/P11')

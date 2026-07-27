@@ -1,0 +1,22 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["view_dim_channel"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+select 
+  dim_channel.ChannelSK,
+  dim_channel.ChannelFinanceSK,
+  dim_channel.ChannelSaleSK,
+  dim_channel.ChannelCostSK,
+  dim_aging.* 
+from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_aging_history` as dim_aging
+
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_VIEW}.view_dim_channel` as dim_channel
+  on dim_aging.CompanySK = dim_channel.CompanySK
+  and dim_aging.cfsDep = dim_channel.DepCode
+
+where dim_aging.cfsvnosid != 'BFCN020/47'
+
+qualify row_number() over(partition by asatdate, AgingSK order by ChannelSK) = 1

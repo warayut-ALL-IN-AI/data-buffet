@@ -7,7 +7,7 @@
 > inline `ref(...)` + `tags: [...]`), so the views — and `topic_flows.md` — always
 > match the repo.
 
-**Objects: 229** — initial 15 · validated 135 · curated 8 · dimension 59 · fact 9 · cdc 2 · process 1
+**Objects: 271** — initial 15 · validated 135 · curated 8 · dimension 59 · fact 9 · cdc 2 · process 1
 
 **Paused (config commented out):** fact_chq, fact_mir_rs, fact_mir_vs
 

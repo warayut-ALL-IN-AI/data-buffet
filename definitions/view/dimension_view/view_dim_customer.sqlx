@@ -1,0 +1,58 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["dim_customer", "dim_group_customer"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+with mds_nicknamemaster as (
+  SELECT companyid, customercode, customernickname 
+  FROM `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_customernickname_master` 
+  WHERE is_active = TRUE
+
+), mds_keyaccount as (
+  SELECT 
+    ka.companyid,
+    ka.customercode,
+    ka.customername,
+    ka_group.keyaccountcode,
+    ka_group.keyaccountname
+  FROM `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_keyaccount_master` as ka
+  LEFT JOIN `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_keyaccount_group_master` as ka_group
+    on ka_group.is_active = TRUE
+    and ka.companyid = ka_group.companyid
+    and ka.keyaccountcode = ka_group.keyaccountcode
+  WHERE ka.is_active = TRUE
+
+)
+  SELECT 
+    group_cust.GroupCustomerSK,
+    dim_cust.*,
+    sub_district.name_th as SubDistrict,
+    district.name_th as District,
+    province.name_th as Province,
+    geo.name as Region,
+    IF(mds_nickname.customernickname is not null, mds_nickname.customernickname, dim_cust.debnamet) as NicknameCustomer,
+    mds_ka.KeyAccountCode,
+    mds_ka.KeyAccountName
+
+  FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_customer` as dim_cust
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_group_customer` as group_cust
+    on dim_cust.companyID = group_cust.companyID
+    and IFNULL(dim_cust.debgroup, dim_cust.debcode) = group_cust.debgroup
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sub_districts` as sub_district
+    on dim_cust.InvoiceSubDistrictSK = sub_district.SubDistrictSK
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_districts` as district
+    on dim_cust.InvoiceDistrictSK = district.DistrictSK
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_provinces` as province
+    on dim_cust.InvoiceProvinceSK = province.ProvinceSK
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_geographies` as geo 
+    on province.GeoGraphiesSK = geo.GeoGraphiesSK
+
+  ---- MDS
+  left join mds_nicknamemaster as mds_nickname
+    on dim_cust.companyID = mds_nickname.companyID
+    and dim_cust.debcode = mds_nickname.customercode
+  left join mds_keyaccount as mds_ka
+    on dim_cust.companyid = mds_ka.companyid
+    and dim_cust.debcode = mds_ka.customercode

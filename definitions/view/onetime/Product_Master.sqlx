@@ -1,0 +1,53 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["stk", "stg", "product", "product_detail", "brand", "vendor"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+select 
+a.stkcode as ProductCode ,
+a.stkcode2 as ProductCode1,
+a.stkdesct1 as ProductMac5Description,
+g.stgcode as ProductGroupMAC5, 
+g.stgdesct as ProductGroupMac5Description,
+g.stgdesce as ProductGroupMAC5Type,
+g.gacccode as ProductGroupACC,
+g.gaccname as ProductGroupACCName,
+pd.pd_product_name as ProductName,
+p.prd_description as ProductDescription,
+p.prd_dimension1 as ProductDimension1 ,
+p.prd_dimension2 as ProductDimension2,
+p.prd_dimension3 as ProductDimension3,
+p.prd_dimension4 as ProductDimension4,
+pd.pd_garantee as ProductGarantee,
+pd.pd_garantee_detail as ProductGaranteeDetail,
+(case 
+  when 
+    pd.pd_certificate is not null 
+    and pd.pd_certificate <> '' 
+    and pd.pd_certificate <> 'โปรดระบุ' 
+    and pd.pd_certificate <> '-' 
+    and pd.pd_certificate <> 'None' 
+    and pd.pd_certificate <> 'No'
+  then 'Yes' 
+  else 'No' 
+end) as ThaiIndustrialStandardFlag,
+(case
+  when pdr.Rebate is not null then 'Yes'
+  else 'No'
+end) as ProductFCExcFlag,
+pd.pd_certificate as ThaiIndustrialSatandardDetail,
+p.prd_brand_id as BrandID,
+p.prd_vendor_id as VendorID,
+a.stksto as WarehouseID,
+a.STKcode885 as Barcode
+
+from `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stk` a  
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stg` g on a.STKgroup = g.STGcode
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product` p on a.STKcode885 = p.prd_barcode
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product_detail` pd on p.prd_id = pd.pd_prd_id
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_rebate` pdr on a.stkcode = pdr.Rebate
+--left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.brand` brand on p.prd_brand_id = brand.bra_id
+--left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.vendor` vendor on p.prd_vendor_id = vendor.vd_id
+--where a.STKcode885 is not null and a.STKcode885 <> ''

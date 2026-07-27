@@ -1,0 +1,35 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["tbook_profilecomp"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+SELECT
+  projectcode,
+  docno,
+  profilecomp,
+  compname,
+  projectname,
+  typecomp,
+  statuscomp,
+  projectfrom,
+  compgroup,
+  history,
+  place,
+  district,
+  province,
+  pjstart,
+  pjend,
+  CASE 
+    -- 1. ถ้า pjstart เป็น NULL (แต่ pjend มีค่าหรือไม่มีก็ได้) ให้เป็น 0
+    WHEN SAFE_CAST(pjstart AS DATE) IS NULL THEN 0
+    -- 2. ถ้า pjstart มีค่า แต่ pjend เป็น NULL ให้ใช้ CURRENT_DATE()
+    WHEN SAFE_CAST(pjend AS DATE) IS NULL THEN 
+      DATE_DIFF(CURRENT_DATE(), SAFE_CAST(pjstart AS DATE), DAY)
+    -- 3. ถ้ามีค่าทั้งคู่ ให้คำนวณตามปกติ
+    ELSE 
+      DATE_DIFF(SAFE_CAST(pjend AS DATE), SAFE_CAST(pjstart AS DATE), DAY)
+  END Project_Day
+
+FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.tbook_profilecomp`

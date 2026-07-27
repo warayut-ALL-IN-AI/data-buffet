@@ -1,0 +1,15 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["dim_product_mkt", "dim_product_mkt_director"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+SELECT
+  mkt.ProductMktSK,
+  dir.ProductMktDirectorSK,
+  mkt.* except(ProductMktSK)
+FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_mkt` as mkt
+LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_mkt_director` as dir
+  on mkt.TypeMarketingID = dir.TypeMarketingID
+  and mkt.CompanyID = dir.CompanyID

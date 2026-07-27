@@ -1,0 +1,12 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["dim_sale_representative", "dim_department"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+select distinct Sales_Rep.*, Department.DepartmentName 
+from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative` as Sales_Rep
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_department` as Department 
+  on Sales_Rep.DepartmentID = Department.DepartmentID
+  and Sales_Rep.CompanySK = Department.CompanySK

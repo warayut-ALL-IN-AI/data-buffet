@@ -1,0 +1,25 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["curated_mih", "ar_s"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+SELECT  
+  mihYear, 
+  mihMonth, 
+  mihDay,
+  mihVnos, 
+  mihJob, 
+  mihRef1, 
+  mihRef2, 
+  mihRef3, 
+  mihCancel, 
+  mihStatus ,
+  ar.ar_snamet as Status_Name ,
+  memoExtract,
+  mihMemoNew,
+  mihstatus_desc 
+FROM `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih` mih
+  left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ar_s` ar on mih.mihStatus = ar.ar_scode
+WHERE mihType = 'PS'

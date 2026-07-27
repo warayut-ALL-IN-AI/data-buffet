@@ -1,0 +1,35 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["dim_invoice", "dim_aging"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+with tab_main as (
+  select 
+    agi.AgingSK,
+    inv.*,
+    
+    (CASE 
+      WHEN inv.mihType in ('BS', 'AS') THEN inv_is.milLinkvcno
+      ELSE inv.milLinkvcno
+    END) as RefOrder,
+
+  from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_invoice` as inv
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_invoice` as inv_is
+    on inv.milLinkVcno = inv_is.mihVnos
+    and inv.companyID = inv_is.companyID
+    and inv_is.mihType = 'IS'
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_aging` as agi
+    on agi.CFSvnosID = inv.mihvnos
+    and inv.CompanySK = agi.CompanySK
+
+  -- where mih2.mih2pos is not null
+
+  qualify row_number() over(partition by InvoiceSK order by AgingSK) = 1
+
+)
+  select 
+    *,
+    `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_flag_scg`(RefOrder, mihCus) as FlagSCG,
+  from tab_main

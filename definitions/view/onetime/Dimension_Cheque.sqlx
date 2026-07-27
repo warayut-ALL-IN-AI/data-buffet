@@ -1,0 +1,68 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["chq", "cql", "mir"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+WITH
+  CHQ_DATA AS (
+    SELECT
+      company_id,
+      chqno,
+      chqbank,
+      chqacode,
+      chqcus,
+      chqdatec,
+      chqdater,
+      chqdatep,
+      chqtype,
+      CASE 
+        WHEN chqstatus = 1 THEN 'Cleared'
+        WHEN chqstatus = 2 THEN 'Bounced'
+        WHEN chqstatus = 3 THEN 'Due'
+        ELSE null END AS chqstatus,
+      CASE 
+        WHEN chqstatusn = 1 THEN 'POST'  
+        WHEN chqstatusn = 2 THEN 'PASS'  
+        WHEN chqstatusn = 3 THEN 'เคลียร์แล้ว'
+        WHEN chqstatusn = 4 THEN 'ยังไม่เคลียร์'
+        WHEN chqstatusn = 5 THEN 'ปรับปรุงแล้ว'
+        WHEN chqstatusn = 6 THEN 'ยกเลิกใบสำคัญ'
+        ELSE null END AS chqstatusn ,
+      --chqtotal,
+      
+      chqmemo,
+      chqgl
+    FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.chq`
+    WHERE chqtype = 1 AND company_id = 'ag01'
+  ),
+  CQL_DATA AS (
+    SELECT *
+    FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.cql`
+    WHERE cqlbook = 0 AND company_id = 'ag01'
+  ),
+  MIR_DATA AS (
+    SELECT mirvnos, mircus, mirbinvno, sum(mirsum) AS mirsum
+    FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.mir`
+    WHERE company_id = 'ag01'
+    GROUP BY mirvnos, mircus, mirbinvno
+  )
+
+SELECT distinct chq.*
+--, cql.cqlbank
+--, cql.cqlno
+, cql.cqlvnos
+--, cqlsuml
+--, cqlcus 
+--, mir.mirbinvno
+
+FROM CHQ_DATA chq
+LEFT JOIN CQL_DATA cql
+  ON chq.chqno = cql.cqlno AND chq.chqcus = cql.cqlcus
+--LEFT JOIN MIR_DATA mir
+--  ON cql.cqlvnos = mir.mirvnos and cql.cqlcus = mir.mircus 
+
+--WHERE cqlvnos = 'RI-402103'
+--LIMIT 100
+--WHERE cqlbook = 0 chqcus = '137300526' company_id = 'ag01'

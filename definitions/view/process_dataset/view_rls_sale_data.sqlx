@@ -1,0 +1,84 @@
+config {
+  type: "view",
+  schema: databuffet.PROCESS_DATASET,
+  dependencies: ["view_rls_data"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+WITH emp_map AS (
+  SELECT 
+    TRIM(employeeid) AS employeeid, 
+    TRIM(employeetype) AS employeetype,
+    TRIM(employeename) AS employeename, 
+    TRIM(employeeemail) AS employeeemail
+  FROM `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_org_employee_mapping_center` 
+  WHERE is_active = TRUE
+    AND LOWER(TRIM(employeetype)) = 'sales'
+    AND employeeid IS NOT NULL
+    AND employeeemail IS NOT NULL
+
+), rls_data AS (
+  SELECT DISTINCT 
+    emp.employeeemail AS EmployeeEmail, 
+    rls.LevelName,
+    rls.LevelValue
+  FROM `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.view_rls_data` AS rls
+  INNER JOIN emp_map AS emp
+    ON rls.EmployeeID = emp.employeeid
+
+), rls_customer_raw AS (
+  SELECT 
+    milCus,
+    SectionID
+  FROM `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.RLS_Customer360`
+  WHERE SectionID IS NOT NULL
+
+), agg_rls_customer AS (
+  SELECT 
+    t2.EmployeeEmail, 
+    t1.milCus
+  FROM rls_customer_raw AS t1,
+    UNNEST(SPLIT(t1.SectionID, '|')) AS split_section_id
+  INNER JOIN rls_data AS t2
+    ON split_section_id = t2.LevelValue 
+    AND t2.LevelName = 'SectionID'
+  WHERE t1.milCus IS NOT NULL
+
+), rls_customer AS (
+  SELECT DISTINCT
+    EmployeeEmail,
+    'CustomerID' AS LevelName,
+    milCus AS LevelValue
+  FROM agg_rls_customer
+
+)
+  SELECT * FROM rls_data
+  UNION ALL
+  SELECT * FROM rls_customer
+  order by 1
+
+
+------ #### BACK UP 17/7/2026
+-- with emp_map as (
+--   SELECT 
+--     trim(employeeid) as employeeid, 
+--     trim(employeetype) as employeetype,
+--     trim(employeename) as employeename, 
+--     trim(employeeemail) as employeeemail,
+--   FROM `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_org_employee_mapping_center` 
+--   WHERE is_active = true
+--     and lower(trim(employeetype)) = 'sales'
+--     and employeeid is not null
+--     and employeeemail is not null
+
+-- )
+--   select distinct 
+--     -- emp.EmployeeType,
+--     emp.EmployeeEmail, 
+--     rls.LevelName,
+--     rls.LevelValue,
+--   from `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.view_rls_data` as rls
+--   inner join emp_map as emp
+--     on rls.EmployeeID = emp.employeeid
+--   -- where emp.EmployeeEmail is not null
+--   -- order by 1

@@ -1,0 +1,109 @@
+config {
+  type: "view",
+  schema: databuffet.PROCESS_DATASET,
+  dependencies: [],
+  tags: [databuffet.TAG_VIEW],
+}
+
+WITH raw_data as (
+  SELECT *
+  FROM `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.mih_address_data` 
+  -- where 
+
+), sub_districts as (
+  select 
+    sd.SubDistrictSK, sd.DistrictSK, sd.ProvinceSK,
+    sd.name_th as sub_district_name,
+    d.name_th as district_name,
+    p.name_th as province_name,
+  from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sub_districts` as sd
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_districts` as d
+    on sd.DistrictSK = d.DistrictSK
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_provinces` as p
+    on sd.ProvinceSK = p.ProvinceSK
+
+), districts as (
+  select 
+    d.DistrictSK, d.ProvinceSK,
+    d.name_th as district_name,
+    p.name_th as province_name,
+  from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_districts` as d
+  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_provinces` as p
+    on d.ProvinceSK = p.ProvinceSK
+
+), sub_district as (
+  select 
+    'sub_districts' as condition,
+    t.* except(info),
+    sd.ProvinceSK,
+    sd.DistrictSK,
+    sd.SubDistrictSK,
+    t.info.SubDistrictTH,
+    t.info.SubDistrictEN,
+    t.info.DistrictTH,
+    t.info.DistrictEN,
+    t.info.ProvinceTH,
+    t.info.ProvinceEN,
+  from raw_data as t
+  inner join sub_districts as sd
+    on (CASE
+    when t.info.ProvinceTH is not null and t.info.DistrictTH is not null and t.info.SubDistrictTH is not null
+      then t.info.ProvinceTH = sd.province_name and t.info.DistrictTH = sd.district_name and t.info.SubDistrictTH = sd.sub_district_name
+    when t.info.DistrictTH is not null and t.info.SubDistrictTH is not null
+      then t.info.DistrictTH = sd.district_name and t.info.SubDistrictTH = sd.sub_district_name
+    when t.info.SubDistrictTH is not null
+      then t.info.SubDistrictTH = sd.sub_district_name
+  END)
+  
+), district as (
+  select 
+    'districts' as condition,
+    t.* except(info),
+    d.ProvinceSK,
+    d.DistrictSK,
+    null as SubDistrictSK,
+    t.info.SubDistrictTH,
+    t.info.SubDistrictEN,
+    t.info.DistrictTH,
+    t.info.DistrictEN,
+    t.info.ProvinceTH,
+    t.info.ProvinceEN,
+  from raw_data as t
+  inner join districts as d
+    on (CASE 
+      WHEN t.info.ProvinceTH is not null and t.info.DistrictTH is not null
+        then t.info.ProvinceTH = d.province_name and t.info.DistrictTH = d.district_name
+      WHEN t.info.DistrictTH is not null
+        then t.info.DistrictTH = d.district_name
+    END)
+  where not exists (select 1 from sub_district as t2 where t.mihType = t2.mihType and t.mihVnos = t2.mihVnos)
+
+), province as (
+  select 
+    'provinces' as condition,
+    t.* except(info),
+    p.ProvinceSK,
+    null as DistrictSK,
+    null as SubDistrictSK,
+    t.info.SubDistrictTH,
+    t.info.SubDistrictEN,
+    t.info.DistrictTH,
+    t.info.DistrictEN,
+    t.info.ProvinceTH,
+    t.info.ProvinceEN,
+  from raw_data as t
+  inner join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_provinces` as p
+    on t.info.ProvinceTH = p.name_th
+  where not exists (select 1 from sub_district as t2 where t.mihType = t2.mihType and t.mihVnos = t2.mihVnos)
+    and not exists (select 1 from district as t2 where t.mihType = t2.mihType and t.mihVnos = t2.mihVnos)
+
+), mix_table as (
+  select * from sub_district
+  union all
+  select * from district
+  union all
+  select * from province
+
+)
+  select 'invoice' as address_type, *
+  from mix_table

@@ -1,0 +1,44 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["stk", "stg", "product", "product_detail", "brand", "vendor", "dim_company", "dim_product_master"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+select 
+dim_product.ProductSK,
+dim_com.CompanySK,
+dim_com.companyID,
+a.stkcode as ProductCode ,
+p.prd_color as ProductColor , 
+pd.pd_shape as ProductShape,
+pd.pd_gross_weight as ProductGrossWeight,
+pd.pd_net_weight as ProductNetWeight,
+pd.pd_series as ProductSeries,
+p.prd_size as ProductSize,
+pd.pd_size_hight as ProductSizeHight,
+pd.pd_size_long as ProductSizeLong,
+pd.pd_size_wide as ProductSizeWide,
+pd.pd_sale_unit as ProductUnit,
+pd.pd_material as ProductMaterials,
+pd.pd_model as ProductModel
+
+
+from `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stk` a  
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stg` g 
+  on a.STKgroup = g.STGcode 
+  and a.company_id = g.company_id
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product` p 
+  on a.STKcode885 = p.prd_barcode
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product_detail` pd 
+  on p.prd_id = pd.pd_prd_id
+--left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.brand` brand on p.prd_brand_id = brand.bra_id
+--left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.vendor` vendor on p.prd_vendor_id = vendor.vd_id
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_company` as dim_com
+  on a.company_id = dim_com.companyID
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_master` as dim_product
+  on a.stkcode = dim_product.ProductCode
+  and a.company_id = dim_product.companyID
+where a.STKcode885 is not null and a.STKcode885 <> '' 
+  and a.company_id = 'ag01'
+  and dim_product.ProductSK is not null

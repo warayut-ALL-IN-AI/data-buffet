@@ -1,0 +1,93 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["stk", "curated_mih", "curated_mil"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+WITH stk as (
+  SELECT DISTINCT
+    stkcode,
+    stkvat,
+    (stkvat / 100) + 1 AS vat,
+    stkcode885,
+    stkgroup,
+  FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stk`
+
+), raw_transcation as (
+  SELECT
+    a.mihvatno,
+    a.mihdesc,
+    a.mihmemo,
+    a.memoextract,
+    a.mihmemonew,
+    b.*,
+
+    s.stkcode885,
+    s.vat as stkVat,
+    s.stkgroup as stkGroup,
+    a.mihVatsum,
+    a.mihExtrasum,
+    a.mihExtravat,
+    SUM(milSum) OVER (PARTITION BY b.milDay, b.milMonth, b.milYear, b.milType, b.milCus, b.milVnos) as over_milsum,
+
+  FROM `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih` a
+  INNER JOIN `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mil` b
+    ON a.mihDay = b.milDay
+      AND a.mihMonth = b.milMonth
+      AND a.mihYear = b.milYear
+      AND a.mihType = b.milType
+      AND a.mihVnos = b.milVnos
+      AND a.mihCus = b.milCus
+  LEFT JOIN stk AS s
+    ON s.stkcode = b.milstk
+  WHERE a.mihtype IN ('IS', 'AS', 'BS', 'QS') 
+
+), transcation as (
+  SELECT *,
+    (CASE 
+      WHEN LEFT(MILvnos, 2) = 'CN' 
+        THEN 
+          IF(
+            over_milsum != 0, 
+            (milSum / over_milsum)*-1 * mihVatsum,
+          0) *-1
+      ELSE 
+        IF(
+          over_milsum != 0,
+          (milSum / over_milsum) * mihVatsum,
+        0)
+    END) as Vat,
+
+  FROM raw_transcation
+
+)
+  SELECT 
+    * EXCEPT(mihVatsum, stkVat, stkcode885, mihExtrasum,mihExtravat, over_milsum),
+    (milsum - miladisc) + Vat AS milsum_incvat,
+
+    (CASE
+      WHEN IFNULL(mihVatsum, 0.0) != 0.0 THEN mildisca * stkVat
+      ELSE mildisca
+    END) AS mildisca_incvat,
+
+    (CASE 
+      WHEN IFNULL(mihVatsum, 0.0) != 0.0 THEN milcog * stkVat
+      ELSE milcog
+    END) AS milcog_incvat,
+
+    stkcode885 AS Barcode,
+    IF(
+      over_milsum != 0,
+      ((milSum / over_milsum) * mihExtrasum),
+    0) AS DepositExcVat,
+    IF(
+      over_milsum != 0,
+      (((milSum / over_milsum) * mihExtrasum) + (milSum / over_milsum) * mihExtravat),
+    0) AS DepositIncVat,
+    IF(
+      over_milsum != 0,
+      ((milSum / over_milsum) * mihExtravat),
+    0) AS DepositVat,
+
+  FROM transcation

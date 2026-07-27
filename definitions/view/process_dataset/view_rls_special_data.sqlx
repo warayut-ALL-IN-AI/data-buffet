@@ -1,0 +1,209 @@
+config {
+  type: "view",
+  schema: databuffet.PROCESS_DATASET,
+  dependencies: [],
+  tags: [databuffet.TAG_VIEW],
+}
+
+WITH mds_data AS (
+  SELECT 
+    TRIM(rls.employeeid) as EmployeeID,
+    TRIM(rls.EmployeeEmail) as EmployeeEmail, 
+    TRIM(emp.employeetype) as EmployeeType,
+    IFNULL(TRIM(rls.CompanyReport), 'ALL') as CompanyID,
+    IFNULL(TRIM(rls.ReportID), 'ALL') as ReportID,
+    IFNULL(TRIM(rls.ReportName), 'ALL') as ReportName,
+    IFNULL(TRIM(rls.Director), 'ALL') as DirectorID,
+    IFNULL(TRIM(rls.Region), 'ALL') as RegionID, 
+    IFNULL(TRIM(rls.Section), 'ALL') as SectionID, 
+    -- IFNULL(TRIM(rls.Department), 'ALL') as DepartmentID, 
+    IFNULL(TRIM(rls.MktGroupID), 'ALL') as MktGroupID, 
+    IFNULL(TRIM(rls.MktSubGroupID), 'ALL') as MktSubGroupID, 
+    IFNULL(TRIM(rls.MktSegmentID), 'ALL') as MktSegmentID,
+    IFNULL(FlagCustomer, false) as FlageCustomer,
+  FROM `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_org_rls_special` as rls
+  INNER JOIN `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_org_employee_mapping_center` as emp
+    on emp.is_active = true
+    AND LOWER(employeetype) IN ('special', 'mkt')
+    AND rls.EmployeeEmail = emp.EmployeeEmail
+  WHERE rls.is_active = true
+    -- and rls.EmployeeEmail = 'Manit.bo@dos.co.th'
+
+), rls_customer_raw as (
+  select milCus, DirectorID, RegionID, SectionID
+  from `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.RLS_Customer360`
+
+), normal_pivoted_raw AS (
+  SELECT 
+    EmployeeID,
+    EmployeeEmail,
+    EmployeeType,
+    FlageCustomer,
+    LevelName, 
+    LevelValue
+  FROM mds_data
+  UNPIVOT(LevelValue FOR LevelName IN (
+    CompanyID, ReportID, ReportName, DirectorID, RegionID, SectionID --, DepartmentID
+  ))
+
+), normal_pivoted AS (
+  SELECT 
+    EmployeeID,
+    EmployeeEmail,
+    EmployeeType,
+    FlageCustomer,
+    LevelName,
+    TRIM(split_val) AS LevelValue
+  FROM normal_pivoted_raw,
+  UNNEST(SPLIT(LevelValue, '|')) AS split_val
+
+), mds_arrays AS (
+  SELECT
+    EmployeeID,
+    EmployeeEmail,
+    EmployeeType,
+    FlageCustomer,
+    SPLIT(MktGroupID, '|') AS g,
+    SPLIT(MktSubGroupID, '|') AS sub,
+    SPLIT(MktSegmentID, '|') AS seg
+  FROM mds_data
+
+), mds_indexed AS (
+  SELECT
+    EmployeeID,
+    EmployeeEmail,
+    EmployeeType,
+    FlageCustomer,
+    GREATEST(
+      ARRAY_LENGTH(g), ARRAY_LENGTH(sub), ARRAY_LENGTH(seg)
+    ) AS max_len,
+    g, sub, seg
+  FROM mds_arrays
+
+), mkt_combined AS (
+  SELECT
+    EmployeeID,
+    EmployeeEmail,
+    EmployeeType,
+    FlageCustomer,
+    'MktGroupID|MktSubGroupID|MktSegmentID' AS LevelName,
+    CONCAT(
+      COALESCE(g[SAFE_OFFSET(idx)], g[SAFE_OFFSET(0)]), '|',
+      COALESCE(sub[SAFE_OFFSET(idx)], sub[SAFE_OFFSET(0)]), '|',
+      COALESCE(seg[SAFE_OFFSET(idx)], seg[SAFE_OFFSET(0)])
+    ) AS LevelValue,
+
+    COALESCE(g[SAFE_OFFSET(idx)], g[SAFE_OFFSET(0)]) AS MktGroupID,
+    COALESCE(sub[SAFE_OFFSET(idx)], sub[SAFE_OFFSET(0)]) AS MktSubGroupID,
+    COALESCE(seg[SAFE_OFFSET(idx)], seg[SAFE_OFFSET(0)]) AS MktSegmentID
+
+  FROM mds_indexed,
+  UNNEST(GENERATE_ARRAY(0, max_len - 1)) AS idx
+
+), rls_customer_mkt AS (
+  SELECT 
+    milCus,
+    SPLIT(single_product, ':') AS split_hierarchy
+  FROM `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.RLS_Customer360`,
+    UNNEST(SPLIT(ProductMkt, '|')) AS single_product 
+  WHERE ProductMkt IS NOT NULL
+
+), ext_rls_customer_mkt AS (
+  SELECT 
+    milCus,
+    split_hierarchy[SAFE_OFFSET(0)] AS MktGroupID,
+    split_hierarchy[SAFE_OFFSET(1)] AS SubMktGroupID,
+    split_hierarchy[SAFE_OFFSET(2)] AS SegmentID
+  FROM rls_customer_mkt
+
+), mkt_combined_all as (
+  SELECT *
+  FROM mkt_combined as emp
+  WHERE emp.LevelValue = 'ALL|ALL|ALL'
+    AND emp.EmployeeType = 'MKT'
+
+), mkt_combined_notall as (
+  SELECT *
+  FROM mkt_combined as emp
+  WHERE NOT EXISTS (SELECT 1 FROM mkt_combined_all as emp2 WHERE emp2.EmployeeEmail = emp.EmployeeEmail)
+    AND emp.EmployeeType = 'MKT'
+  
+), final_mkt as (
+  SELECT DISTINCT
+    EmployeeID,
+    EmployeeEmail,
+    EmployeeType,
+    'CustomerID' as LevelName,
+    'ALL' as LevelValue
+  FROM mkt_combined_all
+  UNION ALL
+  SELECT DISTINCT
+    emp.EmployeeID,
+    emp.EmployeeEmail,
+    emp.EmployeeType,
+    'CustomerID' as LevelName,
+    cus.milCus as LevelValue,
+  FROM mkt_combined_notall as emp
+  INNER JOIN ext_rls_customer_mkt cus
+    -- 1. MktGroupID logic
+    ON (emp.MktGroupID = 'ALL' OR emp.MktGroupID = cus.MktGroupID)
+    -- 2. MktSubGroupID logic
+    AND (emp.MktGroupID = 'ALL' OR emp.MktSubGroupID = 'ALL' OR emp.MktSubGroupID = cus.SubMktGroupID)
+    -- 3. MktSegmentID logic
+    AND (emp.MktGroupID = 'ALL' OR emp.MktSubGroupID = 'ALL' OR emp.MktSegmentID = 'ALL' OR emp.MktSegmentID = cus.SegmentID)
+  
+) , final_normal as (
+  SELECT EmployeeID, EmployeeEmail, EmployeeType, LevelName, LevelValue 
+  FROM normal_pivoted
+  UNION ALL
+  SELECT EmployeeID, EmployeeEmail, EmployeeType, LevelName, LevelValue 
+  FROM mkt_combined
+  UNION ALL
+  SELECT EmployeeID, EmployeeEmail, EmployeeType, 'CustomerID' as LevelName, 'ALL' as LevelValue 
+  FROM mds_data
+  WHERE LOWER(employeetype) = 'special'
+    and (
+      FlageCustomer = false
+      or lower(concat(DirectorID, '|', RegionID, '|', SectionID)) = 'all|all|all' 
+    )
+
+), final_special as (
+  SELECT DISTINCT 
+    mds.EmployeeID,
+    mds.EmployeeEmail,
+    mds.EmployeeType,
+    cust.milCus
+  FROM rls_customer_raw AS cust,
+    UNNEST(SPLIT(IFNULL(cust.DirectorID, ''), '|')) AS split_c_dir,
+    UNNEST(SPLIT(IFNULL(cust.RegionID, ''), '|')) AS split_c_reg,
+    UNNEST(SPLIT(IFNULL(cust.SectionID, ''), '|')) AS split_c_sec
+  INNER JOIN mds_data AS mds
+    ON (mds.DirectorID = 'ALL' OR split_c_dir IN UNNEST(SPLIT(mds.DirectorID, '|')))
+    AND (mds.RegionID = 'ALL' OR split_c_reg IN UNNEST(SPLIT(mds.RegionID, '|')))
+    AND (mds.SectionID = 'ALL' OR split_c_sec IN UNNEST(SPLIT(mds.SectionID, '|')))
+    AND LOWER(mds.employeetype) = 'special'
+    AND mds.FlageCustomer = true
+    AND lower(concat(mds.DirectorID, '|', mds.RegionID, '|', mds.SectionID)) != 'all|all|all'
+    
+  WHERE cust.DirectorID is not null
+    or cust.RegionID is not null
+    or cust.SectionID is not null
+
+), final as (
+  SELECT *
+  FROM final_normal
+  UNION DISTINCT 
+  SELECT *
+  FROM final_mkt
+  UNION DISTINCT
+  SELECT DISTINCT
+    EmployeeID,
+    EmployeeEmail,
+    EmployeeType,
+    'CustomerID' AS LevelName,
+    milCus AS LevelValue
+  FROM final_special
+
+)
+  select EmployeeEmail, LevelName, LevelValue
+  from final

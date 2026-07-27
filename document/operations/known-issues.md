@@ -1,6 +1,6 @@
 # Known Issues & Gotchas
 
-รวมจุดที่รู้แล้วว่า "เป็นแบบนี้โดยตั้งใจ" หรือ "ต้องระวัง" — อัปเดตล่าสุด 2026-07-20
+รวมจุดที่รู้แล้วว่า "เป็นแบบนี้โดยตั้งใจ" หรือ "ต้องระวัง" — อัปเดตล่าสุด 2026-07-24
 
 ## คำสะกดผิดที่เป็น identifier จริง (ห้ามแก้)
 
@@ -36,6 +36,30 @@
   จึงทำงานเหมือน full rebuild แม้ประกาศ `type: "incremental"`
 - **`mir.sqlx`** — `type: "incremental"` แต่ tag `validated_full` (จัดกลุ่ม operator)
 - **saleout_mdt** — ไม่มี sub-tag และส่วนใหญ่ไม่ partition
+- **View layer เข้า Dataform** (ตัดสินใจ + ทำ 2026-07-24): เดิม BigQuery views ถูก
+  สร้าง/แก้ **นอก Dataform** ตรงใน console จึงไม่อยู่ใน repo และไม่มี lineage — ย้ายมา
+  เป็น `type: "view"` ใต้ `definitions/view/` (แยก subfolder ตาม dataset ปลายทาง)
+  แล้ว **42 ไฟล์** โดย **`config.schema` คงชี้ dataset เดิม** (`dimension_view`,
+  `fact_view`, `onetime`, `process_dataset`, `bridge_dataset`) เพื่อไม่ให้
+  Power BI/consumer พัง และแทน project literal `databuffet-nonprd` ด้วย
+  `${databuffet.DATABASE}` (portable ข้าม env) — inventory เต็ม: `project_wiki/view/view-layer.md`
+  - ขอบเขต: 42 ตัว **ตัด 12** (test 5: `TEST_Data_Transaction`×2 + `temp_dim.*`×3;
+    `peem_using` ทั้ง dataset 7 ตัว: `view_1..4_Product_DOS_CAT1*` + RLS trio
+    `view_rls_data`/`sale`/`special` — เป็น **test copy ส่วนตัวของเจ้าของ** ของ RLS views
+    ใน `process_dataset` จงใจไม่เอาเข้า Dataform)
+  - เพิ่ม constant: `TAG_VIEW`=`view`, `BRIDGE`=`bridge_dataset` (ไม่มี `PEEM_USING`)
+  - `dependencies[]` ใส่เฉพาะ action จริง (basename ที่ unique) — external/UDF/ตารางที่
+    ไม่มี .sqlx (`dim_districts/provinces/geographies/sub_districts`, `dim_aging_history`,
+    `dim_product_rebate`, `mih_address_data`, `RLS_Customer360`, `mds_*`) อ้างด้วย
+    interpolation แต่ไม่ list เป็น dep (ตารางมีอยู่แล้ว)
+  - ⚠️ ยังไม่ได้ compile-verify (เครื่องนี้ไม่มี dataform CLI) — ต้องเช็คตอนขึ้น service:
+    (1) view ที่อ้าง view อื่น (chain เช่น `view_dim_aging`→`view_dim_channel`,
+    `Model_Invoice_Transaction`→`view_fact_transcation`) resolve เรียงลำดับถูก
+    (2) `fact_transcation.sqlx` อ่าน `onetime.Transaction_Data_Mart` และ
+    `dimension_view.view_dim_channel` แต่ไม่ได้ประกาศ dep ฝั่ง fact (จงใจไม่แตะไฟล์
+    pipeline เดิม) — pipeline ยังถูกเพราะ view เป็น logical + มีอยู่ก่อน; follow-up ควรเติม
+    dep ฝั่ง fact ให้ DAG ครบ (3) ownership เปลี่ยนมือ — Dataform จะ `CREATE OR REPLACE`
+    ทับทุกครั้งที่รัน ใครแก้ใน console จะโดนเขียนทับ
 
 ## ข้อจำกัด environment
 

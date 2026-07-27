@@ -1,0 +1,137 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["stk", "curated_mih", "curated_tbook_quotation", "curated_mil", "view_deb_address_data", "dim_company"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+WITH stk as (
+  SELECT DISTINCT
+    company_id,
+    stkcode,
+    stkvat,
+    (stkvat / 100) + 1 AS vat,
+    stkcode885,
+    stkgroup
+  FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stk`
+  -- where company_id = 'ag01'
+
+), mih_ps as (
+  select 
+    mihps.company_id,
+    mihVnos,
+    qt.id as QuotationID ,
+    qt.running as QuotationCode 
+  from `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih` as mihps
+  left join `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_tbook_quotation` as qt  
+    on mihps.mihref1 = qt.running
+    and mihps.company_id = qt.company_id
+  where mihps.mihType = 'PS'
+    -- and mihps.company_id = 'ag01'
+
+), raw_transcation as (
+  SELECT
+    -- `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_flag_sales_kpi`(a.mihcancel, a.mihstatus, product_rebate.rebate) as FlagSalesKPI,
+    dim_com.CompanySK,
+    dim_com.companyID,
+    a.mihvatno,
+    a.mihdesc,
+    a.mihmemo,
+    a.memoextract,
+    a.mihmemonew,
+    a.mihCancel,
+    a.mihStatus,
+    mih_ps.QuotationID,
+    mih_ps.QuotationCode,
+    b.* except(company_id),
+
+    s.stkcode885,
+    s.vat as stkVat,
+    s.stkgroup as stkGroup,
+    a.mihVatsum,
+    a.mihExtrasum,
+    a.mihExtravat,
+    aidata.ProvinceSK as OrderProvinceSK,
+    aidata.DistrictSK as OrderDistrictSK,
+    aidata.SubDistrictSK as OrderSubDistrictSK,
+    SUM(milSum) OVER (PARTITION BY b.milDay, b.milMonth, b.milYear, b.milType, b.milCus, b.milVnos) as over_milsum,
+
+  FROM `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih` as a
+  INNER JOIN `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mil` as b
+    ON a.mihYear = b.milYear
+      AND a.mihMonth = b.milMonth
+      AND a.mihDay = b.milDay
+      AND a.mihType = b.milType
+      AND a.mihVnos = b.milVnos
+      AND a.mihCus = b.milCus
+      AND a.company_id = b.company_id
+  LEFT JOIN mih_ps as mih_ps
+    ON b.milLinkvcno = mih_ps.mihVnos
+    and b.company_id = mih_ps.company_id
+  LEFT JOIN stk AS s
+    ON s.stkcode = b.milstk
+    and s.company_id = b.company_id
+  -- LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_rebate` as product_rebate 
+  --   ON b.milstk = product_rebate.Rebate
+  LEFT JOIN `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.view_deb_address_data` as aidata
+    ON a.mihCus = aidata.debcode
+    AND a.company_id = aidata.company_id
+  LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_company` as dim_com
+    ON a.company_id = dim_com.companyID
+  WHERE a.mihtype IN ('IS', 'AS', 'BS', 'QS') 
+    -- and a.company_id = 'ag01'
+
+), transcation as (
+  SELECT *,
+    (CASE 
+      WHEN milType = 'BS' 
+        THEN 
+          IF(
+            IFNULL(over_milsum, 0) <> 0, 
+            (milSum / over_milsum)*-1 * mihVatsum,
+          0) *-1
+      ELSE 
+        IF(
+          IFNULL(over_milsum, 0) <> 0,
+          (milSum / over_milsum) * mihVatsum,
+        0)
+    END) as Vat,
+
+  FROM raw_transcation
+
+)
+  SELECT 
+    * EXCEPT(mihVatsum, stkVat, stkcode885, mihExtrasum, mihExtravat, over_milsum),
+    --------- Oat Edit --------------
+    /*(CASE
+      WHEN milType = 'BS' and milsum < 0 THEN 0
+      ELSE milsum + Vat 
+    END) AS milsum_incvat,*/
+    --------- End Oat Edit --------------
+    milsum + Vat AS milsum_incvat,
+
+    (CASE
+      WHEN IFNULL(mihVatsum, 0.0) <> 0.0 THEN mildisca * stkVat
+      ELSE mildisca
+    END) AS mildisca_incvat,
+
+    (CASE 
+      WHEN IFNULL(mihVatsum, 0.0) <> 0.0 THEN milcog * stkVat
+      ELSE milcog
+    END) AS milcog_incvat,
+
+    stkcode885 AS Barcode,
+    IF(
+      IFNULL(over_milsum, 0) <> 0,
+      ((milSum / over_milsum) * mihExtrasum),
+    0) AS DepositExcVat,
+    IF(
+      IFNULL(over_milsum, 0) <> 0,
+      (((milSum / over_milsum) * mihExtrasum) + (milSum / over_milsum) * mihExtravat),
+    0) AS DepositIncVat,
+    IF(
+      IFNULL(over_milsum, 0) <> 0,
+      ((milSum / over_milsum) * mihExtravat),
+    0) AS DepositVat,
+
+  FROM transcation

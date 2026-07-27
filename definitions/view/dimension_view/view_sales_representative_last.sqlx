@@ -1,0 +1,24 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["view_dim_sale_representative_last", "dim_department_last", "dim_section_last", "dim_region_last"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+SELECT
+  dim_sale.*,
+  dim_region.RegionID,
+  dim_region.RegionName,
+  dim_section.SectionID,
+  dim_section.SectionName,
+  dim_depart.DepartmentName
+FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_VIEW}.view_dim_sale_representative_last` as dim_sale
+LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_department_last` as dim_depart
+  ON dim_depart.DepartmentSK = dim_sale.DepartmentSK
+  and dim_depart.CompanySK = dim_sale.CompanySK
+LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section_last` as dim_section
+  ON dim_section.SectionSK = dim_depart.SectionSK
+  and dim_section.CompanySK = dim_depart.CompanySK
+LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region_last` as dim_region
+  ON dim_region.RegionSK = dim_depart.RegionSK
+  and dim_region.CompanySK = dim_depart.CompanySK

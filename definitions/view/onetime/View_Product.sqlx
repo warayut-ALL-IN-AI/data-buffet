@@ -1,0 +1,45 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["stk", "stk_mkt", "stg", "product", "product_detail", "brand", "vendor"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+select 
+a.stkcode,
+a.stkgroup,
+g.stgdesct,
+g.stgdesce,
+a.stkcode2,
+a.stkdesct1,
+a.stksortnt,
+a.stksto,
+a.stksalegrp,
+a.stkcode885 ,
+a.stkvat,
+b.zgroup3 as Group_1 ,
+b.zgroup4 as Shipping ,
+p.prd_sku ,
+p.prd_description ,
+p.prd_model ,
+p.prd_is_active,
+p.prd_barcode ,
+p.prd_brand_id ,
+brand.bra_name,
+p.prd_cat_id ,
+pc.cat_code ,
+pc.cat_level ,
+pd.pd_material,
+p.prd_vendor_id,
+vendor.vd_name,
+pd.pd_certificate,
+pd.pd_garantee
+from `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stk` a  
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stk_mkt` b on a.STKcode = b.stkcode
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stg` g on a.STKgroup = g.STGcode
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product` p on a.STKcode885 = p.prd_barcode
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.category` pc on p.prd_cat_id = pc.cat_id
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product_detail` pd on p.prd_id = pd.pd_prd_id
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.brand` brand on p.prd_brand_id = brand.bra_id
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.vendor` vendor on p.prd_vendor_id = vendor.vd_id
+--where a.STKcode885 is not null and a.STKcode885 <> ''

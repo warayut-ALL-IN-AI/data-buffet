@@ -1,0 +1,83 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["match_customer", "customer_profile", "customer_status", "customer_profile_nature_business", "nature_business", "customer_type", "deb", "view_deb_address_data"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+with match_customer as (
+SELECT customer_allkon, customer_mac5
+FROM (
+    SELECT 
+        a.customer_allkon, 
+        a.customer_mac5,
+        ROW_NUMBER() OVER(PARTITION BY a.customer_mac5 ORDER BY a.customer_allkon DESC) as rn
+    FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.match_customer` a
+    INNER JOIN (
+        SELECT DISTINCT customer_code 
+        FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}.customer_profile`
+    ) b ON a.customer_allkon = b.customer_code 
+    WHERE a.company_id = 'ag01'
+)
+WHERE rn = 1
+),Customer_360 as (
+
+select cp.* ,
+    cs.customer_status_name ,
+    nb.nature_business_code ,
+    nb.nature_business_name ,
+    nb.nature_business_name_en ,
+    ct.customer_type_name ,
+    ct.customer_type_name_en 
+from  `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}.customer_profile` cp 
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}.customer_status` cs on cp.customer_status_id = cs.id
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}.customer_profile_nature_business` cpnb  on cp.id =  cpnb.customer_profile_id 
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}.nature_business` nb  on cpnb.nature_business_id = nb.id
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}.customer_type` ct on cp.customer_type_id = ct.id
+
+)
+select 
+    -- SK
+    deb_address.ProvinceSK as InvoiceProvinceSK,
+    deb_address.DistrictSK as InvoiceDistrictSK,
+    deb_address.SubDistrictSK as InvoiceSubDistrictSK,
+
+    -- Data Address
+    deb_address.SubDistrictTH as SubDistrict,
+    deb_address.DistrictTH as District,
+    deb_address.ProvinceTH as Province,
+    geo.name as Region,
+
+    -- data
+    deb.debcode ,
+    deb.debdate,
+    customer_code ,
+    cp.prefix_id ,
+    deb.debnamet ,
+    cp.first_name , 
+    cp.last_name ,
+    deb.debtaxclass ,
+    cp.full_name , 
+    cp.customer_status_name ,
+    deb.debsalesp ,
+    deb.debxxxx ,
+    deb.debgrade ,
+    cp.nature_business_code ,
+    cp.nature_business_name ,
+    cp.nature_business_name_en ,
+    cp.customer_type_name ,
+    cp.customer_type_name_en ,
+    deb.debbranch ,
+    deb.deblimit , 
+    deb.debgroup ,
+    deb.DEBcreditTerm ,
+    DATE_DIFF(CURRENT_DATE(), deb.debdate, YEAR) as Total_contact_time_Year
+
+FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.deb` deb
+left join `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.view_deb_address_data` as deb_address
+    on deb.debcode = deb_address.debcode
+left join match_customer mc on deb.debcode = mc.customer_mac5
+left join Customer_360 cp on mc.customer_allkon = cp.customer_code
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_provinces` provinces on deb_address.ProvinceSK = provinces.ProvinceSK
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_geographies` geo on provinces.GeoGraphiesSK = geo.GeoGraphiesSK
+where deb.company_id = 'ag01'

@@ -1,0 +1,27 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["dim_sale_representative_last", "dim_department_last"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+select Sales_Rep.*, Department.DepartmentName ,
+
+-------Oat เพิ่ม ไว้ ทำตัว Sort -------
+FORMAT('%02d', 
+    ROW_NUMBER() OVER (
+      -- จัดกลุ่มตาม SectionSK (หากเป็นค่าว่างหรือ Null จะถูกรวบเป็นกลุ่มเดียวกัน)
+      PARTITION BY IFNULL(CAST(Sales_Rep.RegionSK AS STRING), '') 
+      
+      -- เรียงลำดับคิวในการรันเลข โดยดูจาก DepartmentID ก่อน ถ้าไม่มีให้ดู EmployeeID
+      ORDER BY 
+        IFNULL(Sales_Rep.DepartmentID, ''), 
+        EmployeeID
+    )
+  ) AS Sort
+-------Oat เพิ่ม ไว้ ทำตัว Sort -------
+
+from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative_last` as Sales_Rep
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_department_last` as Department 
+  on Sales_Rep.DepartmentSK = Department.DepartmentSK
+  and Sales_Rep.CompanySK = Department.CompanySK

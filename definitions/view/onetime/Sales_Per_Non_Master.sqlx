@@ -1,0 +1,22 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["per", "dim_sale_representative"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+SELECT
+  t2.percode AS EmployeeID,
+  CASE WHEN INSTR(t2.pernamet, ' ') > 0 THEN TRIM(SUBSTR(t2.pernamet, 1, INSTR(t2.pernamet, ' ') - 1)) ELSE t2.pernamet END AS EmployeeName,
+  CASE WHEN INSTR(t2.pernamet, ' ') > 0 THEN  TRIM(SUBSTR(t2.pernamet, INSTR(t2.pernamet, ' ') + 1)) ELSE NULL END AS EmployeeSurname,
+  REGEXP_EXTRACT(t2.pernamet, r'\(([^)]*)\)') AS EmployeeNickname
+FROM
+  `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.per` AS t2
+WHERE
+  CAST(t2.percode AS STRING) NOT IN (
+  SELECT
+    DISTINCT CAST(t1.EmployeeID AS STRING)
+  FROM
+    `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative` AS t1
+  WHERE
+    t1.EmployeeID IS NOT NULL )

@@ -19,6 +19,7 @@
 | `TAG_FACT_DAILY` / `TAG_FACT_MONTHLY` / `TAG_FACT_YEARLY` | `fact_daily`, `fact_monthly`, `fact_yearly` | Fact refresh cadence |
 | `TAG_PROCESS` | `process` | Process layer (address parsing) |
 | `TAG_CDC` / `TAG_CDC_INCREMENTAL` | `cdc`, `cdc_incremental` | CDC pipeline |
+| `TAG_VIEW` | `view` | View layer (`definitions/view/`) — presentation views over dim/fact/curated. Added 2026-07-24; migration in progress (see operations/known-issues.md). |
 | `ONETIME` | `onetime` | One-off actions |
 
 ## Dataset (BigQuery schema) names
@@ -37,11 +38,13 @@
 | Constant | Value | Holds |
 |---|---|---|
 | `DIMENSION_TABLE` | `dimension_table` | Physical dimension tables |
-| `DIMENSION_VIEW` | `dimension_view` | Dimension views |
+| `DIMENSION_VIEW` | `dimension_view` | Dimension views (`definitions/view/dimension_view/`) |
 | `FACT_TABLE` | `fact_table` | Physical fact tables |
-| `FACT_VIEW` | `fact_view` | Fact views |
+| `FACT_VIEW` | `fact_view` | Fact views (`definitions/view/fact_view/`) |
+| `ONETIME` | `onetime` | Data-mart / Power BI / model views + externally-loaded base tables |
+| `BRIDGE` | `bridge_dataset` | Bridge views (many-to-many SK maps) — `definitions/view/bridge_dataset/` |
 | `CDC_DATESET` (sic) | `cdc_dataset` | CDC change log |
-| `PROCESS_DATASET` | `process_dataset` | Derived datasets (address parsing) |
+| `PROCESS_DATASET` | `process_dataset` | Derived datasets (address parsing) + RLS/address views |
 | `FUNCTION_DATASET` | `function_dataset` | BigQuery UDFs |
 | `MDS_DATASET` | `mds_dataset` | Master-data-service tables (externally loaded, **not** created by this repo) |
 

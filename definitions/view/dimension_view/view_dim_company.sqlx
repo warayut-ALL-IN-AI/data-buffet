@@ -1,0 +1,28 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["dim_company"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+SELECT 
+  CompanySK, CompanyID, CompanyCode, CompanyNameTH, CompanyNameEN,
+  (CASE 
+    WHEN lower(CompanyID) in ('ag01', 'ab01') THEN 'ag01'
+    ELSE CompanyID
+  END) as CompanyReportID, 
+  (CASE 
+    WHEN lower(CompanyID) = 'ac02' THEN 'บริษัท ธรรมสรณ์ เอ็นจิเนียริง จำกัด'
+    WHEN lower(CompanyID) = 'aa05' THEN 'บริษัท ฌาณตา จำกัด'
+    WHEN lower(CompanyID) = 'ak02' THEN 'บริษัท สยามเวสท์ แมเนจเม้นท์ คอนซัลแทนท์ (เอเซี่ยน) จำกัด'
+    WHEN lower(CompanyID) in ('ag01', 'ab01') THEN 'บริษัท ธรรมสรณ์ จำกัด'
+    ELSE 'ไม่มีข้อมูล'
+  END) as CompanyNameReportTH,
+  (CASE 
+    WHEN lower(CompanyID) = 'ac02' THEN 'THAMMASORN ENGINEERING CO., LTD.'
+    WHEN lower(CompanyID) = 'aa05' THEN 'SHANNTA CO., LTD.'
+    WHEN lower(CompanyID) = 'ak02' THEN 'SIAM WASTE MANAGEMENT CONSULTANT (ASIAN) COMPANY LIMITED'
+    WHEN lower(CompanyID) in ('ag01', 'ab01') THEN 'Thammasorn Co., Ltd.'
+    ELSE 'No Data'
+  END) as CompanyNameReportEN,
+FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_company`

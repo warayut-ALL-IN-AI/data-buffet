@@ -1,0 +1,15 @@
+config {
+  type: "view",
+  schema: databuffet.FACT_VIEW,
+  dependencies: ["fact_mir_vs", "dim_aging"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+select t2.AgingSK, t1.*
+from `${databuffet.DATABASE}.${databuffet.FACT_TABLE}.fact_mir_vs` as t1
+left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_aging` as t2
+  on t1.mirbinvno = t2.cfsvnosid
+  and t1.company_id = t2.CompanyID
+
+
+-- 509185

@@ -1,0 +1,135 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["mih", "ar_s", "ap_s", "mih2"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+with mih_raw as (
+  SELECT  
+    mihday,
+    mihmonth,
+    mihyear,
+    mihtype,
+    mihvnos,
+    mihcus,
+    mihref1,
+    mihper,
+    mihstatus,
+    (CASE
+      WHEN mihtype in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
+      WHEN mihtype in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
+      ELSE null
+    END) as status_desc,
+    mihcancel
+
+  FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.mih`
+  left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ar_s`
+    on mihstatus = ar_scode
+  left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ap_s`
+    on mihstatus = ap_scode
+  WHERE mihtype = 'IS'
+    and mihref1 is not null
+    and mihcancel <> -1
+    --and mihvnos in ('6712000024')
+
+), mih_raw2 as (
+  SELECT  
+    mihday,
+    mihmonth,
+    mihyear,
+    mihtype,
+    mihvnos,
+    mihcus,
+    mihref1,
+    mihper,
+    mihstatus,
+    (CASE
+      WHEN mihtype in ('QS', 'PS', 'IS', 'AS', 'BS', 'VS', 'RS') THEN ar_snamet
+      WHEN mihtype in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
+      ELSE null
+    END) as status_desc,
+    mihcancel
+    
+  FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.mih`
+  left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ar_s`
+    on mihstatus = ar_scode
+  left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ap_s`
+    on mihstatus = ap_scode
+  /*WHERE mihtype = 'IS'
+    and mihref1 is not null
+    and mihcancel <> -1*/
+    --and mihvnos in ('6712000024')
+
+), filter_mih2 as (
+  SELECT DISTINCT
+    mih2vnos, mih2cus, mih2per2, mih2rev, mih2perpc,mih2per2pc,
+    CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale1, 
+    CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale2,
+    row_number() over(partition by mih2vnos, mih2cus order by mih2rev desc) as chk_row
+  FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.mih2`
+  WHERE mih2cus is not null
+    and mih2per2 is not null
+    and mih2per2pc is not null
+    and (mih2perpc <> '100%' and mih2perpc <> '00%')
+    and EXISTS (
+      SELECT 1 FROM mih_raw as mih 
+      WHERE mih2.mih2type = 'PS'
+        and mih2.mih2vnos = mih.mihref1
+        and mih2.mih2cus = mih.mihcus
+    )
+
+), includ_mih as (
+  SELECT 
+  mihday
+  ,mihmonth
+  ,mihyear
+  ,mihtype
+  ,mihcus
+  ,mih.mihvnos
+  ,mihper
+  ,per_sale1
+  ,mih2per2
+  ,per_sale2
+  ,mihstatus
+  ,status_desc
+  ,mihcancel
+
+  FROM mih_raw as mih
+  INNER JOIN filter_mih2 as mih2
+    ON mih.mihref1 = mih2.mih2vnos
+      and mih.mihcus = mih2.mih2cus
+      and chk_row = 1
+------------------------------------------------------------------
+
+), exclude_mil as (
+  SELECT
+    mih2.mihday
+    ,mih2.mihmonth
+    ,mih2.mihyear
+    ,mih2.mihtype
+    ,mih2.mihcus
+    ,mih2.mihvnos
+    ,mih2.mihper  
+    ,100 as per_sale1
+    ,'0' as mih2per2
+    , 0 as per_sale2
+    ,mihstatus
+    ,status_desc
+    ,mihcancel
+
+  FROM mih_raw2 as mih2
+  WHERE NOT EXISTS (
+    SELECT 1 
+    FROM includ_mih as mil2
+    WHERE mih2.mihtype = mil2.mihtype
+      and mih2.mihvnos = mil2.mihvnos
+  )
+
+) 
+select t.* ,case when t.per_sale1 <> 100 then 'Yes' else 'No' end as InvoiceSalesFlag
+from (
+  select * from exclude_mil
+  UNION ALL
+  SELECT *  FROM includ_mih
+) t

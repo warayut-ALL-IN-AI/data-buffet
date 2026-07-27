@@ -1,0 +1,13 @@
+config {
+  type: "view",
+  schema: databuffet.DIMENSION_VIEW,
+  dependencies: ["dim_guarantee", "dim_customer"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+SELECT cust.CustomerSK, guar.*
+FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_guarantee` as guar
+LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_customer` as cust
+  on guar.CustomerCode = cust.debcode
+  and guar.CompanySK = cust.CompanySK
+WHERE cust.CustomerSK is not null

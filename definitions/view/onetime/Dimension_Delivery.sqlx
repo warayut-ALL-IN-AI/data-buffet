@@ -1,0 +1,57 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["ttrip_document", "ttrip", "curated_mil", "tdelivery", "curated_mih", "deb"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+select td.fdocument,d.fserial_no,t.fcode,t.fvehicle
+  ,PARSE_DATE('%Y%m%d', LEFT(CAST(td.fdatetime AS STRING), 8)) as Date, mh.mihCus, deb.debnamet
+  ,d.flattitude, d.flongtitude ,d.fzone ,d.fpoi
+  ,td.fitem
+  ,td.fitem2
+  ,(case 
+      when IFNULL(td.fdocument,'0') = '0' then 'ยังไม่จัดของ' 
+      else 'จัดของขึ้นรถ' 
+    end) S1 
+  ,(case 
+      when IFNULL(t.fpass_Date,'0') = '0' then 'ไม่ปล่อยรถ' 
+      else 'ปล่อยรถแล้ว' 
+    end) S2  
+  ,(case 
+      when IFNULL(d.fserial_no,'0') = '0' then 'ยังไม่ส่งของ' 
+      else (case when td.fcancel = '0' then 'รับสินค้าแล้ว' else 'ลูกค้าไม่รับ' end) 
+    end) S3
+  ,count(td.fitem) qty2  
+  
+from `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ttrip_document` as td  
+inner join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ttrip` as t 
+  on t.frun = td.fmaster  
+inner join (select distinct milvnos from `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mil` where miltype = 'IS') as milIS 
+  on td.fdocument = milIS.milvnos
+left join (         
+  select fserial_no ,fmaster ,flattitude,flongtitude,fzone,fpoi ,fdatetime  
+  from `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.tdelivery` as dl 
+  inner join (
+    select distinct milvnos from `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mil` where miltype = 'IS'
+  ) as milIS2 
+    on dl.fserial_no = milIS2.milvnos
+) d 
+  on td.fmaster = d.fmaster   
+
+left join `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih` as mh 
+  on td.fdocument = mh.mihvnos
+left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.deb` as deb 
+  on mh.mihCus = deb.debcode
+
+where td.fdocument like (case when IFNULL(d.fserial_no,'0') = '0' then '%' else  d.fserial_no end)  
+group by td.fdocument,t.fcode,t.fvehicle,td.fitem,td.fitem2  ,d.flattitude , d.flongtitude ,d.fzone ,d.fpoi
+  ,(case when IFNULL(td.fdocument,'0') = '0' then 'ยังไม่จัดของ' else 'จัดของขึ้นรถ' end)   
+  ,(case when IFNULL(t.fpass_Date,'0') = '0' then 'ไม่ปล่อยรถ' else 'ปล่อยรถแล้ว' end)  
+  ,(case 
+    when IFNULL(d.fserial_no,'0') = '0' then 'ยังไม่ส่งของ'
+    else (case when td.fcancel = '0' then 'รับสินค้าแล้ว' else 'ลูกค้าไม่รับ' end)
+  end)  
+  ,d.fserial_no
+  ,PARSE_DATE('%Y%m%d', LEFT(CAST(td.fdatetime AS STRING), 8))
+  ,mh.mihCus,deb.debnamet

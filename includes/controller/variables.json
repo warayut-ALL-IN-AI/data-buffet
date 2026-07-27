@@ -11,6 +11,7 @@
     "TAG_FACT_MONTHLY": "fact_monthly",
     "TAG_FACT_YEARLY": "fact_yearly",
     "TAG_PROCESS": "process",
+    "TAG_VIEW": "view",
 
     "TAG_VALIDATED_INCREMENTAL": "validated_incremental",
     "TAG_VALIDATED_FULL": "validated_full",
@@ -46,6 +47,7 @@
     "FACT_VIEW" : "fact_view",
 
     "ONETIME": "onetime",
+    "BRIDGE": "bridge_dataset",
     "CDC_DATESET" : "cdc_dataset",
     "PROCESS_DATASET": "process_dataset",
     "FUNCTION_DATASET": "function_dataset",

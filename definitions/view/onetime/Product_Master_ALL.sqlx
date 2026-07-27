@@ -1,0 +1,61 @@
+config {
+  type: "view",
+  schema: databuffet.ONETIME,
+  dependencies: ["dim_product_master", "view_dim_product_mkt", "Product_Attribute", "dim_product_mkt_director"],
+  tags: [databuffet.TAG_VIEW],
+}
+
+SELECT
+  product.ProductCode,
+  product.ProductCode1,
+  product.ProductMac5Description,
+  product.ProductGroupMAC5,
+  product.ProductGroupMac5Description,
+  product.ProductGroupMAC5Type,
+  product.ProductGroupACC,
+  product.ProductGroupACCName,
+  product.ProductName,
+  product.ProductDescription,
+  product.ProductDimension1,
+  product.ProductDimension2,
+  product.ProductDimension3,
+  product.ProductDimension4,
+  product.ProductGarantee,
+  product.ProductGaranteeDetail,
+  product.ThaiIndustrialStandardFlag,
+  product.ThaiIndustrialSatandardDetail,
+  product.Barcode,
+  mkt.MarketingGroupID,
+  mkt.MarketingGroup,
+  mkt.SubMarketingID,
+  mkt.SubMarketing,
+  mkt.SegmentID,
+  mkt.Segment,
+  mkt.TypeMarketingID,
+  mkt.TypeMarketing,
+  director.name as DirectorMarketingName,
+  director.Surname as DirectorMarketingSurname,
+  CONCAT(director.name,' ',director.Surname) as DirectorMarketingNameSurname,
+  attr.ProductColor,
+  attr.ProductShape,
+  attr.ProductGrossWeight,
+  attr.ProductNetWeight,
+  attr.ProductSeries,
+  attr.ProductSize,
+  attr.ProductSizeHight,
+  attr.ProductSizeLong,
+  attr.ProductSizeWide,
+  attr.ProductUnit,
+  attr.ProductMaterials,
+  attr.ProductModel
+FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_master` product
+LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_VIEW}.view_dim_product_mkt` mkt
+  ON product.ProductMktSK = mkt.ProductMktSK and product.CompanySK = mkt.CompanySK
+
+LEFT JOIN `${databuffet.DATABASE}.${databuffet.ONETIME}.Product_Attribute` attr
+  ON product.ProductSK = attr.ProductSK and product.CompanySK = attr.CompanySK
+
+LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_mkt_director` director
+  ON mkt.ProductMktDirectorSK = director.ProductMktDirectorSK and mkt.CompanySK = director.CompanySK
+
+where product.companyID = 'ag01'
