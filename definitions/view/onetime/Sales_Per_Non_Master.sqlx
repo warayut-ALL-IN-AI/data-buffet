@@ -1,18 +1,11 @@
 config {
   type: "view",
   schema: databuffet.ONETIME,
-  dependencies: ["per", "dim_sale_representative"],
+  dependencies: ["dim_sale_representative"],
   tags: [databuffet.TAG_VIEW],
 }
 
 js {
-    const PerTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "per",
-    };
-    const PerTableRef = `${PerTable.database}.${PerTable.schema}.${PerTable.name}`;
-
     const DimSaleRepresentativeTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -27,7 +20,7 @@ SELECT
   CASE WHEN INSTR(t2.pernamet, ' ') > 0 THEN  TRIM(SUBSTR(t2.pernamet, INSTR(t2.pernamet, ' ') + 1)) ELSE NULL END AS EmployeeSurname,
   REGEXP_EXTRACT(t2.pernamet, r'\(([^)]*)\)') AS EmployeeNickname
 FROM
-  `${PerTableRef}` AS t2
+  ${ref(databuffet.VALIDATED_MAC5, "per")} AS t2
 WHERE
   CAST(t2.percode AS STRING) NOT IN (
   SELECT

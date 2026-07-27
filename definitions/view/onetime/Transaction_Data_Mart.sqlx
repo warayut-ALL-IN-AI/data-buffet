@@ -1,45 +1,17 @@
 config {
   type: "view",
   schema: databuffet.ONETIME,
-  dependencies: ["stk", "curated_mih", "curated_tbook_quotation", "curated_mil", "view_deb_address_data", "dim_company"],
+  dependencies: ["view_deb_address_data", "dim_company"],
   tags: [databuffet.TAG_VIEW],
 }
 
 js {
-    const StkTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "stk",
-    };
-    const StkTableRef = `${StkTable.database}.${StkTable.schema}.${StkTable.name}`;
-
-    const CuratedMihTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.CURATED_MAC5,
-        name: "curated_mih",
-    };
-    const CuratedMihTableRef = `${CuratedMihTable.database}.${CuratedMihTable.schema}.${CuratedMihTable.name}`;
-
-    const CuratedTbookQuotationTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.CURATED_MAC5,
-        name: "curated_tbook_quotation",
-    };
-    const CuratedTbookQuotationTableRef = `${CuratedTbookQuotationTable.database}.${CuratedTbookQuotationTable.schema}.${CuratedTbookQuotationTable.name}`;
-
     const FnFlagSalesKpiTable = {
         database: databuffet.DATABASE,
         schema: databuffet.FUNCTION_DATASET,
         name: "fn_flag_sales_kpi",
     };
     const FnFlagSalesKpiTableRef = `${FnFlagSalesKpiTable.database}.${FnFlagSalesKpiTable.schema}.${FnFlagSalesKpiTable.name}`;
-
-    const CuratedMilTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.CURATED_MAC5,
-        name: "curated_mil",
-    };
-    const CuratedMilTableRef = `${CuratedMilTable.database}.${CuratedMilTable.schema}.${CuratedMilTable.name}`;
 
     const DimProductRebateTable = {
         database: databuffet.DATABASE,
@@ -71,7 +43,7 @@ WITH stk as (
     (stkvat / 100) + 1 AS vat,
     stkcode885,
     stkgroup
-  FROM `${StkTableRef}`
+  FROM ${ref(databuffet.VALIDATED_MAC5, "stk")}
   -- where company_id = 'ag01'
 
 ), mih_ps as (
@@ -80,8 +52,8 @@ WITH stk as (
     mihVnos,
     qt.id as QuotationID ,
     qt.running as QuotationCode 
-  from `${CuratedMihTableRef}` as mihps
-  left join `${CuratedTbookQuotationTableRef}` as qt  
+  from ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mihps
+  left join ${ref(databuffet.CURATED_MAC5, "curated_tbook_quotation")} as qt  
     on mihps.mihref1 = qt.running
     and mihps.company_id = qt.company_id
   where mihps.mihType = 'PS'
@@ -114,8 +86,8 @@ WITH stk as (
     aidata.SubDistrictSK as OrderSubDistrictSK,
     SUM(milSum) OVER (PARTITION BY b.milDay, b.milMonth, b.milYear, b.milType, b.milCus, b.milVnos) as over_milsum,
 
-  FROM `${CuratedMihTableRef}` as a
-  INNER JOIN `${CuratedMilTableRef}` as b
+  FROM ${ref(databuffet.CURATED_MAC5, "curated_mih")} as a
+  INNER JOIN ${ref(databuffet.CURATED_MAC5, "curated_mil")} as b
     ON a.mihYear = b.milYear
       AND a.mihMonth = b.milMonth
       AND a.mihDay = b.milDay

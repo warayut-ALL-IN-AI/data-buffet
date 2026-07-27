@@ -1,7 +1,7 @@
 config {
   type: "view",
   schema: databuffet.DIMENSION_VIEW,
-  dependencies: ["dim_order", "mih2"],
+  dependencies: ["dim_order"],
   tags: [databuffet.TAG_VIEW],
 }
 
@@ -19,13 +19,6 @@ js {
         name: "dim_order",
     };
     const DimOrderTableRef = `${DimOrderTable.database}.${DimOrderTable.schema}.${DimOrderTable.name}`;
-
-    const Mih2Table = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "mih2",
-    };
-    const Mih2TableRef = `${Mih2Table.database}.${Mih2Table.schema}.${Mih2Table.name}`;
 }
 
 SELECT 
@@ -34,7 +27,7 @@ SELECT
   mih2.mih2pos as CustomerShipTo,
 
 from `${DimOrderTableRef}` as ord
-left join `${Mih2TableRef}` as mih2
+left join ${ref(databuffet.VALIDATED_MAC5, "mih2")} as mih2
   on ord.companyID = mih2.company_id
   and ord.mihDay = mih2.mih2day
   and ord.mihMonth = mih2.mih2month

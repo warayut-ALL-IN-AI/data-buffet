@@ -1,18 +1,11 @@
 config {
   type: "view",
   schema: databuffet.FACT_VIEW,
-  dependencies: ["curated_mih", "fact_mir_rs", "dim_aging", "ar_s"],
+  dependencies: ["fact_mir_rs", "dim_aging"],
   tags: [databuffet.TAG_VIEW],
 }
 
 js {
-    const CuratedMihTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.CURATED_MAC5,
-        name: "curated_mih",
-    };
-    const CuratedMihTableRef = `${CuratedMihTable.database}.${CuratedMihTable.schema}.${CuratedMihTable.name}`;
-
     const FactMirRsTable = {
         database: databuffet.DATABASE,
         schema: databuffet.FACT_TABLE,
@@ -26,18 +19,11 @@ js {
         name: "dim_aging",
     };
     const DimAgingTableRef = `${DimAgingTable.database}.${DimAgingTable.schema}.${DimAgingTable.name}`;
-
-    const ArSTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "ar_s",
-    };
-    const ArSTableRef = `${ArSTable.database}.${ArSTable.schema}.${ArSTable.name}`;
 }
 
 with t3 as (
   select company_id, mihtype, mihvnos, mihcancel, mihstatus
-  from `${CuratedMihTableRef}`
+  from ${ref(databuffet.CURATED_MAC5, "curated_mih")}
 
 )
 
@@ -50,5 +36,5 @@ left join `${DimAgingTableRef}` as t2
 left join t3 on t3.mihvnos = t1.mirvnos
     and t3.mihtype = t1.mirtype
     and t3.company_id = t1.company_id
-left join `${ArSTableRef}` ars on t3.mihstatus = ars.ar_scode 
+left join ${ref(databuffet.VALIDATED_MAC5, "ar_s")} ars on t3.mihstatus = ars.ar_scode 
     and t3.company_id = ars.company_id

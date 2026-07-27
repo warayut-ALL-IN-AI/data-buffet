@@ -1,17 +1,7 @@
 config {
   type: "view",
   schema: databuffet.ONETIME,
-  dependencies: ["curated_tbook_quotation"],
   tags: [databuffet.TAG_VIEW],
-}
-
-js {
-    const CuratedTbookQuotationTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.CURATED_MAC5,
-        name: "curated_tbook_quotation",
-    };
-    const CuratedTbookQuotationTableRef = `${CuratedTbookQuotationTable.database}.${CuratedTbookQuotationTable.schema}.${CuratedTbookQuotationTable.name}`;
 }
 
 select 
@@ -27,4 +17,4 @@ select
   PriceValidity,
   TermDelivery,
   TermPayment 
-from `${CuratedTbookQuotationTableRef}`
+from ${ref(databuffet.CURATED_MAC5, "curated_tbook_quotation")}

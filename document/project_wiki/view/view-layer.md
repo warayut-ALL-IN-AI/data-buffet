@@ -25,15 +25,16 @@
 
 ## Pattern
 
-Three blocks in fixed order: `config` → `js` → SQL body. **Every** table/view reference
-goes through a `js`-block object + `Ref` string — see
-[coding-standards/sqlx-coding-standard.md §3](../../coding-standards/sqlx-coding-standard.md).
+Blocks in fixed order: `config` → `js` (optional) → SQL body. References follow the
+project-wide two-tier rule in
+[coding-standards/sqlx-coding-standard.md §3](../../coding-standards/sqlx-coding-standard.md):
+**`${ref()}` for validated/curated, js-block `TableRef` for everything else.**
 
 ```js
 config {
   type: "view",
   schema: databuffet.DIMENSION_VIEW,          // original target dataset — DO NOT change
-  dependencies: ["dim_company"],              // repo actions only (tables + upstream views)
+  dependencies: ["dim_company"],              // NON-ref() repo actions only (dims/facts/views)
   tags: [databuffet.TAG_VIEW],
 }
 
@@ -47,19 +48,22 @@ js {
 }
 
 SELECT ...
-FROM `${DimCompanyTableRef}`
+FROM `${DimCompanyTableRef}`                        -- dimension: js-block ref
+LEFT JOIN ${ref(databuffet.CURATED_MAC5, "curated_mih")} AS mih   -- curated: ref()
 ```
 
 Rules:
-1. **One reference format only** — declare `<Pascal>Table` + `<Pascal>TableRef` in `js`,
-   then use `` `${XxxTableRef}` `` in SQL. No inline
-   `` `${databuffet.DATABASE}.${databuffet.X}.tbl` ``, no `databuffet-nonprd` literal.
-   This applies to *every* target alike: repo dims/facts, curated/validated, other views,
-   UDF dataset, and external sources (`mds_dataset`, `onetime` bases, `RLS_Customer360`)
-   — only the `schema:` constant differs.
-2. Declarations follow first-use order in the SQL; declare only what is used.
-3. No trailing `;` (the view DDL wraps the query).
-4. Dataset → constant map is the same registry as everywhere else
+1. `validated_*` / `curated_*` → `${ref(databuffet.<CONST>, "<table>")}`, **no backticks**,
+   and the table must **not** appear in `dependencies[]` (Dataform wires it).
+2. Everything else → declare `<Pascal>Table` + `<Pascal>TableRef` in `js`, use
+   `` `${XxxTableRef}` ``: repo dims/facts, other views, `process_dataset`,
+   `mds_dataset`, `onetime` bases, `function_dataset`, `RLS_Customer360`. Repo actions
+   among these go in `dependencies[]`.
+3. No inline `` `${databuffet.DATABASE}.${databuffet.X}.tbl` ``, no `databuffet-nonprd`
+   literal. Declarations follow first-use order; declare only what is used. A view that
+   reads only validated/curated has **no `js` block** (e.g. `Dimension_Quotation`).
+4. No trailing `;` (the view DDL wraps the query).
+5. Dataset → constant map is the same registry as everywhere else
    (`includes/controller/variables.json`).
 
 ### Run order caveat (documented, not yet wired)

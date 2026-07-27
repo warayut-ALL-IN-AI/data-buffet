@@ -1,52 +1,23 @@
 config {
   type: "view",
   schema: databuffet.FACT_VIEW,
-  dependencies: ["chq", "cql", "mir", "curated_mih", "dim_status_not_receive", "ar_s", "view_dim_aging", "dim_aging_rang", "dim_invoice", "fact_mir_vs"],
+  dependencies: [
+    "dim_status_not_receive",
+    "view_dim_aging",
+    "dim_aging_rang",
+    "dim_invoice",
+    "fact_mir_vs",
+  ],
   tags: [databuffet.TAG_VIEW],
 }
 
 js {
-    const ChqTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "chq",
-    };
-    const ChqTableRef = `${ChqTable.database}.${ChqTable.schema}.${ChqTable.name}`;
-
-    const CqlTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "cql",
-    };
-    const CqlTableRef = `${CqlTable.database}.${CqlTable.schema}.${CqlTable.name}`;
-
-    const MirTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "mir",
-    };
-    const MirTableRef = `${MirTable.database}.${MirTable.schema}.${MirTable.name}`;
-
-    const CuratedMihTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.CURATED_MAC5,
-        name: "curated_mih",
-    };
-    const CuratedMihTableRef = `${CuratedMihTable.database}.${CuratedMihTable.schema}.${CuratedMihTable.name}`;
-
     const DimStatusNotReceiveTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
         name: "dim_status_not_receive",
     };
     const DimStatusNotReceiveTableRef = `${DimStatusNotReceiveTable.database}.${DimStatusNotReceiveTable.schema}.${DimStatusNotReceiveTable.name}`;
-
-    const ArSTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "ar_s",
-    };
-    const ArSTableRef = `${ArSTable.database}.${ArSTable.schema}.${ArSTable.name}`;
 
     const ViewDimAgingTable = {
         database: databuffet.DATABASE,
@@ -82,11 +53,11 @@ with chq as (
     cql.company_id, cql.cqlvnos,
     max(ex.extract_date) as extract_date, 
     sum(ex.extract_amount) as extract_amount
-  FROM `${ChqTableRef}` as chq
+  FROM ${ref(databuffet.VALIDATED_MAC5, "chq")} as chq
   , UNNEST(extract_value) as ex
   INNER JOIN (
     select distinct company_id, cqlno, cqlvnos, 
-    from `${CqlTableRef}`
+    from ${ref(databuffet.VALIDATED_MAC5, "cql")}
   ) as cql 
     ON chq.chqno = cql.cqlno 
     and chq.company_id = cql.company_id
@@ -99,7 +70,7 @@ with chq as (
     company_id,
     mirbinvno,
     SUM(mirsum) as total_normal_paid
-  FROM `${MirTableRef}`
+  FROM ${ref(databuffet.VALIDATED_MAC5, "mir")}
   WHERE mirtype = 'RS'
     AND (company_id, mirvnos) NOT IN (
        SELECT AS STRUCT company_id, cqlvnos 
@@ -117,11 +88,11 @@ with chq as (
     (COALESCE(mih.mihnetsum, 0) - COALESCE(norm.total_normal_paid, 0)) as adjusted_mihnetsum,
     ri.extract_date, 
     ri.extract_amount
-  FROM `${MirTableRef}` as mir
+  FROM ${ref(databuffet.VALIDATED_MAC5, "mir")} as mir
   INNER JOIN chq as ri 
     ON mir.company_id = ri.company_id 
     and mir.mirvnos = ri.cqlvnos
-  LEFT JOIN `${CuratedMihTableRef}` as mih
+  LEFT JOIN ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
     ON mir.company_id = mih.company_id
     AND mir.mirbinvno = mih.mihvnos
     AND mir.mirbinvtype = mih.mihtype
@@ -196,13 +167,13 @@ with chq as (
         and mih.mihstatus = exc_status.StatusID
       )
     ) as FlagUse,
-  from `${MirTableRef}` as mir
-  inner join `${CuratedMihTableRef}` as mih
+  from ${ref(databuffet.VALIDATED_MAC5, "mir")} as mir
+  inner join ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
     on mir.company_id = mih.company_id
     and mir.mirvnos = mih.mihvnos
     and mir.mirtype = mih.mihtype
     and mih.mihcancel = 0
-  left join `${ArSTableRef}` as ar
+  left join ${ref(databuffet.VALIDATED_MAC5, "ar_s")} as ar
     on mir.company_id = ar.company_id
     and mih.mihstatus = ar.ar_scode
   left join edit_mir as e_mir

@@ -60,15 +60,20 @@
     pipeline เดิม) — pipeline ยังถูกเพราะ view เป็น logical + มีอยู่ก่อน; follow-up ควรเติม
     dep ฝั่ง fact ให้ DAG ครบ (3) ownership เปลี่ยนมือ — Dataform จะ `CREATE OR REPLACE`
     ทับทุกครั้งที่รัน ใครแก้ใน console จะโดนเขียนทับ
-  - **Format การอ้างอิงตาราง = 1 แบบ** (แก้ 2026-07-24 ตาม feedback): view ทั้ง 42 ไฟล์
-    ใช้ `config` → `js` (ประกาศ `<Pascal>Table` + `<Pascal>TableRef` ทุกแหล่ง รวม
-    mds/external/view อื่น) → SQL อ้าง `` `${XxxTableRef}` `` **ห้าม inline**
-    `${databuffet.DATABASE}...` ใน body (รอบแรก generate ผิด standard §3 แก้แล้ว —
-    ยืนยัน 42/42 เนื้อ SQL ไม่เปลี่ยนหลัง reformat)
-- **ไฟล์เก่ายังผสมหลาย format การอ้างอิง (tech debt)**: เช่น `fact_transcation.sqlx`
-  ใช้ js-block Ref กับ dims แต่ inline `${databuffet.DATABASE}.onetime.Transaction_Data_Mart`
-  และ `${ref(...)}` กับ validated ในไฟล์เดียว — มาตรฐานคือ js-block Ref
-  (coding-standard §3); ของใหม่ยึดแบบเดียว ของเก่าค่อยแปลงเมื่อแตะไฟล์นั้น
+  - **Format การอ้างอิงตาราง = กฎ 2 ชั้น** (แก้ 2026-07-24 ตาม feedback 2 รอบ):
+    (ก) `validated_*`/`curated_*` → `${ref(databuffet.<CONST>, "tbl")}` ไม่ครอบ backtick
+    และ **ห้ามใส่ใน `dependencies[]`** (Dataform ผูกให้เอง — §10)
+    (ข) ที่เหลือ (dim/fact, view อื่น, process, mds, onetime base, UDF, external) →
+    js-block `<Pascal>Table`/`<Pascal>TableRef` อ้างด้วย `` `${XxxTableRef}` ``
+    ห้าม inline `${databuffet.DATABASE}...` ใน body; view ที่อ่านแต่ validated/curated
+    จะ**ไม่มี js block** เลย (เช่น `Dimension_Quotation`)
+    ประวัติ: รอบแรก generate เป็น inline (ผิด §3) → รอบสองแก้เป็น js-block ทั้งหมด
+    (ยัง**ผิด** เพราะ validated/curated ต้องเป็น `ref()`) → รอบสามได้ตามนี้
+    ยืนยันทุกรอบ: เนื้อ SQL ไม่เปลี่ยน 42/42 เทียบกับ BigQuery
+- **ไฟล์เก่ายังมี inline reference (tech debt)**: `fact_transcation.sqlx` ใช้ js-block Ref
+  กับ dims และ `${ref(...)}` กับ validated ถูกแล้ว แต่ยัง inline
+  `${databuffet.DATABASE}.onetime.Transaction_Data_Mart` (ควรเป็น js-block Ref ตาม §3.2)
+  — ของใหม่ยึดกฎ 2 ชั้น ของเก่าค่อยแปลงเมื่อแตะไฟล์นั้น
 
 ## ข้อจำกัด environment
 

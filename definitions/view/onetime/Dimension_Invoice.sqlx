@@ -1,38 +1,7 @@
 config {
   type: "view",
   schema: databuffet.ONETIME,
-  dependencies: ["mih", "ar_s", "ap_s", "mih2"],
   tags: [databuffet.TAG_VIEW],
-}
-
-js {
-    const MihTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "mih",
-    };
-    const MihTableRef = `${MihTable.database}.${MihTable.schema}.${MihTable.name}`;
-
-    const ArSTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "ar_s",
-    };
-    const ArSTableRef = `${ArSTable.database}.${ArSTable.schema}.${ArSTable.name}`;
-
-    const ApSTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "ap_s",
-    };
-    const ApSTableRef = `${ApSTable.database}.${ApSTable.schema}.${ApSTable.name}`;
-
-    const Mih2Table = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "mih2",
-    };
-    const Mih2TableRef = `${Mih2Table.database}.${Mih2Table.schema}.${Mih2Table.name}`;
 }
 
 with mih_raw as (
@@ -53,10 +22,10 @@ with mih_raw as (
     END) as status_desc,
     mihcancel
 
-  FROM `${MihTableRef}`
-  left join `${ArSTableRef}`
+  FROM ${ref(databuffet.VALIDATED_MAC5, "mih")}
+  left join ${ref(databuffet.VALIDATED_MAC5, "ar_s")}
     on mihstatus = ar_scode
-  left join `${ApSTableRef}`
+  left join ${ref(databuffet.VALIDATED_MAC5, "ap_s")}
     on mihstatus = ap_scode
   WHERE mihtype = 'IS'
     and mihref1 is not null
@@ -81,10 +50,10 @@ with mih_raw as (
     END) as status_desc,
     mihcancel
     
-  FROM `${MihTableRef}`
-  left join `${ArSTableRef}`
+  FROM ${ref(databuffet.VALIDATED_MAC5, "mih")}
+  left join ${ref(databuffet.VALIDATED_MAC5, "ar_s")}
     on mihstatus = ar_scode
-  left join `${ApSTableRef}`
+  left join ${ref(databuffet.VALIDATED_MAC5, "ap_s")}
     on mihstatus = ap_scode
   /*WHERE mihtype = 'IS'
     and mihref1 is not null
@@ -97,7 +66,7 @@ with mih_raw as (
     CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2perpc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale1, 
     CAST(NULLIF(REPLACE(REGEXP_REPLACE(mih2per2pc, r'[^0-9.%]', ''), '%', ''), '') AS FLOAT64) as per_sale2,
     row_number() over(partition by mih2vnos, mih2cus order by mih2rev desc) as chk_row
-  FROM `${Mih2TableRef}`
+  FROM ${ref(databuffet.VALIDATED_MAC5, "mih2")}
   WHERE mih2cus is not null
     and mih2per2 is not null
     and mih2per2pc is not null

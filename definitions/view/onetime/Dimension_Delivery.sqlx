@@ -1,52 +1,7 @@
 config {
   type: "view",
   schema: databuffet.ONETIME,
-  dependencies: ["ttrip_document", "ttrip", "curated_mil", "tdelivery", "curated_mih", "deb"],
   tags: [databuffet.TAG_VIEW],
-}
-
-js {
-    const TtripDocumentTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "ttrip_document",
-    };
-    const TtripDocumentTableRef = `${TtripDocumentTable.database}.${TtripDocumentTable.schema}.${TtripDocumentTable.name}`;
-
-    const TtripTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "ttrip",
-    };
-    const TtripTableRef = `${TtripTable.database}.${TtripTable.schema}.${TtripTable.name}`;
-
-    const CuratedMilTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.CURATED_MAC5,
-        name: "curated_mil",
-    };
-    const CuratedMilTableRef = `${CuratedMilTable.database}.${CuratedMilTable.schema}.${CuratedMilTable.name}`;
-
-    const TdeliveryTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "tdelivery",
-    };
-    const TdeliveryTableRef = `${TdeliveryTable.database}.${TdeliveryTable.schema}.${TdeliveryTable.name}`;
-
-    const CuratedMihTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.CURATED_MAC5,
-        name: "curated_mih",
-    };
-    const CuratedMihTableRef = `${CuratedMihTable.database}.${CuratedMihTable.schema}.${CuratedMihTable.name}`;
-
-    const DebTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "deb",
-    };
-    const DebTableRef = `${DebTable.database}.${DebTable.schema}.${DebTable.name}`;
 }
 
 select td.fdocument,d.fserial_no,t.fcode,t.fvehicle
@@ -68,24 +23,24 @@ select td.fdocument,d.fserial_no,t.fcode,t.fvehicle
     end) S3
   ,count(td.fitem) qty2  
   
-from `${TtripDocumentTableRef}` as td  
-inner join `${TtripTableRef}` as t 
+from ${ref(databuffet.VALIDATED_MAC5, "ttrip_document")} as td  
+inner join ${ref(databuffet.VALIDATED_MAC5, "ttrip")} as t 
   on t.frun = td.fmaster  
-inner join (select distinct milvnos from `${CuratedMilTableRef}` where miltype = 'IS') as milIS 
+inner join (select distinct milvnos from ${ref(databuffet.CURATED_MAC5, "curated_mil")} where miltype = 'IS') as milIS 
   on td.fdocument = milIS.milvnos
 left join (         
   select fserial_no ,fmaster ,flattitude,flongtitude,fzone,fpoi ,fdatetime  
-  from `${TdeliveryTableRef}` as dl 
+  from ${ref(databuffet.VALIDATED_MAC5, "tdelivery")} as dl 
   inner join (
-    select distinct milvnos from `${CuratedMilTableRef}` where miltype = 'IS'
+    select distinct milvnos from ${ref(databuffet.CURATED_MAC5, "curated_mil")} where miltype = 'IS'
   ) as milIS2 
     on dl.fserial_no = milIS2.milvnos
 ) d 
   on td.fmaster = d.fmaster   
 
-left join `${CuratedMihTableRef}` as mh 
+left join ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mh 
   on td.fdocument = mh.mihvnos
-left join `${DebTableRef}` as deb 
+left join ${ref(databuffet.VALIDATED_MAC5, "deb")} as deb 
   on mh.mihCus = deb.debcode
 
 where td.fdocument like (case when IFNULL(d.fserial_no,'0') = '0' then '%' else  d.fserial_no end)  

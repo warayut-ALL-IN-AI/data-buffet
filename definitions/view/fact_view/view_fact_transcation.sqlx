@@ -1,7 +1,32 @@
 config {
   type: "view",
   schema: databuffet.FACT_VIEW,
-  dependencies: ["dim_calendar", "dim_product_mkt", "dim_rebate", "dim_report", "fact_transcation", "deb", "dim_guarantee", "dim_section_last", "dim_section", "dim_sale_representative", "dim_channel", "dim_sale_representative_last", "dim_department_last", "dim_director_last", "dim_change_district", "dim_cost_stk", "dim_cost_group", "dim_stk_mkt", "dim_region_last", "dim_product_master", "fact_invoice", "view_dim_aging", "fact_order", "view_dim_invoice", "dim_region", "curated_mih"],
+  dependencies: [
+    "dim_calendar",
+    "dim_product_mkt",
+    "dim_rebate",
+    "dim_report",
+    "fact_transcation",
+    "dim_guarantee",
+    "dim_section_last",
+    "dim_section",
+    "dim_sale_representative",
+    "dim_channel",
+    "dim_sale_representative_last",
+    "dim_department_last",
+    "dim_director_last",
+    "dim_change_district",
+    "dim_cost_stk",
+    "dim_cost_group",
+    "dim_stk_mkt",
+    "dim_region_last",
+    "dim_product_master",
+    "fact_invoice",
+    "view_dim_aging",
+    "fact_order",
+    "view_dim_invoice",
+    "dim_region",
+  ],
   tags: [databuffet.TAG_VIEW],
 }
 
@@ -47,13 +72,6 @@ js {
         name: "fact_transcation",
     };
     const FactTranscationTableRef = `${FactTranscationTable.database}.${FactTranscationTable.schema}.${FactTranscationTable.name}`;
-
-    const DebTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.VALIDATED_MAC5,
-        name: "deb",
-    };
-    const DebTableRef = `${DebTable.database}.${DebTable.schema}.${DebTable.name}`;
 
     const MappingInvoiceTable = {
         database: databuffet.DATABASE,
@@ -208,13 +226,6 @@ js {
         name: "dim_region",
     };
     const DimRegionTableRef = `${DimRegionTable.database}.${DimRegionTable.schema}.${DimRegionTable.name}`;
-
-    const CuratedMihTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.CURATED_MAC5,
-        name: "curated_mih",
-    };
-    const CuratedMihTableRef = `${CuratedMihTable.database}.${CuratedMihTable.schema}.${CuratedMihTable.name}`;
 }
 
 with dim_calendar as (
@@ -280,7 +291,7 @@ with dim_calendar as (
   from `${FactTranscationTableRef}` as trans
 
   -- deb
-  left join `${DebTableRef}` as deb
+  left join ${ref(databuffet.VALIDATED_MAC5, "deb")} as deb
     on trans.milCus = deb.debcode
     and trans.companyID = deb.company_id
 
@@ -668,7 +679,7 @@ with dim_calendar as (
     on fn.ProductSK = prd.ProductSK
 
   -- get mihnotes
-  left join `${CuratedMihTableRef}` as mih
+  left join ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
     on fn.companyid = mih.company_id
     and fn.milday = mih.mihday
     and fn.milmonth = mih.mihmonth

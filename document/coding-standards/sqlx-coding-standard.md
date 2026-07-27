@@ -41,12 +41,30 @@ config {
 - `dependencies` ใช้กับ action ที่อ้างด้วย string interpolation (dim, schema bootstrap)
   ส่วนตารางที่อ่านผ่าน `${ref(...)}` Dataform จัด dependency ให้เอง — ไม่ต้องใส่ซ้ำ
 
-## 3. js block — การประกาศ/อ้างอิงตารางและวิว (format เดียวทั้งโปรเจกต์)
+## 3. การอ้างอิงตาราง/วิว — เลือก 1 ใน 2 แบบตาม "ใครสร้างตารางนั้น"
 
-**กติกาเดียว**: ทุก table/view ที่ไม่ได้อ่านผ่าน `ref()` ต้องประกาศเป็น object +
-Ref string ใน `js {}` แล้วเรียกใน SQL ด้วย `` `${XxxTableRef}` `` เท่านั้น
-**ห้าม inline** `` `${databuffet.DATABASE}.${databuffet.XXX}.table` `` ใน SQL body
-และห้าม hardcode `databuffet-nonprd` หรือชื่อ dataset ตรง ๆ
+**กฎ**: ตารางที่ Dataform สร้างในชั้น validated/curated ใช้ `${ref()}`
+ที่เหลือทั้งหมดประกาศ object + Ref string ใน `js {}` — **ห้าม inline**
+`` `${databuffet.DATABASE}.${databuffet.XXX}.tbl` `` ใน SQL body และห้าม hardcode
+`databuffet-nonprd` หรือชื่อ dataset ตรง ๆ
+
+| แหล่งข้อมูล | รูปแบบ | `dependencies[]` |
+|---|---|---|
+| `validated_*`, `curated_*` | `${ref(databuffet.VALIDATED_MAC5, "deb")}` | **ห้ามใส่** — Dataform ผูกให้เอง |
+| `dimension_table`, `fact_table`, view อื่น, `process_dataset`, `mds_dataset`, `onetime` base, `function_dataset`, external | js-block `<Pascal>TableRef` | ใส่ (เฉพาะที่เป็น action ใน repo) |
+
+### 3.1 `${ref()}` — validated / curated
+
+```sql
+FROM ${ref(databuffet.CURATED_MAC5, "curated_mih")} AS mih
+LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, "deb")} AS deb ON ...
+```
+
+- 2 อาร์กิวเมนต์เสมอ: `ref(<schema constant>, "<table>")`
+- **ไม่ต้องครอบ backtick** — `ref()` คืน FQN ที่ quote มาให้แล้ว
+- ชื่อที่อ้างผ่าน `ref()` **ห้ามใส่ซ้ำใน `dependencies[]`** (§10)
+
+### 3.2 js block — ที่เหลือทั้งหมด
 
 ```javascript
 js {
@@ -65,19 +83,21 @@ FROM `${DimCompanyTableRef}`
 
 - ชื่อ: `<PascalCase>Table` + `<PascalCase>TableRef` — PascalCase แปลงจากชื่อตาราง
   (`dim_company` → `DimCompany`, `mds_data_keyaccount_master` → `MdsDataKeyaccountMaster`)
+- ต้องครอบ backtick: `` `${XxxTableRef}` ``
 - ตารางเป้าหมายของไฟล์ใช้ `name: name()` (ชื่อไฟล์ = ชื่อตาราง)
-- ใช้กติกาเดียวกันกับทุกปลายทาง: dim/fact ใน repo, curated/validated, **view อื่น**,
-  UDF dataset, และ external (`mds_dataset`, `onetime` base, `process_dataset.RLS_Customer360`)
-  — ต่างกันแค่ `schema:` ที่ชี้ constant คนละตัว
 - ประกาศเรียงตามลำดับที่ถูกใช้ครั้งแรกใน SQL และ**ประกาศเฉพาะตัวที่ใช้จริง**
-  (ไม่มี declared-but-unused)
+  (ไม่มี declared-but-unused); ถ้าไฟล์นั้นอ้างแต่ validated/curated ก็**ไม่ต้องมี js block**
 - validated: ประกาศ `pk_key` ใน js ให้ตรงกับ `uniqueKey` ใน config เสมอ (นิยามซ้ำ 2 ที่)
 
-> **หมายเหตุความไม่สม่ำเสมอที่ยังเหลือ (tech debt)**: ไฟล์ layer เดิมบางไฟล์ยังผสม
-> 3 แบบอยู่ เช่น `fact_transcation.sqlx` ใช้ js-block Ref กับ dims แต่ inline
-> `${databuffet.DATABASE}.onetime.Transaction_Data_Mart` และ `${ref(...)}` กับ validated
-> ในไฟล์เดียวกัน — ของใหม่ให้ยึด js-block Ref อย่างเดียว และค่อย ๆ แปลงของเก่าเมื่อแตะไฟล์นั้น
-> `definitions/view/` ทั้ง 42 ไฟล์ถูกจัดให้เป็น format นี้ครบแล้ว (2026-07-24)
+> ทำไม dim/fact ไม่ใช้ `ref()`: MERGE dims และ `fact_transcation` เป็น
+> `type: "operations"` ที่ target มีอยู่ก่อนใน BigQuery — Dataform ไม่ได้เป็นเจ้าของ
+> target จึง `ref()` ไม่ได้ ส่วน dim full-rebuild ที่เป็น `type: "table"` ยังคง js-block
+> ตามของเดิมเพื่อให้ทั้ง layer เขียนเหมือนกัน
+>
+> **tech debt**: ไฟล์เก่าบางไฟล์ยัง inline อยู่ เช่น `fact_transcation.sqlx` ใช้
+> `${databuffet.DATABASE}.onetime.Transaction_Data_Mart` แบบ inline (ควรเป็น js-block Ref)
+> — ของใหม่ยึดกฎข้างบน ของเก่าค่อยแปลงเมื่อแตะไฟล์นั้น
+> `definitions/view/` ทั้ง 42 ไฟล์ทำตามกฎนี้ครบแล้ว (2026-07-24)
 
 ## 4. การ cast / ทำความสะอาดข้อมูล
 
@@ -152,7 +172,8 @@ join dim_company → `WHERE is_active = TRUE` → `MdsID` ปิดท้าย 
 | ห้าม | เพราะ |
 |---|---|
 | hardcode ชื่อ dataset/project | ต้องผ่าน `databuffet.*` เพื่อย้าย environment ได้ |
-| inline `` `${databuffet.DATABASE}.${databuffet.X}.tbl` `` ใน SQL body | ต้องประกาศ object + `XxxTableRef` ใน `js {}` แล้วอ้าง `` `${XxxTableRef}` `` (§3) — format เดียวทั้งโปรเจกต์ |
+| inline `` `${databuffet.DATABASE}.${databuffet.X}.tbl` `` ใน SQL body | ต้องประกาศ object + `XxxTableRef` ใน `js {}` แล้วอ้าง `` `${XxxTableRef}` `` (§3.2) |
+| ใช้ js-block Ref กับ `validated_*` / `curated_*` | ต้องใช้ `${ref(...)}` เพื่อให้ Dataform ผูก dependency ให้ (§3.1) |
 | แก้/regenerate SK ของ MERGE dims | fact/dim อื่น persist SK พวกนั้นไว้ ข้อมูลจะชี้ผิด |
 | persist SK ของ full-rebuild dims ข้ามวัน | SK ออกเลขใหม่ทุกคืน — consumer ใหม่ต้อง rebuild รายวันตาม |
 | `CURRENT_DATE()` ไม่ระบุ timezone | เที่ยงคืน UTC ≠ เที่ยงคืนไทย ข้อมูลคลาดวัน |
