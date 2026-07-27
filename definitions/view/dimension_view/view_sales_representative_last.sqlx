@@ -5,6 +5,36 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const ViewDimSaleRepresentativeLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_VIEW,
+        name: "view_dim_sale_representative_last",
+    };
+    const ViewDimSaleRepresentativeLastTableRef = `${ViewDimSaleRepresentativeLastTable.database}.${ViewDimSaleRepresentativeLastTable.schema}.${ViewDimSaleRepresentativeLastTable.name}`;
+
+    const DimDepartmentLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_department_last",
+    };
+    const DimDepartmentLastTableRef = `${DimDepartmentLastTable.database}.${DimDepartmentLastTable.schema}.${DimDepartmentLastTable.name}`;
+
+    const DimSectionLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_last",
+    };
+    const DimSectionLastTableRef = `${DimSectionLastTable.database}.${DimSectionLastTable.schema}.${DimSectionLastTable.name}`;
+
+    const DimRegionLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region_last",
+    };
+    const DimRegionLastTableRef = `${DimRegionLastTable.database}.${DimRegionLastTable.schema}.${DimRegionLastTable.name}`;
+}
+
 SELECT
   dim_sale.*,
   dim_region.RegionID,
@@ -12,13 +42,13 @@ SELECT
   dim_section.SectionID,
   dim_section.SectionName,
   dim_depart.DepartmentName
-FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_VIEW}.view_dim_sale_representative_last` as dim_sale
-LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_department_last` as dim_depart
+FROM `${ViewDimSaleRepresentativeLastTableRef}` as dim_sale
+LEFT JOIN `${DimDepartmentLastTableRef}` as dim_depart
   ON dim_depart.DepartmentSK = dim_sale.DepartmentSK
   and dim_depart.CompanySK = dim_sale.CompanySK
-LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section_last` as dim_section
+LEFT JOIN `${DimSectionLastTableRef}` as dim_section
   ON dim_section.SectionSK = dim_depart.SectionSK
   and dim_section.CompanySK = dim_depart.CompanySK
-LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region_last` as dim_region
+LEFT JOIN `${DimRegionLastTableRef}` as dim_region
   ON dim_region.RegionSK = dim_depart.RegionSK
   and dim_region.CompanySK = dim_depart.CompanySK

@@ -5,11 +5,27 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimProductMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_mkt",
+    };
+    const DimProductMktTableRef = `${DimProductMktTable.database}.${DimProductMktTable.schema}.${DimProductMktTable.name}`;
+
+    const DimProductMktDirectorTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_mkt_director",
+    };
+    const DimProductMktDirectorTableRef = `${DimProductMktDirectorTable.database}.${DimProductMktDirectorTable.schema}.${DimProductMktDirectorTable.name}`;
+}
+
 SELECT
   mkt.ProductMktSK,
   dir.ProductMktDirectorSK,
   mkt.* except(ProductMktSK)
-FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_mkt` as mkt
-LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_mkt_director` as dir
+FROM `${DimProductMktTableRef}` as mkt
+LEFT JOIN `${DimProductMktDirectorTableRef}` as dir
   on mkt.TypeMarketingID = dir.TypeMarketingID
   and mkt.CompanyID = dir.CompanyID

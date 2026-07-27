@@ -5,15 +5,31 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimAgingHistoryTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_aging_history",
+    };
+    const DimAgingHistoryTableRef = `${DimAgingHistoryTable.database}.${DimAgingHistoryTable.schema}.${DimAgingHistoryTable.name}`;
+
+    const ViewDimChannelTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_VIEW,
+        name: "view_dim_channel",
+    };
+    const ViewDimChannelTableRef = `${ViewDimChannelTable.database}.${ViewDimChannelTable.schema}.${ViewDimChannelTable.name}`;
+}
+
 select 
   dim_channel.ChannelSK,
   dim_channel.ChannelFinanceSK,
   dim_channel.ChannelSaleSK,
   dim_channel.ChannelCostSK,
   dim_aging.* 
-from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_aging_history` as dim_aging
+from `${DimAgingHistoryTableRef}` as dim_aging
 
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_VIEW}.view_dim_channel` as dim_channel
+left join `${ViewDimChannelTableRef}` as dim_channel
   on dim_aging.CompanySK = dim_channel.CompanySK
   and dim_aging.cfsDep = dim_channel.DepCode
 

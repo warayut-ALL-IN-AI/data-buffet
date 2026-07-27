@@ -5,13 +5,36 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const MdsDataOrgEmployeeMappingCenterTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.MDS_DATASET,
+        name: "mds_data_org_employee_mapping_center",
+    };
+    const MdsDataOrgEmployeeMappingCenterTableRef = `${MdsDataOrgEmployeeMappingCenterTable.database}.${MdsDataOrgEmployeeMappingCenterTable.schema}.${MdsDataOrgEmployeeMappingCenterTable.name}`;
+
+    const ViewRlsDataTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.PROCESS_DATASET,
+        name: "view_rls_data",
+    };
+    const ViewRlsDataTableRef = `${ViewRlsDataTable.database}.${ViewRlsDataTable.schema}.${ViewRlsDataTable.name}`;
+
+    const RLSCustomer360Table = {
+        database: databuffet.DATABASE,
+        schema: databuffet.PROCESS_DATASET,
+        name: "RLS_Customer360",
+    };
+    const RLSCustomer360TableRef = `${RLSCustomer360Table.database}.${RLSCustomer360Table.schema}.${RLSCustomer360Table.name}`;
+}
+
 WITH emp_map AS (
   SELECT 
     TRIM(employeeid) AS employeeid, 
     TRIM(employeetype) AS employeetype,
     TRIM(employeename) AS employeename, 
     TRIM(employeeemail) AS employeeemail
-  FROM `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_org_employee_mapping_center` 
+  FROM `${MdsDataOrgEmployeeMappingCenterTableRef}` 
   WHERE is_active = TRUE
     AND LOWER(TRIM(employeetype)) = 'sales'
     AND employeeid IS NOT NULL
@@ -22,7 +45,7 @@ WITH emp_map AS (
     emp.employeeemail AS EmployeeEmail, 
     rls.LevelName,
     rls.LevelValue
-  FROM `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.view_rls_data` AS rls
+  FROM `${ViewRlsDataTableRef}` AS rls
   INNER JOIN emp_map AS emp
     ON rls.EmployeeID = emp.employeeid
 
@@ -30,7 +53,7 @@ WITH emp_map AS (
   SELECT 
     milCus,
     SectionID
-  FROM `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.RLS_Customer360`
+  FROM `${RLSCustomer360TableRef}`
   WHERE SectionID IS NOT NULL
 
 ), agg_rls_customer AS (
@@ -65,7 +88,7 @@ WITH emp_map AS (
 --     trim(employeetype) as employeetype,
 --     trim(employeename) as employeename, 
 --     trim(employeeemail) as employeeemail,
---   FROM `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_org_employee_mapping_center` 
+--   FROM `${MdsDataOrgEmployeeMappingCenterTableRef}` 
 --   WHERE is_active = true
 --     and lower(trim(employeetype)) = 'sales'
 --     and employeeid is not null
@@ -77,7 +100,7 @@ WITH emp_map AS (
 --     emp.EmployeeEmail, 
 --     rls.LevelName,
 --     rls.LevelValue,
---   from `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.view_rls_data` as rls
+--   from `${ViewRlsDataTableRef}` as rls
 --   inner join emp_map as emp
 --     on rls.EmployeeID = emp.employeeid
 --   -- where emp.EmployeeEmail is not null

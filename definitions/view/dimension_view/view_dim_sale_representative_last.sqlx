@@ -5,6 +5,22 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimSaleRepresentativeLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative_last",
+    };
+    const DimSaleRepresentativeLastTableRef = `${DimSaleRepresentativeLastTable.database}.${DimSaleRepresentativeLastTable.schema}.${DimSaleRepresentativeLastTable.name}`;
+
+    const DimDepartmentLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_department_last",
+    };
+    const DimDepartmentLastTableRef = `${DimDepartmentLastTable.database}.${DimDepartmentLastTable.schema}.${DimDepartmentLastTable.name}`;
+}
+
 select Sales_Rep.*, Department.DepartmentName ,
 
 -------Oat เพิ่ม ไว้ ทำตัว Sort -------
@@ -21,7 +37,7 @@ FORMAT('%02d',
   ) AS Sort
 -------Oat เพิ่ม ไว้ ทำตัว Sort -------
 
-from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative_last` as Sales_Rep
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_department_last` as Department 
+from `${DimSaleRepresentativeLastTableRef}` as Sales_Rep
+left join `${DimDepartmentLastTableRef}` as Department 
   on Sales_Rep.DepartmentSK = Department.DepartmentSK
   and Sales_Rep.CompanySK = Department.CompanySK

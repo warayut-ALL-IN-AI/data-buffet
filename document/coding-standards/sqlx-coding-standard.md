@@ -41,9 +41,12 @@ config {
 - `dependencies` ใช้กับ action ที่อ้างด้วย string interpolation (dim, schema bootstrap)
   ส่วนตารางที่อ่านผ่าน `${ref(...)}` Dataform จัด dependency ให้เอง — ไม่ต้องใส่ซ้ำ
 
-## 3. js block
+## 3. js block — การประกาศ/อ้างอิงตารางและวิว (format เดียวทั้งโปรเจกต์)
 
-ตารางที่ไม่ได้อ่านผ่าน `ref()` ให้ประกาศ object + Ref string ตาม convention:
+**กติกาเดียว**: ทุก table/view ที่ไม่ได้อ่านผ่าน `ref()` ต้องประกาศเป็น object +
+Ref string ใน `js {}` แล้วเรียกใน SQL ด้วย `` `${XxxTableRef}` `` เท่านั้น
+**ห้าม inline** `` `${databuffet.DATABASE}.${databuffet.XXX}.table` `` ใน SQL body
+และห้าม hardcode `databuffet-nonprd` หรือชื่อ dataset ตรง ๆ
 
 ```javascript
 js {
@@ -56,9 +59,25 @@ js {
 }
 ```
 
-- ชื่อ: `<PascalCase>Table` + `<PascalCase>TableRef`
+```sql
+FROM `${DimCompanyTableRef}`
+```
+
+- ชื่อ: `<PascalCase>Table` + `<PascalCase>TableRef` — PascalCase แปลงจากชื่อตาราง
+  (`dim_company` → `DimCompany`, `mds_data_keyaccount_master` → `MdsDataKeyaccountMaster`)
 - ตารางเป้าหมายของไฟล์ใช้ `name: name()` (ชื่อไฟล์ = ชื่อตาราง)
+- ใช้กติกาเดียวกันกับทุกปลายทาง: dim/fact ใน repo, curated/validated, **view อื่น**,
+  UDF dataset, และ external (`mds_dataset`, `onetime` base, `process_dataset.RLS_Customer360`)
+  — ต่างกันแค่ `schema:` ที่ชี้ constant คนละตัว
+- ประกาศเรียงตามลำดับที่ถูกใช้ครั้งแรกใน SQL และ**ประกาศเฉพาะตัวที่ใช้จริง**
+  (ไม่มี declared-but-unused)
 - validated: ประกาศ `pk_key` ใน js ให้ตรงกับ `uniqueKey` ใน config เสมอ (นิยามซ้ำ 2 ที่)
+
+> **หมายเหตุความไม่สม่ำเสมอที่ยังเหลือ (tech debt)**: ไฟล์ layer เดิมบางไฟล์ยังผสม
+> 3 แบบอยู่ เช่น `fact_transcation.sqlx` ใช้ js-block Ref กับ dims แต่ inline
+> `${databuffet.DATABASE}.onetime.Transaction_Data_Mart` และ `${ref(...)}` กับ validated
+> ในไฟล์เดียวกัน — ของใหม่ให้ยึด js-block Ref อย่างเดียว และค่อย ๆ แปลงของเก่าเมื่อแตะไฟล์นั้น
+> `definitions/view/` ทั้ง 42 ไฟล์ถูกจัดให้เป็น format นี้ครบแล้ว (2026-07-24)
 
 ## 4. การ cast / ทำความสะอาดข้อมูล
 
@@ -133,6 +152,7 @@ join dim_company → `WHERE is_active = TRUE` → `MdsID` ปิดท้าย 
 | ห้าม | เพราะ |
 |---|---|
 | hardcode ชื่อ dataset/project | ต้องผ่าน `databuffet.*` เพื่อย้าย environment ได้ |
+| inline `` `${databuffet.DATABASE}.${databuffet.X}.tbl` `` ใน SQL body | ต้องประกาศ object + `XxxTableRef` ใน `js {}` แล้วอ้าง `` `${XxxTableRef}` `` (§3) — format เดียวทั้งโปรเจกต์ |
 | แก้/regenerate SK ของ MERGE dims | fact/dim อื่น persist SK พวกนั้นไว้ ข้อมูลจะชี้ผิด |
 | persist SK ของ full-rebuild dims ข้ามวัน | SK ออกเลขใหม่ทุกคืน — consumer ใหม่ต้อง rebuild รายวันตาม |
 | `CURRENT_DATE()` ไม่ระบุ timezone | เที่ยงคืน UTC ≠ เที่ยงคืนไทย ข้อมูลคลาดวัน |

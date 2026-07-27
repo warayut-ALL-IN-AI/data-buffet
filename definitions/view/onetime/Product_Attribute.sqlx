@@ -5,6 +5,64 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const StkTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "stk",
+    };
+    const StkTableRef = `${StkTable.database}.${StkTable.schema}.${StkTable.name}`;
+
+    const StgTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "stg",
+    };
+    const StgTableRef = `${StgTable.database}.${StgTable.schema}.${StgTable.name}`;
+
+    const ProductTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MASTERSKU,
+        name: "product",
+    };
+    const ProductTableRef = `${ProductTable.database}.${ProductTable.schema}.${ProductTable.name}`;
+
+    const ProductDetailTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MASTERSKU,
+        name: "product_detail",
+    };
+    const ProductDetailTableRef = `${ProductDetailTable.database}.${ProductDetailTable.schema}.${ProductDetailTable.name}`;
+
+    const BrandTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MASTERSKU,
+        name: "brand",
+    };
+    const BrandTableRef = `${BrandTable.database}.${BrandTable.schema}.${BrandTable.name}`;
+
+    const VendorTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MASTERSKU,
+        name: "vendor",
+    };
+    const VendorTableRef = `${VendorTable.database}.${VendorTable.schema}.${VendorTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const DimProductMasterTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_master",
+    };
+    const DimProductMasterTableRef = `${DimProductMasterTable.database}.${DimProductMasterTable.schema}.${DimProductMasterTable.name}`;
+}
+
 select 
 dim_product.ProductSK,
 dim_com.CompanySK,
@@ -24,19 +82,19 @@ pd.pd_material as ProductMaterials,
 pd.pd_model as ProductModel
 
 
-from `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stk` a  
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stg` g 
+from `${StkTableRef}` a  
+left join `${StgTableRef}` g 
   on a.STKgroup = g.STGcode 
   and a.company_id = g.company_id
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product` p 
+left join `${ProductTableRef}` p 
   on a.STKcode885 = p.prd_barcode
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product_detail` pd 
+left join `${ProductDetailTableRef}` pd 
   on p.prd_id = pd.pd_prd_id
---left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.brand` brand on p.prd_brand_id = brand.bra_id
---left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.vendor` vendor on p.prd_vendor_id = vendor.vd_id
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_company` as dim_com
+--left join `${BrandTableRef}` brand on p.prd_brand_id = brand.bra_id
+--left join `${VendorTableRef}` vendor on p.prd_vendor_id = vendor.vd_id
+left join `${DimCompanyTableRef}` as dim_com
   on a.company_id = dim_com.companyID
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_master` as dim_product
+left join `${DimProductMasterTableRef}` as dim_product
   on a.stkcode = dim_product.ProductCode
   and a.company_id = dim_product.companyID
 where a.STKcode885 is not null and a.STKcode885 <> '' 

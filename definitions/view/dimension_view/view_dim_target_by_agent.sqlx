@@ -5,6 +5,78 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimSaleRepresentativeLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative_last",
+    };
+    const DimSaleRepresentativeLastTableRef = `${DimSaleRepresentativeLastTable.database}.${DimSaleRepresentativeLastTable.schema}.${DimSaleRepresentativeLastTable.name}`;
+
+    const DimTargetProductGroupTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_target_product_group",
+    };
+    const DimTargetProductGroupTableRef = `${DimTargetProductGroupTable.database}.${DimTargetProductGroupTable.schema}.${DimTargetProductGroupTable.name}`;
+
+    const DimProductMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_mkt",
+    };
+    const DimProductMktTableRef = `${DimProductMktTable.database}.${DimProductMktTable.schema}.${DimProductMktTable.name}`;
+
+    const DimReportTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_report",
+    };
+    const DimReportTableRef = `${DimReportTable.database}.${DimReportTable.schema}.${DimReportTable.name}`;
+
+    const DimRateTargetTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_rate_target",
+    };
+    const DimRateTargetTableRef = `${DimRateTargetTable.database}.${DimRateTargetTable.schema}.${DimRateTargetTable.name}`;
+
+    const DimDepartmentLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_department_last",
+    };
+    const DimDepartmentLastTableRef = `${DimDepartmentLastTable.database}.${DimDepartmentLastTable.schema}.${DimDepartmentLastTable.name}`;
+
+    const DimRegionLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region_last",
+    };
+    const DimRegionLastTableRef = `${DimRegionLastTable.database}.${DimRegionLastTable.schema}.${DimRegionLastTable.name}`;
+
+    const DimSectionLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_last",
+    };
+    const DimSectionLastTableRef = `${DimSectionLastTable.database}.${DimSectionLastTable.schema}.${DimSectionLastTable.name}`;
+
+    const DimRegionManagerLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region_manager_last",
+    };
+    const DimRegionManagerLastTableRef = `${DimRegionManagerLastTable.database}.${DimRegionManagerLastTable.schema}.${DimRegionManagerLastTable.name}`;
+
+    const DimSectionManagerLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_manager_last",
+    };
+    const DimSectionManagerLastTableRef = `${DimSectionManagerLastTable.database}.${DimSectionManagerLastTable.schema}.${DimSectionManagerLastTable.name}`;
+}
+
 -- with exc_salerep as (
 --   SELECT SaleRepSK
 --   FROM (
@@ -12,7 +84,7 @@ config {
 --       SaleRepSK,
 --       DepartmentID,
 --       COUNT(DISTINCT IF(DepartmentID IS NULL, 0, 1)) OVER(PARTITION BY EmployeeID) as dept_status_count
---     FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative_last`
+--     FROM `${DimSaleRepresentativeLastTableRef}`
 --   )
 --   WHERE dept_status_count > 1
 --     AND DepartmentID IS NULL
@@ -23,8 +95,8 @@ with target_table as (
     dim_p_mkt.ProductMktSK,
     dim_p_mkt.MarketingGroupID as MarketingGroupID_pg,
     dim_tg_pg.*, 
-  from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_target_product_group` as dim_tg_pg
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_mkt` as dim_p_mkt
+  from `${DimTargetProductGroupTableRef}` as dim_tg_pg
+  left join `${DimProductMktTableRef}` as dim_p_mkt
     on dim_tg_pg.MarketingGroupID = dim_p_mkt.MarketingGroupID
     and dim_tg_pg.SubMarketingID = dim_p_mkt.SubMarketingID
     and dim_tg_pg.SegmentID = dim_p_mkt.SegmentID
@@ -42,11 +114,11 @@ with target_table as (
             AND MarketingGroupID IS NULL THEN 3
       ELSE 2
     END) AS Segment
-  FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_report`
+  FROM `${DimReportTableRef}`
 
 ), rate_target_table as (
   select CompanySK, RateTargetSK, year, month, productgroupid, TargetID, EmployeeID, Percent, DepartmentID
-  from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_rate_target`
+  from `${DimRateTargetTableRef}`
 
 ), rate_target_table_1 as (
   select *
@@ -198,23 +270,23 @@ with target_table as (
     dim_report.ReportSK,
     a.* except(MarketingGroupID_pg)
   from mix_table as a
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative_last` as l 
+  left join `${DimSaleRepresentativeLastTableRef}` as l 
     on a.employeeid = l.employeeid 
     and a.DepartmentID = l.DepartmentID
     and a.CompanySK = l.CompanySK
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_department_last` as c 
+  left join `${DimDepartmentLastTableRef}` as c 
     on c.DepartmentSK = l.DepartmentSK
     and c.CompanySK = l.CompanySK
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region_last` as d 
+  left join `${DimRegionLastTableRef}` as d 
     on c.RegionSK = d.RegionSK
     and c.CompanySK = d.CompanySK
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section_last` e 
+  left join `${DimSectionLastTableRef}` e 
     on c.SectionSK = e.SectionSK
     and c.CompanySK = e.CompanySK
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region_manager_last` f 
+  left join `${DimRegionManagerLastTableRef}` f 
     on d.RegionManagerSK = f.RegionManagerSK
     and d.CompanySK = f.CompanySK
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section_manager_last` g 
+  left join `${DimSectionManagerLastTableRef}` g 
     on e.SectionManagerSK = g.SectionManagerSK
     and e.CompanySK = g.CompanySK
   left join dim_report as dim_report
@@ -245,7 +317,7 @@ FROM (
     final.* except(SaleRepSKLast)
 
   from final
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative_last` as l 
+  left join `${DimSaleRepresentativeLastTableRef}` as l 
     on final.CompanySK = l.CompanySK
     and final.employeeid = l.employeeid 
     and l.DepartmentID is null

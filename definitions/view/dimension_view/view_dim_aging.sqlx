@@ -5,6 +5,36 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimAgingTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_aging",
+    };
+    const DimAgingTableRef = `${DimAgingTable.database}.${DimAgingTable.schema}.${DimAgingTable.name}`;
+
+    const ViewDimChannelTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_VIEW,
+        name: "view_dim_channel",
+    };
+    const ViewDimChannelTableRef = `${ViewDimChannelTable.database}.${ViewDimChannelTable.schema}.${ViewDimChannelTable.name}`;
+
+    const DimSaleRepresentativeLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative_last",
+    };
+    const DimSaleRepresentativeLastTableRef = `${DimSaleRepresentativeLastTable.database}.${DimSaleRepresentativeLastTable.schema}.${DimSaleRepresentativeLastTable.name}`;
+
+    const DimAgingRangTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_aging_rang",
+    };
+    const DimAgingRangTableRef = `${DimAgingRangTable.database}.${DimAgingRangTable.schema}.${DimAgingRangTable.name}`;
+}
+
 with dim_agin_raw as (
   select 
     -- cfs.cfsdateid,
@@ -43,11 +73,11 @@ with dim_agin_raw as (
       ELSE NULL
     END) as ReceiptAgeDays,
   
-  from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_aging` as dim_aging
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_VIEW}.view_dim_channel` as dim_channel
+  from `${DimAgingTableRef}` as dim_aging
+  left join `${ViewDimChannelTableRef}` as dim_channel
     on dim_aging.CompanySK = dim_channel.CompanySK
     and dim_aging.cfsDep = dim_channel.DepCode
-  -- left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative_last` as dim_sale
+  -- left join `${DimSaleRepresentativeLastTableRef}` as dim_sale
   --   on dim_aging.CompanySK = dim_sale.CompanySK
   --   and dim_aging.cfsDep = dim_sale.DepartmentID
   --   and	dim_aging.cfsPer = dim_sale.EmployeeID
@@ -73,7 +103,7 @@ select distinct
   
   ReceiptAgeDays
 from dim_agin_raw as raw
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_aging_rang` as dim_aging_rang
+left join `${DimAgingRangTableRef}` as dim_aging_rang
   on raw.CompanySK = raw.CompanySK
   and DayRange between dim_aging_rang.AgingDayMin and dim_aging_rang.AgingDayMax
 qualify row_number() over(partition by raw.AgingSK order by ReceiptAgeDays desc) = 1

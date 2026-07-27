@@ -5,6 +5,36 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimChannelTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_channel",
+    };
+    const DimChannelTableRef = `${DimChannelTable.database}.${DimChannelTable.schema}.${DimChannelTable.name}`;
+
+    const DimChannelFinanceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_channel_finance",
+    };
+    const DimChannelFinanceTableRef = `${DimChannelFinanceTable.database}.${DimChannelFinanceTable.schema}.${DimChannelFinanceTable.name}`;
+
+    const DimChannelSalesTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_channel_sales",
+    };
+    const DimChannelSalesTableRef = `${DimChannelSalesTable.database}.${DimChannelSalesTable.schema}.${DimChannelSalesTable.name}`;
+
+    const DimChannelCostTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_channel_cost",
+    };
+    const DimChannelCostTableRef = `${DimChannelCostTable.database}.${DimChannelCostTable.schema}.${DimChannelCostTable.name}`;
+}
+
 SELECT 
   t1.ChannelSK,
   t2.ChannelFinanceSK,
@@ -35,13 +65,13 @@ SELECT
   t1.ChannelDDivision03,
   t1.ChannelDSubDivision04,
   t1.DummyChannel,
-FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_channel` as t1
-LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_channel_finance` as t2
+FROM `${DimChannelTableRef}` as t1
+LEFT JOIN `${DimChannelFinanceTableRef}` as t2
   on t1.ChannelIDFinance = t2.ChannelIDFinance
   and t1.CompanySK = t2.CompanySK
-LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_channel_sales` as t3
+LEFT JOIN `${DimChannelSalesTableRef}` as t3
   on t1.ChannelID = t3.ChannelID
   and t1.CompanySK = t3.CompanySK
-LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_channel_cost` as t4
+LEFT JOIN `${DimChannelCostTableRef}` as t4
   on t1.ChannelCostID = t4.ChannelCostID
   and t1.CompanySK = t4.CompanySK

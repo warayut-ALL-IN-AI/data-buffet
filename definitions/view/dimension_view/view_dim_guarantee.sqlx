@@ -5,9 +5,25 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimGuaranteeTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_guarantee",
+    };
+    const DimGuaranteeTableRef = `${DimGuaranteeTable.database}.${DimGuaranteeTable.schema}.${DimGuaranteeTable.name}`;
+
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+}
+
 SELECT cust.CustomerSK, guar.*
-FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_guarantee` as guar
-LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_customer` as cust
+FROM `${DimGuaranteeTableRef}` as guar
+LEFT JOIN `${DimCustomerTableRef}` as cust
   on guar.CustomerCode = cust.debcode
   and guar.CompanySK = cust.CompanySK
 WHERE cust.CustomerSK is not null

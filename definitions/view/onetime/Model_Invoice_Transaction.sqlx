@@ -5,6 +5,127 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const ViewFactTranscationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_VIEW,
+        name: "view_fact_transcation",
+    };
+    const ViewFactTranscationTableRef = `${ViewFactTranscationTable.database}.${ViewFactTranscationTable.schema}.${ViewFactTranscationTable.name}`;
+
+    const DimSaleRepresentativeLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative_last",
+    };
+    const DimSaleRepresentativeLastTableRef = `${DimSaleRepresentativeLastTable.database}.${DimSaleRepresentativeLastTable.schema}.${DimSaleRepresentativeLastTable.name}`;
+
+    const DimDepartmentLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_department_last",
+    };
+    const DimDepartmentLastTableRef = `${DimDepartmentLastTable.database}.${DimDepartmentLastTable.schema}.${DimDepartmentLastTable.name}`;
+
+    const DimSectionLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_last",
+    };
+    const DimSectionLastTableRef = `${DimSectionLastTable.database}.${DimSectionLastTable.schema}.${DimSectionLastTable.name}`;
+
+    const DimSectionManagerLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_manager_last",
+    };
+    const DimSectionManagerLastTableRef = `${DimSectionManagerLastTable.database}.${DimSectionManagerLastTable.schema}.${DimSectionManagerLastTable.name}`;
+
+    const DimRegionManagerLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region_manager_last",
+    };
+    const DimRegionManagerLastTableRef = `${DimRegionManagerLastTable.database}.${DimRegionManagerLastTable.schema}.${DimRegionManagerLastTable.name}`;
+
+    const DimRegionLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region_last",
+    };
+    const DimRegionLastTableRef = `${DimRegionLastTable.database}.${DimRegionLastTable.schema}.${DimRegionLastTable.name}`;
+
+    const DimDirectorLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_director_last",
+    };
+    const DimDirectorLastTableRef = `${DimDirectorLastTable.database}.${DimDirectorLastTable.schema}.${DimDirectorLastTable.name}`;
+
+    const DimProductMasterTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_master",
+    };
+    const DimProductMasterTableRef = `${DimProductMasterTable.database}.${DimProductMasterTable.schema}.${DimProductMasterTable.name}`;
+
+    const DimProductMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_mkt",
+    };
+    const DimProductMktTableRef = `${DimProductMktTable.database}.${DimProductMktTable.schema}.${DimProductMktTable.name}`;
+
+    const ViewDimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_VIEW,
+        name: "view_dim_customer",
+    };
+    const ViewDimCustomerTableRef = `${ViewDimCustomerTable.database}.${ViewDimCustomerTable.schema}.${ViewDimCustomerTable.name}`;
+
+    const DimInvoiceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_invoice",
+    };
+    const DimInvoiceTableRef = `${DimInvoiceTable.database}.${DimInvoiceTable.schema}.${DimInvoiceTable.name}`;
+
+    const DimPaymentTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_payment",
+    };
+    const DimPaymentTableRef = `${DimPaymentTable.database}.${DimPaymentTable.schema}.${DimPaymentTable.name}`;
+
+    const DimDoctypeTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_doctype",
+    };
+    const DimDoctypeTableRef = `${DimDoctypeTable.database}.${DimDoctypeTable.schema}.${DimDoctypeTable.name}`;
+
+    const DimChannelTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_channel",
+    };
+    const DimChannelTableRef = `${DimChannelTable.database}.${DimChannelTable.schema}.${DimChannelTable.name}`;
+
+    const DimChannelCostTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_channel_cost",
+    };
+    const DimChannelCostTableRef = `${DimChannelCostTable.database}.${DimChannelCostTable.schema}.${DimChannelCostTable.name}`;
+
+    const DimReportTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_report",
+    };
+    const DimReportTableRef = `${DimReportTable.database}.${DimReportTable.schema}.${DimReportTable.name}`;
+}
+
 select      
       Sales_Tran.mix_date as InvoiceDate
       ,Sales_Tran.milYear as InvoiceYear
@@ -83,60 +204,60 @@ select
       ,Sales_Tran.TargetBySaleDayofworkSK
 
       
-      from `${databuffet.DATABASE}.${databuffet.FACT_VIEW}.view_fact_transcation` Sales_Tran
+      from `${ViewFactTranscationTableRef}` Sales_Tran
 
 left join (
       select Sales_Rep.*, Department.DepartmentName 
-      from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative_last` as Sales_Rep
-      left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_department_last` as Department 
+      from `${DimSaleRepresentativeLastTableRef}` as Sales_Rep
+      left join `${DimDepartmentLastTableRef}` as Department 
             on Sales_Rep.DepartmentSK = Department.DepartmentSK
             and Sales_Rep.CompanySK = Department.CompanySK
 ) SalesPer on Sales_Tran.SaleRepSKLast = SalesPer.SaleRepSK
       and Sales_Tran.CompanySK = SalesPer.CompanySK
 
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section_last` as Section 
+left join `${DimSectionLastTableRef}` as Section 
       on Sales_Tran.ChangeSectionSKLast = Section.SectionSK
       and Sales_Tran.CompanySK = Section.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section_manager_last` as SectionM 
+left join `${DimSectionManagerLastTableRef}` as SectionM 
       on  Sales_Tran.SectionManagerSKLast = SectionM.SectionManagerSK
       and Sales_Tran.CompanySK = SectionM.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region_manager_last` as RegionM 
+left join `${DimRegionManagerLastTableRef}` as RegionM 
       on  Sales_Tran.RegionManagerSKLast = RegionM.RegionManagerSK
       and Sales_Tran.CompanySK = RegionM.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region_last` as Region 
+left join `${DimRegionLastTableRef}` as Region 
       on  Sales_Tran.RegionSKLast = Region.RegionSK
       and Sales_Tran.CompanySK = Region.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_director_last` as director 
+left join `${DimDirectorLastTableRef}` as director 
       on  Sales_Tran.DirectorSKLast = director.DirectorSK
       and Sales_Tran.CompanySK = director.CompanySK
 
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_master` as ProductMaster 
+left join `${DimProductMasterTableRef}` as ProductMaster 
       on  Sales_Tran.milstk = ProductMaster.ProductCode
       and Sales_Tran.CompanySK = ProductMaster.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_mkt` as ProductMkt 
+left join `${DimProductMktTableRef}` as ProductMkt 
       on  Sales_Tran.ProductMktSK = ProductMkt.ProductMktSK
       and Sales_Tran.CompanySK = ProductMkt.CompanySK
 
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_VIEW}.view_dim_customer` as Customer 
+left join `${ViewDimCustomerTableRef}` as Customer 
       on  Sales_Tran.milCus = Customer.debcode
       and Sales_Tran.CompanySK = Customer.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_invoice` as inv 
+left join `${DimInvoiceTableRef}` as inv 
       on Sales_Tran.invoiceSK = inv.InvoiceSK
       and Sales_Tran.CompanySK = inv.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_payment` as Payment 
+left join `${DimPaymentTableRef}` as Payment 
       on Sales_Tran.PaymentSK = Payment.PaymentSK
       and Sales_Tran.CompanySK = Payment.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_doctype` as DocType 
+left join `${DimDoctypeTableRef}` as DocType 
       on Sales_Tran.milType = DocType.Code
       and Sales_Tran.CompanySK = DocType.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_channel` as Channel 
+left join `${DimChannelTableRef}` as Channel 
       on Sales_Tran.ChannelSK = Channel.ChannelSK
       and Sales_Tran.CompanySK = Channel.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_channel_cost` as ChannelCost 
+left join `${DimChannelCostTableRef}` as ChannelCost 
       on Sales_Tran.ChannelCostSK = ChannelCost.ChannelCostSK
       and Sales_Tran.CompanySK = ChannelCost.CompanySK
 
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_report` as Report
+left join `${DimReportTableRef}` as Report
       on Sales_Tran.ReportSK = Report.ReportSK
       and Sales_Tran.CompanySK = Report.CompanySK
 

@@ -5,6 +5,15 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const CuratedTbookQuotationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.CURATED_MAC5,
+        name: "curated_tbook_quotation",
+    };
+    const CuratedTbookQuotationTableRef = `${CuratedTbookQuotationTable.database}.${CuratedTbookQuotationTable.schema}.${CuratedTbookQuotationTable.name}`;
+}
+
 select 
   ID,
   Running, 
@@ -18,4 +27,4 @@ select
   PriceValidity,
   TermDelivery,
   TermPayment 
-from `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_tbook_quotation`
+from `${CuratedTbookQuotationTableRef}`

@@ -5,6 +5,29 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const MdsDataOrgRlsSpecialTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.MDS_DATASET,
+        name: "mds_data_org_rls_special",
+    };
+    const MdsDataOrgRlsSpecialTableRef = `${MdsDataOrgRlsSpecialTable.database}.${MdsDataOrgRlsSpecialTable.schema}.${MdsDataOrgRlsSpecialTable.name}`;
+
+    const MdsDataOrgEmployeeMappingCenterTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.MDS_DATASET,
+        name: "mds_data_org_employee_mapping_center",
+    };
+    const MdsDataOrgEmployeeMappingCenterTableRef = `${MdsDataOrgEmployeeMappingCenterTable.database}.${MdsDataOrgEmployeeMappingCenterTable.schema}.${MdsDataOrgEmployeeMappingCenterTable.name}`;
+
+    const RLSCustomer360Table = {
+        database: databuffet.DATABASE,
+        schema: databuffet.PROCESS_DATASET,
+        name: "RLS_Customer360",
+    };
+    const RLSCustomer360TableRef = `${RLSCustomer360Table.database}.${RLSCustomer360Table.schema}.${RLSCustomer360Table.name}`;
+}
+
 WITH mds_data AS (
   SELECT 
     TRIM(rls.employeeid) as EmployeeID,
@@ -21,8 +44,8 @@ WITH mds_data AS (
     IFNULL(TRIM(rls.MktSubGroupID), 'ALL') as MktSubGroupID, 
     IFNULL(TRIM(rls.MktSegmentID), 'ALL') as MktSegmentID,
     IFNULL(FlagCustomer, false) as FlageCustomer,
-  FROM `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_org_rls_special` as rls
-  INNER JOIN `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_org_employee_mapping_center` as emp
+  FROM `${MdsDataOrgRlsSpecialTableRef}` as rls
+  INNER JOIN `${MdsDataOrgEmployeeMappingCenterTableRef}` as emp
     on emp.is_active = true
     AND LOWER(employeetype) IN ('special', 'mkt')
     AND rls.EmployeeEmail = emp.EmployeeEmail
@@ -31,7 +54,7 @@ WITH mds_data AS (
 
 ), rls_customer_raw as (
   select milCus, DirectorID, RegionID, SectionID
-  from `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.RLS_Customer360`
+  from `${RLSCustomer360TableRef}`
 
 ), normal_pivoted_raw AS (
   SELECT 
@@ -104,7 +127,7 @@ WITH mds_data AS (
   SELECT 
     milCus,
     SPLIT(single_product, ':') AS split_hierarchy
-  FROM `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.RLS_Customer360`,
+  FROM `${RLSCustomer360TableRef}`,
     UNNEST(SPLIT(ProductMkt, '|')) AS single_product 
   WHERE ProductMkt IS NOT NULL
 

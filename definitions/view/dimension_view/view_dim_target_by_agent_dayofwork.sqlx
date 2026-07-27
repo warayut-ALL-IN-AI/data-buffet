@@ -5,9 +5,74 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimCalendarTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_calendar",
+    };
+    const DimCalendarTableRef = `${DimCalendarTable.database}.${DimCalendarTable.schema}.${DimCalendarTable.name}`;
+
+    const DimTargetProductGroupBySaleTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_target_product_group_by_sale",
+    };
+    const DimTargetProductGroupBySaleTableRef = `${DimTargetProductGroupBySaleTable.database}.${DimTargetProductGroupBySaleTable.schema}.${DimTargetProductGroupBySaleTable.name}`;
+
+    const DimSaleRepresentativeTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative",
+    };
+    const DimSaleRepresentativeTableRef = `${DimSaleRepresentativeTable.database}.${DimSaleRepresentativeTable.schema}.${DimSaleRepresentativeTable.name}`;
+
+    const DimDepartmentTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_department",
+    };
+    const DimDepartmentTableRef = `${DimDepartmentTable.database}.${DimDepartmentTable.schema}.${DimDepartmentTable.name}`;
+
+    const DimRegionTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region",
+    };
+    const DimRegionTableRef = `${DimRegionTable.database}.${DimRegionTable.schema}.${DimRegionTable.name}`;
+
+    const DimDirectorTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_director",
+    };
+    const DimDirectorTableRef = `${DimDirectorTable.database}.${DimDirectorTable.schema}.${DimDirectorTable.name}`;
+
+    const DimSectionTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section",
+    };
+    const DimSectionTableRef = `${DimSectionTable.database}.${DimSectionTable.schema}.${DimSectionTable.name}`;
+
+    const DimRegionManagerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region_manager",
+    };
+    const DimRegionManagerTableRef = `${DimRegionManagerTable.database}.${DimRegionManagerTable.schema}.${DimRegionManagerTable.name}`;
+
+    const DimSectionManagerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_manager",
+    };
+    const DimSectionManagerTableRef = `${DimSectionManagerTable.database}.${DimSectionManagerTable.schema}.${DimSectionManagerTable.name}`;
+}
+
 with tab_dm as (
   select Date, Year, MonthNumber, Day, HolidayFlag
-  from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_calendar`
+  from `${DimCalendarTableRef}`
 
 ), tab_sum_dm as (
   select Year, MonthNumber, count(distinct Day) as total_day
@@ -29,7 +94,7 @@ with tab_dm as (
       WHEN HolidayFlag = 'Yes' THEN 0
       ELSE TRUNC((tbc.CalQty / sum_dm.total_day), 10)
     END) as Qty_New,
-  FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_target_product_group_by_sale` as tbc
+  FROM `${DimTargetProductGroupBySaleTableRef}` as tbc
   LEFT JOIN tab_dm as dm
     ON tbc.Year = dm.Year
       and FORMAT('%02d', tbc.Month) = dm.MonthNumber
@@ -49,18 +114,18 @@ with tab_dm as (
     final.*
     -- count(1)
   FROM final
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative` as salerep
+  left join `${DimSaleRepresentativeTableRef}` as salerep
     on final.Date between salerep.StartDate and salerep.EndDate
       and final.employeeid = salerep.employeeid
       and final.DepartmentID = salerep.DepartmentID
       and final.CompanySK = salerep.CompanySK
 
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_department` as dep
+  left join `${DimDepartmentTableRef}` as dep
     on final.Date between dep.StartDate and dep.EndDate
       and salerep.DepartmentID = dep.DepartmentID
       and salerep.CompanySK = dep.CompanySK
 
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region` as reg
+  left join `${DimRegionTableRef}` as reg
     on final.Date between reg.StartDate and reg.EndDate 
       and (CASE 
         WHEN reg.RegionID != reg.SubRegionID
@@ -69,17 +134,17 @@ with tab_dm as (
       END)
       and dep.CompanySK = reg.CompanySK
 
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_director` as dir
+  left join `${DimDirectorTableRef}` as dir
     on final.Date between dir.StartDate and dir.EndDate
       and reg.DirectorID = dir.DirectorID
       and reg.CompanySK = dir.CompanySK
 
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section` as sec
+  left join `${DimSectionTableRef}` as sec
     on final.Date between sec.StartDate and sec.EndDate 
       and dep.SectionID = sec.SectionID
       and dep.CompanySK = sec.CompanySK
 
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region_manager` as reg_m
+  left join `${DimRegionManagerTableRef}` as reg_m
     on final.Date between reg_m.StartDate and reg_m.EndDate 
       and reg.RegionID = reg_m.RegionID
       and reg.SubRegionID = reg_m.SubRegionID
@@ -91,7 +156,7 @@ with tab_dm as (
       --   ELSE reg.RegionID = reg_m.RegionID
       -- END)
 
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section_manager` as sec_m
+  left join `${DimSectionManagerTableRef}` as sec_m
     on final.Date between sec_m.StartDate and sec_m.EndDate 
       and dep.SectionID = sec_m.SectionID
       and dep.CompanySK = sec_m.CompanySK
@@ -104,7 +169,7 @@ with tab_dm as (
     final2.* except(SaleRepSK)
   FROM final2
   
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative` as salerep
+  left join `${DimSaleRepresentativeTableRef}` as salerep
     on final2.Date between salerep.StartDate and salerep.EndDate
       and final2.employeeid = salerep.employeeid
       and salerep.DepartmentID is null

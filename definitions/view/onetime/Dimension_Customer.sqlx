@@ -5,6 +5,78 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const MatchCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "match_customer",
+    };
+    const MatchCustomerTableRef = `${MatchCustomerTable.database}.${MatchCustomerTable.schema}.${MatchCustomerTable.name}`;
+
+    const CustomerProfileTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_CIS360,
+        name: "customer_profile",
+    };
+    const CustomerProfileTableRef = `${CustomerProfileTable.database}.${CustomerProfileTable.schema}.${CustomerProfileTable.name}`;
+
+    const CustomerStatusTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_CIS360,
+        name: "customer_status",
+    };
+    const CustomerStatusTableRef = `${CustomerStatusTable.database}.${CustomerStatusTable.schema}.${CustomerStatusTable.name}`;
+
+    const CustomerProfileNatureBusinessTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_CIS360,
+        name: "customer_profile_nature_business",
+    };
+    const CustomerProfileNatureBusinessTableRef = `${CustomerProfileNatureBusinessTable.database}.${CustomerProfileNatureBusinessTable.schema}.${CustomerProfileNatureBusinessTable.name}`;
+
+    const NatureBusinessTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_CIS360,
+        name: "nature_business",
+    };
+    const NatureBusinessTableRef = `${NatureBusinessTable.database}.${NatureBusinessTable.schema}.${NatureBusinessTable.name}`;
+
+    const CustomerTypeTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_CIS360,
+        name: "customer_type",
+    };
+    const CustomerTypeTableRef = `${CustomerTypeTable.database}.${CustomerTypeTable.schema}.${CustomerTypeTable.name}`;
+
+    const DebTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "deb",
+    };
+    const DebTableRef = `${DebTable.database}.${DebTable.schema}.${DebTable.name}`;
+
+    const ViewDebAddressDataTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.PROCESS_DATASET,
+        name: "view_deb_address_data",
+    };
+    const ViewDebAddressDataTableRef = `${ViewDebAddressDataTable.database}.${ViewDebAddressDataTable.schema}.${ViewDebAddressDataTable.name}`;
+
+    const DimProvincesTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_provinces",
+    };
+    const DimProvincesTableRef = `${DimProvincesTable.database}.${DimProvincesTable.schema}.${DimProvincesTable.name}`;
+
+    const DimGeographiesTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_geographies",
+    };
+    const DimGeographiesTableRef = `${DimGeographiesTable.database}.${DimGeographiesTable.schema}.${DimGeographiesTable.name}`;
+}
+
 with match_customer as (
 SELECT customer_allkon, customer_mac5
 FROM (
@@ -12,10 +84,10 @@ FROM (
         a.customer_allkon, 
         a.customer_mac5,
         ROW_NUMBER() OVER(PARTITION BY a.customer_mac5 ORDER BY a.customer_allkon DESC) as rn
-    FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.match_customer` a
+    FROM `${MatchCustomerTableRef}` a
     INNER JOIN (
         SELECT DISTINCT customer_code 
-        FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}.customer_profile`
+        FROM `${CustomerProfileTableRef}`
     ) b ON a.customer_allkon = b.customer_code 
     WHERE a.company_id = 'ag01'
 )
@@ -29,11 +101,11 @@ select cp.* ,
     nb.nature_business_name_en ,
     ct.customer_type_name ,
     ct.customer_type_name_en 
-from  `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}.customer_profile` cp 
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}.customer_status` cs on cp.customer_status_id = cs.id
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}.customer_profile_nature_business` cpnb  on cp.id =  cpnb.customer_profile_id 
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}.nature_business` nb  on cpnb.nature_business_id = nb.id
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_CIS360}.customer_type` ct on cp.customer_type_id = ct.id
+from  `${CustomerProfileTableRef}` cp 
+left join `${CustomerStatusTableRef}` cs on cp.customer_status_id = cs.id
+left join `${CustomerProfileNatureBusinessTableRef}` cpnb  on cp.id =  cpnb.customer_profile_id 
+left join `${NatureBusinessTableRef}` nb  on cpnb.nature_business_id = nb.id
+left join `${CustomerTypeTableRef}` ct on cp.customer_type_id = ct.id
 
 )
 select 
@@ -73,11 +145,11 @@ select
     deb.DEBcreditTerm ,
     DATE_DIFF(CURRENT_DATE(), deb.debdate, YEAR) as Total_contact_time_Year
 
-FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.deb` deb
-left join `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.view_deb_address_data` as deb_address
+FROM `${DebTableRef}` deb
+left join `${ViewDebAddressDataTableRef}` as deb_address
     on deb.debcode = deb_address.debcode
 left join match_customer mc on deb.debcode = mc.customer_mac5
 left join Customer_360 cp on mc.customer_allkon = cp.customer_code
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_provinces` provinces on deb_address.ProvinceSK = provinces.ProvinceSK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_geographies` geo on provinces.GeoGraphiesSK = geo.GeoGraphiesSK
+left join `${DimProvincesTableRef}` provinces on deb_address.ProvinceSK = provinces.ProvinceSK
+left join `${DimGeographiesTableRef}` geo on provinces.GeoGraphiesSK = geo.GeoGraphiesSK
 where deb.company_id = 'ag01'

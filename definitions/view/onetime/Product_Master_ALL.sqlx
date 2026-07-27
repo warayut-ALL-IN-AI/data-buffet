@@ -5,6 +5,36 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimProductMasterTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_master",
+    };
+    const DimProductMasterTableRef = `${DimProductMasterTable.database}.${DimProductMasterTable.schema}.${DimProductMasterTable.name}`;
+
+    const ViewDimProductMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_VIEW,
+        name: "view_dim_product_mkt",
+    };
+    const ViewDimProductMktTableRef = `${ViewDimProductMktTable.database}.${ViewDimProductMktTable.schema}.${ViewDimProductMktTable.name}`;
+
+    const ProductAttributeTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.ONETIME,
+        name: "Product_Attribute",
+    };
+    const ProductAttributeTableRef = `${ProductAttributeTable.database}.${ProductAttributeTable.schema}.${ProductAttributeTable.name}`;
+
+    const DimProductMktDirectorTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_mkt_director",
+    };
+    const DimProductMktDirectorTableRef = `${DimProductMktDirectorTable.database}.${DimProductMktDirectorTable.schema}.${DimProductMktDirectorTable.name}`;
+}
+
 SELECT
   product.ProductCode,
   product.ProductCode1,
@@ -48,14 +78,14 @@ SELECT
   attr.ProductUnit,
   attr.ProductMaterials,
   attr.ProductModel
-FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_master` product
-LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_VIEW}.view_dim_product_mkt` mkt
+FROM `${DimProductMasterTableRef}` product
+LEFT JOIN `${ViewDimProductMktTableRef}` mkt
   ON product.ProductMktSK = mkt.ProductMktSK and product.CompanySK = mkt.CompanySK
 
-LEFT JOIN `${databuffet.DATABASE}.${databuffet.ONETIME}.Product_Attribute` attr
+LEFT JOIN `${ProductAttributeTableRef}` attr
   ON product.ProductSK = attr.ProductSK and product.CompanySK = attr.CompanySK
 
-LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_mkt_director` director
+LEFT JOIN `${DimProductMktDirectorTableRef}` director
   ON mkt.ProductMktDirectorSK = director.ProductMktDirectorSK and mkt.CompanySK = director.CompanySK
 
 where product.companyID = 'ag01'

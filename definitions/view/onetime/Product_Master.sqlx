@@ -5,6 +5,57 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const StkTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "stk",
+    };
+    const StkTableRef = `${StkTable.database}.${StkTable.schema}.${StkTable.name}`;
+
+    const StgTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "stg",
+    };
+    const StgTableRef = `${StgTable.database}.${StgTable.schema}.${StgTable.name}`;
+
+    const ProductTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MASTERSKU,
+        name: "product",
+    };
+    const ProductTableRef = `${ProductTable.database}.${ProductTable.schema}.${ProductTable.name}`;
+
+    const ProductDetailTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MASTERSKU,
+        name: "product_detail",
+    };
+    const ProductDetailTableRef = `${ProductDetailTable.database}.${ProductDetailTable.schema}.${ProductDetailTable.name}`;
+
+    const DimProductRebateTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_rebate",
+    };
+    const DimProductRebateTableRef = `${DimProductRebateTable.database}.${DimProductRebateTable.schema}.${DimProductRebateTable.name}`;
+
+    const BrandTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MASTERSKU,
+        name: "brand",
+    };
+    const BrandTableRef = `${BrandTable.database}.${BrandTable.schema}.${BrandTable.name}`;
+
+    const VendorTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MASTERSKU,
+        name: "vendor",
+    };
+    const VendorTableRef = `${VendorTable.database}.${VendorTable.schema}.${VendorTable.name}`;
+}
+
 select 
 a.stkcode as ProductCode ,
 a.stkcode2 as ProductCode1,
@@ -43,11 +94,11 @@ p.prd_vendor_id as VendorID,
 a.stksto as WarehouseID,
 a.STKcode885 as Barcode
 
-from `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stk` a  
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stg` g on a.STKgroup = g.STGcode
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product` p on a.STKcode885 = p.prd_barcode
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.product_detail` pd on p.prd_id = pd.pd_prd_id
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_rebate` pdr on a.stkcode = pdr.Rebate
---left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.brand` brand on p.prd_brand_id = brand.bra_id
---left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MASTERSKU}.vendor` vendor on p.prd_vendor_id = vendor.vd_id
+from `${StkTableRef}` a  
+left join `${StgTableRef}` g on a.STKgroup = g.STGcode
+left join `${ProductTableRef}` p on a.STKcode885 = p.prd_barcode
+left join `${ProductDetailTableRef}` pd on p.prd_id = pd.pd_prd_id
+left join `${DimProductRebateTableRef}` pdr on a.stkcode = pdr.Rebate
+--left join `${BrandTableRef}` brand on p.prd_brand_id = brand.bra_id
+--left join `${VendorTableRef}` vendor on p.prd_vendor_id = vendor.vd_id
 --where a.STKcode885 is not null and a.STKcode885 <> ''

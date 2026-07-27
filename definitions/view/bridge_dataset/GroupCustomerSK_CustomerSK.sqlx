@@ -5,10 +5,26 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimGroupCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_group_customer",
+    };
+    const DimGroupCustomerTableRef = `${DimGroupCustomerTable.database}.${DimGroupCustomerTable.schema}.${DimGroupCustomerTable.name}`;
+
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+}
+
 select distinct
   group_cust.GroupCustomerSK, 
   cust.CustomerSK
-from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_group_customer` as group_cust
-full join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_customer` as cust
+from `${DimGroupCustomerTableRef}` as group_cust
+full join `${DimCustomerTableRef}` as cust
   on group_cust.companySK = cust.companySK
   and group_cust.debgroup = ifnull(cust.debgroup, cust.debcode)

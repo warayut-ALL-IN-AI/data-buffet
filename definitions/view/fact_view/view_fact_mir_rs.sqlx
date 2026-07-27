@@ -5,20 +5,50 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const CuratedMihTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.CURATED_MAC5,
+        name: "curated_mih",
+    };
+    const CuratedMihTableRef = `${CuratedMihTable.database}.${CuratedMihTable.schema}.${CuratedMihTable.name}`;
+
+    const FactMirRsTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: "fact_mir_rs",
+    };
+    const FactMirRsTableRef = `${FactMirRsTable.database}.${FactMirRsTable.schema}.${FactMirRsTable.name}`;
+
+    const DimAgingTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_aging",
+    };
+    const DimAgingTableRef = `${DimAgingTable.database}.${DimAgingTable.schema}.${DimAgingTable.name}`;
+
+    const ArSTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "ar_s",
+    };
+    const ArSTableRef = `${ArSTable.database}.${ArSTable.schema}.${ArSTable.name}`;
+}
+
 with t3 as (
   select company_id, mihtype, mihvnos, mihcancel, mihstatus
-  from `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih`
+  from `${CuratedMihTableRef}`
 
 )
 
 select t2.AgingSK, t1.*  ,t3.mihcancel , t3.mihstatus , ars.ar_snamet
-from `${databuffet.DATABASE}.${databuffet.FACT_TABLE}.fact_mir_rs` as t1
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_aging` as t2
+from `${FactMirRsTableRef}` as t1
+left join `${DimAgingTableRef}` as t2
   on t1.mirbinvno = t2.cfsvnosid
   and t1.company_id = t2.CompanyID
 
 left join t3 on t3.mihvnos = t1.mirvnos
     and t3.mihtype = t1.mirtype
     and t3.company_id = t1.company_id
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ar_s` ars on t3.mihstatus = ars.ar_scode 
+left join `${ArSTableRef}` ars on t3.mihstatus = ars.ar_scode 
     and t3.company_id = ars.company_id

@@ -5,6 +5,22 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+
+    const DimCustomerGradeTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer_grade",
+    };
+    const DimCustomerGradeTableRef = `${DimCustomerGradeTable.database}.${DimCustomerGradeTable.schema}.${DimCustomerGradeTable.name}`;
+}
+
 WITH dim_customer as (
   SELECT 
     CustomerSK,
@@ -15,11 +31,11 @@ WITH dim_customer as (
     debcreditterm, 
     debmemo,
     Customer_CM_Grade  
-  FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_customer`
+  FROM `${DimCustomerTableRef}`
 
 ), dim_customer_grade as (
   select * 
-  from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_customer_grade`
+  from `${DimCustomerGradeTableRef}`
   qualify row_number() over(partition by CustomerSK order by CustomerGradeSK desc) = 1
 
 )

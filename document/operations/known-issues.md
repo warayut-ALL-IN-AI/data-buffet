@@ -60,6 +60,15 @@
     pipeline เดิม) — pipeline ยังถูกเพราะ view เป็น logical + มีอยู่ก่อน; follow-up ควรเติม
     dep ฝั่ง fact ให้ DAG ครบ (3) ownership เปลี่ยนมือ — Dataform จะ `CREATE OR REPLACE`
     ทับทุกครั้งที่รัน ใครแก้ใน console จะโดนเขียนทับ
+  - **Format การอ้างอิงตาราง = 1 แบบ** (แก้ 2026-07-24 ตาม feedback): view ทั้ง 42 ไฟล์
+    ใช้ `config` → `js` (ประกาศ `<Pascal>Table` + `<Pascal>TableRef` ทุกแหล่ง รวม
+    mds/external/view อื่น) → SQL อ้าง `` `${XxxTableRef}` `` **ห้าม inline**
+    `${databuffet.DATABASE}...` ใน body (รอบแรก generate ผิด standard §3 แก้แล้ว —
+    ยืนยัน 42/42 เนื้อ SQL ไม่เปลี่ยนหลัง reformat)
+- **ไฟล์เก่ายังผสมหลาย format การอ้างอิง (tech debt)**: เช่น `fact_transcation.sqlx`
+  ใช้ js-block Ref กับ dims แต่ inline `${databuffet.DATABASE}.onetime.Transaction_Data_Mart`
+  และ `${ref(...)}` กับ validated ในไฟล์เดียว — มาตรฐานคือ js-block Ref
+  (coding-standard §3); ของใหม่ยึดแบบเดียว ของเก่าค่อยแปลงเมื่อแตะไฟล์นั้น
 
 ## ข้อจำกัด environment
 

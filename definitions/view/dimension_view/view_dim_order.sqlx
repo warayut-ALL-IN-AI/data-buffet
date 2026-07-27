@@ -5,13 +5,36 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const FnOrderTypeTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FUNCTION_DATASET,
+        name: "fn_order_type",
+    };
+    const FnOrderTypeTableRef = `${FnOrderTypeTable.database}.${FnOrderTypeTable.schema}.${FnOrderTypeTable.name}`;
+
+    const DimOrderTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_order",
+    };
+    const DimOrderTableRef = `${DimOrderTable.database}.${DimOrderTable.schema}.${DimOrderTable.name}`;
+
+    const Mih2Table = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "mih2",
+    };
+    const Mih2TableRef = `${Mih2Table.database}.${Mih2Table.schema}.${Mih2Table.name}`;
+}
+
 SELECT 
   ord.*,
-  `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_order_type`(ord.mihref2) as OrderType,
+  `${FnOrderTypeTableRef}`(ord.mihref2) as OrderType,
   mih2.mih2pos as CustomerShipTo,
 
-from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_order` as ord
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.mih2` as mih2
+from `${DimOrderTableRef}` as ord
+left join `${Mih2TableRef}` as mih2
   on ord.companyID = mih2.company_id
   and ord.mihDay = mih2.mih2day
   and ord.mihMonth = mih2.mih2month

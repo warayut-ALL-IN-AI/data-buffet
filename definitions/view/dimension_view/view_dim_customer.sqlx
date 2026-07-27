@@ -5,9 +5,74 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const MdsDataCustomernicknameMasterTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.MDS_DATASET,
+        name: "mds_data_customernickname_master",
+    };
+    const MdsDataCustomernicknameMasterTableRef = `${MdsDataCustomernicknameMasterTable.database}.${MdsDataCustomernicknameMasterTable.schema}.${MdsDataCustomernicknameMasterTable.name}`;
+
+    const MdsDataKeyaccountMasterTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.MDS_DATASET,
+        name: "mds_data_keyaccount_master",
+    };
+    const MdsDataKeyaccountMasterTableRef = `${MdsDataKeyaccountMasterTable.database}.${MdsDataKeyaccountMasterTable.schema}.${MdsDataKeyaccountMasterTable.name}`;
+
+    const MdsDataKeyaccountGroupMasterTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.MDS_DATASET,
+        name: "mds_data_keyaccount_group_master",
+    };
+    const MdsDataKeyaccountGroupMasterTableRef = `${MdsDataKeyaccountGroupMasterTable.database}.${MdsDataKeyaccountGroupMasterTable.schema}.${MdsDataKeyaccountGroupMasterTable.name}`;
+
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+
+    const DimGroupCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_group_customer",
+    };
+    const DimGroupCustomerTableRef = `${DimGroupCustomerTable.database}.${DimGroupCustomerTable.schema}.${DimGroupCustomerTable.name}`;
+
+    const DimSubDistrictsTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sub_districts",
+    };
+    const DimSubDistrictsTableRef = `${DimSubDistrictsTable.database}.${DimSubDistrictsTable.schema}.${DimSubDistrictsTable.name}`;
+
+    const DimDistrictsTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_districts",
+    };
+    const DimDistrictsTableRef = `${DimDistrictsTable.database}.${DimDistrictsTable.schema}.${DimDistrictsTable.name}`;
+
+    const DimProvincesTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_provinces",
+    };
+    const DimProvincesTableRef = `${DimProvincesTable.database}.${DimProvincesTable.schema}.${DimProvincesTable.name}`;
+
+    const DimGeographiesTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_geographies",
+    };
+    const DimGeographiesTableRef = `${DimGeographiesTable.database}.${DimGeographiesTable.schema}.${DimGeographiesTable.name}`;
+}
+
 with mds_nicknamemaster as (
   SELECT companyid, customercode, customernickname 
-  FROM `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_customernickname_master` 
+  FROM `${MdsDataCustomernicknameMasterTableRef}` 
   WHERE is_active = TRUE
 
 ), mds_keyaccount as (
@@ -17,8 +82,8 @@ with mds_nicknamemaster as (
     ka.customername,
     ka_group.keyaccountcode,
     ka_group.keyaccountname
-  FROM `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_keyaccount_master` as ka
-  LEFT JOIN `${databuffet.DATABASE}.${databuffet.MDS_DATASET}.mds_data_keyaccount_group_master` as ka_group
+  FROM `${MdsDataKeyaccountMasterTableRef}` as ka
+  LEFT JOIN `${MdsDataKeyaccountGroupMasterTableRef}` as ka_group
     on ka_group.is_active = TRUE
     and ka.companyid = ka_group.companyid
     and ka.keyaccountcode = ka_group.keyaccountcode
@@ -36,17 +101,17 @@ with mds_nicknamemaster as (
     mds_ka.KeyAccountCode,
     mds_ka.KeyAccountName
 
-  FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_customer` as dim_cust
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_group_customer` as group_cust
+  FROM `${DimCustomerTableRef}` as dim_cust
+  left join `${DimGroupCustomerTableRef}` as group_cust
     on dim_cust.companyID = group_cust.companyID
     and IFNULL(dim_cust.debgroup, dim_cust.debcode) = group_cust.debgroup
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sub_districts` as sub_district
+  left join `${DimSubDistrictsTableRef}` as sub_district
     on dim_cust.InvoiceSubDistrictSK = sub_district.SubDistrictSK
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_districts` as district
+  left join `${DimDistrictsTableRef}` as district
     on dim_cust.InvoiceDistrictSK = district.DistrictSK
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_provinces` as province
+  left join `${DimProvincesTableRef}` as province
     on dim_cust.InvoiceProvinceSK = province.ProvinceSK
-  left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_geographies` as geo 
+  left join `${DimGeographiesTableRef}` as geo 
     on province.GeoGraphiesSK = geo.GeoGraphiesSK
 
   ---- MDS

@@ -5,6 +5,29 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const StkTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "stk",
+    };
+    const StkTableRef = `${StkTable.database}.${StkTable.schema}.${StkTable.name}`;
+
+    const CuratedMihTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.CURATED_MAC5,
+        name: "curated_mih",
+    };
+    const CuratedMihTableRef = `${CuratedMihTable.database}.${CuratedMihTable.schema}.${CuratedMihTable.name}`;
+
+    const CuratedMilTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.CURATED_MAC5,
+        name: "curated_mil",
+    };
+    const CuratedMilTableRef = `${CuratedMilTable.database}.${CuratedMilTable.schema}.${CuratedMilTable.name}`;
+}
+
 WITH stk as (
   SELECT DISTINCT
     stkcode,
@@ -12,7 +35,7 @@ WITH stk as (
     (stkvat / 100) + 1 AS vat,
     stkcode885,
     stkgroup,
-  FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stk`
+  FROM `${StkTableRef}`
 
 ), raw_transcation as (
   SELECT
@@ -31,8 +54,8 @@ WITH stk as (
     a.mihExtravat,
     SUM(milSum) OVER (PARTITION BY b.milDay, b.milMonth, b.milYear, b.milType, b.milCus, b.milVnos) as over_milsum,
 
-  FROM `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih` a
-  INNER JOIN `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mil` b
+  FROM `${CuratedMihTableRef}` a
+  INNER JOIN `${CuratedMilTableRef}` b
     ON a.mihDay = b.milDay
       AND a.mihMonth = b.milMonth
       AND a.mihYear = b.milYear

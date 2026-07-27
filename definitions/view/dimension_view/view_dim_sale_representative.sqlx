@@ -5,8 +5,24 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimSaleRepresentativeTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative",
+    };
+    const DimSaleRepresentativeTableRef = `${DimSaleRepresentativeTable.database}.${DimSaleRepresentativeTable.schema}.${DimSaleRepresentativeTable.name}`;
+
+    const DimDepartmentTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_department",
+    };
+    const DimDepartmentTableRef = `${DimDepartmentTable.database}.${DimDepartmentTable.schema}.${DimDepartmentTable.name}`;
+}
+
 select distinct Sales_Rep.*, Department.DepartmentName 
-from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative` as Sales_Rep
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_department` as Department 
+from `${DimSaleRepresentativeTableRef}` as Sales_Rep
+left join `${DimDepartmentTableRef}` as Department 
   on Sales_Rep.DepartmentID = Department.DepartmentID
   and Sales_Rep.CompanySK = Department.CompanySK

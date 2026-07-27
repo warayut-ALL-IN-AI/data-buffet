@@ -5,6 +5,22 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const CuratedMihTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.CURATED_MAC5,
+        name: "curated_mih",
+    };
+    const CuratedMihTableRef = `${CuratedMihTable.database}.${CuratedMihTable.schema}.${CuratedMihTable.name}`;
+
+    const ArSTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "ar_s",
+    };
+    const ArSTableRef = `${ArSTable.database}.${ArSTable.schema}.${ArSTable.name}`;
+}
+
 SELECT  
   mihYear, 
   mihMonth, 
@@ -20,6 +36,6 @@ SELECT
   memoExtract,
   mihMemoNew,
   mihstatus_desc 
-FROM `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih` mih
-  left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ar_s` ar on mih.mihStatus = ar.ar_scode
+FROM `${CuratedMihTableRef}` mih
+  left join `${ArSTableRef}` ar on mih.mihStatus = ar.ar_scode
 WHERE mihType = 'PS'

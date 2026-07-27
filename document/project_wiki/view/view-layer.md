@@ -25,24 +25,41 @@
 
 ## Pattern
 
+Three blocks in fixed order: `config` → `js` → SQL body. **Every** table/view reference
+goes through a `js`-block object + `Ref` string — see
+[coding-standards/sqlx-coding-standard.md §3](../../coding-standards/sqlx-coding-standard.md).
+
 ```js
 config {
   type: "view",
   schema: databuffet.DIMENSION_VIEW,          // original target dataset — DO NOT change
-  dependencies: ["dim_company", "view_dim_channel"],  // repo actions only (tables + upstream views)
+  dependencies: ["dim_company"],              // repo actions only (tables + upstream views)
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+}
+
 SELECT ...
-FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_company`
+FROM `${DimCompanyTableRef}`
 ```
 
 Rules:
-1. Every fully-qualified reference `databuffet-nonprd.<ds>.<table>` becomes
-   `` `${databuffet.DATABASE}.${databuffet.<CONST>}.<table>` `` (portable across
-   dev/nonprod/prod — the project literal is gone).
-2. No trailing `;` (the view DDL wraps the query).
-3. Dataset → constant map is the same registry as everywhere else
+1. **One reference format only** — declare `<Pascal>Table` + `<Pascal>TableRef` in `js`,
+   then use `` `${XxxTableRef}` `` in SQL. No inline
+   `` `${databuffet.DATABASE}.${databuffet.X}.tbl` ``, no `databuffet-nonprd` literal.
+   This applies to *every* target alike: repo dims/facts, curated/validated, other views,
+   UDF dataset, and external sources (`mds_dataset`, `onetime` bases, `RLS_Customer360`)
+   — only the `schema:` constant differs.
+2. Declarations follow first-use order in the SQL; declare only what is used.
+3. No trailing `;` (the view DDL wraps the query).
+4. Dataset → constant map is the same registry as everywhere else
    (`includes/controller/variables.json`).
 
 ### Run order caveat (documented, not yet wired)

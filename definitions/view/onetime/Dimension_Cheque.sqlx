@@ -5,6 +5,29 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const ChqTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "chq",
+    };
+    const ChqTableRef = `${ChqTable.database}.${ChqTable.schema}.${ChqTable.name}`;
+
+    const CqlTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "cql",
+    };
+    const CqlTableRef = `${CqlTable.database}.${CqlTable.schema}.${CqlTable.name}`;
+
+    const MirTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "mir",
+    };
+    const MirTableRef = `${MirTable.database}.${MirTable.schema}.${MirTable.name}`;
+}
+
 WITH
   CHQ_DATA AS (
     SELECT
@@ -34,17 +57,17 @@ WITH
       
       chqmemo,
       chqgl
-    FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.chq`
+    FROM `${ChqTableRef}`
     WHERE chqtype = 1 AND company_id = 'ag01'
   ),
   CQL_DATA AS (
     SELECT *
-    FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.cql`
+    FROM `${CqlTableRef}`
     WHERE cqlbook = 0 AND company_id = 'ag01'
   ),
   MIR_DATA AS (
     SELECT mirvnos, mircus, mirbinvno, sum(mirsum) AS mirsum
-    FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.mir`
+    FROM `${MirTableRef}`
     WHERE company_id = 'ag01'
     GROUP BY mirvnos, mircus, mirbinvno
   )

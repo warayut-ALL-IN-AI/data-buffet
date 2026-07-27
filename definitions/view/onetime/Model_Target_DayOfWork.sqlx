@@ -5,6 +5,85 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimTargetProductGroupBySaleDayofworkTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_target_product_group_by_sale_dayofwork",
+    };
+    const DimTargetProductGroupBySaleDayofworkTableRef = `${DimTargetProductGroupBySaleDayofworkTable.database}.${DimTargetProductGroupBySaleDayofworkTable.schema}.${DimTargetProductGroupBySaleDayofworkTable.name}`;
+
+    const DimSaleRepresentativeLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative_last",
+    };
+    const DimSaleRepresentativeLastTableRef = `${DimSaleRepresentativeLastTable.database}.${DimSaleRepresentativeLastTable.schema}.${DimSaleRepresentativeLastTable.name}`;
+
+    const DimDepartmentLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_department_last",
+    };
+    const DimDepartmentLastTableRef = `${DimDepartmentLastTable.database}.${DimDepartmentLastTable.schema}.${DimDepartmentLastTable.name}`;
+
+    const DimSectionLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_last",
+    };
+    const DimSectionLastTableRef = `${DimSectionLastTable.database}.${DimSectionLastTable.schema}.${DimSectionLastTable.name}`;
+
+    const DimSectionManagerLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_manager_last",
+    };
+    const DimSectionManagerLastTableRef = `${DimSectionManagerLastTable.database}.${DimSectionManagerLastTable.schema}.${DimSectionManagerLastTable.name}`;
+
+    const DimRegionManagerLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region_manager_last",
+    };
+    const DimRegionManagerLastTableRef = `${DimRegionManagerLastTable.database}.${DimRegionManagerLastTable.schema}.${DimRegionManagerLastTable.name}`;
+
+    const DimRegionLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region_last",
+    };
+    const DimRegionLastTableRef = `${DimRegionLastTable.database}.${DimRegionLastTable.schema}.${DimRegionLastTable.name}`;
+
+    const DimDirectorLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_director_last",
+    };
+    const DimDirectorLastTableRef = `${DimDirectorLastTable.database}.${DimDirectorLastTable.schema}.${DimDirectorLastTable.name}`;
+
+    const DimProductMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_mkt",
+    };
+    const DimProductMktTableRef = `${DimProductMktTable.database}.${DimProductMktTable.schema}.${DimProductMktTable.name}`;
+
+    const DimTargetProductGroupTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_target_product_group",
+    };
+    const DimTargetProductGroupTableRef = `${DimTargetProductGroupTable.database}.${DimTargetProductGroupTable.schema}.${DimTargetProductGroupTable.name}`;
+
+    const DimReportTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_report",
+    };
+    const DimReportTableRef = `${DimReportTable.database}.${DimReportTable.schema}.${DimReportTable.name}`;
+}
+
 select 
       Target_Work.TargetBySaleDayofworkSK
       -- ,FORMAT('%d-%02d-%02d', CAST(Target_Work.Year AS INT64),CAST(Target_Work.Month AS INT64),CAST(Target_Work.Day AS INT64)) as TargetDate
@@ -38,38 +117,38 @@ select
       ,Report.ReportName1
       ,Report.ReportName2
       
-from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_target_product_group_by_sale_dayofwork` as Target_Work
+from `${DimTargetProductGroupBySaleDayofworkTableRef}` as Target_Work
 left join (
       select Sales_Rep.*, Department.DepartmentName 
-      from `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_sale_representative_last` as Sales_Rep
-      left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_department_last` as Department 
+      from `${DimSaleRepresentativeLastTableRef}` as Sales_Rep
+      left join `${DimDepartmentLastTableRef}` as Department 
             on Sales_Rep.DepartmentSK = Department.DepartmentSK
             and Sales_Rep.CompanySK = Department.CompanySK
 ) SalesPer 
       on Target_Work.SaleRepSK = SalesPer.SaleRepSK
       and Target_Work.CompanySK = SalesPer.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section_last` as Section 
+left join `${DimSectionLastTableRef}` as Section 
       on Target_Work.SectionSK = Section.SectionSK
       and Target_Work.CompanySK = Section.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_section_manager_last` as SectionM 
+left join `${DimSectionManagerLastTableRef}` as SectionM 
       on Target_Work.SectionManagerSK = SectionM.SectionManagerSK
       and Target_Work.CompanySK = SectionM.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region_manager_last` as RegionM 
+left join `${DimRegionManagerLastTableRef}` as RegionM 
       on Target_Work.RegionManagerSK = RegionM.RegionManagerSK
       and Target_Work.CompanySK = RegionM.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_region_last` as Region 
+left join `${DimRegionLastTableRef}` as Region 
       on Target_Work.RegionSK = Region.RegionSK
       and Target_Work.CompanySK = Region.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_director_last` as director 
+left join `${DimDirectorLastTableRef}` as director 
       on Target_Work.DirectorSK = director.DirectorSK
       and Target_Work.CompanySK = director.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_mkt` as ProductMkt 
+left join `${DimProductMktTableRef}` as ProductMkt 
       on Target_Work.ProductMktSK = ProductMkt.ProductMktSK
       and Target_Work.CompanySK = ProductMkt.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_target_product_group` as TargetGroup 
+left join `${DimTargetProductGroupTableRef}` as TargetGroup 
       on Target_Work.TargetProductGroupSK = TargetGroup.TargetProductGroupSK
       and Target_Work.CompanySK = TargetGroup.CompanySK
-left join `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_report` as Report 
+left join `${DimReportTableRef}` as Report 
       on Target_Work.ReportSK = Report.ReportSK
       and Target_Work.CompanySK = Report.CompanySK
 where Target_Work.CompanySK = 4

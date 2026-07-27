@@ -5,6 +5,50 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const TtripDocumentTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "ttrip_document",
+    };
+    const TtripDocumentTableRef = `${TtripDocumentTable.database}.${TtripDocumentTable.schema}.${TtripDocumentTable.name}`;
+
+    const TtripTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "ttrip",
+    };
+    const TtripTableRef = `${TtripTable.database}.${TtripTable.schema}.${TtripTable.name}`;
+
+    const CuratedMilTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.CURATED_MAC5,
+        name: "curated_mil",
+    };
+    const CuratedMilTableRef = `${CuratedMilTable.database}.${CuratedMilTable.schema}.${CuratedMilTable.name}`;
+
+    const TdeliveryTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "tdelivery",
+    };
+    const TdeliveryTableRef = `${TdeliveryTable.database}.${TdeliveryTable.schema}.${TdeliveryTable.name}`;
+
+    const CuratedMihTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.CURATED_MAC5,
+        name: "curated_mih",
+    };
+    const CuratedMihTableRef = `${CuratedMihTable.database}.${CuratedMihTable.schema}.${CuratedMihTable.name}`;
+
+    const DebTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "deb",
+    };
+    const DebTableRef = `${DebTable.database}.${DebTable.schema}.${DebTable.name}`;
+}
+
 select td.fdocument,d.fserial_no,t.fcode,t.fvehicle
   ,PARSE_DATE('%Y%m%d', LEFT(CAST(td.fdatetime AS STRING), 8)) as Date, mh.mihCus, deb.debnamet
   ,d.flattitude, d.flongtitude ,d.fzone ,d.fpoi
@@ -24,24 +68,24 @@ select td.fdocument,d.fserial_no,t.fcode,t.fvehicle
     end) S3
   ,count(td.fitem) qty2  
   
-from `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ttrip_document` as td  
-inner join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.ttrip` as t 
+from `${TtripDocumentTableRef}` as td  
+inner join `${TtripTableRef}` as t 
   on t.frun = td.fmaster  
-inner join (select distinct milvnos from `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mil` where miltype = 'IS') as milIS 
+inner join (select distinct milvnos from `${CuratedMilTableRef}` where miltype = 'IS') as milIS 
   on td.fdocument = milIS.milvnos
 left join (         
   select fserial_no ,fmaster ,flattitude,flongtitude,fzone,fpoi ,fdatetime  
-  from `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.tdelivery` as dl 
+  from `${TdeliveryTableRef}` as dl 
   inner join (
-    select distinct milvnos from `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mil` where miltype = 'IS'
+    select distinct milvnos from `${CuratedMilTableRef}` where miltype = 'IS'
   ) as milIS2 
     on dl.fserial_no = milIS2.milvnos
 ) d 
   on td.fmaster = d.fmaster   
 
-left join `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih` as mh 
+left join `${CuratedMihTableRef}` as mh 
   on td.fdocument = mh.mihvnos
-left join `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.deb` as deb 
+left join `${DebTableRef}` as deb 
   on mh.mihCus = deb.debcode
 
 where td.fdocument like (case when IFNULL(d.fserial_no,'0') = '0' then '%' else  d.fserial_no end)  

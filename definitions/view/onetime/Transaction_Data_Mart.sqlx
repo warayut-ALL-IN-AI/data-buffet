@@ -5,6 +5,64 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const StkTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "stk",
+    };
+    const StkTableRef = `${StkTable.database}.${StkTable.schema}.${StkTable.name}`;
+
+    const CuratedMihTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.CURATED_MAC5,
+        name: "curated_mih",
+    };
+    const CuratedMihTableRef = `${CuratedMihTable.database}.${CuratedMihTable.schema}.${CuratedMihTable.name}`;
+
+    const CuratedTbookQuotationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.CURATED_MAC5,
+        name: "curated_tbook_quotation",
+    };
+    const CuratedTbookQuotationTableRef = `${CuratedTbookQuotationTable.database}.${CuratedTbookQuotationTable.schema}.${CuratedTbookQuotationTable.name}`;
+
+    const FnFlagSalesKpiTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FUNCTION_DATASET,
+        name: "fn_flag_sales_kpi",
+    };
+    const FnFlagSalesKpiTableRef = `${FnFlagSalesKpiTable.database}.${FnFlagSalesKpiTable.schema}.${FnFlagSalesKpiTable.name}`;
+
+    const CuratedMilTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.CURATED_MAC5,
+        name: "curated_mil",
+    };
+    const CuratedMilTableRef = `${CuratedMilTable.database}.${CuratedMilTable.schema}.${CuratedMilTable.name}`;
+
+    const DimProductRebateTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_rebate",
+    };
+    const DimProductRebateTableRef = `${DimProductRebateTable.database}.${DimProductRebateTable.schema}.${DimProductRebateTable.name}`;
+
+    const ViewDebAddressDataTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.PROCESS_DATASET,
+        name: "view_deb_address_data",
+    };
+    const ViewDebAddressDataTableRef = `${ViewDebAddressDataTable.database}.${ViewDebAddressDataTable.schema}.${ViewDebAddressDataTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+}
+
 WITH stk as (
   SELECT DISTINCT
     company_id,
@@ -13,7 +71,7 @@ WITH stk as (
     (stkvat / 100) + 1 AS vat,
     stkcode885,
     stkgroup
-  FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.stk`
+  FROM `${StkTableRef}`
   -- where company_id = 'ag01'
 
 ), mih_ps as (
@@ -22,8 +80,8 @@ WITH stk as (
     mihVnos,
     qt.id as QuotationID ,
     qt.running as QuotationCode 
-  from `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih` as mihps
-  left join `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_tbook_quotation` as qt  
+  from `${CuratedMihTableRef}` as mihps
+  left join `${CuratedTbookQuotationTableRef}` as qt  
     on mihps.mihref1 = qt.running
     and mihps.company_id = qt.company_id
   where mihps.mihType = 'PS'
@@ -31,7 +89,7 @@ WITH stk as (
 
 ), raw_transcation as (
   SELECT
-    -- `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_flag_sales_kpi`(a.mihcancel, a.mihstatus, product_rebate.rebate) as FlagSalesKPI,
+    -- `${FnFlagSalesKpiTableRef}`(a.mihcancel, a.mihstatus, product_rebate.rebate) as FlagSalesKPI,
     dim_com.CompanySK,
     dim_com.companyID,
     a.mihvatno,
@@ -56,8 +114,8 @@ WITH stk as (
     aidata.SubDistrictSK as OrderSubDistrictSK,
     SUM(milSum) OVER (PARTITION BY b.milDay, b.milMonth, b.milYear, b.milType, b.milCus, b.milVnos) as over_milsum,
 
-  FROM `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mih` as a
-  INNER JOIN `${databuffet.DATABASE}.${databuffet.CURATED_MAC5}.curated_mil` as b
+  FROM `${CuratedMihTableRef}` as a
+  INNER JOIN `${CuratedMilTableRef}` as b
     ON a.mihYear = b.milYear
       AND a.mihMonth = b.milMonth
       AND a.mihDay = b.milDay
@@ -71,12 +129,12 @@ WITH stk as (
   LEFT JOIN stk AS s
     ON s.stkcode = b.milstk
     and s.company_id = b.company_id
-  -- LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_product_rebate` as product_rebate 
+  -- LEFT JOIN `${DimProductRebateTableRef}` as product_rebate 
   --   ON b.milstk = product_rebate.Rebate
-  LEFT JOIN `${databuffet.DATABASE}.${databuffet.PROCESS_DATASET}.view_deb_address_data` as aidata
+  LEFT JOIN `${ViewDebAddressDataTableRef}` as aidata
     ON a.mihCus = aidata.debcode
     AND a.company_id = aidata.company_id
-  LEFT JOIN `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_company` as dim_com
+  LEFT JOIN `${DimCompanyTableRef}` as dim_com
     ON a.company_id = dim_com.companyID
   WHERE a.mihtype IN ('IS', 'AS', 'BS', 'QS') 
     -- and a.company_id = 'ag01'

@@ -5,6 +5,15 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const TbookProfilecompTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.VALIDATED_MAC5,
+        name: "tbook_profilecomp",
+    };
+    const TbookProfilecompTableRef = `${TbookProfilecompTable.database}.${TbookProfilecompTable.schema}.${TbookProfilecompTable.name}`;
+}
+
 SELECT
   projectcode,
   docno,
@@ -32,4 +41,4 @@ SELECT
       DATE_DIFF(SAFE_CAST(pjend AS DATE), SAFE_CAST(pjstart AS DATE), DAY)
   END Project_Day
 
-FROM `${databuffet.DATABASE}.${databuffet.VALIDATED_MAC5}.tbook_profilecomp`
+FROM `${TbookProfilecompTableRef}`

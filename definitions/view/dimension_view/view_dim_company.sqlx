@@ -5,6 +5,15 @@ config {
   tags: [databuffet.TAG_VIEW],
 }
 
+js {
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+}
+
 SELECT 
   CompanySK, CompanyID, CompanyCode, CompanyNameTH, CompanyNameEN,
   (CASE 
@@ -25,4 +34,4 @@ SELECT
     WHEN lower(CompanyID) in ('ag01', 'ab01') THEN 'Thammasorn Co., Ltd.'
     ELSE 'No Data'
   END) as CompanyNameReportEN,
-FROM `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}.dim_company`
+FROM `${DimCompanyTableRef}`
