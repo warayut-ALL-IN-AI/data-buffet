@@ -78,15 +78,28 @@
   `Sales_Per_Non_Master` (`\(`/`\)`) — กฎอยู่ใน coding-standard §3.3
   **บทเรียน**: การเทียบ SQL แบบ text ตรง ๆ จับ bug ประเภทนี้ไม่ได้ ต้องจำลอง
   template-literal unescape ก่อนเทียบ (ยืนยันแล้ว 42/42 ตรงหลังจำลอง)
-  - **⚠️ ยังไม่ตรวจ/ไม่แก้ — ไฟล์ layer เดิมที่อาจโดนปัญหาเดียวกัน** (พบตอนสแกน 2026-07-24
-    ยังไม่ยืนยันเพราะ compile ในเครื่องไม่ได้ — **อย่าเพิ่งแก้จนกว่าจะ compile ยืนยัน**):
-    `initial/create_all_function.sqlx` (regex เยอะมาก มี `\n` `\b` `\d` `\s` ใน body),
+  - **แก้แล้ว 2026-07-24 — `initial/create_all_function.sqlx`** (ดู bullet ถัดไป):
+    มี escape ผิด **335 จุด** รวม `\1` 1 จุดที่ทำให้ทั้ง action compile ไม่ผ่าน
+  - **⚠️ ยังไม่ตรวจ/ไม่แก้ — ไฟล์ที่เหลือที่อาจโดนปัญหาเดียวกัน** (พบตอนสแกน 2026-07-24
+    ยังไม่ยืนยันเพราะ compile ในเครื่องไม่ได้ — **อย่าเพิ่งแก้จนกว่าจะ compile ยืนยัน**
+    เพราะจะเปลี่ยนพฤติกรรมของ dim ที่รันอยู่ทุกวัน):
     `dimension/dim_sale_representative.sqlx` (`r'\s+'`, `r'\((.*?)\)'` → อาจกลายเป็น
-    `r's+'`, `r'((.*?))'`), `dimension/dim_quotation.sqlx` (`r'[a-zA-Z0-9\s]'`),
+    `r's+'`, `r'((.*?))'` ทำให้แยกชื่อ/นามสกุล/ชื่อเล่นผิด),
+    `dimension/dim_sale_representative_last.sqlx` (แบบเดียวกัน),
+    `dimension/dim_quotation.sqlx` (`r'[a-zA-Z0-9\s]'`),
     `process/deb_address_data.sqlx` (`\n`)
     — ถ้าเป็นจริงคือ bug เงียบที่รันมานาน (ผลลัพธ์ regex ผิดแต่ไม่ error)
     ส่วน `\'` ใน validated/* ~35 ไฟล์ **ไม่ใช่ปัญหา** เพราะอยู่ใน nested template literal
     ของ `${when(incremental(), ...)}` ซึ่ง `\'` → `'` ถูกต้องอยู่แล้ว
+- **`create_all_function.sqlx` เคย drift จาก BigQuery** (sync แล้ว 2026-07-24): ไฟล์มี
+  UDF แค่ 4 ตัว **ขาด `fn_order_type`** (ซึ่ง `view_dim_order` เรียกใช้อยู่) และ
+  `fn_flag_scg` ประกาศพารามิเตอร์เป็น `milvnos`/`milcus` ขณะที่ของจริงคือ
+  `mihvnos`/`mihcus` — สาเหตุน่าจะมาจากที่ action นี้ compile ไม่ผ่าน (octal `\1`)
+  คนเลยไปแก้ UDF ตรงใน console แทน ตอนนี้ generate ใหม่จาก
+  `function_dataset.INFORMATION_SCHEMA.ROUTINES` ครบ 5 ตัว ตรงกับ BigQuery แบบ
+  byte-identical (verify ด้วยการจำลอง template-literal unescape แล้ว 5/5)
+  **หลักการ: ไฟล์นี้ยึด BigQuery เป็นความจริง** — ถ้าจะแก้ UDF ให้แก้ที่ไฟล์แล้วรัน
+  ไม่ใช่แก้ใน console
 - **ไฟล์เก่ายังมี inline reference (tech debt)**: `fact_transcation.sqlx` ใช้ js-block Ref
   กับ dims และ `${ref(...)}` กับ validated ถูกแล้ว แต่ยัง inline
   `${databuffet.DATABASE}.onetime.Transaction_Data_Mart` (ควรเป็น js-block Ref ตาม §3.2)

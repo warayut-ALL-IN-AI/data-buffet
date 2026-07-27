@@ -13,14 +13,29 @@ source, `dimension_table`, `dimension_view`, `fact_table`, `fact_view`,
 `OPTIONS(location="us-central1")`.
 
 ### `create_all_function.sqlx`
-4 UDFs in `function_dataset`:
+**5 UDFs** in `function_dataset` — re-synced from the live dataset on 2026-07-24
+(BigQuery is the source of truth for this file; see the note below):
 
-| UDF | Purpose |
-|---|---|
-| `fn_flag_exc` | cancel/status → exclude flag |
-| `fn_flag_sales_kpi` | sales-KPI Yes/No |
-| `fn_flag_scg` | Thai "ซื้อตรง"/"ซื้อผ่านร้าน" direct-vs-store classification for CRC vnos |
-| `EXTRACT_CHQ_DATA` | regex-heavy parser of Thai cheque/transfer memo → `STRUCT<chqmemo, extract_text, extract_value ARRAY<STRUCT<extract_date DATE, extract_amount FLOAT64>>>`; handles Thai month abbreviations + Buddhist-era (พ.ศ.) year conversion |
+| UDF | Signature | Purpose |
+|---|---|---|
+| `fn_flag_exc` | `(mihcancel INT64, mihstatus INT64, FlagExc STRING)` | cancel/status → exclude flag |
+| `fn_flag_sales_kpi` | `(mihcancel INT64, mihstatus INT64, rebate STRING)` | sales-KPI Yes/No |
+| `fn_flag_scg` | `(mihvnos STRING, mihcus STRING)` | Thai "ซื้อตรง"/"ซื้อผ่านร้าน" direct-vs-store classification for CRC vnos |
+| `fn_order_type` | `(mihref2 STRING)` | `QOAG` prefix → `Online-AllkonsM`, else `Offline` (used by `view_dim_order`) |
+| `EXTRACT_CHQ_DATA` | `(memo_raw STRING, datec DATETIME, total FLOAT64)` | regex-heavy parser of Thai cheque/transfer memo → `STRUCT<chqmemo, extract_text, extract_value ARRAY<STRUCT<extract_date DATE, extract_amount FLOAT64>>>`; handles Thai month abbreviations + Buddhist-era (พ.ศ.) year conversion |
+
+> **Drift found and fixed 2026-07-24**: the file had only 4 UDFs (`fn_order_type`
+> missing entirely) and `fn_flag_scg` declared its parameters as `milvnos`/`milcus`
+> while BigQuery has `mihvnos`/`mihcus`. It also carried **335 unescaped backslashes**
+> in the SQL body — including one `\1` that makes the whole action fail to compile
+> ("octal escape"), which is likely why the file drifted from reality in the first
+> place. Regenerated from `function_dataset.INFORMATION_SCHEMA.ROUTINES` with every
+> backslash doubled per [coding-standard §3.3](../../coding-standards/sqlx-coding-standard.md);
+> all 5 now round-trip byte-identical to BigQuery.
+>
+> These UDFs are **not separate Dataform actions** — they are all created by this one
+> `operations` action, so consumers cannot `ref()` them (interpolate
+> `${databuffet.FUNCTION_DATASET}` instead and do not list them in `dependencies[]`).
 
 ## External-table patterns
 
