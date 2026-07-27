@@ -18,7 +18,7 @@ SELECT
   t2.percode AS EmployeeID,
   CASE WHEN INSTR(t2.pernamet, ' ') > 0 THEN TRIM(SUBSTR(t2.pernamet, 1, INSTR(t2.pernamet, ' ') - 1)) ELSE t2.pernamet END AS EmployeeName,
   CASE WHEN INSTR(t2.pernamet, ' ') > 0 THEN  TRIM(SUBSTR(t2.pernamet, INSTR(t2.pernamet, ' ') + 1)) ELSE NULL END AS EmployeeSurname,
-  REGEXP_EXTRACT(t2.pernamet, r'\(([^)]*)\)') AS EmployeeNickname
+  REGEXP_EXTRACT(t2.pernamet, r'\\(([^)]*)\\)') AS EmployeeNickname
 FROM
   ${ref(databuffet.VALIDATED_MAC5, "per")} AS t2
 WHERE

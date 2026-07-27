@@ -219,11 +219,11 @@ with chq as (
     bil.mirnotes,
     -- t2.total_row,
     (
-      SELECT STRING_AGG(CONCAT(CAST(idx + 1 AS STRING), '. ', item), '\n' ORDER BY idx)
+      SELECT STRING_AGG(CONCAT(CAST(idx + 1 AS STRING), '. ', item), '\\n' ORDER BY idx)
       FROM UNNEST(t2.array_information) as item WITH OFFSET as idx --ดึงค่า index ออกมาตรงนี้ (เริ่มจาก 0)
     ) as ri_information,
     (
-      SELECT STRING_AGG(CONCAT(CAST(idx + 1 AS STRING), '. ', item), '\n' ORDER BY idx)
+      SELECT STRING_AGG(CONCAT(CAST(idx + 1 AS STRING), '. ', item), '\\n' ORDER BY idx)
       FROM UNNEST(t2.array_amt) as item WITH OFFSET as idx --ดึงค่า index ออกมาตรงนี้ (เริ่มจาก 0)
     ) as ri_amt
   from `${ViewDimAgingTableRef}` as t1

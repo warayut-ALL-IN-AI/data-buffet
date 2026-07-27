@@ -65,6 +65,11 @@ Rules:
    literal. Declarations follow first-use order; declare only what is used. A view that
    reads only validated/curated has **no `js` block** (e.g. `Dimension_Quotation`).
 4. No trailing `;` (the view DDL wraps the query).
+4b. **Double every backslash** — the SQL body is a JS template literal
+   ([coding-standard §3.3](../../coding-standards/sqlx-coding-standard.md)). `\1` is a
+   compile error ("octal escape"); `\(`, `\d`, `\n` compile fine but silently corrupt the
+   SQL. Migrating from the console means rewriting `r'|\1'` → `r'|\\1'`, `'\n'` → `'\\n'`.
+   Hit for real in 3 views on 2026-07-24.
 5. Dataset → constant map is the same registry as everywhere else
    (`includes/controller/variables.json`).
 

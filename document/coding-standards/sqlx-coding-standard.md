@@ -99,6 +99,40 @@ FROM `${DimCompanyTableRef}`
 > — ของใหม่ยึดกฎข้างบน ของเก่าค่อยแปลงเมื่อแตะไฟล์นั้น
 > `definitions/view/` ทั้ง 42 ไฟล์ทำตามกฎนี้ครบแล้ว (2026-07-24)
 
+### 3.3 Backslash ใน SQL body — ต้องเขียน `\\` เสมอ
+
+Dataform คอมไพล์ SQL body เป็น **JavaScript template literal** ดังนั้น `\` ทุกตัวคือ
+escape character — ต้อง **double เป็น `\\`** ถ้าอยากให้ backslash ไปโผล่ใน SQL จริง
+(รวมถึงใน comment `--` ด้วย เพราะ comment ก็อยู่ใน template string)
+
+```sql
+-- ผิด: compile error "Octal escape sequences are not allowed in template strings"
+REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\1')
+
+-- ผิดแบบเงียบ: \( กลายเป็น ( → regex เพี้ยนโดยไม่ error
+REGEXP_EXTRACT(pernamet, r'\(([^)]*)\)')
+
+-- ผิดแบบเงียบ: \n กลายเป็น newline จริงในสตริง → BigQuery syntax error
+STRING_AGG(item, '\n')
+
+-- ถูกทั้งหมด
+REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\\1')
+REGEXP_EXTRACT(pernamet, r'\\(([^)]*)\\)')
+STRING_AGG(item, '\\n')
+```
+
+| เขียนใน `.sqlx` | SQL ที่ออกจริง | หมายเหตุ |
+|---|---|---|
+| `\\1` `\\n` `\\(` `\\d` | `\1` `\n` `\(` `\d` | ✅ ที่ต้องการ |
+| `\1`…`\9`, `\0` | — | ⛔ compile error (octal) |
+| `\n` `\t` `\r` | ขึ้นบรรทัดใหม่จริง / tab / CR | ⚠️ ไม่ error แต่ SQL พัง |
+| `\(` `\d` `\s` `\w` | `(` `d` `s` `w` | ⚠️ ไม่ error แต่ **regex เพี้ยนเงียบ** |
+
+precedent ในโค้ด: `includes/controller/function-data.js` → ``pattern = `r'[\\n\\r\\t]'` ``
+
+> **เวลาย้าย SQL จาก BigQuery console เข้า `.sqlx` ต้อง double backslash ทุกตัวก่อนเสมอ**
+> (view layer เจอปัญหานี้จริง 3 ไฟล์ 2026-07-24 — 2 ใน 3 เป็นแบบเพี้ยนเงียบ ไม่ error)
+
 ## 4. การ cast / ทำความสะอาดข้อมูล
 
 ใช้ helper จาก `function-data.js` เท่านั้น:
@@ -174,6 +208,7 @@ join dim_company → `WHERE is_active = TRUE` → `MdsID` ปิดท้าย 
 | hardcode ชื่อ dataset/project | ต้องผ่าน `databuffet.*` เพื่อย้าย environment ได้ |
 | inline `` `${databuffet.DATABASE}.${databuffet.X}.tbl` `` ใน SQL body | ต้องประกาศ object + `XxxTableRef` ใน `js {}` แล้วอ้าง `` `${XxxTableRef}` `` (§3.2) |
 | ใช้ js-block Ref กับ `validated_*` / `curated_*` | ต้องใช้ `${ref(...)}` เพื่อให้ Dataform ผูก dependency ให้ (§3.1) |
+| เขียน `\` เดี่ยวใน SQL body (regex, `\n`) | body เป็น JS template literal — `\1` = compile error, `\(`/`\d` โดนกลืน backslash เงียบ ต้อง `\\` (§3.3) |
 | แก้/regenerate SK ของ MERGE dims | fact/dim อื่น persist SK พวกนั้นไว้ ข้อมูลจะชี้ผิด |
 | persist SK ของ full-rebuild dims ข้ามวัน | SK ออกเลขใหม่ทุกคืน — consumer ใหม่ต้อง rebuild รายวันตาม |
 | `CURRENT_DATE()` ไม่ระบุ timezone | เที่ยงคืน UTC ≠ เที่ยงคืนไทย ข้อมูลคลาดวัน |

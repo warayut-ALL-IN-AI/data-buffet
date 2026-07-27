@@ -64,6 +64,10 @@ LEFT JOIN `${DimCompanyTableRef}` AS com ON ...
 
 ### 4. ข้อควรระวัง
 
+- **backslash ต้อง double** — SQL body เป็น JS template literal
+  ([§3.3](../coding-standards/sqlx-coding-standard.md)) เวลา copy SQL จาก BigQuery
+  console เข้ามาต้องแปลงก่อน: `r'|\1'` → `r'|\\1'`, `r'\('` → `r'\\('`, `'\n'` → `'\\n'`
+  (`\1` = compile error; `\(` / `\n` **ไม่ error แต่ผลลัพธ์เพี้ยนเงียบ**)
 - **ห้ามมี `;` ปิดท้าย** — DDL ของ view ครอบ query อยู่แล้ว
 - ห้าม hardcode `databuffet-nonprd` หรือชื่อ dataset; ห้าม inline
   `` `${databuffet.DATABASE}.${databuffet.X}.tbl` `` ใน SQL body
@@ -89,5 +93,6 @@ view รันหลัง table layer (`dimension_daily` / `fact_daily`) เส
 - [ ] validated/curated ใช้ `${ref(...)}` และ **ไม่อยู่ใน** `dependencies[]`
 - [ ] ที่เหลือใช้ js-block `` `${XxxTableRef}` `` และ repo action อยู่ใน `dependencies[]` ครบ
 - [ ] ไม่มี `databuffet-nonprd` / inline `${databuffet.DATABASE}` / `;` ท้ายไฟล์
+- [ ] backslash ใน regex/สตริง double เป็น `\\` แล้ว (รวมใน comment)
 - [ ] ไม่มี declaration ที่ประกาศแล้วไม่ได้ใช้
 - [ ] อัปเดต inventory ใน [project_wiki/view/view-layer.md](../project_wiki/view/view-layer.md)

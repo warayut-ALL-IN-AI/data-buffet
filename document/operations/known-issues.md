@@ -70,6 +70,23 @@
     ประวัติ: รอบแรก generate เป็น inline (ผิด §3) → รอบสองแก้เป็น js-block ทั้งหมด
     (ยัง**ผิด** เพราะ validated/curated ต้องเป็น `ref()`) → รอบสามได้ตามนี้
     ยืนยันทุกรอบ: เนื้อ SQL ไม่เปลี่ยน 42/42 เทียบกับ BigQuery
+- **Backslash ใน SQL body ต้อง double** (เจอจริง 2026-07-24, view layer 3 ไฟล์):
+  Dataform คอมไพล์ body เป็น JS template literal — `r'|\1'` ทำให้ compile error
+  *"Octal escape sequences are not allowed in template strings"* ส่วน `r'\('` และ `'\n'`
+  **ไม่ error แต่เพี้ยนเงียบ** (backslash โดนกลืน / กลายเป็น newline จริง) แก้แล้วที่
+  `view_dim_product_master` (`\1`×3 รวมใน comment), `view_aging_ri` (`'\n'`×2),
+  `Sales_Per_Non_Master` (`\(`/`\)`) — กฎอยู่ใน coding-standard §3.3
+  **บทเรียน**: การเทียบ SQL แบบ text ตรง ๆ จับ bug ประเภทนี้ไม่ได้ ต้องจำลอง
+  template-literal unescape ก่อนเทียบ (ยืนยันแล้ว 42/42 ตรงหลังจำลอง)
+  - **⚠️ ยังไม่ตรวจ/ไม่แก้ — ไฟล์ layer เดิมที่อาจโดนปัญหาเดียวกัน** (พบตอนสแกน 2026-07-24
+    ยังไม่ยืนยันเพราะ compile ในเครื่องไม่ได้ — **อย่าเพิ่งแก้จนกว่าจะ compile ยืนยัน**):
+    `initial/create_all_function.sqlx` (regex เยอะมาก มี `\n` `\b` `\d` `\s` ใน body),
+    `dimension/dim_sale_representative.sqlx` (`r'\s+'`, `r'\((.*?)\)'` → อาจกลายเป็น
+    `r's+'`, `r'((.*?))'`), `dimension/dim_quotation.sqlx` (`r'[a-zA-Z0-9\s]'`),
+    `process/deb_address_data.sqlx` (`\n`)
+    — ถ้าเป็นจริงคือ bug เงียบที่รันมานาน (ผลลัพธ์ regex ผิดแต่ไม่ error)
+    ส่วน `\'` ใน validated/* ~35 ไฟล์ **ไม่ใช่ปัญหา** เพราะอยู่ใน nested template literal
+    ของ `${when(incremental(), ...)}` ซึ่ง `\'` → `'` ถูกต้องอยู่แล้ว
 - **ไฟล์เก่ายังมี inline reference (tech debt)**: `fact_transcation.sqlx` ใช้ js-block Ref
   กับ dims และ `${ref(...)}` กับ validated ถูกแล้ว แต่ยัง inline
   `${databuffet.DATABASE}.onetime.Transaction_Data_Mart` (ควรเป็น js-block Ref ตาม §3.2)
