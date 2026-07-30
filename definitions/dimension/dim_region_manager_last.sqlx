@@ -45,7 +45,7 @@ SELECT
     SELECT
       *
     FROM `${DimRegionManagerTableRef}`
-    WHERE CURRENT_DATE('Asia/Bangkok') between StartDate and EndDate
+    -- WHERE CURRENT_DATE('Asia/Bangkok') between StartDate and EndDate
     QUALIFY ROW_NUMBER() OVER (PARTITION BY CompanyID, RegionID, SubRegionID ORDER BY StartDate DESC, EndDate DESC) = 1
   ) as t1
   LEFT JOIN `${DimCompanyTableRef}` as dim_com
