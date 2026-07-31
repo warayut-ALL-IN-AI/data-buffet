@@ -8,7 +8,7 @@ config {
                   "dim_target_product_group_by_sale_dayofwork",
                   "dim_sale_representative", "dim_department", "dim_director",
                   "dim_region", "dim_region_manager", 
-                  "dim_section", "dim_section_manager"                  
+                  "dim_section", "dim_section_manager"        
                 ],
   tags: [databuffet.TAG_FACT_DAILY],
 }
@@ -186,7 +186,11 @@ BEGIN
       -- productmaster.ProductCode,
       productmaster.ProductGroupACC,
       deb.debgroup,
-      IF(channel_sk.DummyChannel <> 'not calculated', channel_sk.DummyChannel, CAST(NULL AS STRING)) as DummyChannel,
+      (CASE
+        WHEN flagSpecialDimChannel.employeeID is not null THEN CAST(NULL AS STRING)
+        WHEN channel_sk.DummyChannel <> 'not calculated' THEN channel_sk.DummyChannel
+        ELSE CAST(NULL AS STRING)
+      END) as DummyChannel,
       trans.* except(OrderProvinceSK, OrderDistrictSK, OrderSubDistrictSK)
     FROM ${databuffet.DATABASE}.onetime.Transaction_Data_Mart as trans
     
@@ -209,6 +213,17 @@ BEGIN
     LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'deb')} as deb
       ON trans.milCus = deb.debCode
       AND trans.companyID = deb.company_id
+      
+    -- SPECIAL FLAG DIM CHANNEL
+    LEFT JOIN (
+      select distinct companyid, employeeID
+      from databuffet-nonprd.dimension_table.dim_sale_representative
+      where companyid = 'ab01'
+        and CURRENT_DATE('Asia/Bangkok') between StartDate and EndDate
+
+    ) as flagSpecialDimChannel
+      on trans.companyID = flagSpecialDimChannel.companyID
+        and trans.milPer = flagSpecialDimChannel.employeeID
       
     WHERE PARSE_DATE('%Y%m%d', CONCAT(trans.milYear, FORMAT("%02d", trans.milMonth), FORMAT("%02d", trans.milDay))) >= DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR)
       -- and trans.asatdate >= CURRENT_DATE('Asia/Bangkok')-1
