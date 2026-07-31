@@ -194,9 +194,15 @@ CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET
 RETURNS STRING AS (
   TRIM(
     REGEXP_REPLACE(
-      text_input, 
-      r'^\+(?:บริษัท|บจก\.|บมจ\.|หจก\.|ร้าน|ห้างหุ้นส่วนจำกัด|ห้างหุ้นจำกัด)?\s*(.*?)\s*(?:จำกัด|\(มหาชน\))?$', 
-      r'\1'
+      -- Step 2: ตัดคำลงท้ายออก (จำกัด, (มหาชน))
+      REGEXP_REPLACE(
+        -- Step 1: ตัดคำนำหน้าออก
+        text_input,
+        r'^\+?\s*(?:บริษัท|บจก\.|บมจ\.|หจก\.|ร้าน|ห้างหุ้นส่วนจำกัด|ห้างหุ้นจำกัด)\s*', 
+        ''
+      ),
+      r'\s*(?:จำกัด|\(มหาชน\))\s*$', 
+      ''
     )
   )
 );
