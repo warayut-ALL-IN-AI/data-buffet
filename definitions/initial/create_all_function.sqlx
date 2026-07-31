@@ -13,6 +13,7 @@ CASE
   END
 );
 
+
 CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_flag_sales_kpi`(mihcancel INT64, mihstatus INT64, rebate STRING)
 AS (
 CASE 
@@ -20,6 +21,7 @@ CASE
     ELSE 'No' 
   END
 );
+
 
 CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_flag_scg`(mihvnos STRING, mihcus STRING)
 AS (
@@ -30,6 +32,7 @@ AS (
 END)
 );
 
+
 CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_order_type`(mihref2 STRING)
 AS (
 (CASE 
@@ -37,6 +40,7 @@ AS (
     ELSE 'Offline'
   END)
 );
+
 
 CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.EXTRACT_CHQ_DATA`(memo_raw STRING, datec DATETIME, total FLOAT64) RETURNS STRUCT<chqmemo STRING, extract_text STRING, extract_value ARRAY<STRUCT<extract_date DATE, extract_amount FLOAT64>>>
 AS (
@@ -181,6 +185,18 @@ AS (
             ) AS transfer_pos
         )
       )
+    )
+  )
+);
+
+
+CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.clean_company_prefix`(text_input STRING)
+RETURNS STRING AS (
+  TRIM(
+    REGEXP_REPLACE(
+      text_input, 
+      r'^(?:บริษัท|บจก\.|บมจ\.|หจก\.|ร้าน|ห้างหุ้นส่วนจำกัด|ห้างหุ้นจำกัด)?\s*(.*?)\s*(?:จำกัด|\(มหาชน\))?$', 
+      r'\1'
     )
   )
 );
