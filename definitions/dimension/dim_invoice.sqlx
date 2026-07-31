@@ -46,7 +46,7 @@ BEGIN
             WHEN mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_snamet
             ELSE null
           END) as StatusDesc,
-          mihCancel,mihDep,mihJob
+          mihCancel,mihDep,mihJob,mihNotes
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
         left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar_s
           on mih.mihStatus = ar_s.ar_scode
@@ -70,7 +70,7 @@ BEGIN
             WHEN mih.mihType in ('QP', 'PP', 'IP', 'AP', 'BP', 'VP', 'RP') THEN ap_s.ap_snamet
             ELSE null
           END) as StatusDesc,
-          mih.mihCancel, mih.mihDep, mih.mihJob
+          mih.mihCancel, mih.mihDep, mih.mihJob,mihNotes
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
         left join ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar_s
           on mih.mihStatus = ar_s.ar_scode
@@ -110,7 +110,7 @@ BEGIN
           mihDay, mihMonth, mihYear, mihType, mihCus, mih.mihVnos, mihPer,
           per_sale1, mih2per2, per_sale2,
           mihStatus, StatusDesc, mihCancel, mihRef1, mihRef2,
-          mihDep,mihJob
+          mihDep,mihJob,mihNotes
         FROM mih_raw as mih
         INNER JOIN filter_mih2 as mih2
           ON mih.mihref1 = mih2.mih2vnos
@@ -126,7 +126,7 @@ BEGIN
           '0' as mih2per2,
           0 as per_sale2,
           mihStatus, StatusDesc, mihCancel, mihRef1, mihRef2,
-          mihDep,mihJob
+          mihDep,mihJob,mihNotes
         FROM mih_raw2 as mih2
         WHERE NOT EXISTS (
           SELECT 1
@@ -175,6 +175,7 @@ BEGIN
       t1.mihRef1, t1.mihRef2, t1.mihPer, t1.mihStatus, t1.StatusDesc, t1.mihCancel,
       t1.per_sale1, t1.mih2per2, t1.per_sale2, t1.mihDep, t1.mihJob,
       t1.InvoiceSalesFlag,
+      t1.mihNotes,
       dim_order.OrderSK
     FROM source_combined AS t1
     LEFT JOIN `${DimInvoiceTableRef}` AS t2
@@ -215,27 +216,26 @@ BEGIN
       T.mihRef2 = S.mihRef2,
       T.mihDep = S.mihDep,
       T.mihJob = S.mihJob,
+      T.mihNotes = S.mihNotes,
       T.InvoiceSalesFlag = S.InvoiceSalesFlag
       -- ยกเว้น: OrderSK, InvoiceSK, QuotationSK ไม่ถูก update
 
   -- กรณีไม่เจอข้อมูล (Insert)
   WHEN NOT MATCHED THEN
     INSERT (
-      InvoiceSK, CompanySK, OrderSK,
-      companyID,
+      InvoiceSK, CompanySK, OrderSK, companyID,
       mix_date, mihDay, mihMonth, mihYear,
       mihType, mihVnos, mihCus, milLinkVcno,
       mihRef1, mihRef2, mihPer, mihStatus, StatusDesc, mihCancel,
-      per_sale1, mih2per2, per_sale2, mihDep, mihJob,
+      per_sale1, mih2per2, per_sale2, mihDep, mihJob, mihNotes,
       InvoiceSalesFlag
     )
     VALUES (
-      S.InvoiceSK, S.CompanySK, S.OrderSK,
-      S.companyID,
+      S.InvoiceSK, S.CompanySK, S.OrderSK, S.companyID,
       S.mix_date, S.mihDay, S.mihMonth, S.mihYear,
       S.mihType, S.mihVnos, S.mihCus, S.milLinkVcno,
       S.mihRef1, S.mihRef2, S.mihPer, S.mihStatus, S.StatusDesc, S.mihCancel,
-      S.per_sale1, S.mih2per2, S.per_sale2, S.mihDep, S.mihJob,
+      S.per_sale1, S.mih2per2, S.per_sale2, S.mihDep, S.mihJob, S.mihNotes,
       S.InvoiceSalesFlag
     );
 END;
