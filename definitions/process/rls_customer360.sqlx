@@ -1,0 +1,51 @@
+config {
+    type: "table",
+    schema: databuffet.PROCESS_DATASET,
+    dependencies: [],
+    tags: [databuffet.TAG_PROCESS],
+    bigquery: {
+        // partitionBy: "asatdate",
+        // clusterBy: ["company_id", "debcode"],
+        // updatePartitionFilter: "asatdate >= CURRENT_DATE('Asia/Bangkok')-7"
+    }
+}
+
+-- CREATE OR REPLACE TABLE databuffet-nonprd.process_dataset.RLS_Customer360
+-- AS
+WITH fact_table as (
+  SELECT DISTINCT
+    milCus,
+    fact.milPer,
+    section.SectionID,
+    region.RegionID,
+    director.DirectorID,
+    prod_mkt.MarketingGroupID,
+    prod_mkt.SubMarketingID,
+    prod_mkt.SegmentID
+
+  FROM `databuffet-nonprd.fact_table.fact_transcation` AS fact
+  LEFT JOIN `databuffet-nonprd.dimension_table.dim_region` AS region
+    ON fact.RegionSK = region.RegionSK
+  LEFT JOIN `databuffet-nonprd.dimension_table.dim_section` AS section
+    ON fact.SectionSK = section.SectionSK
+  LEFT JOIN `databuffet-nonprd.dimension_table.dim_director` AS director
+    ON fact.DirectorSK = director.DirectorSK
+  LEFT JOIN `databuffet-nonprd.dimension_table.dim_product_mkt` AS prod_mkt
+    ON fact.ProductMktSK = prod_mkt.ProductMktSK
+  
+)
+  select
+    milCus,
+    STRING_AGG(DISTINCT milPer, '|') as milPer,
+    STRING_AGG(DISTINCT SectionID, '|') as SectionID,
+    STRING_AGG(DISTINCT RegionID, '|') as RegionID,
+    STRING_AGG(DISTINCT DirectorID, '|') as DirectorID,
+    STRING_AGG(
+      DISTINCT CONCAT(
+        MarketingGroupID, ':',
+        SubMarketingID, ':',
+        SegmentID
+      )
+    , '|') as ProductMkt
+  from fact_table
+  group by milCus
