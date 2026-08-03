@@ -1,7 +1,7 @@
 config {
     type: "table",
     schema: databuffet.PROCESS_DATASET,
-    dependencies: [],
+    dependencies: ["fact_transcation"],
     tags: [databuffet.TAG_PROCESS],
     bigquery: {
         // partitionBy: "asatdate",
