@@ -1,9 +1,12 @@
-# Process Layer — `definitions/process/deb_address_data.sqlx`
+# Process Layer — `definitions/process/`
 
-> **LLM context**: 1 file. AI-powered Thai address parsing, gated on CDC so only
-> *changed* addresses are re-parsed each day. Writes to `process_dataset.deb_address_data`;
-> the companion view `process_dataset.view_deb_address_data` is what `fact_transcation`
-> and `dim_customer` consume for Province/District/SubDistrict SKs.
+> **LLM context**: 2 files, both tag `process`.
+> 1. **`deb_address_data.sqlx`** — AI-powered Thai address parsing, gated on CDC so only
+>    *changed* addresses are re-parsed each day. Writes to `process_dataset.deb_address_data`;
+>    the companion view `process_dataset.view_deb_address_data` is what `fact_transcation`
+>    and `dim_customer` consume for Province/District/SubDistrict SKs.
+> 2. **`rls_customer360.sqlx`** — per-customer access map for **row-level security**
+>    on Customer360 (see the section at the bottom). Plain `type: "table"`, no AI.
 
 ## Config
 
@@ -42,3 +45,28 @@ else keeps its previously parsed value. Blank addresses are skipped.
 `AI.GENERATE` costs per call. Without CDC gating, every daily run would re-parse the
 entire customer master. This is the reference example for "expensive derivation +
 CDC gate" — reuse this pattern for any future LLM/UDF-heavy enrichment.
+
+---
+
+## `rls_customer360.sqlx` — row-level-security access map
+
+`type: "table"` in `process_dataset`, `dependencies: ["fact_transcation"]`, tag `process`.
+Builds **one row per customer** (`milCus`) listing every sales entity associated with
+that customer, so downstream row-level security can decide who may see a customer.
+
+For each `milCus` it `STRING_AGG(DISTINCT …, '|')`s (pipe-delimited) over
+`fact_transcation` joined to the dims:
+
+| Column | Source | Meaning |
+|---|---|---|
+| `milPer` | fact | sales-person id(s) |
+| `SectionID` | `dim_section` (via `SectionSK`) | section(s) |
+| `RegionID` | `dim_region` (via `RegionSK`) | region(s) |
+| `DirectorID` | `dim_director` (via `DirectorSK`) | director(s) |
+| `ProductMkt` | `dim_product_mkt` (via `ProductMktSK`) | `MarketingGroupID:SubMarketingID:SegmentID` combo(s) |
+
+No AI, no CDC gate — a straight daily rebuild off `fact_transcation`, so it inherits
+that fact's coverage. The `CREATE OR REPLACE TABLE` header is commented out because
+Dataform materializes it from the `config` block. RLS is also referenced in
+[operations/known-issues.md](../../operations/known-issues.md) and
+[architecture/overview.md](../../architecture/overview.md).

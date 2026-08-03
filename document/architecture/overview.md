@@ -24,8 +24,14 @@ GCS AVRO files  gs://file-raw-data  (Hive partition: ASATDATE=YYYYMMDD)
 │ (59 ไฟล์)  │                 │  (6 ไฟล์)  │
 └────────────┘                 └────────────┘
  dimension_table                 fact_table
+      └───────────────┬───────────────┘
+                      ▼
+              ┌────────────┐  definitions/view/ (42 ไฟล์)
+              │    VIEW    │  BI/reporting views (type: "view")
+              └────────────┘  dimension_view · fact_view · bridge_dataset ·
+               view schemas    onetime · process_dataset
 
-ท่อเสริม:  CDC (cdc_dataset)  →  PROCESS (process_dataset, AI.GENERATE แกะที่อยู่ไทย)
+ท่อเสริม:  CDC (cdc_dataset)  →  PROCESS (process_dataset, AI.GENERATE แกะที่อยู่ไทย + RLS)
 ต้นทางภายนอก:  mds_dataset (master data service — repo นี้ไม่ได้สร้าง)
 ```
 
@@ -38,8 +44,9 @@ GCS AVRO files  gs://file-raw-data  (Hive partition: ASATDATE=YYYYMMDD)
 | Curated | `curated_*` | incremental | join ข้าม validated, JSON parsing, split-sale (ag01) |
 | Dimension | `dimension_table` | operations (MERGE) / table | ออก surrogate key, SCD |
 | Fact | `fact_table` | table / operations | join SK ทุก dimension, retention 4 ปี |
+| View | `dimension_view`, `fact_view`, `bridge_dataset`, `onetime`, `process_dataset` | view | BI/reporting views อ่านจาก dim/fact/curated (`type: "view"`, tag `view`) |
 | CDC | `cdc_dataset` | operations | จับ NEW/CHANGED จาก config |
-| Process | `process_dataset` | incremental | AI แกะที่อยู่ไทย เฉพาะ row ที่ CDC บอกว่าเปลี่ยน |
+| Process | `process_dataset` | incremental / operations | AI แกะที่อยู่ไทย (row ที่ CDC เปลี่ยน) + RLS (`rls_customer360`) |
 
 ## จุดสำคัญเชิงออกแบบ
 

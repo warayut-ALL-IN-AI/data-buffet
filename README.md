@@ -44,12 +44,17 @@ GCS AVRO files (gs://file-raw-data)
 │ (59 files, SCD) │◄───────────│ (9 fact tables) │
 └─────────────────┘            └─────────────────┘
    definitions/dimension/         definitions/fact/
-        ▲
+        ▲          │                    │
+        │          └────────┬───────────┘
+        │                   ▼
+        │          ┌─────────────────┐   definitions/view/  (42 views)
+        │          │ VIEW            │   BI/reporting layer (type: "view")
+        │          └─────────────────┘   reads dim/fact/curated + other views
         │  mds_dataset (external master-data-service tables — not built by this repo)
 
 Supporting pipelines:
   • CDC      definitions/cdc/        Change tracking driven by includes/controller/cdc-config.json
-  • PROCESS  definitions/process/    AI Thai-address parsing (AI.GENERATE), gated on CDC changes
+  • PROCESS  definitions/process/    AI Thai-address parsing (AI.GENERATE, gated on CDC) + RLS (rls_customer360)
 ```
 
 ### Layers
@@ -61,8 +66,9 @@ Supporting pipelines:
 | **Curated** | `definitions/curated/` | 5 | Business-ready joins, enrichment, JSON parsing |
 | **Dimension** | `definitions/dimension/` | 59 | Conformed dimensions with surrogate keys (MERGE + SCD intervals) |
 | **Fact** | `definitions/fact/` | 9 | Star-schema fact tables joined to dimensions (4-year retention) |
+| **View** | `definitions/view/` | 42 | BI/reporting views (`type: "view"`) over dim/fact/curated: `dimension_view`, `fact_view`, `bridge_dataset`, `onetime`, `process_dataset` |
 | **CDC** | `definitions/cdc/` | 2 | Config-driven change log over validated tables |
-| **Process** | `definitions/process/` | 1 | AI address parsing consumed by dims/facts |
+| **Process** | `definitions/process/` | 2 | AI address parsing + row-level security (`rls_customer360`) |
 
 **Validated breakdown:** MAC5 `86` · CIS360 `24` · MASTERSKU `11` · SALEOUT_MDT `10`
 (+1 schema-bootstrap file per source)

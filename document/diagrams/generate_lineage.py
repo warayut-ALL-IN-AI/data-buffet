@@ -13,6 +13,7 @@ focused views instead of one giant graph:
   3. Star schema         — every fact and what feeds it (dim/curated -> fact)
   4. Dimension backbone  — dim -> dim build order (dim_company is the root)
   5. Source -> model     — validated/curated -> dimension/fact data flow
+  6. View layer          — view -> what each BI/reporting view reads
 
 Operational scaffolding (the `initial` layer: create_all_* / drop_all_*, and the
 `*_schema_*` schema-declaration objects) is excluded from views 2-4 — it adds
@@ -116,13 +117,14 @@ TOPICS = [
     ]),
 ]
 
-LAYER_ORDER = ["initial", "validated", "curated", "dimension", "fact", "cdc", "process"]
+LAYER_ORDER = ["initial", "validated", "curated", "dimension", "fact", "view", "cdc", "process"]
 LAYER_STYLE = {
     "initial":   ("#e0e0e0", "#9e9e9e"),
     "validated": ("#cfe8ff", "#4a90d9"),
     "curated":   ("#a8d5ff", "#2f6fb0"),
     "dimension": ("#ffe0b3", "#d98f2f"),
     "fact":      ("#c6f5c6", "#3fa63f"),
+    "view":      ("#cfeae6", "#3a9d94"),
     "cdc":       ("#f0d0f0", "#b060b0"),
     "process":   ("#f5c6c6", "#c04040"),
 }
@@ -369,6 +371,14 @@ def main():
     src_nodes = {n for e in src_edges for n in e}
     source_model = mermaid_block(src_nodes, node_meta, src_edges)
 
+    # ---- View 6: view layer — what each view reads ----
+    view_nodes = {n for n, ly in layer_of.items() if ly == "view" and not is_scaffold(n)}
+    view_feed_edges = {(s, d) for s, d in data_edges if d in view_nodes}
+    view_layer_nodes = set(view_nodes)
+    for s, d in view_feed_edges:
+        view_layer_nodes.add(s)
+    view_layer = mermaid_block(view_layer_nodes, node_meta, view_feed_edges)
+
     paused_labels = sorted(node_meta[n][2] for n, m in node_meta.items() if m[1])
     total = len(node_meta)
 
@@ -381,6 +391,7 @@ flowchart LR
   C["curated ({counts['curated']})<br/>business joins"]
   D["dimension ({counts['dimension']})<br/>SK + SCD"]
   F["fact ({counts['fact']})<br/>star-schema"]
+  VW["view ({counts['view']})<br/>BI/reporting views"]
   CDC["cdc ({counts['cdc']})"]
   P["process ({counts['process']})<br/>AI address parse"]
   raw --> I --> V --> C
@@ -389,6 +400,9 @@ flowchart LR
   V --> D
   V --> F
   D --> F
+  D --> VW
+  F --> VW
+  C --> VW
   V -.-> CDC -.-> P
   classDef raw fill:#f5f5f5,stroke:#999,color:#111;
   classDef initial fill:#e0e0e0,stroke:#9e9e9e,color:#111;
@@ -396,6 +410,7 @@ flowchart LR
   classDef curated fill:#a8d5ff,stroke:#2f6fb0,color:#111;
   classDef dimension fill:#ffe0b3,stroke:#d98f2f,color:#111;
   classDef fact fill:#c6f5c6,stroke:#3fa63f,color:#111;
+  classDef view fill:#cfeae6,stroke:#3a9d94,color:#111;
   classDef cdc fill:#f0d0f0,stroke:#b060b0,color:#111;
   classDef process fill:#f5c6c6,stroke:#c04040,color:#111;
   class raw raw;
@@ -404,6 +419,7 @@ flowchart LR
   class C curated;
   class D dimension;
   class F fact;
+  class VW view;
   class CDC cdc;
   class P process;
 ```"""
@@ -424,9 +440,10 @@ flowchart TB
     C["curated | {tc('TAG_CURATED')}<br/>business joins<br/>tag: curated"]
     D["dimension_daily | {tc('TAG_DIM_DAILY')}<br/>SK + SCD rebuild<br/>tag: dimension_daily"]
     Fd["fact_daily | {tc('TAG_FACT_DAILY')}<br/>star-schema load<br/>tag: fact_daily"]
+    Vw["view | {tc('TAG_VIEW')}<br/>BI/reporting views<br/>tag: view"]
     CDC["cdc | {tc('TAG_CDC')}<br/>change log<br/>tag: cdc"]
     P["process | {tc('TAG_PROCESS')}<br/>AI.GENERATE - gated on today's CDC changes<br/>tag: process"]
-    V --> C --> D --> Fd
+    V --> C --> D --> Fd --> Vw
     V --> CDC --> P
   end
 
@@ -442,6 +459,7 @@ flowchart TB
   classDef cur fill:#a8d5ff,stroke:#2f6fb0,color:#111;
   classDef dim fill:#ffe0b3,stroke:#d98f2f,color:#111;
   classDef fct fill:#c6f5c6,stroke:#3fa63f,color:#111;
+  classDef vw fill:#cfeae6,stroke:#3a9d94,color:#111;
   classDef cdc fill:#f0d0f0,stroke:#b060b0,color:#111;
   classDef proc fill:#f5c6c6,stroke:#c04040,color:#111;
   class I boot;
@@ -449,6 +467,7 @@ flowchart TB
   class C cur;
   class D,Dy dim;
   class Fd fct;
+  class Vw vw;
   class CDC cdc;
   class P proc;
 ```"""
@@ -515,6 +534,15 @@ How `validated` / `curated` tables flow into dimensions and facts (scaffolding
 excluded). This is the densest view — open it on GitHub or mermaid.live to zoom.
 
 {source_model}
+
+---
+
+## 6. View layer — what each view reads
+
+Every `view_*` (BI/reporting layer) and the dimensions / facts / curated tables /
+other views it selects from. Edges captured from each view's `dependencies[]`.
+
+{view_layer}
 """
     OUT.write_text(doc, encoding="utf-8")
     print(f"Wrote {OUT.relative_to(REPO)}")
@@ -522,6 +550,7 @@ excluded). This is the densest view — open it on GitHub or mermaid.live to zoo
     print(f"  view2 star:   nodes={len(star_nodes)} edges={len(star_edges)}")
     print(f"  view3 dims:   nodes={len(dim_connected)} edges={len(dim_edges)}")
     print(f"  view4 source: nodes={len(src_nodes)} edges={len(src_edges)}")
+    print(f"  view6 views:  nodes={len(view_layer_nodes)} edges={len(view_feed_edges)}")
     print(f"  paused={len(paused_labels)}")
 
     topic_doc, covered = build_topic_flows(node_meta, data_edges, layer_of, is_scaffold)

@@ -13,8 +13,9 @@ source, `dimension_table`, `dimension_view`, `fact_table`, `fact_view`,
 `OPTIONS(location="us-central1")`.
 
 ### `create_all_function.sqlx`
-**5 UDFs** in `function_dataset` — re-synced from the live dataset on 2026-07-24
-(BigQuery is the source of truth for this file; see the note below):
+**6 UDFs** in `function_dataset` — re-synced from the live dataset on 2026-07-24
+(`clean_company_prefix` added later; BigQuery is the source of truth for this file;
+see the note below):
 
 | UDF | Signature | Purpose |
 |---|---|---|
@@ -23,6 +24,7 @@ source, `dimension_table`, `dimension_view`, `fact_table`, `fact_view`,
 | `fn_flag_scg` | `(mihvnos STRING, mihcus STRING)` | Thai "ซื้อตรง"/"ซื้อผ่านร้าน" direct-vs-store classification for CRC vnos |
 | `fn_order_type` | `(mihref2 STRING)` | `QOAG` prefix → `Online-AllkonsM`, else `Offline` (used by `view_dim_order`) |
 | `EXTRACT_CHQ_DATA` | `(memo_raw STRING, datec DATETIME, total FLOAT64)` | regex-heavy parser of Thai cheque/transfer memo → `STRUCT<chqmemo, extract_text, extract_value ARRAY<STRUCT<extract_date DATE, extract_amount FLOAT64>>>`; handles Thai month abbreviations + Buddhist-era (พ.ศ.) year conversion |
+| `clean_company_prefix` | `(text_input STRING)` | strips Thai company prefixes (`บริษัท`, `บจก.`, `บมจ.`, `หจก.`, `ร้าน`, `ห้างหุ้นส่วนจำกัด`, leading `+`) and suffixes (`จำกัด`, `(มหาชน)`) → bare company name for matching |
 
 > **Drift found and fixed 2026-07-24**: the file had only 4 UDFs (`fn_order_type`
 > missing entirely) and `fn_flag_scg` declared its parameters as `milvnos`/`milcus`

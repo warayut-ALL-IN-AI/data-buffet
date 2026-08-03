@@ -24,9 +24,11 @@ the code** — never hand-edit the output.
    DAG root; `_last` snapshots feed `update_sk_sale_rep_group`).
 5. **Source → model** — how `validated` / `curated` tables flow into dimensions and
    facts (the densest view).
+6. **View layer** — every `view_*` (BI/reporting layer) and the dimensions / facts /
+   curated tables / other views it reads (from each view's `dependencies[]`).
 
 Operational scaffolding (the `initial` layer and `*_schema_*` objects) is excluded
-from views 3–5 — it adds hundreds of bootstrap-only edges and no data-lineage value.
+from views 3–6 — it adds hundreds of bootstrap-only edges and no data-lineage value.
 Paused objects (config commented out) render dashed.
 
 ## The topic views (in `topic_flows.md`)
