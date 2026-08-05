@@ -108,6 +108,7 @@ BEGIN
             mih.mihMemoNew,
             mih.mihstatus_desc as mihStatusDesc,
             mih.mihCus,
+            mih.mihNotes,
             order_status.OrderStatus
         FROM ${ref(databuffet.CURATED_MAC5, 'curated_mih')} as mih
         LEFT JOIN ${ref(databuffet.VALIDATED_MAC5, 'ar_s')} as ar
@@ -152,6 +153,7 @@ BEGIN
         t1.memoExtract,
         t1.mihMemoNew,
         t1.mihStatusDesc,
+        t1.mihNotes,
         t1.OrderStatus
     FROM source_data AS t1
     LEFT JOIN `${DimOrderTableRef}` AS t2
@@ -183,6 +185,7 @@ BEGIN
       T.StatusName = S.StatusName,
       T.memoExtract = S.memoExtract,
       T.mihMemoNew = S.mihMemoNew,
+      T.mihNotes = S.mihNotes,
       T.mihStatusDesc = S.mihStatusDesc
 
   -- กรณีไม่เจอข้อมูล (Insert)
@@ -191,16 +194,16 @@ BEGIN
       OrderSK, CompanySK,
       companyID,
       mix_date, mihYear, mihMonth, mihDay, mihType, mihVnos, mihCus,
-      mihJob, mihRef1, mihRef2, mihRef3,
-      mihCancel, mihStatus, StatusName,
-      memoExtract, mihMemoNew, mihStatusDesc, OrderStatus
+      mihJob, mihRef1, mihRef2, mihRef3, mihCancel, mihStatus, 
+      StatusName, memoExtract, mihMemoNew, mihNotes, 
+      mihStatusDesc, OrderStatus
     )
     VALUES (
       S.OrderSK, S.CompanySK,
       S.companyID,
       S.mix_date, S.mihYear, S.mihMonth, S.mihDay, S.mihType, S.mihVnos, S.mihCus,
-      S.mihJob, S.mihRef1, S.mihRef2, S.mihRef3,
-      S.mihCancel, S.mihStatus, S.StatusName,
-      S.memoExtract, S.mihMemoNew, S.mihStatusDesc, S.OrderStatus
+      S.mihJob, S.mihRef1, S.mihRef2, S.mihRef3, S.mihCancel, S.mihStatus, 
+      S.StatusName, S.memoExtract, S.mihMemoNew, S.mihNotes, 
+      S.mihStatusDesc, S.OrderStatus
     );
 END;
