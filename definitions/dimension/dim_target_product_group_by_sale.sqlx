@@ -97,7 +97,7 @@ with target_table as (
   select 
     dim_p_mkt.ProductMktSK,
     dim_p_mkt.MarketingGroupID as MarketingGroupID_pg,
-    dim_tg_pg.*, 
+    dim_tg_pg.* except(MdsID), 
   from `${DimTargetProductGroupTableRef}` as dim_tg_pg
   left join `${DimProductMktTableRef}` as dim_p_mkt
     on dim_tg_pg.MarketingGroupID = dim_p_mkt.MarketingGroupID
@@ -107,7 +107,7 @@ with target_table as (
 
 ), dim_report as (
   SELECT 
-    *, 
+    * except(MdsID), 
     (CASE 
       WHEN COUNT(*) OVER(PARTITION BY RegionID) = 1 THEN 1
       WHEN COUNT(*) OVER(PARTITION BY RegionID) > 1 
