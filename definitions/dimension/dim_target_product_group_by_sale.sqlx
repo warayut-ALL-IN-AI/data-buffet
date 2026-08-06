@@ -276,6 +276,7 @@ with target_table as (
     dim_report.ReportSK,
     a.* except(MarketingGroupID_pg)
   from mix_table as a
+  -- Sale Org.
   left join `${DimSaleRepLastTableRef}` as l 
     on a.employeeid = l.employeeid 
     and a.DepartmentID = l.DepartmentID
@@ -295,16 +296,24 @@ with target_table as (
   left join `${DimSectionManagerLastTableRef}` as g 
     on e.SectionManagerSK = g.SectionManagerSK
     and e.CompanySK = g.CompanySK
+
+  -- Report
+  left join `${DimDepartmentLastTableRef}` as c_report
+    on a.DepartmentID = c_report.DepartmentID
+    and a.CompanySK = c_report.CompanySK
+  left join `${DimRegionLastTableRef}` as d_report
+    on c_report.RegionSK = d_report.RegionSK
+    and c_report.CompanySK = d_report.CompanySK
   left join dim_report as dim_report
     on a.CompanySK = dim_report.CompanySK
       and (CASE 
         WHEN dim_report.Segment = 1 
-          THEN d.RegionID = dim_report.RegionID
+          THEN d_report.RegionID = dim_report.RegionID
         WHEN dim_report.Segment = 2
-          THEN d.RegionID = dim_report.RegionID
+          THEN d_report.RegionID = dim_report.RegionID
             and a.MarketingGroupID_pg = dim_report.MarketingGroupID
         WHEN dim_report.Segment = 3
-          THEN d.RegionID = dim_report.RegionID
+          THEN d_report.RegionID = dim_report.RegionID
             and dim_report.MarketingGroupID is null
       END)
   
