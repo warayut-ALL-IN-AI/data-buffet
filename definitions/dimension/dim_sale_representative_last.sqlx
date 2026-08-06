@@ -35,40 +35,62 @@ js {
     const DimSaleRepTableRef = `${DimSaleRepTable.database}.${DimSaleRepTable.schema}.${DimSaleRepTable.name}`;
 
 }
-
-SELECT
-    ROW_NUMBER() OVER (ORDER BY dim_com.CompanySK, t1.DepartmentID, t1.EmployeeID, t1.DepCode, t1.CostChannelID, t1.ProvinceID) AS SaleRepSK,
-    NULL AS DepartmentSK,
-    NULL AS SectionSK,
-    NULL AS SectionManagerSK,
-    NULL AS RegionSK,
-    NULL AS RegionManagerSK,
-    NULL AS DirectorSK,
-    dim_com.CompanySK,
-    dim_com.companyID,
-
-    t1.DepartmentID,
-    t1.EmployeeID,
-    t1.EmployeeName,
-    t1.EmployeeSurname,
-    t1.EmployeeNickname,
-    t1.DepCode,
-    t1.CostChannelID,
-    t1.ProvinceID,
-    t1.ChangeSectionFlag,
-    t1.CustomerFlag,
-    t1.StartDate,
-    t1.EndDate,
-  FROM (
+with raw as (
     SELECT
-      *
-    FROM `${DimSaleRepTableRef}`
-    WHERE CURRENT_DATE('Asia/Bangkok') between StartDate and EndDate
-    QUALIFY ROW_NUMBER() OVER (PARTITION BY CompanyID, DepartmentID, EmployeeID, DepCode, CostChannelID, ProvinceID ORDER BY StartDate DESC, EndDate DESC) = 1
-  ) as t1
-  LEFT JOIN `${DimCompanyTableRef}` as dim_com
-    on t1.CompanyID = dim_com.CompanyID
+        -- ROW_NUMBER() OVER (ORDER BY dim_com.CompanySK, t1.DepartmentID, t1.EmployeeID, t1.DepCode, t1.CostChannelID, t1.ProvinceID) AS SaleRepSK,
+        NULL AS DepartmentSK,
+        NULL AS SectionSK,
+        NULL AS SectionManagerSK,
+        NULL AS RegionSK,
+        NULL AS RegionManagerSK,
+        NULL AS DirectorSK,
+        dim_com.CompanySK,
+        dim_com.companyID,
 
+        t1.DepartmentID,
+        t1.EmployeeID,
+        t1.EmployeeName,
+        t1.EmployeeSurname,
+        t1.EmployeeNickname,
+        t1.DepCode,
+        t1.CostChannelID,
+        t1.ProvinceID,
+        t1.ChangeSectionFlag,
+        t1.CustomerFlag,
+        t1.StartDate,
+        t1.EndDate,
+    FROM (
+        SELECT *
+        FROM `${DimSaleRepTableRef}`
+        -- WHERE CURRENT_DATE('Asia/Bangkok') between StartDate and EndDate
+        WHERE DepartmentID is not null
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY CompanyID, DepartmentID, EmployeeID, DepCode, CostChannelID, ProvinceID ORDER BY StartDate DESC, EndDate DESC) = 1
+    ) as t1
+    LEFT JOIN `${DimCompanyTableRef}` as dim_com
+        on t1.CompanyID = dim_com.CompanyID
+
+), agg_normal as (
+  SELECT *
+  FROM raw
+  WHERE DepCode is null
+    and CostChannelID is null
+    and ProvinceID is null
+    and ChangeSectionFlag is null
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY CompanyID, EmployeeID ORDER BY StartDate DESC, EndDate DESC) = 1
+
+), final as (
+  SELECT *
+  FROM raw
+  WHERE NOT EXISTS (select 1 from agg_normal as ag where raw.CompanyID = ag.CompanyID and raw.EmployeeID = ag.EmployeeID)
+  UNION ALL
+  SELECT *
+  FROM agg_normal
+
+)
+  SELECT 
+    ROW_NUMBER() OVER (ORDER BY CompanySK, DepartmentID, EmployeeID, DepCode, CostChannelID, ProvinceID) AS SaleRepSK,
+    *
+  FROM final
 
 pre_operations {
 }
