@@ -84,6 +84,13 @@ js {
     };
     const DimDirectorTableRef = `${DimDirectorTable.database}.${DimDirectorTable.schema}.${DimDirectorTable.name}`;
 
+    const DimRateTargetTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_rate_target",
+    };
+    const DimRateTargetTableRef = `${DimRateTargetTable.database}.${DimRateTargetTable.schema}.${DimRateTargetTable.name}`;
+
 }
 
 with tab_dm as (
@@ -174,7 +181,7 @@ with tab_dm as (
       and dep.CompanySK = sec_m.CompanySK
     
   -- where salerep.SaleRepSK = 42
-)
+), final_mix as (
   SELECT 
     row_number() over(order by Year, Month, Day, TargetBySaleSK) as TargetBySaleDayofworkSK, 
     COALESCE(final2.SaleRepSK, salerep.SaleRepSK) as SaleRepSK,
@@ -187,6 +194,31 @@ with tab_dm as (
       and salerep.DepartmentID is null
       and final2.SaleRepSK is null
       and final2.CompanySK = salerep.CompanySK
+
+), spcial_data as (
+  SELECT m.*
+  FROM final_mix as m
+  INNER JOIN `${DimRateTargetTableRef}` as r
+    ON m.startdate = r.startdate
+    and m.enddate = r.enddate
+    and m.EmployeeID = r.employeeid
+    and m.CompanyID = r.CompanyID
+    and m.Year = r.Year
+    and m.Month = r.Month
+
+)
+  select m.*
+  from final_mix as m
+  where not exists (
+    select 1 from spcial_data as s
+    where m.companyID = s.companyID
+      and m.Year = s.Year
+      and m.Month = s.Month
+      and m.EmployeeID = s.EmployeeID
+  )
+  union distinct
+  select *
+  from spcial_data
 
 
 pre_operations {
