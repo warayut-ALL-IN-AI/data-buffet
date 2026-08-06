@@ -114,6 +114,8 @@ with tab_dm as (
   LEFT JOIN tab_dm as dm
     ON tbc.Year = dm.Year
       and FORMAT('%02d', tbc.Month) = dm.MonthNumber
+      and (tbc.StartDate is null
+           or dm.Date between tbc.StartDate and tbc.EndDate)  
   LEFT JOIN tab_sum_dm as sum_dm
     ON sum_dm.YEAR = dm.YEAR
       and sum_dm.MonthNumber = dm.MonthNumber
@@ -165,12 +167,6 @@ with tab_dm as (
       and reg.RegionID = reg_m.RegionID
       and reg.SubRegionID = reg_m.SubRegionID
       and reg.CompanySK = reg_m.CompanySK
-      
-      -- and (CASE 
-      --   WHEN reg_m.RegionID != reg_m.SubRegionID
-      --     THEN reg.RegionID = reg_m.RegionID and reg.SubRegionID = reg_m.SubRegionID
-      --   ELSE reg.RegionID = reg_m.RegionID
-      -- END)
 
   left join `${DimSectionManagerTableRef}` as sec_m
     on final.Date between sec_m.StartDate and sec_m.EndDate 

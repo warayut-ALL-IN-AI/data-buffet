@@ -117,7 +117,7 @@ with target_table as (
   FROM `${DimReportTableRef}`
 
 ), rate_target_table as (
-  select CompanySK, RateTargetSK, year, month, productgroupid, TargetID, EmployeeID, Percent, DepartmentID
+  select CompanySK, RateTargetSK, year, month, startdate, enddate, productgroupid, TargetID, EmployeeID, Percent, DepartmentID
   from `${DimRateTargetTableRef}`
 
 ), rate_target_table_1 as (
@@ -164,6 +164,8 @@ with target_table as (
     rate.EmployeeID,
     rate.Percent,
     rate.DepartmentID,
+    rate.StartDate,
+    rate.EndDate,
 
     -- Cal
     (tg.Amt * (rate.Percent / 100)) as CalAmt,
@@ -188,6 +190,8 @@ with target_table as (
     rate.EmployeeID,
     rate.Percent,
     rate.DepartmentID,
+    rate.StartDate,
+    rate.EndDate,
 
     -- Cal
     (tg.Amt * (rate.Percent / 100)) as CalAmt,
@@ -220,6 +224,8 @@ with target_table as (
     rate.EmployeeID,
     rate.Percent,
     rate.DepartmentID,
+    rate.StartDate,
+    rate.EndDate,
 
     -- Cal
     (tg.Amt * (rate.Percent / 100)) as CalAmt,
@@ -305,7 +311,7 @@ with target_table as (
   qualify row_number() over(partition by CompanySK, SaleRepSKLast, DepartmentSKLast, RegionSKLast, RegionManagerSKLast, 
 SectionSKLast, SectionManagerSKLast, DirectorSKLast, TargetProductGroupSK, RateTargetSK, ProductMktSK,
 Year, Month, MarketingGroupID, MarketingGroupName, SubMarketingID, SubMarketingName, SegmentID, SegmentName,
-ChannelTargetGroup, TargetID, EmployeeID, DepartmentID order by dim_report.Segment) = 1
+ChannelTargetGroup, TargetID, EmployeeID, DepartmentID, StartDate, EndDate order by dim_report.Segment) = 1
   
 )
 SELECT 

@@ -55,6 +55,8 @@ SELECT
   ${databuffet.functionData.cleanString("t1.companyID")} AS companyID,
   ${databuffet.functionData.castInt64("t1.Year")} AS Year,
   ${databuffet.functionData.castInt64("t1.Month")} AS Month,
+  t1.startdate as StartDate,
+  t1.enddate as EndDate,
   ${databuffet.functionData.cleanString("t1.ProductGroupID")} AS ProductGroupID,
   ${databuffet.functionData.cleanString("t1.ProductGroupName")} AS ProductGroupName,
   ${databuffet.functionData.cleanString("t1.TargetID")} AS TargetID,
