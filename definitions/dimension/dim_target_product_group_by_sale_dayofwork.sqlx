@@ -202,6 +202,7 @@ with tab_dm as (
     ON m.startdate = r.startdate
     and m.enddate = r.enddate
     and m.EmployeeID = r.employeeid
+    and m.DepartmentID = r.DepartmentID
     and m.CompanyID = r.CompanyID
     and m.Year = r.Year
     and m.Month = r.Month
@@ -214,7 +215,8 @@ with tab_dm as (
     where m.companyID = s.companyID
       and m.Year = s.Year
       and m.Month = s.Month
-      and m.EmployeeID = s.EmployeeID
+      and m.EmployeeID = s.EmployeeID      
+      and m.DepartmentID = s.DepartmentID
   )
   union distinct
   select *
