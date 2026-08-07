@@ -4,6 +4,12 @@ config {
   tags: [],
 }
 
+CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_get_scg_customer_ids`()
+RETURNS ARRAY<STRING> AS (
+  ['111000262', '111009320', '111017384', '111023359']
+);
+
+
 CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_flag_exc`(mihcancel INT64, mihstatus INT64, FlagExc STRING)
 AS (
 CASE 
@@ -26,8 +32,8 @@ CASE
 CREATE OR REPLACE FUNCTION `${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_flag_scg`(mihvnos STRING, mihcus STRING)
 AS (
 (CASE 
-  WHEN UPPER(left(mihvnos,3)) = 'CRC' and mihcus not in ('111000262','111009320','111017384') THEN 'ซื้อตรง'
-  WHEN UPPER(left(mihvnos,3)) = 'CRC' and mihcus in ('111000262','111009320','111017384') THEN 'ซื้อผ่านร้าน'
+  WHEN UPPER(left(mihvnos,3)) = 'CRC' and mihcus not in UNNEST(`${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_get_scg_customer_ids`()) THEN 'ซื้อตรง'
+  WHEN UPPER(left(mihvnos,3)) = 'CRC' and mihcus in UNNEST(`${databuffet.DATABASE}.${databuffet.FUNCTION_DATASET}.fn_get_scg_customer_ids`()) THEN 'ซื้อผ่านร้าน'
   ELSE CAST(NULL AS STRING)
 END)
 );

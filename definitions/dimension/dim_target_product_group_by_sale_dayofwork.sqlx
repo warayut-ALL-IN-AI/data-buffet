@@ -147,8 +147,8 @@ with tab_dm as (
 
   left join `${DimDepartmentTableRef}` as dep
     on final.Date between dep.StartDate and dep.EndDate
-      and salerep.DepartmentID = dep.DepartmentID
-      and salerep.CompanySK = dep.CompanySK
+      and final.DepartmentID = dep.DepartmentID
+      and final.CompanySK = dep.CompanySK
 
   left join `${DimRegionTableRef}` as reg
     on final.Date between reg.StartDate and reg.EndDate 
