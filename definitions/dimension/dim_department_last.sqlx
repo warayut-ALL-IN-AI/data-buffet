@@ -48,7 +48,7 @@ SELECT
       *
     FROM `${DimDepartmentTableRef}`
     -- WHERE CURRENT_DATE('Asia/Bangkok') between StartDate and EndDate
-    QUALIFY ROW_NUMBER() OVER (PARTITION BY CompanyID, DepartmentID ORDER BY StartDate DESC, EndDate DESC) = 1
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY CompanyID, DepartmentID ORDER BY EndDate DESC, StartDate DESC) = 1
   ) as t1
   LEFT JOIN `${DimCompanyTableRef}` as dim_com
     on t1.CompanyID = dim_com.CompanyID
