@@ -121,8 +121,8 @@ with tab_dm as (
   LEFT JOIN tab_dm as dm
     ON tbc.Year = dm.Year
       and FORMAT('%02d', tbc.Month) = dm.MonthNumber
-      and (tbc.StartDate is null
-           or dm.Date between tbc.StartDate and tbc.EndDate)  
+      -- and (tbc.StartDate is null
+      --      or dm.Date between tbc.StartDate and tbc.EndDate)  
   LEFT JOIN tab_sum_dm as sum_dm
     ON sum_dm.YEAR = dm.YEAR
       and sum_dm.MonthNumber = dm.MonthNumber
