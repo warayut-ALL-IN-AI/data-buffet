@@ -167,7 +167,11 @@ js {
 BEGIN
   CREATE OR REPLACE TEMP TABLE temp_fact_transcation 
   AS
-  WITH raw_transction as (
+  WITH department_change as (
+    SELECT distinct CompanyID, RegionID , SectionID, StartDate, EndDate
+    FROM `${DimDepartmentTableRef}` 
+  
+  ), raw_transction as (
     SELECT distinct
       channel_sk.ChannelSK,
       channel_sk.ChannelCostID,
@@ -245,7 +249,10 @@ BEGIN
     costgroup_sk.CostGroupSK,
 
     change_sec_sk.SectionSK as ChangeSectionSK,
-    -- change_sec_m_sk.SectionManagerSK as ChangeSectionManagerSK,
+    change_sec_m_sk.SectionManagerSK as ChangeSectionManagerSK,
+    change_reg_sk.RegionSK as ChangeRegionSK,
+    change_reg_m_sk.RegionManagerSK as ChangeRegionManagerSK,
+    change_dir_sk.DirectorSK as ChangeDirectorSK,
 
     trans.ChannelSK,
     trans.ChannelFinanceSK,
@@ -366,6 +373,12 @@ BEGIN
       and sec_sk.SectionID = sec_m_sk.SectionID
       and trans.CompanySK = sec_m_sk.CompanySK
 
+  -- DirectorSK
+  LEFT JOIN `${DimDirectorTableRef}` as dir_sk
+    ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
+      and reg_sk.DirectorID = dir_sk.DirectorID
+      and trans.CompanySK = dir_sk.CompanySK
+
   -- Change district
   LEFT JOIN `${DimChangeDistrictTableRef}` as dim_change_district
     ON trans.milCus = TRIM(dim_change_district.customerCode)
@@ -378,16 +391,40 @@ BEGIN
       and dim_change_district.newSectionID = change_sec_sk.SectionID
       and trans.CompanySK = change_sec_sk.CompanySK
 
-  -- -- ChangeSectionManagerSK
-  -- LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
-  --   ON trans.mix_date between change_sec_m_sk.StartDate and change_sec_m_sk.EndDate
-  --     and change_sec_sk.SectionID = change_sec_m_sk.SectionID
+  -- ChangeSectionManagerSK
+  LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
+    ON trans.mix_date between change_sec_m_sk.StartDate and change_sec_m_sk.EndDate
+      and change_sec_sk.SectionID = change_sec_m_sk.SectionID
 
-  -- DirectorSK
-  LEFT JOIN `${DimDirectorTableRef}` as dir_sk
-    ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
-      and reg_sk.DirectorID = dir_sk.DirectorID
-      and trans.CompanySK = dir_sk.CompanySK
+  -- Change Department
+  LEFT JOIN department_change as change_dep
+    ON trans.mix_date between change_dep.StartDate and change_dep.EndDate
+      and change_sec_sk.SectionID = change_dep.SectionID
+      and change_sec_sk.CompanyID = change_dep.CompanyID
+
+  -- Change RegionSK
+  LEFT JOIN `${DimRegionTableRef}` as change_reg_sk
+    ON trans.mix_date between change_reg_sk.StartDate and change_reg_sk.EndDate
+      and (CASE 
+        WHEN change_reg_sk.RegionID != change_reg_sk.SubRegionID
+          THEN change_dep.RegionID = change_reg_sk.RegionID and change_dep.SectionID = change_reg_sk.SubRegionID
+        ELSE change_dep.RegionID = change_reg_sk.RegionID
+      END)
+      and trans.CompanySK = change_reg_sk.CompanySK
+
+  -- Change RegionManagerSK
+  LEFT JOIN `${DimRegionManagerTableRef}` as change_reg_m_sk
+    ON trans.mix_date between change_reg_m_sk.StartDate and change_reg_m_sk.EndDate
+      and change_reg_sk.RegionID = change_reg_m_sk.RegionID
+      and change_reg_sk.SubRegionID = change_reg_m_sk.SubRegionID
+      and trans.CompanySK = change_reg_m_sk.CompanySK
+
+  -- Change DirectorSK
+  LEFT JOIN `${DimDirectorTableRef}` as change_dir_sk
+    ON trans.mix_date between change_dir_sk.StartDate and change_dir_sk.EndDate
+      and change_reg_sk.DirectorID = change_dir_sk.DirectorID
+      and trans.CompanySK = change_dir_sk.CompanySK
+
 
   WHERE IFNULL(trans.ChannelCostID, '') != 'COST99999'
   qualify row_number() over(partition by trans.milType,trans.milVnos,trans.milCus,trans.milStk,trans.milPer,trans.milListno order by sale_sk.seq_condition, sale_sk.SaleRepSK desc) = 1
@@ -406,7 +443,10 @@ BEGIN
     costgroup_sk.CostGroupSK,
 
     change_sec_sk.SectionSK as ChangeSectionSK,
-    -- change_sec_m_sk.SectionManagerSK as ChangeSectionManagerSK,
+    change_sec_m_sk.SectionManagerSK as ChangeSectionManagerSK,
+    change_reg_sk.RegionSK as ChangeRegionSK,
+    change_reg_m_sk.RegionManagerSK as ChangeRegionManagerSK,
+    change_dir_sk.DirectorSK as ChangeDirectorSK,
 
     trans.ChannelSK,
     trans.ChannelFinanceSK,
@@ -512,10 +552,16 @@ BEGIN
     ON trans.mix_date between sec_m_sk.StartDate and sec_m_sk.EndDate
       and sec_sk.SectionID = sec_m_sk.SectionID
       and trans.CompanySK = sec_m_sk.CompanySK
-      
+
+  -- DirectorSK
+  LEFT JOIN `${DimDirectorTableRef}` as dir_sk
+    ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
+      and reg_sk.DirectorID = dir_sk.DirectorID
+      and trans.CompanySK = dir_sk.CompanySK
+
   -- Change district
   LEFT JOIN `${DimChangeDistrictTableRef}` as dim_change_district
-    ON trans.milCus = dim_change_district.customerCode
+    ON trans.milCus = TRIM(dim_change_district.customerCode)
       AND trans.mix_date BETWEEN dim_change_district.StartDate AND dim_change_district.EndDate
       and trans.CompanySK = dim_change_district.CompanySK
 
@@ -525,16 +571,39 @@ BEGIN
       and dim_change_district.newSectionID = change_sec_sk.SectionID
       and trans.CompanySK = change_sec_sk.CompanySK
 
-  -- -- ChangeSectionManagerSK
-  -- LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
-  --   ON trans.mix_date between change_sec_m_sk.StartDate and change_sec_m_sk.EndDate
-  --     and change_sec_sk.SectionID = change_sec_m_sk.SectionID
+  -- ChangeSectionManagerSK
+  LEFT JOIN `${DimSectionManagerTableRef}` as change_sec_m_sk
+    ON trans.mix_date between change_sec_m_sk.StartDate and change_sec_m_sk.EndDate
+      and change_sec_sk.SectionID = change_sec_m_sk.SectionID
 
-  -- DirectorSK
-  LEFT JOIN `${DimDirectorTableRef}` as dir_sk
-    ON trans.mix_date between dir_sk.StartDate and dir_sk.EndDate
-      and reg_sk.DirectorID = dir_sk.DirectorID
-      and trans.CompanySK = dir_sk.CompanySK
+  -- Change Department
+  LEFT JOIN department_change as change_dep
+    ON trans.mix_date between change_dep.StartDate and change_dep.EndDate
+      and change_sec_sk.SectionID = change_dep.SectionID
+      and change_sec_sk.CompanyID = change_dep.CompanyID
+
+  -- Change RegionSK
+  LEFT JOIN `${DimRegionTableRef}` as change_reg_sk
+    ON trans.mix_date between change_reg_sk.StartDate and change_reg_sk.EndDate
+      and (CASE 
+        WHEN change_reg_sk.RegionID != change_reg_sk.SubRegionID
+          THEN change_dep.RegionID = change_reg_sk.RegionID and change_dep.SectionID = change_reg_sk.SubRegionID
+        ELSE change_dep.RegionID = change_reg_sk.RegionID
+      END)
+      and trans.CompanySK = change_reg_sk.CompanySK
+
+  -- Change RegionManagerSK
+  LEFT JOIN `${DimRegionManagerTableRef}` as change_reg_m_sk
+    ON trans.mix_date between change_reg_m_sk.StartDate and change_reg_m_sk.EndDate
+      and change_reg_sk.RegionID = change_reg_m_sk.RegionID
+      and change_reg_sk.SubRegionID = change_reg_m_sk.SubRegionID
+      and trans.CompanySK = change_reg_m_sk.CompanySK
+
+  -- Change DirectorSK
+  LEFT JOIN `${DimDirectorTableRef}` as change_dir_sk
+    ON trans.mix_date between change_dir_sk.StartDate and change_dir_sk.EndDate
+      and change_reg_sk.DirectorID = change_dir_sk.DirectorID
+      and trans.CompanySK = change_dir_sk.CompanySK
   
   -- Sale Add-on
   LEFT JOIN (
