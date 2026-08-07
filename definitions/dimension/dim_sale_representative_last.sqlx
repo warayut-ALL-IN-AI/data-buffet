@@ -76,7 +76,7 @@ with raw as (
     and CostChannelID is null
     and ProvinceID is null
     and ChangeSectionFlag is null
-  QUALIFY ROW_NUMBER() OVER (PARTITION BY CompanyID, EmployeeID ORDER BY StartDate DESC, EndDate DESC) = 1
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY CompanyID, EmployeeID ORDER BY EndDate DESC, StartDate DESC) = 1
 
 ), final as (
   SELECT *
