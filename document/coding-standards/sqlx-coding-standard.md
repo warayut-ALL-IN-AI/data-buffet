@@ -99,45 +99,46 @@ FROM `${DimCompanyTableRef}`
 > — ของใหม่ยึดกฎข้างบน ของเก่าค่อยแปลงเมื่อแตะไฟล์นั้น
 > `definitions/view/` ทั้ง 42 ไฟล์ทำตามกฎนี้ครบแล้ว (2026-07-24)
 
-### 3.3 Backslash ใน SQL body — ต้องเขียน `\\` เสมอ
+### 3.3 Backslash ใน SQL body — เขียนตรง ๆ ตัวเดียว
 
-Dataform คอมไพล์ SQL body เป็น **JavaScript template literal** ดังนั้น `\` ทุกตัวคือ
-escape character — ต้อง **double เป็น `\\`** ถ้าอยากให้ backslash ไปโผล่ใน SQL จริง
-(รวมถึงใน comment `--` ด้วย เพราะ comment ก็อยู่ใน template string)
+**Dataform ส่ง backslash ใน SQL body ของ `.sqlx` ไปยัง BigQuery ตรง ๆ ไม่ unescape**
+เขียนยังไงได้อย่างนั้น — regex เขียนเหมือนที่จะเขียนใน BigQuery console เป๊ะ
 
 ```sql
--- ผิด: compile error "Octal escape sequences are not allowed in template strings"
+-- ถูก: เขียนตัวเดียวเหมือน SQL ปกติ
 REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\1')
-
--- ผิดแบบเงียบ: \( กลายเป็น ( → regex เพี้ยนโดยไม่ error
 REGEXP_EXTRACT(pernamet, r'\(([^)]*)\)')
-
--- ผิดแบบเงียบ: \n กลายเป็น newline จริงในสตริง → BigQuery syntax error
 STRING_AGG(item, '\n')
 
--- ถูกทั้งหมด
-REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\\1')
-REGEXP_EXTRACT(pernamet, r'\\(([^)]*)\\)')
-STRING_AGG(item, '\\n')
+-- ผิด: \\ จะหลุดไปถึง BigQuery ทั้งคู่
+REGEXP_EXTRACT(pernamet, r'\\(([^)]*)\\)')   -- BigQuery อ่านว่า backslash + วงเล็บเปิด
 ```
 
-| เขียนใน `.sqlx` | SQL ที่ออกจริง | หมายเหตุ |
+| เขียนใน `.sqlx` | SQL ที่ออกจริง | ผล |
 |---|---|---|
-| `\\1` `\\n` `\\(` `\\d` | `\1` `\n` `\(` `\d` | ✅ ที่ต้องการ |
-| `\1`…`\9`, `\0` | — | ⛔ compile error (octal) |
-| `\n` `\t` `\r` | ขึ้นบรรทัดใหม่จริง / tab / CR | ⚠️ ไม่ error แต่ SQL พัง |
-| `\(` `\d` `\s` `\w` | `(` `d` `s` `w` | ⚠️ ไม่ error แต่ **regex เพี้ยนเงียบ** |
+| `\1` `\n` `\(` `\d` | `\1` `\n` `\(` `\d` | ✅ ที่ต้องการ |
+| `\\1` `\\n` `\\(` `\\d` | `\\1` `\\n` `\\(` `\\d` | ⛔ regex พัง / เพี้ยนเงียบ |
 
-precedent ในโค้ด: `includes/controller/function-data.js` → ``pattern = `r'[\\n\\r\\t]'` ``
+> ⚠️ **ข้อยกเว้น — ไฟล์ `.js` จริงใน `includes/`**
+> `includes/controller/function-data.js` เป็น JavaScript จริง string ในนั้นเป็น template
+> literal จริง ๆ → **ต้อง double** เช่น ``pattern = `r'[\\n\\r\\t]'` `` ซึ่ง**ถูกแล้ว**
+> กฎ "เขียนตัวเดียว" ใช้กับ **SQL body ของ `.sqlx` เท่านั้น** ไม่ใช้กับ `.js`
 
-> **เวลาย้าย SQL จาก BigQuery console เข้า `.sqlx` ต้อง double backslash ทุกตัวก่อนเสมอ**
-> (view layer เจอปัญหานี้จริง 3 ไฟล์ 2026-07-24 — 2 ใน 3 เป็นแบบเพี้ยนเงียบ ไม่ error)
+> **ยืนยันก่อน deploy เสมอ**: เปิด panel **Compiled queries** ใน Dataform UI แล้วดูว่า
+> backslash ที่ออกมาเป็นแบบที่ต้องการจริง — เร็วกว่าและชัวร์กว่าการเดาจากเอกสาร
 
-> **และทิศกลับกัน: ห้าม copy `.sqlx` ไปวางใน BigQuery console — deploy ผ่าน Dataform เท่านั้น**
-> การ paste ข้ามขั้น template-literal ทำให้ `\\` หลุดไปถึง BigQuery ทั้งคู่ → regex พัง
-> (เกิดจริง 2026-08-07 กับ `EXTRACT_CHQ_DATA`: `missing )` + regex อีก 33 ตัวผิดเงียบ
-> ดู `document/operations/known-issues.md`) ถ้าจำเป็นต้องวางมือจริง ๆ ต้อง unescape
-> `\\` → `\` เองก่อนวาง
+> **ห้าม copy `.sqlx` ไปวางใน BigQuery console และห้าม copy จาก console กลับเข้า `.sqlx`
+> โดยไม่ตรวจ** — deploy ผ่าน Dataform เท่านั้น
+
+#### ประวัติ (สำคัญ — เอกสารฉบับก่อนบอกกลับด้าน)
+
+| วันที่ | เกิดอะไร |
+|---|---|
+| 2026-07-27 | §3.3 ฉบับแรกสรุปว่า Dataform คอมไพล์ body เป็น JS template literal จึงต้อง double → commit `3c02e61` ไล่ double 3 view file + `67e779e` double ทั้ง `create_all_function.sqlx` (335 จุด) |
+| 2026-08-07 | UDF ถูก deploy เข้า BigQuery → `EXTRACT_CHQ_DATA` พัง `Cannot parse regular expression: missing )` |
+| 2026-08-10 | ตรวจ **Compiled queries panel ของจริง** → `\\` ออกมาเป็น `\\` ไม่ถูกกิน **ข้อสรุปเดิมผิด** ย้อน `create_all_function.sqlx` (351 จุด) และ 3 view file กลับเป็น backslash ตัวเดียว |
+
+**บทเรียน**: อย่าสรุปพฤติกรรม compiler จากการอนุมาน — เปิด Compiled queries panel ดูของจริง
 
 ## 4. การ cast / ทำความสะอาดข้อมูล
 

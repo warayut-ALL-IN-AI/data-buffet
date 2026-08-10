@@ -42,16 +42,16 @@ with final as (
     IFNULL(rebate.accExc, 'No') as FlagAccExc,
     
     -- ARRAY_REVERSE(
-    --   SPLIT(REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\\1'), '|')
+    --   SPLIT(REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\1'), '|')
     -- )[SAFE_OFFSET(0)] AS WaterPac,
     (CASE
       WHEN REGEXP_CONTAINS(ProductCode, r'/([PU])') THEN
-        ARRAY_REVERSE(SPLIT(REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\\1'), '|'))[SAFE_OFFSET(0)]
+        ARRAY_REVERSE(SPLIT(REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\1'), '|'))[SAFE_OFFSET(0)]
       ELSE NULL
     END) as WaterPac,
     (CASE
       WHEN REGEXP_CONTAINS(ProductCode1, r'/([PU])') THEN
-        ARRAY_REVERSE(SPLIT(REGEXP_REPLACE(ProductCode1, r'/([PU])', r'|\\1'), '|'))[SAFE_OFFSET(0)]
+        ARRAY_REVERSE(SPLIT(REGEXP_REPLACE(ProductCode1, r'/([PU])', r'|\1'), '|'))[SAFE_OFFSET(0)]
       ELSE NULL
     END) as WaterPac1,
 

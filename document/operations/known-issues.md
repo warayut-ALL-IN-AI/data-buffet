@@ -70,43 +70,40 @@
     ประวัติ: รอบแรก generate เป็น inline (ผิด §3) → รอบสองแก้เป็น js-block ทั้งหมด
     (ยัง**ผิด** เพราะ validated/curated ต้องเป็น `ref()`) → รอบสามได้ตามนี้
     ยืนยันทุกรอบ: เนื้อ SQL ไม่เปลี่ยน 42/42 เทียบกับ BigQuery
-- **Backslash ใน SQL body ต้อง double** (เจอจริง 2026-07-24, view layer 3 ไฟล์):
-  Dataform คอมไพล์ body เป็น JS template literal — `r'|\1'` ทำให้ compile error
-  *"Octal escape sequences are not allowed in template strings"* ส่วน `r'\('` และ `'\n'`
-  **ไม่ error แต่เพี้ยนเงียบ** (backslash โดนกลืน / กลายเป็น newline จริง) แก้แล้วที่
-  `view_dim_product_master` (`\1`×3 รวมใน comment), `view_aging_ri` (`'\n'`×2),
-  `Sales_Per_Non_Master` (`\(`/`\)`) — กฎอยู่ใน coding-standard §3.3
-  **บทเรียน**: การเทียบ SQL แบบ text ตรง ๆ จับ bug ประเภทนี้ไม่ได้ ต้องจำลอง
-  template-literal unescape ก่อนเทียบ (ยืนยันแล้ว 42/42 ตรงหลังจำลอง)
-  - **แก้แล้ว 2026-07-24 — `initial/create_all_function.sqlx`** (ดู bullet ถัดไป):
-    มี escape ผิด **335 จุด** รวม `\1` 1 จุดที่ทำให้ทั้ง action compile ไม่ผ่าน
-  - **🔥 เกิดซ้ำ 2026-08-10 — `create_all_function.sqlx` (แก้แล้ว)**
-    อาการ: เรียก `EXTRACT_CHQ_DATA` แล้วได้
-    `Cannot parse regular expression: missing )` (regex บรรทัด 178)
-    **ต้นตอ**: UDF ถูก deploy ด้วยการ **copy ข้อความดิบจาก `.sqlx` ไปวางใน BigQuery
-    console** (BQ `last_altered` 2026-08-07 15:25 / commit ไฟล์ 08:25) ซึ่งข้าม
-    template-literal pass → BigQuery ได้ `\\` ไปเต็ม ๆ ทำให้ `\\(` กลายเป็น
-    "backslash + วงเล็บเปิด" → วงเล็บไม่บาลานซ์ **และ regex อีก 33 ตัวในฟังก์ชัน
-    เดียวกันผิดเงียบ** (`\\d` = backslash+`d` ไม่ใช่ตัวเลข)
-    **เจอ bug ซ้อน**: `clean_company_prefix` (เพิ่ม 2026-07-31 **หลัง**กฎ §3.3 ออก)
-    เขียน `\` เดี่ยว 14 จุดที่บรรทัด 207/210 → ไฟล์ปนกัน 2 มาตรฐาน
-    **paste ดิบก็พัง (EXTRACT_CHQ_DATA) / ผ่าน Dataform ก็พัง (clean_company_prefix
-    → `^+?` = nothing to repeat)** ไม่มีวิธี deploy ไหนที่ถูกทั้งไฟล์
-    **แก้แล้ว 2026-08-10**: double backslash บรรทัด 207/210 → จำลอง compile ยืนยัน
-    regex ครบ 34 ตัวผ่านหมด, 0 octal error, ไม่เหลือ backslash เดี่ยว
-    **กฎเหล็กที่ได้จากเคสนี้: ห้าม copy `.sqlx` ไปวางใน BigQuery console —
-    deploy ผ่าน Dataform เท่านั้น** (ถ้าจำเป็นต้องวางมือ ต้อง unescape `\\`→`\` ก่อน)
-  - **⚠️ ยังไม่ตรวจ/ไม่แก้ — ไฟล์ที่เหลือที่อาจโดนปัญหาเดียวกัน** (พบตอนสแกน 2026-07-24
-    ยังไม่ยืนยันเพราะ compile ในเครื่องไม่ได้ — **อย่าเพิ่งแก้จนกว่าจะ compile ยืนยัน**
-    เพราะจะเปลี่ยนพฤติกรรมของ dim ที่รันอยู่ทุกวัน):
-    `dimension/dim_sale_representative.sqlx` (`r'\s+'`, `r'\((.*?)\)'` → อาจกลายเป็น
-    `r's+'`, `r'((.*?))'` ทำให้แยกชื่อ/นามสกุล/ชื่อเล่นผิด),
-    `dimension/dim_sale_representative_last.sqlx` (แบบเดียวกัน),
-    `dimension/dim_quotation.sqlx` (`r'[a-zA-Z0-9\s]'`),
-    `process/deb_address_data.sqlx` (`\n`)
-    — ถ้าเป็นจริงคือ bug เงียบที่รันมานาน (ผลลัพธ์ regex ผิดแต่ไม่ error)
-    ส่วน `\'` ใน validated/* ~35 ไฟล์ **ไม่ใช่ปัญหา** เพราะอยู่ใน nested template literal
-    ของ `${when(incremental(), ...)}` ซึ่ง `\'` → `'` ถูกต้องอยู่แล้ว
+- **🔥 Backslash ใน SQL body — เขียนตัวเดียว (เอกสารเดิมบอกกลับด้าน แก้แล้ว 2026-08-10)**
+
+  **ข้อเท็จจริง (ยืนยันจาก Compiled queries panel ของจริง 2026-08-10)**:
+  Dataform ส่ง backslash ใน SQL body ของ `.sqlx` ไป BigQuery **ตรง ๆ ไม่ unescape**
+  เขียน `\\` ก็ได้ `\\` เขียน `\` ก็ได้ `\` → **regex ต้องเขียนตัวเดียวเหมือน SQL ปกติ**
+  (กฎอยู่ใน coding-standard §3.3 ที่แก้ใหม่แล้ว)
+
+  **ลำดับเหตุการณ์**
+  1. 2026-07-27 — สรุป (โดยการอนุมาน ไม่ได้เปิด compiled panel ดู) ว่า body เป็น JS
+     template literal จึงต้อง double → commit `3c02e61` double 3 view file
+     (`view_dim_product_master`, `view_aging_ri`, `Sales_Per_Non_Master`) และ
+     `67e779e` double ทั้ง `create_all_function.sqlx` (335 จุด)
+  2. 2026-08-07 15:25 — deploy UDF เข้า BigQuery → `EXTRACT_CHQ_DATA` พัง
+     `Cannot parse regular expression: missing )` เพราะ `\\(` ที่ไปถึง BigQuery
+     ถูกอ่านเป็น "backslash + วงเล็บเปิด" วงเล็บไม่บาลานซ์
+     **และ regex อีก 33 ตัวในฟังก์ชันเดียวกันผิดเงียบด้วย** (`\\d` = backslash+`d`
+     ไม่ใช่ตัวเลข) — ไม่ใช่แค่ตัวที่ error ดัง
+  3. 2026-08-10 — เปิด **Compiled queries panel** ดูของจริง พบว่า `\\` ออกมาเป็น `\\`
+     → **ข้อสรุปของข้อ 1 ผิด** ย้อนกลับทั้งหมด: `create_all_function.sqlx` 351 จุด
+     และ 3 view file (`git checkout 3c02e61^`) กลับเป็น backslash ตัวเดียว
+
+  **ผลพลอยได้ — 4 ไฟล์ที่เคย flag ว่า "เสี่ยง" ไม่ใช่ปัญหา**
+  `dim_sale_representative`, `dim_sale_representative_last`, `dim_quotation`,
+  `deb_address_data` เขียน `\` ตัวเดียวอยู่แล้ว = **ถูกตามกฎที่แท้จริง** ไม่ต้องแก้
+  (เดิม flag ไว้ว่าอาจ "เพี้ยนเงียบ" — เกิดจากกฎที่ผิด) ส่วน `\'` ใน validated/* ~35 ไฟล์
+  ก็ไม่ใช่ปัญหาเช่นกัน เพราะอยู่ใน `${when(incremental(), ...)}` ซึ่งเป็น JS จริง
+
+  **บทเรียน**
+  - **อย่าอนุมานพฤติกรรม compiler — เปิด Compiled queries panel ดูของจริงก่อนเสมอ**
+    การอนุมานผิดรอบเดียวลาม 4 commit และทำให้ UDF พังจริงบน production
+  - **ห้าม copy `.sqlx` ไปวางใน BigQuery console** และ **ห้าม copy จาก console
+    กลับเข้า `.sqlx` โดยไม่ตรวจ** — `67e779e` sync มาจาก console คือจุดที่รับ `\\` เข้ามา
+  - ข้อยกเว้นที่ยังจริง: ไฟล์ `.js` ใน `includes/` เป็น JavaScript จริง **ต้อง double**
+    (`function-data.js` → ``r'[\\n\\r\\t]'`` ถูกแล้ว) กฎ "ตัวเดียว" ใช้กับ `.sqlx` เท่านั้น
 - **`create_all_function.sqlx` เคย drift จาก BigQuery** (sync แล้ว 2026-07-24): ไฟล์มี
   UDF แค่ 4 ตัว **ขาด `fn_order_type`** (ซึ่ง `view_dim_order` เรียกใช้อยู่) และ
   `fn_flag_scg` ประกาศพารามิเตอร์เป็น `milvnos`/`milcus` ขณะที่ของจริงคือ
