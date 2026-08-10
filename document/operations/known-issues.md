@@ -90,6 +90,14 @@
   3. 2026-08-10 — เปิด **Compiled queries panel** ดูของจริง พบว่า `\\` ออกมาเป็น `\\`
      → **ข้อสรุปของข้อ 1 ผิด** ย้อนกลับทั้งหมด: `create_all_function.sqlx` 351 จุด
      และ 3 view file (`git checkout 3c02e61^`) กลับเป็น backslash ตัวเดียว
+  4. 2026-08-10 (ต่อ) — ย้อนแล้วเจอ **ข้อยกเว้นเดียว**: `\1` เขียนตรง ๆ ไม่ได้
+     Dataform ขึ้น *"Octal escape sequences are not allowed in template strings"*
+     (เห็นกับตาที่ `view_dim_product_master`) แต่ `\\1` ก็ใช้แทนไม่ได้เพราะ BigQuery
+     อ่านเป็น "backslash + เลข 1" ได้ข้อความขยะแบบไม่ error
+     **แก้ด้วย `CONCAT('|', CHR(92), '1')`** — ประกอบ backslash จาก `CHR(92)`
+     ผลลัพธ์เท่ากันทุกประการ ใช้ที่ `view_dim_product_master` (3 จุด รวมใน comment)
+     และ `create_all_function.sqlx` บรรทัด 184 (1 จุด)
+     สรุปกฎสุดท้าย: **backslash ผ่านตรง ๆ ทุกตัว ยกเว้น `\0`–`\9` ที่ต้องใช้ `CHR(92)`**
 
   **ผลพลอยได้ — 4 ไฟล์ที่เคย flag ว่า "เสี่ยง" ไม่ใช่ปัญหา**
   `dim_sale_representative`, `dim_sale_representative_last`, `dim_quotation`,

@@ -181,7 +181,7 @@ AS (
       FROM (
         SELECT 
           CASE WHEN transfer_pos > 1 THEN SUBSTR(memo_raw, 1, transfer_pos - 1) WHEN transfer_pos = 1 THEN '' ELSE memo_raw END AS chqmemo_clean,
-          CASE WHEN transfer_pos > 0 THEN REGEXP_REPLACE(SUBSTR(memo_raw, transfer_pos), r'\+\s*(\d{1,2}/\d{1,2}|ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)', r' \1') ELSE NULL END AS chqmemo_extract
+          CASE WHEN transfer_pos > 0 THEN REGEXP_REPLACE(SUBSTR(memo_raw, transfer_pos), r'\+\s*(\d{1,2}/\d{1,2}|ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)', CONCAT(' ', CHR(92), '1')) ELSE NULL END AS chqmemo_extract
         FROM (
           SELECT 
             COALESCE(
