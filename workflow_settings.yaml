@@ -6,6 +6,3 @@ dataformCoreVersion: 3.0.0
 vars:
     RAW_BUCKET: "gs://file-raw-data"
     MDS_BACKFILL_DAYS: "1"
-    # หน้าต่างย้อนหลังของ incremental window ใน validated/curated (ปกติ "1")
-    # ตั้งชั่วคราวเป็น "3" แล้วรันเพื่อเก็บย้อนหลัง 3 วัน จากนั้นตั้งกลับเป็น "1"
-    BACKFILL_DAYS: "1"
