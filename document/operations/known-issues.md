@@ -72,8 +72,13 @@
     ยืนยันทุกรอบ: เนื้อ SQL ไม่เปลี่ยน 42/42 เทียบกับ BigQuery
 - **⚠️ ดึง view จาก BigQuery กลับเข้า `.sqlx` — backtick หาย** (เจอจริง 2026-08-10):
   `INFORMATION_SCHEMA.VIEWS.view_definition` คืน path ของตาราง **โดยตัด backtick ออก**
-  เช่น `from databuffet-nonprd.dimension_table.dim_invoice as inv` ซึ่ง
-  **ไม่ใช่ SQL ที่ valid** เพราะ project id มีขีดกลาง (`-`) — copy มาวางตรง ๆ จะพัง
+  เช่น `from databuffet-nonprd.dimension_table.dim_invoice as inv`
+  **แก้ความเข้าใจผิด (2026-08-10)**: ตอนแรกบันทึกว่า "ไม่ใช่ SQL ที่ valid เพราะ project id
+  มีขีดกลาง" — **ผิด** ทดสอบด้วย `bq query --dry_run` แล้ว GoogleSQL รับ project id
+  ที่มีขีดกลางใน table path โดยไม่ต้อง backtick ได้ปกติ
+  → **ยังต้องใส่ backtick กลับ** แต่เหตุผลคือ**ความสม่ำเสมอกับ convention ของ repo**
+  ไม่ใช่เรื่อง valid/invalid (ทั้ง repo ใช้ `` `${XxxTableRef}` `` และมี 1 จุดที่หลุด —
+  `fact_transcation.sqlx:768` — ซึ่งรันได้ แต่อ่านแล้วเหมือนบั๊กทุกครั้งที่มีคนรีวิว)
   (น่าสังเกต: การเรียก UDF ยังคง backtick ไว้ ตัดเฉพาะ path ของตาราง)
   **เวลาดึงกลับเข้า repo ต้องใส่ backtick ครอบ `` `${XxxTableRef}` `` เองทุกตัว**
   ส่วน `${ref(...)}` **ห้าม**ครอบ เพราะ Dataform ใส่ให้เองอยู่แล้ว

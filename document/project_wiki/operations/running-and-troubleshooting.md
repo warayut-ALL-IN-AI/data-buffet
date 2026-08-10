@@ -52,6 +52,37 @@ bq --project_id=databuffet-nonprd query --use_legacy_sql=false 'SELECT ...'
 | Fact upsert doubles rows | `fact_transcation` DELETE keys are `milVnos, milType, CompanySK` — grain drift in `onetime.Transaction_Data_Mart` breaks this |
 | Orphan SK values in facts | Expected after mds hard-deletes ([mds-delete-pattern.md](../dimension/mds-delete-pattern.md)); `dim_target_product_group_by_sale*` self-heal next day |
 
+## Drift: views/UDFs edited in the BigQuery console
+
+Views and UDFs get edited directly in the console and the change never reaches
+`definitions/`. Either the next Dataform run silently overwrites the console
+work, or the repo carries SQL that no longer matches production.
+
+**BigQuery is the source of truth for view SQL.** Pull the console version into
+the repo; do not push the repo over a live view unless that is the explicit
+intent.
+
+Run the scan before any `view` tag run, and after a stretch of console work:
+skill `bq-drift-scan` (`.claude/skills/bq-drift-scan/`, with
+`scripts/{dump.sql,scan.py,pull.py}`), or the read-only `bq-drift-auditor` agent.
+Baseline 2026-08-10: 42 views + 7 UDFs, all matching except a trailing semicolon
+in `Sales_Per_Non_Master`, plus two `onetime.TEST_Data_Transaction*` views that
+exist only in BigQuery and are deliberately not tracked.
+
+Things that cost time the first round:
+
+- `INFORMATION_SCHEMA.VIEWS.view_definition` returns table paths **without
+  backticks**. It still runs (GoogleSQL accepts a hyphenated project id unquoted),
+  but it breaks the repo convention — re-add `` `${XxxTableRef}` `` when pulling.
+  A diff that normalises backticks away cannot see this; check it separately.
+- Saving a view in the console **drops commented-out blocks**. `view_rls_data`
+  lost 88 lines that way; the text is still in git history.
+- BigQuery ids are **case sensitive**. `RLS_Customer360` vs `rls_customer360`
+  compiles and fails at run time — confirm with `bq ls <dataset>`.
+- `last_modified_time` from `<dataset>.__TABLES__` (views) and
+  `ROUTINES.last_altered` (UDFs), compared against `git log -1` for the file,
+  is what tells you which side is ahead.
+
 ## Backfilling more than one day (`BACKFILL_DAYS`)
 
 Every validated and curated incremental window reads
