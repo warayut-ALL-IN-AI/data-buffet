@@ -66,12 +66,12 @@ with tab_main as (
       ELSE inv.milLinkvcno
     END) as RefOrder,
 
-    (CASE
+    (CASE 
       WHEN inv.mihCus in UNNEST(`${FnGetScgCustomerIdsTableRef}`())
         THEN `${CleanCompanyPrefixTableRef}`(
           REGEXP_EXTRACT(
-            REGEXP_REPLACE(inv.mihNotes, r'\*{2,3}', '##'),
-            r'#?D/?S?\s*\+?\s*(?:แ)?\s*([^\r\n#]+)'
+            REGEXP_REPLACE(inv.mihNotes, r'\*{2,3}', '##'), 
+            r'(?:#?D/?S?|#/S)\s*\+?\s*(?:แ)?\s*([^\r\n#]+)'
           )
         )
       ELSE NULL
