@@ -133,6 +133,12 @@ precedent ในโค้ด: `includes/controller/function-data.js` → ``patte
 > **เวลาย้าย SQL จาก BigQuery console เข้า `.sqlx` ต้อง double backslash ทุกตัวก่อนเสมอ**
 > (view layer เจอปัญหานี้จริง 3 ไฟล์ 2026-07-24 — 2 ใน 3 เป็นแบบเพี้ยนเงียบ ไม่ error)
 
+> **และทิศกลับกัน: ห้าม copy `.sqlx` ไปวางใน BigQuery console — deploy ผ่าน Dataform เท่านั้น**
+> การ paste ข้ามขั้น template-literal ทำให้ `\\` หลุดไปถึง BigQuery ทั้งคู่ → regex พัง
+> (เกิดจริง 2026-08-07 กับ `EXTRACT_CHQ_DATA`: `missing )` + regex อีก 33 ตัวผิดเงียบ
+> ดู `document/operations/known-issues.md`) ถ้าจำเป็นต้องวางมือจริง ๆ ต้อง unescape
+> `\\` → `\` เองก่อนวาง
+
 ## 4. การ cast / ทำความสะอาดข้อมูล
 
 ใช้ helper จาก `function-data.js` เท่านั้น:

@@ -80,6 +80,22 @@
   template-literal unescape ก่อนเทียบ (ยืนยันแล้ว 42/42 ตรงหลังจำลอง)
   - **แก้แล้ว 2026-07-24 — `initial/create_all_function.sqlx`** (ดู bullet ถัดไป):
     มี escape ผิด **335 จุด** รวม `\1` 1 จุดที่ทำให้ทั้ง action compile ไม่ผ่าน
+  - **🔥 เกิดซ้ำ 2026-08-10 — `create_all_function.sqlx` (แก้แล้ว)**
+    อาการ: เรียก `EXTRACT_CHQ_DATA` แล้วได้
+    `Cannot parse regular expression: missing )` (regex บรรทัด 178)
+    **ต้นตอ**: UDF ถูก deploy ด้วยการ **copy ข้อความดิบจาก `.sqlx` ไปวางใน BigQuery
+    console** (BQ `last_altered` 2026-08-07 15:25 / commit ไฟล์ 08:25) ซึ่งข้าม
+    template-literal pass → BigQuery ได้ `\\` ไปเต็ม ๆ ทำให้ `\\(` กลายเป็น
+    "backslash + วงเล็บเปิด" → วงเล็บไม่บาลานซ์ **และ regex อีก 33 ตัวในฟังก์ชัน
+    เดียวกันผิดเงียบ** (`\\d` = backslash+`d` ไม่ใช่ตัวเลข)
+    **เจอ bug ซ้อน**: `clean_company_prefix` (เพิ่ม 2026-07-31 **หลัง**กฎ §3.3 ออก)
+    เขียน `\` เดี่ยว 14 จุดที่บรรทัด 207/210 → ไฟล์ปนกัน 2 มาตรฐาน
+    **paste ดิบก็พัง (EXTRACT_CHQ_DATA) / ผ่าน Dataform ก็พัง (clean_company_prefix
+    → `^+?` = nothing to repeat)** ไม่มีวิธี deploy ไหนที่ถูกทั้งไฟล์
+    **แก้แล้ว 2026-08-10**: double backslash บรรทัด 207/210 → จำลอง compile ยืนยัน
+    regex ครบ 34 ตัวผ่านหมด, 0 octal error, ไม่เหลือ backslash เดี่ยว
+    **กฎเหล็กที่ได้จากเคสนี้: ห้าม copy `.sqlx` ไปวางใน BigQuery console —
+    deploy ผ่าน Dataform เท่านั้น** (ถ้าจำเป็นต้องวางมือ ต้อง unescape `\\`→`\` ก่อน)
   - **⚠️ ยังไม่ตรวจ/ไม่แก้ — ไฟล์ที่เหลือที่อาจโดนปัญหาเดียวกัน** (พบตอนสแกน 2026-07-24
     ยังไม่ยืนยันเพราะ compile ในเครื่องไม่ได้ — **อย่าเพิ่งแก้จนกว่าจะ compile ยืนยัน**
     เพราะจะเปลี่ยนพฤติกรรมของ dim ที่รันอยู่ทุกวัน):
