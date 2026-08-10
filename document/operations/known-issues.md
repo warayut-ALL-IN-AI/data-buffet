@@ -138,13 +138,54 @@
 - เครื่อง local WSL ไม่มี `dataform` CLI (`dataform` และ `npx dataform` fail ทั้งคู่)
 - `bq` ต้องระบุ `--project_id=databuffet-nonprd` (default gcloud project เป็นตัวอื่น)
 - INFORMATION_SCHEMA ระดับ region ถูก deny — ใช้ระดับ dataset
-- `workflow_settings.yaml` เป็นค่าเฉพาะ environment
+- `workflow_settings.yaml` เป็นค่าเฉพาะ environment — `BACKFILL_DAYS` ตั้งเองในแต่ละ
+  workspace ไม่ได้ติดมากับ commit
+- **git ฝั่ง WSL กับฝั่ง Windows เห็น working tree ไม่ตรงกัน (CRLF)**: ฝั่ง Windows
+  สะอาด แต่ `wsl git status` เห็นไฟล์เป็น modified นับสิบ เพราะ config line-ending
+  คนละแบบ → Stop hook `doc-sync-check.sh` (อ่าน `git status` จาก WSL) จะเตือน
+  doc-sync ทุกครั้งแม้ commit ครบแล้ว **เป็น false positive ไม่ใช่เอกสารขาด**
 
 ## เหตุการณ์ที่เคยเกิด
 
 - **2026-05-23/24**: validated_mac5 datetime parse fail 2 วัน (รูปแบบ timestamp
   จาก raw เปลี่ยนชั่วคราว) — หายเองตั้งแต่ 05-25 ถ้าเกิดซ้ำให้ดู
   `parseFlexibleDatetime` ว่ารองรับ format ใหม่หรือยัง
+- **2026-08-07/10**: `EXTRACT_CHQ_DATA` พังบน BigQuery
+  (`Cannot parse regular expression: missing )`) จากการ deploy ด้วยการ paste
+  ข้อความดิบเข้า console + กฎ backslash ในเอกสารที่สรุปผิดมาตั้งแต่ 07-27
+  รายละเอียดเต็มอยู่ในหัวข้อ **พฤติกรรมที่ตั้งใจ** ด้านบน (bullet backslash)
+
+## การตัดสินใจเชิงออกแบบ
+
+- **2026-08-10 — `BACKFILL_DAYS` สำหรับ incremental window ของ validated/curated**
+
+  **ปัญหา**: incremental window hardcode `CURRENT_DATE('Asia/Bangkok')-1` ทุกจุด
+  พอ source พังหลายวัน (เช่น `mih` พัง 3 วัน) เก็บย้อนหลังไม่ได้ ต้อง full refresh
+  ทั้งตารางอย่างเดียว
+
+  **ที่เลือกทำ**: เปลี่ยนเป็น
+  `DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY)`
+  74 จุด / 52 ไฟล์ (validated mac5+cis360+mastersku และ curated) — ปรับ var
+  ชั่วคราวแล้วรัน จากนั้นตั้งกลับ ขั้นตอนอยู่ใน
+  [running-and-troubleshooting.md](../project_wiki/operations/running-and-troubleshooting.md)
+
+  **ที่จงใจไม่แตะ** (ความหมายไม่ใช่หน้าต่างย้อนหลัง — อย่าเอาไปผูกกับ var นี้):
+  - `cdc/cdc_change_log.sqlx` — ใช้ `=` เจาะ partition เดียว ไม่ใช่ช่วง
+    ถ้าเปลี่ยนเป็นช่วงจะเปลี่ยนสิ่งที่ CDC เอาไปเทียบ
+  - `dimension/dim_aging.sqlx` `run_date` — เป็นวันที่ของ snapshot
+    `DELETE ... >= run_date` แต่ `INSERT` วันเดียว → ถอยวันจะลบมากกว่าที่เขียนกลับ
+  - `view/fact_view/view_fact_transcation.sqlx` — เป็นขอบบนของช่วง 4 ปี
+
+  **ข้อควรรู้**:
+  - `BACKFILL_DAYS` **ตั้งเองรายเครื่อง ไม่ได้ติดมากับ commit ของ repo**
+    `databuffet.js` จึงใส่ `|| "1"` ไว้ (เป็นตัวเดียวในไฟล์ที่มี fallback)
+    ไม่งั้น workspace ที่ยังไม่มี var จะ interpolate เป็น `undefined` ใส่ SQL 74 จุด
+  - รูปแบบนี้ nest `${databuffet.BACKFILL_DAYS}` ไว้ข้างใน
+    `${when(incremental(), ...)}` ซึ่งไม่เคยมีในโปรเจกต์มาก่อน —
+    **ยืนยันแล้วว่า compile ผ่าน** (ดู Compiled queries ของ `mih` 2026-08-10
+    ออกมาเป็น `INTERVAL 1 DAY`)
+  - รันซ้ำวันที่เก็บไปแล้วปลอดภัย เพราะ `QUALIFY ROW_NUMBER() ... ORDER BY
+    asatdate DESC` คัดเหลือ 1 แถวต่อ PK อยู่แล้ว
 
 ## หนี้ทางเทคนิค / งานค้าง
 
