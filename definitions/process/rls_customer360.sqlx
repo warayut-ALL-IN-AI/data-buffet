@@ -10,7 +10,7 @@ config {
     }
 }
 
--- CREATE OR REPLACE TABLE databuffet-nonprd.process_dataset.RLS_Customer360
+-- CREATE OR REPLACE TABLE databuffet-nonprd.process_dataset.rls_customer360
 -- AS
 WITH fact_table as (
   SELECT DISTINCT

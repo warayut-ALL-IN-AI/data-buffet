@@ -769,6 +769,7 @@ flowchart LR
   dim_company --> Product_Attribute
   dim_company --> Transaction_Data_Mart
   dim_company --> view_dim_company
+  dim_company --> view_fact_transcation
   dim_cost_group --> view_fact_transcation
   dim_cost_stk --> view_fact_transcation
   dim_customer --> GroupCustomerSK_CustomerSK
@@ -785,6 +786,7 @@ flowchart LR
   dim_department_last --> view_fact_transcation
   dim_department_last --> view_sales_representative_last
   dim_director --> view_dim_target_by_agent_dayofwork
+  dim_director --> view_fact_transcation
   dim_director_last --> Model_Invoice_Transaction
   dim_director_last --> Model_Target_DayOfWork
   dim_director_last --> view_fact_transcation
@@ -824,6 +826,7 @@ flowchart LR
   dim_region_last --> view_rls_data
   dim_region_last --> view_sales_representative_last
   dim_region_manager --> view_dim_target_by_agent_dayofwork
+  dim_region_manager --> view_fact_transcation
   dim_region_manager_last --> Model_Invoice_Transaction
   dim_region_manager_last --> Model_Target_DayOfWork
   dim_region_manager_last --> view_dim_target_by_agent
@@ -852,6 +855,7 @@ flowchart LR
   dim_section_last --> view_rls_data
   dim_section_last --> view_sales_representative_last
   dim_section_manager --> view_dim_target_by_agent_dayofwork
+  dim_section_manager --> view_fact_transcation
   dim_section_manager_last --> Model_Invoice_Transaction
   dim_section_manager_last --> Model_Target_DayOfWork
   dim_section_manager_last --> view_dim_target_by_agent
@@ -905,7 +909,9 @@ flowchart LR
   view_dim_aging --> view_fact_transcation
   view_dim_channel --> view_dim_aging
   view_dim_channel --> view_dim_aging_history
+  view_dim_company --> view_rls_data
   view_dim_customer --> Model_Invoice_Transaction
+  view_dim_customer --> view_dim_invoice
   view_dim_invoice --> view_fact_transcation
   view_dim_product_mkt --> Product_Master_ALL
   view_dim_sale_representative_last --> view_sales_representative_last

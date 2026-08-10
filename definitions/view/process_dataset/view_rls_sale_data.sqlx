@@ -23,7 +23,7 @@ js {
     const RLSCustomer360Table = {
         database: databuffet.DATABASE,
         schema: databuffet.PROCESS_DATASET,
-        name: "RLS_Customer360",
+        name: "rls_customer360",
     };
     const RLSCustomer360TableRef = `${RLSCustomer360Table.database}.${RLSCustomer360Table.schema}.${RLSCustomer360Table.name}`;
 }

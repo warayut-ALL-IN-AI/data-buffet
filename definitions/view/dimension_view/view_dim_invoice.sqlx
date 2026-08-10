@@ -1,18 +1,11 @@
 config {
   type: "view",
   schema: databuffet.DIMENSION_VIEW,
-  dependencies: ["dim_invoice", "dim_aging"],
+  dependencies: ["dim_invoice", "dim_aging", "view_dim_customer"],
   tags: [databuffet.TAG_VIEW],
 }
 
 js {
-    const DimInvoiceTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_invoice",
-    };
-    const DimInvoiceTableRef = `${DimInvoiceTable.database}.${DimInvoiceTable.schema}.${DimInvoiceTable.name}`;
-
     const DimAgingTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -20,12 +13,47 @@ js {
     };
     const DimAgingTableRef = `${DimAgingTable.database}.${DimAgingTable.schema}.${DimAgingTable.name}`;
 
+    const DimInvoiceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_invoice",
+    };
+    const DimInvoiceTableRef = `${DimInvoiceTable.database}.${DimInvoiceTable.schema}.${DimInvoiceTable.name}`;
+
+    const ViewDimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_VIEW,
+        name: "view_dim_customer",
+    };
+    const ViewDimCustomerTableRef = `${ViewDimCustomerTable.database}.${ViewDimCustomerTable.schema}.${ViewDimCustomerTable.name}`;
+
+    const CleanCompanyPrefixTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FUNCTION_DATASET,
+        name: "clean_company_prefix",
+    };
+    const CleanCompanyPrefixTableRef = `${CleanCompanyPrefixTable.database}.${CleanCompanyPrefixTable.schema}.${CleanCompanyPrefixTable.name}`;
+
     const FnFlagScgTable = {
         database: databuffet.DATABASE,
         schema: databuffet.FUNCTION_DATASET,
         name: "fn_flag_scg",
     };
     const FnFlagScgTableRef = `${FnFlagScgTable.database}.${FnFlagScgTable.schema}.${FnFlagScgTable.name}`;
+
+    const FnGetScgCustomerIdsTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FUNCTION_DATASET,
+        name: "fn_get_scg_customer_ids",
+    };
+    const FnGetScgCustomerIdsTableRef = `${FnGetScgCustomerIdsTable.database}.${FnGetScgCustomerIdsTable.schema}.${FnGetScgCustomerIdsTable.name}`;
+
+    const MdsDataCrcShopNameRenameTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.MDS_DATASET,
+        name: "mds_data_crc_shop_name_rename",
+    };
+    const MdsDataCrcShopNameRenameTableRef = `${MdsDataCrcShopNameRenameTable.database}.${MdsDataCrcShopNameRenameTable.schema}.${MdsDataCrcShopNameRenameTable.name}`;
 }
 
 with tab_main as (
@@ -37,6 +65,16 @@ with tab_main as (
       WHEN inv.mihType in ('BS', 'AS') THEN inv_is.milLinkvcno
       ELSE inv.milLinkvcno
     END) as RefOrder,
+
+    (CASE 
+      WHEN inv.mihCus in UNNEST(`${FnGetScgCustomerIdsTableRef}`())
+        THEN `${CleanCompanyPrefixTableRef}`( 
+          REGEXP_EXTRACT(
+            REPLACE( REPLACE( REPLACE( REPLACE(inv.mihNotes, '***', '##'), '**', '##'), '*', '##'), '//', '##'),
+            r'#D/S\s+(.*?)\s*(?:#|$)') 
+          )
+      ELSE NULL
+    END) as CRCShopName,
 
   from `${DimInvoiceTableRef}` as inv
   left join `${DimInvoiceTableRef}` as inv_is
@@ -53,6 +91,21 @@ with tab_main as (
 
 )
   select 
-    *,
-    `${FnFlagScgTableRef}`(RefOrder, mihCus) as FlagSCG,
-  from tab_main
+    main.* except(CRCShopName),
+    `${FnFlagScgTableRef}`(main.RefOrder, main.mihCus) as FlagSCG,
+
+    COALESCE(mds_crc.crc_shop_name_change, main.CRCShopName) as CRCShopName, 
+    (CASE
+      WHEN cust.FlagMDSNickName = True THEN cust.NicknameCustomer
+      WHEN COALESCE(mds_crc.crc_shop_name_change, main.CRCShopName) is not null THEN COALESCE(mds_crc.crc_shop_name_change, main.CRCShopName)
+      ELSE `${CleanCompanyPrefixTableRef}`(debnamet)
+    END) as CustomerReportName
+    
+  from tab_main as main
+  left join `${ViewDimCustomerTableRef}` as cust
+    on main.CompanySK = cust.CompanySK
+    and main.mihCus = cust.debcode
+  left join `${MdsDataCrcShopNameRenameTableRef}` as mds_crc
+    on main.CRCShopName = mds_crc.crc_shop_name
+    and main.CRCShopName is not null
+    and mds_crc.is_active = true

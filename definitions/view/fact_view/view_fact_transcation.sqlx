@@ -1,32 +1,7 @@
 config {
   type: "view",
   schema: databuffet.FACT_VIEW,
-  dependencies: [
-    "dim_calendar",
-    "dim_product_mkt",
-    "dim_rebate",
-    "dim_report",
-    "fact_transcation",
-    "dim_guarantee",
-    "dim_section_last",
-    "dim_section",
-    "dim_sale_representative",
-    "dim_channel",
-    "dim_sale_representative_last",
-    "dim_department_last",
-    "dim_director_last",
-    "dim_change_district",
-    "dim_cost_stk",
-    "dim_cost_group",
-    "dim_stk_mkt",
-    "dim_region_last",
-    "dim_product_master",
-    "fact_invoice",
-    "view_dim_aging",
-    "fact_order",
-    "view_dim_invoice",
-    "dim_region",
-  ],
+  dependencies: ["dim_calendar", "dim_product_mkt", "dim_rebate", "dim_report", "fact_transcation", "dim_guarantee", "dim_section_last", "dim_section", "dim_sale_representative", "dim_channel", "dim_sale_representative_last", "dim_department_last", "dim_director_last", "dim_change_district", "dim_cost_stk", "dim_cost_group", "dim_stk_mkt", "dim_region_last", "dim_product_master", "fact_invoice", "view_dim_aging", "fact_order", "view_dim_invoice", "dim_region", "dim_company", "dim_director", "dim_region_manager", "dim_section_manager"],
   tags: [databuffet.TAG_VIEW],
 }
 
@@ -38,12 +13,75 @@ js {
     };
     const DimCalendarTableRef = `${DimCalendarTable.database}.${DimCalendarTable.schema}.${DimCalendarTable.name}`;
 
-    const MdsDataChangeMarketinggroupMasterTable = {
+    const DimChangeDistrictTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.MDS_DATASET,
-        name: "mds_data_change_marketinggroup_master",
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_change_district",
     };
-    const MdsDataChangeMarketinggroupMasterTableRef = `${MdsDataChangeMarketinggroupMasterTable.database}.${MdsDataChangeMarketinggroupMasterTable.schema}.${MdsDataChangeMarketinggroupMasterTable.name}`;
+    const DimChangeDistrictTableRef = `${DimChangeDistrictTable.database}.${DimChangeDistrictTable.schema}.${DimChangeDistrictTable.name}`;
+
+    const DimChannelTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_channel",
+    };
+    const DimChannelTableRef = `${DimChannelTable.database}.${DimChannelTable.schema}.${DimChannelTable.name}`;
+
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+
+    const DimCostGroupTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_cost_group",
+    };
+    const DimCostGroupTableRef = `${DimCostGroupTable.database}.${DimCostGroupTable.schema}.${DimCostGroupTable.name}`;
+
+    const DimCostStkTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_cost_stk",
+    };
+    const DimCostStkTableRef = `${DimCostStkTable.database}.${DimCostStkTable.schema}.${DimCostStkTable.name}`;
+
+    const DimDepartmentLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_department_last",
+    };
+    const DimDepartmentLastTableRef = `${DimDepartmentLastTable.database}.${DimDepartmentLastTable.schema}.${DimDepartmentLastTable.name}`;
+
+    const DimDirectorTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_director",
+    };
+    const DimDirectorTableRef = `${DimDirectorTable.database}.${DimDirectorTable.schema}.${DimDirectorTable.name}`;
+
+    const DimDirectorLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_director_last",
+    };
+    const DimDirectorLastTableRef = `${DimDirectorLastTable.database}.${DimDirectorLastTable.schema}.${DimDirectorLastTable.name}`;
+
+    const DimGuaranteeTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_guarantee",
+    };
+    const DimGuaranteeTableRef = `${DimGuaranteeTable.database}.${DimGuaranteeTable.schema}.${DimGuaranteeTable.name}`;
+
+    const DimProductMasterTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_master",
+    };
+    const DimProductMasterTableRef = `${DimProductMasterTable.database}.${DimProductMasterTable.schema}.${DimProductMasterTable.name}`;
 
     const DimProductMktTable = {
         database: databuffet.DATABASE,
@@ -59,117 +97,12 @@ js {
     };
     const DimRebateTableRef = `${DimRebateTable.database}.${DimRebateTable.schema}.${DimRebateTable.name}`;
 
-    const DimReportTable = {
+    const DimRegionTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
-        name: "dim_report",
+        name: "dim_region",
     };
-    const DimReportTableRef = `${DimReportTable.database}.${DimReportTable.schema}.${DimReportTable.name}`;
-
-    const FactTranscationTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.FACT_TABLE,
-        name: "fact_transcation",
-    };
-    const FactTranscationTableRef = `${FactTranscationTable.database}.${FactTranscationTable.schema}.${FactTranscationTable.name}`;
-
-    const MappingInvoiceTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.ONETIME,
-        name: "mapping_invoice",
-    };
-    const MappingInvoiceTableRef = `${MappingInvoiceTable.database}.${MappingInvoiceTable.schema}.${MappingInvoiceTable.name}`;
-
-    const DimGuaranteeTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_guarantee",
-    };
-    const DimGuaranteeTableRef = `${DimGuaranteeTable.database}.${DimGuaranteeTable.schema}.${DimGuaranteeTable.name}`;
-
-    const DimSectionLastTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_section_last",
-    };
-    const DimSectionLastTableRef = `${DimSectionLastTable.database}.${DimSectionLastTable.schema}.${DimSectionLastTable.name}`;
-
-    const DimSectionTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_section",
-    };
-    const DimSectionTableRef = `${DimSectionTable.database}.${DimSectionTable.schema}.${DimSectionTable.name}`;
-
-    const FnFlagScgTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.FUNCTION_DATASET,
-        name: "fn_flag_scg",
-    };
-    const FnFlagScgTableRef = `${FnFlagScgTable.database}.${FnFlagScgTable.schema}.${FnFlagScgTable.name}`;
-
-    const DimSaleRepresentativeTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_sale_representative",
-    };
-    const DimSaleRepresentativeTableRef = `${DimSaleRepresentativeTable.database}.${DimSaleRepresentativeTable.schema}.${DimSaleRepresentativeTable.name}`;
-
-    const DimChannelTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_channel",
-    };
-    const DimChannelTableRef = `${DimChannelTable.database}.${DimChannelTable.schema}.${DimChannelTable.name}`;
-
-    const DimSaleRepresentativeLastTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_sale_representative_last",
-    };
-    const DimSaleRepresentativeLastTableRef = `${DimSaleRepresentativeLastTable.database}.${DimSaleRepresentativeLastTable.schema}.${DimSaleRepresentativeLastTable.name}`;
-
-    const DimDepartmentLastTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_department_last",
-    };
-    const DimDepartmentLastTableRef = `${DimDepartmentLastTable.database}.${DimDepartmentLastTable.schema}.${DimDepartmentLastTable.name}`;
-
-    const DimDirectorLastTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_director_last",
-    };
-    const DimDirectorLastTableRef = `${DimDirectorLastTable.database}.${DimDirectorLastTable.schema}.${DimDirectorLastTable.name}`;
-
-    const DimChangeDistrictTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_change_district",
-    };
-    const DimChangeDistrictTableRef = `${DimChangeDistrictTable.database}.${DimChangeDistrictTable.schema}.${DimChangeDistrictTable.name}`;
-
-    const DimCostStkTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_cost_stk",
-    };
-    const DimCostStkTableRef = `${DimCostStkTable.database}.${DimCostStkTable.schema}.${DimCostStkTable.name}`;
-
-    const DimCostGroupTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_cost_group",
-    };
-    const DimCostGroupTableRef = `${DimCostGroupTable.database}.${DimCostGroupTable.schema}.${DimCostGroupTable.name}`;
-
-    const DimStkMktTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_stk_mkt",
-    };
-    const DimStkMktTableRef = `${DimStkMktTable.database}.${DimStkMktTable.schema}.${DimStkMktTable.name}`;
+    const DimRegionTableRef = `${DimRegionTable.database}.${DimRegionTable.schema}.${DimRegionTable.name}`;
 
     const DimRegionLastTable = {
         database: databuffet.DATABASE,
@@ -178,26 +111,61 @@ js {
     };
     const DimRegionLastTableRef = `${DimRegionLastTable.database}.${DimRegionLastTable.schema}.${DimRegionLastTable.name}`;
 
-    const FnFlagExcTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.FUNCTION_DATASET,
-        name: "fn_flag_exc",
-    };
-    const FnFlagExcTableRef = `${FnFlagExcTable.database}.${FnFlagExcTable.schema}.${FnFlagExcTable.name}`;
-
-    const DimProductMasterTable = {
+    const DimRegionManagerTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
-        name: "dim_product_master",
+        name: "dim_region_manager",
     };
-    const DimProductMasterTableRef = `${DimProductMasterTable.database}.${DimProductMasterTable.schema}.${DimProductMasterTable.name}`;
+    const DimRegionManagerTableRef = `${DimRegionManagerTable.database}.${DimRegionManagerTable.schema}.${DimRegionManagerTable.name}`;
 
-    const FactInvoiceTable = {
+    const DimReportTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.FACT_TABLE,
-        name: "fact_invoice",
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_report",
     };
-    const FactInvoiceTableRef = `${FactInvoiceTable.database}.${FactInvoiceTable.schema}.${FactInvoiceTable.name}`;
+    const DimReportTableRef = `${DimReportTable.database}.${DimReportTable.schema}.${DimReportTable.name}`;
+
+    const DimSaleRepresentativeTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative",
+    };
+    const DimSaleRepresentativeTableRef = `${DimSaleRepresentativeTable.database}.${DimSaleRepresentativeTable.schema}.${DimSaleRepresentativeTable.name}`;
+
+    const DimSaleRepresentativeLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_sale_representative_last",
+    };
+    const DimSaleRepresentativeLastTableRef = `${DimSaleRepresentativeLastTable.database}.${DimSaleRepresentativeLastTable.schema}.${DimSaleRepresentativeLastTable.name}`;
+
+    const DimSectionTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section",
+    };
+    const DimSectionTableRef = `${DimSectionTable.database}.${DimSectionTable.schema}.${DimSectionTable.name}`;
+
+    const DimSectionLastTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_last",
+    };
+    const DimSectionLastTableRef = `${DimSectionLastTable.database}.${DimSectionLastTable.schema}.${DimSectionLastTable.name}`;
+
+    const DimSectionManagerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section_manager",
+    };
+    const DimSectionManagerTableRef = `${DimSectionManagerTable.database}.${DimSectionManagerTable.schema}.${DimSectionManagerTable.name}`;
+
+    const DimStkMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_stk_mkt",
+    };
+    const DimStkMktTableRef = `${DimStkMktTable.database}.${DimStkMktTable.schema}.${DimStkMktTable.name}`;
 
     const ViewDimAgingTable = {
         database: databuffet.DATABASE,
@@ -206,13 +174,6 @@ js {
     };
     const ViewDimAgingTableRef = `${ViewDimAgingTable.database}.${ViewDimAgingTable.schema}.${ViewDimAgingTable.name}`;
 
-    const FactOrderTable = {
-        database: databuffet.DATABASE,
-        schema: databuffet.FACT_TABLE,
-        name: "fact_order",
-    };
-    const FactOrderTableRef = `${FactOrderTable.database}.${FactOrderTable.schema}.${FactOrderTable.name}`;
-
     const ViewDimInvoiceTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_VIEW,
@@ -220,18 +181,61 @@ js {
     };
     const ViewDimInvoiceTableRef = `${ViewDimInvoiceTable.database}.${ViewDimInvoiceTable.schema}.${ViewDimInvoiceTable.name}`;
 
-    const DimRegionTable = {
+    const FactInvoiceTable = {
         database: databuffet.DATABASE,
-        schema: databuffet.DIMENSION_TABLE,
-        name: "dim_region",
+        schema: databuffet.FACT_TABLE,
+        name: "fact_invoice",
     };
-    const DimRegionTableRef = `${DimRegionTable.database}.${DimRegionTable.schema}.${DimRegionTable.name}`;
+    const FactInvoiceTableRef = `${FactInvoiceTable.database}.${FactInvoiceTable.schema}.${FactInvoiceTable.name}`;
+
+    const FactOrderTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: "fact_order",
+    };
+    const FactOrderTableRef = `${FactOrderTable.database}.${FactOrderTable.schema}.${FactOrderTable.name}`;
+
+    const FactTranscationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: "fact_transcation",
+    };
+    const FactTranscationTableRef = `${FactTranscationTable.database}.${FactTranscationTable.schema}.${FactTranscationTable.name}`;
+
+    const FnFlagExcTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FUNCTION_DATASET,
+        name: "fn_flag_exc",
+    };
+    const FnFlagExcTableRef = `${FnFlagExcTable.database}.${FnFlagExcTable.schema}.${FnFlagExcTable.name}`;
+
+    const FnFlagScgTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FUNCTION_DATASET,
+        name: "fn_flag_scg",
+    };
+    const FnFlagScgTableRef = `${FnFlagScgTable.database}.${FnFlagScgTable.schema}.${FnFlagScgTable.name}`;
+
+    const MdsDataChangeMarketinggroupMasterTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.MDS_DATASET,
+        name: "mds_data_change_marketinggroup_master",
+    };
+    const MdsDataChangeMarketinggroupMasterTableRef = `${MdsDataChangeMarketinggroupMasterTable.database}.${MdsDataChangeMarketinggroupMasterTable.schema}.${MdsDataChangeMarketinggroupMasterTable.name}`;
+
+    const MappingInvoiceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.ONETIME,
+        name: "mapping_invoice",
+    };
+    const MappingInvoiceTableRef = `${MappingInvoiceTable.database}.${MappingInvoiceTable.schema}.${MappingInvoiceTable.name}`;
 }
 
 with dim_calendar as (
-  select Date
-  from `${DimCalendarTableRef}`
-  where Date between DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR) AND CURRENT_DATE('Asia/Bangkok')-1
+  select cal.Date, comp.CompanySK
+  from `${DimCalendarTableRef}` as cal
+  cross join `${DimCompanyTableRef}` as comp
+  where Date between DATE_TRUNC(DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL 4 YEAR), YEAR) AND CURRENT_DATE('Asia/Bangkok')-1 
  
 ), mds_change_mktgroup as (
   SELECT 
@@ -362,17 +366,40 @@ with dim_calendar as (
             END)
     END) as ChangeSectionSKLast,
 
+    ----  change transaction
     (CASE 
       WHEN IFNULL(dim_salerep.ChangeSectionFlag, 'No') = 'Yes' 
-        THEN COALESCE(trans.ChangeSectionSK, (
-            SELECT SectionSK 
-            FROM `${DimSectionTableRef}` 
-            WHERE SectionID = 'Dummy999990' 
-              and trans.mix_date between StartDate and EndDate))
+        THEN COALESCE(trans.ChangeSectionSK, dummy_sec.SectionSK)
       ELSE COALESCE(trans.ChangeSectionSK, trans.SectionSK)
     END) as ChangeSectionSK,
 
-    trans.* except(ChangeSectionSK, SectionMappingID, debgroup, FlagMappingInvoice),
+    (CASE 
+      WHEN IFNULL(dim_salerep.ChangeSectionFlag, 'No') = 'Yes' 
+        THEN COALESCE(trans.ChangeSectionManagerSK, dummy_sec_mgr.SectionManagerSK)
+      ELSE COALESCE(trans.ChangeSectionManagerSK, trans.SectionManagerSK)
+    END) as ChangeSectionManagerSK,
+
+    (CASE 
+      WHEN IFNULL(dim_salerep.ChangeSectionFlag, 'No') = 'Yes' 
+        THEN COALESCE(trans.ChangeRegionSK, dummy_reg.RegionSK)
+      ELSE COALESCE(trans.ChangeRegionSK, trans.RegionSK)
+    END) as ChangeRegionSK,
+
+    (CASE 
+      WHEN IFNULL(dim_salerep.ChangeSectionFlag, 'No') = 'Yes' 
+        THEN COALESCE(trans.ChangeRegionManagerSK, dummy_reg_mgr.RegionManagerSK)
+      ELSE COALESCE(trans.ChangeRegionManagerSK, trans.RegionManagerSK)
+    END) as ChangeRegionManagerSK,
+
+    (CASE 
+      WHEN IFNULL(dim_salerep.ChangeSectionFlag, 'No') = 'Yes' 
+        THEN COALESCE(trans.ChangeDirectorSK, dummy_dir.DirectorSK)
+      ELSE COALESCE(trans.ChangeDirectorSK, trans.DirectorSK)
+    END) as ChangeDirectorSK,
+
+    trans.* except(ChangeSectionSK, ChangeRegionSK, ChangeDirectorSK,
+      ChangeSectionManagerSK, ChangeRegionManagerSK,
+      SectionMappingID, debgroup, FlagMappingInvoice),
 
     (CASE
       WHEN sale_sk.seq_condition = 3 and trans.ChannelCostID = sale_sk.CostChannelID THEN 3.1
@@ -550,6 +577,33 @@ with dim_calendar as (
         END) = dim_report.RegionID
           and dim_report.MarketingGroupID is null
     END)
+
+    LEFT JOIN `${DimSectionTableRef}` as dummy_sec
+      ON dummy_sec.SectionID = 'Dummy999990'
+      AND trans.CompanySK = dummy_sec.CompanySK
+      AND trans.mix_date BETWEEN dummy_sec.StartDate AND dummy_sec.EndDate
+
+    LEFT JOIN `${DimSectionManagerTableRef}` as dummy_sec_mgr
+      ON dummy_sec_mgr.SectionID = 'Dummy999990'
+      AND trans.CompanySK = dummy_sec_mgr.CompanySK
+      AND trans.mix_date BETWEEN dummy_sec_mgr.StartDate AND dummy_sec_mgr.EndDate
+
+    LEFT JOIN `${DimRegionTableRef}` dummy_reg
+      ON dummy_reg.RegionID = 'Dummy999990'
+      AND dummy_reg.SubRegionID = 'Dummy999990'
+      AND trans.CompanySK = dummy_reg.CompanySK
+      AND trans.mix_date BETWEEN dummy_reg.StartDate AND dummy_reg.EndDate
+
+    LEFT JOIN `${DimRegionManagerTableRef}` as dummy_reg_mgr
+      ON dummy_reg_mgr.RegionID = 'Dummy999990'
+      AND dummy_reg_mgr.SubRegionID = 'Dummy999990'
+      AND trans.CompanySK = dummy_reg_mgr.CompanySK
+      AND trans.mix_date BETWEEN dummy_reg_mgr.StartDate AND dummy_reg_mgr.EndDate
+
+    LEFT JOIN `${DimDirectorTableRef}` as dummy_dir
+      ON dummy_dir.DirectorID = 'Non Director'
+      AND trans.CompanySK = dummy_dir.CompanySK
+      AND trans.mix_date BETWEEN dummy_dir.StartDate AND dummy_dir.EndDate
 
   -- where UPPER(left(milLinkvcno,3)) = 'CRC'
 
@@ -750,6 +804,15 @@ with dim_calendar as (
           AND (REGEXP_CONTAINS(fn.mildesc, mds.ProductDescription) OR REGEXP_CONTAINS(mih.mihnotes, mds.Remark) OR REGEXP_CONTAINS(mih.mihdesc, mds.Remark))
         )
       )
+      OR 
+      (
+        -- กลุ่มที่ 19: เช็คจาก ProductID และชื่อสินค้า (mildesc)
+        (
+          lower(mds.ProductAction) = 'inc' AND lower(mds.ProductDescriptionAction) = 'contains'
+          AND fn.milstk = mds.ProductID 
+          AND REGEXP_CONTAINS(fn.mildesc, mds.ProductDescription)
+        )
+      )
     )
 
 )
@@ -759,12 +822,13 @@ with dim_calendar as (
       milQuan, milQuanp2, milAdisc, milCog, milConv, milDisca, milDisct, milVat, milSum,
       milExchg, milAcost, milCost, milUcost, milUprice, 
       Vat, milsum_incvat, mildisca_incvat, milcog_incvat,
-      DepositExcVat, DepositIncVat, DepositVat
+      DepositExcVat, DepositIncVat, DepositVat, CompanySK
     ),
-    IF(trans.mix_date is not null, trans.mix_date, Date) as mix_date,
-    IF(trans.mix_date is not null, trans.milDay, EXTRACT(DAY FROM Date) ) as milDay,
-    IF(trans.mix_date is not null, trans.milMonth, EXTRACT(MONTH FROM Date) ) as milMonth,
-    IF(trans.mix_date is not null, trans.milYear, EXTRACT(YEAR FROM Date) ) as milYear,
+    IF(trans.mix_date is not null, trans.CompanySK, calendar.CompanySK) as CompanySK,
+    IF(trans.mix_date is not null, trans.mix_date, calendar.Date) as mix_date,
+    IF(trans.mix_date is not null, trans.milDay, EXTRACT(DAY FROM calendar.Date) ) as milDay,
+    IF(trans.mix_date is not null, trans.milMonth, EXTRACT(MONTH FROM calendar.Date) ) as milMonth,
+    IF(trans.mix_date is not null, trans.milYear, EXTRACT(YEAR FROM calendar.Date) ) as milYear,
     
     IF(trans.mix_date is not null, trans.milQuan, 0.0) as milQuan,
     IF(trans.mix_date is not null, trans.milQuanp2, 0.0) as milQuanp2,
@@ -772,7 +836,7 @@ with dim_calendar as (
     IF(trans.mix_date is not null, trans.milCog, 0.0) as milCog,
     IF(trans.mix_date is not null, trans.milConv, 0.0) as milConv,
     IF(trans.mix_date is not null, trans.milDisca, 0.0) as milDisca,
-    trans.milDisct,
+    IF(trans.mix_date is not null, trans.milDisct, NULL) as milDisct,
     IF(trans.mix_date is not null, trans.milVat, 0.0) as milVat,
     IF(trans.mix_date is not null, trans.milSum, 0.0) as milSum,
     
@@ -795,6 +859,7 @@ with dim_calendar as (
   from dim_calendar as calendar
   left join final2 as trans
     on calendar.Date = trans.mix_date
+    and calendar.CompanySK = trans.CompanySK
   left join `${DimProductMktTableRef}` as new_prd
     on trans.NewProductMktSK = new_prd.ProductMktSK
   left join `${DimProductMktTableRef}` as prd
