@@ -66,13 +66,14 @@ with tab_main as (
       ELSE inv.milLinkvcno
     END) as RefOrder,
 
-    (CASE 
+    (CASE
       WHEN inv.mihCus in UNNEST(`${FnGetScgCustomerIdsTableRef}`())
-        THEN `${CleanCompanyPrefixTableRef}`( 
+        THEN `${CleanCompanyPrefixTableRef}`(
           REGEXP_EXTRACT(
-            REPLACE( REPLACE( REPLACE( REPLACE(inv.mihNotes, '***', '##'), '**', '##'), '*', '##'), '//', '##'),
-            r'#D/S\s+(.*?)\s*(?:#|$)') 
+            REGEXP_REPLACE(inv.mihNotes, r'\*{2,3}', '##'),
+            r'#?D/?S?\s*\+?\s*(?:แ)?\s*([^\r\n#]+)'
           )
+        )
       ELSE NULL
     END) as CRCShopName,
 
