@@ -90,14 +90,21 @@
   3. 2026-08-10 — เปิด **Compiled queries panel** ดูของจริง พบว่า `\\` ออกมาเป็น `\\`
      → **ข้อสรุปของข้อ 1 ผิด** ย้อนกลับทั้งหมด: `create_all_function.sqlx` 351 จุด
      และ 3 view file (`git checkout 3c02e61^`) กลับเป็น backslash ตัวเดียว
-  4. 2026-08-10 (ต่อ) — ย้อนแล้วเจอ **ข้อยกเว้นเดียว**: `\1` เขียนตรง ๆ ไม่ได้
-     Dataform ขึ้น *"Octal escape sequences are not allowed in template strings"*
-     (เห็นกับตาที่ `view_dim_product_master`) แต่ `\\1` ก็ใช้แทนไม่ได้เพราะ BigQuery
-     อ่านเป็น "backslash + เลข 1" ได้ข้อความขยะแบบไม่ error
-     **แก้ด้วย `CONCAT('|', CHR(92), '1')`** — ประกอบ backslash จาก `CHR(92)`
-     ผลลัพธ์เท่ากันทุกประการ ใช้ที่ `view_dim_product_master` (3 จุด รวมใน comment)
-     และ `create_all_function.sqlx` บรรทัด 184 (1 จุด)
-     สรุปกฎสุดท้าย: **backslash ผ่านตรง ๆ ทุกตัว ยกเว้น `\0`–`\9` ที่ต้องใช้ `CHR(92)`**
+  4. 2026-08-10 (ต่อ) — deploy `create_all_function` ผ่าน Dataform แล้ววัดของจริง:
+     `EXTRACT_CHQ_DATA` 337 backslash / `clean_company_prefix` 14 → รวม 351 เท่ากับใน
+     `.sqlx` เป๊ะ และ `REGEXP_CONTAINS(ddl, r'\\\\')` = **false** ทุก routine
+     → **ยืนยัน pass-through 1:1 จากปลายทาง** ทดสอบเรียกใช้ผ่านทั้ง 3 เคส
+  5. 2026-08-10 (ต่อ) — เจอ **ข้อยกเว้นจริง: `--` comment คนละกฎกับโค้ด**
+     Dataform escape backslash ให้อัตโนมัติเฉพาะในโค้ด SQL **ไม่ทำใน `--` comment**
+     comment จึงโดนประมวลผลเป็น JS template literal ตรง ๆ
+     - โค้ด `r'|\1'` → compiled `r'|\1'` ✅ ผ่านตรง ๆ
+     - comment `r'|\1'` → ⛔ *"Octal escape sequences are not allowed"*
+     - comment `r'|\\1'` → compiled `r'|\1'` ✅
+     นี่คือสาเหตุที่แท้จริงของ error ที่ commit `3c02e61` เจอเมื่อ 2026-07-27 —
+     มาจาก **comment บรรทัดเดียว** แต่ตอนนั้นเหมาว่าทั้งไฟล์ต้อง double
+     สแกนทั้ง `definitions/` แล้ว: มี **comment เดียว**ในโปรเจกต์ที่มี backslash คือ
+     `view_dim_product_master.sqlx:45` → ใส่ `\\1` แล้ว
+     **กฎสุดท้าย: โค้ดเขียน backslash ตัวเดียว / ใน `--` comment เขียนสองตัว**
 
   **ผลพลอยได้ — 4 ไฟล์ที่เคย flag ว่า "เสี่ยง" ไม่ใช่ปัญหา**
   `dim_sale_representative`, `dim_sale_representative_last`, `dim_quotation`,

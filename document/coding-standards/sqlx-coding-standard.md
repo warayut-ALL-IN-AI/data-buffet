@@ -115,33 +115,29 @@ REGEXP_EXTRACT(pernamet, r'\\(([^)]*)\\)')   -- BigQuery อ่านว่า b
 
 | เขียนใน `.sqlx` | SQL ที่ออกจริง | ผล |
 |---|---|---|
-| `\n` `\(` `\d` `\s` `\+` | เหมือนเดิมทุกตัว | ✅ ที่ต้องการ |
+| `\n` `\(` `\d` `\s` `\+` `\1` | เหมือนเดิมทุกตัว | ✅ ที่ต้องการ |
 | `\\n` `\\(` `\\d` | เหมือนเดิมทุกตัว (ยังคู่) | ⛔ regex พัง / เพี้ยนเงียบ |
-| **`\0`–`\9`** | — | ⛔ **compile error** (ดูข้างล่าง) |
 
-#### ข้อยกเว้นเดียว — `\1`–`\9` เขียนตรง ๆ ไม่ได้
+#### ⚠️ ข้อยกเว้น — ใน `--` comment ต้อง double
 
-backslash ตามด้วยตัวเลขทำให้ Dataform ขึ้น
-*"Octal escape sequences are not allowed in template strings"* — compile ไม่ผ่าน
-(ยืนยัน 2026-08-10 กับ `view_dim_product_master`)
-
-แต่ `\1` จำเป็นสำหรับ **backreference** ใน argument ที่ 3 ของ `REGEXP_REPLACE`
-(อ้างถึงข้อความที่จับได้ในวงเล็บกลุ่มที่ 1) เขียน `\\1` แทนไม่ได้ เพราะ BigQuery จะอ่านว่า
-"backslash ตามด้วยเลข 1" → ได้ข้อความขยะแบบไม่ error
-
-**วิธีเลี่ยง: ประกอบสตริงด้วย `CHR(92)`** (= backslash) — argument ที่ 3 ของ
-`REGEXP_REPLACE` รับ expression ไม่จำเป็นต้องเป็น literal
+Dataform escape backslash ให้อัตโนมัติ**เฉพาะในโค้ด SQL** แต่**ไม่ทำใน `--` comment**
+comment จึงถูกประมวลผลเป็น JS template literal ตรง ๆ
 
 ```sql
--- ⛔ compile error
-REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\1')
-
--- ✅ ผลลัพธ์เหมือนกันเป๊ะ
-REGEXP_REPLACE(ProductCode, r'/([PU])', CONCAT('|', CHR(92), '1'))
+--   SPLIT(REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\\1'), '|')   -- ✅ ใน comment ต้อง \\1
+    ARRAY_REVERSE(SPLIT(REGEXP_REPLACE(ProductCode, r'/([PU])', r'|\1'), '|'))  -- ✅ ในโค้ดใช้ \1
 ```
 
-ที่ใช้อยู่จริง: `view_dim_product_master` (WaterPac, WaterPac1) และ
-`create_all_function.sqlx` บรรทัด 184 (`chqmemo_extract`)
+| ใน `--` comment | ผล |
+|---|---|
+| `\1`–`\9`, `\0` | ⛔ **compile error** *"Octal escape sequences are not allowed in template strings"* |
+| `\n` `\t` `\r` | ⚠️ กลายเป็นขึ้นบรรทัดใหม่/tab จริง — **comment ขาดกลางคัน ส่วนที่เหลือกลายเป็นโค้ด** |
+| `\(` `\d` `\s` | backslash หายเงียบ (ไม่อันตรายเพราะเป็น comment แต่อ่านแล้วสับสน) |
+| `\\1` `\\n` | ✅ ได้ `\1` `\n` ตามต้องการ |
+
+**สรุป: โค้ดเขียนตัวเดียว / comment เขียนสองตัว**
+ที่ใช้อยู่จริง: [view_dim_product_master.sqlx:45](../../definitions/view/dimension_view/view_dim_product_master.sqlx)
+เป็น comment เดียวในทั้งโปรเจกต์ที่มี backslash (สแกนยืนยัน 2026-08-10)
 
 > ⚠️ **ข้อยกเว้น — ไฟล์ `.js` จริงใน `includes/`**
 > `includes/controller/function-data.js` เป็น JavaScript จริง string ในนั้นเป็น template
