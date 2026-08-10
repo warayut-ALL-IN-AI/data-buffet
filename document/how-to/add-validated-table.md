@@ -41,7 +41,7 @@ config {
   `parseFlexibleDatetime` / `parseAsatDate()` สำหรับ `asatdate`)
 - incremental window (เฉพาะ incremental):
   ```sql
-  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY))`) }
   ```
 - ปิดท้ายด้วย `${partition_statement}` (QUALIFY dedup)
 

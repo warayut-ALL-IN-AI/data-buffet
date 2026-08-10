@@ -132,7 +132,13 @@ dataformCoreVersion: 3.0.0
 vars:
     RAW_BUCKET: "gs://file-raw-data"
     MDS_BACKFILL_DAYS: "1"     # updated_at look-back window for mds dimension MERGEs
+    BACKFILL_DAYS: "1"         # incremental look-back window for validated/curated
 ```
+
+> `workflow_settings.yaml` is listed in `.gitignore` **but is already tracked**, so
+> the ignore rule has no effect and edits to it are committed and shared like any
+> other file. `databuffet.js` still falls back to `"1"` if `BACKFILL_DAYS` is
+> missing, so an older checkout compiles rather than emitting `undefined`.
 
 ### `includes/databuffet.js`
 Imported by all SQLX files; merges project config, variables, CDC config and helpers:
@@ -144,6 +150,7 @@ databuffet.DATABASE              // defaultDatabase (databuffet-nonprd)
 databuffet.RAW_BUCKET            // gs://file-raw-data
 databuffet.REGION                // us-central1
 databuffet.MDS_BACKFILL_DAYS     // "1"
+databuffet.BACKFILL_DAYS         // "1"  (falls back to "1" if the var is unset)
 
 databuffet.VALIDATED_MAC5        // "validated_mac5"
 databuffet.DIMENSION_TABLE       // "dimension_table"
@@ -235,7 +242,7 @@ deduplicates with `QUALIFY ROW_NUMBER()` over its primary key (defined per file 
 attaches a `NOT ENFORCED` primary key in a retry-wrapped post-operation.
 
 ```sql
-${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY))`) }
 QUALIFY ROW_NUMBER() OVER (
   PARTITION BY <primary key columns>
   ORDER BY asatdate DESC          -- or a business column, per table

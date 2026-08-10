@@ -35,7 +35,7 @@ SELECT
     ${databuffet.functionData.parseFlexibleDatetime('create_date')} as create_date,
     ${databuffet.functionData.parseAsatDate()} AS asatdate,
 FROM `${sourceTableRef}`
-${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY))`) }
 ${partition_statement}
 
 pre_operations {}

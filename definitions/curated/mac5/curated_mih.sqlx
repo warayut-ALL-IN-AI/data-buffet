@@ -136,7 +136,7 @@ LEFT JOIN mih2_raw as mih2
 
 WHERE mih.company_id = 'ag01'
     and IFNULL(mih.mihvnos, '') != ''
-    ${ when(incremental(), `AND mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+    ${ when(incremental(), `AND mih.asatdate >= DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY)`) }
 
 UNION ALL
 
@@ -145,4 +145,4 @@ SELECT
 FROM mih_raw as mih
 WHERE mih.company_id != 'ag01'
     AND IFNULL(mih.mihvnos, '') != ''
-    ${ when(incremental(), `AND mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+    ${ when(incremental(), `AND mih.asatdate >= DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY)`) }

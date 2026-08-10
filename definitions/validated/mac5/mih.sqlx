@@ -128,7 +128,7 @@ WITH all_sources AS (
     IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(เธฟ[^เธฟ]*เธฟ)')), 'เธฟ00เธฟ') AS memo_extract,
     ${databuffet.functionData.parseAsatDate()} AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AG01}.mih`
-  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY))`) }
 
   UNION ALL
 
@@ -219,7 +219,7 @@ WITH all_sources AS (
     IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(เธฟ[^เธฟ]*เธฟ)')), 'เธฟ00เธฟ') AS memo_extract,
     ${databuffet.functionData.parseAsatDate()} AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AA05}.mih`
-  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY))`) }
 
   UNION ALL
 
@@ -310,7 +310,7 @@ WITH all_sources AS (
     IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(เธฟ[^เธฟ]*เธฟ)')), 'เธฟ00เธฟ') AS memo_extract,
     ${databuffet.functionData.parseAsatDate()} AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AB01}.mih`
-  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY))`) }
 
   UNION ALL
 
@@ -401,7 +401,7 @@ WITH all_sources AS (
     IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(เธฟ[^เธฟ]*เธฟ)')), 'เธฟ00เธฟ') AS memo_extract,
     ${databuffet.functionData.parseAsatDate()} AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AC02}.mih`
-  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY))`) }
 
   UNION ALL
 
@@ -492,7 +492,7 @@ WITH all_sources AS (
     IFNULL(TRIM(REGEXP_EXTRACT(mihmemo, r'(เธฟ[^เธฟ]*เธฟ)')), 'เธฟ00เธฟ') AS memo_extract,
     ${databuffet.functionData.parseAsatDate()} AS asatdate
   FROM `${databuffet.DATABASE}.${databuffet.RAW_MAC5_AK02}.mih`
-  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", CURRENT_DATE('Asia/Bangkok')-1)`) }
+  ${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY))`) }
 )
 
 SELECT * 

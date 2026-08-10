@@ -31,7 +31,7 @@ config {
   JSON parsing, dedup revision ล่าสุด
 - Incremental window แบบ inline (มาตรฐานจริงของชั้นนี้คือ **1 วัน**):
   ```sql
-  ${when(incremental(), `AND asatdate >= CURRENT_DATE('Asia/Bangkok')-1`)}
+  ${when(incremental(), `AND asatdate >= DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY)`)}
   ```
 
 ### 4. Logic ซับซ้อนหลัง load → post_operations

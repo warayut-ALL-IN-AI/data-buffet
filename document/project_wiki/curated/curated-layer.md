@@ -23,7 +23,7 @@
 MAC5 curated tables use an inline **1-day** window, not `updatePartitionFilter`:
 
 ```sql
-${when(incremental(), `AND asatdate >= CURRENT_DATE('Asia/Bangkok')-1`)}
+${when(incremental(), `AND asatdate >= DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY)`)}
 ```
 
 Only `curated_product` uses `updatePartitionFilter: "asatdate >= CURRENT_DATE('Asia/Bangkok')-7"`.

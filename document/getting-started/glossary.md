@@ -46,6 +46,7 @@
 | **mds inactive DELETE (tombstone)** | ท้าย dimension MERGE (เหลือ 2 ตัว): `DELETE FROM dim WHERE MdsID IN (SELECT id FROM mds WHERE is_active = FALSE)` — ลบ row ที่ต้นทาง soft-delete |
 | **Overwrite import** | โหมด import ของ mds ที่ล้างตารางแล้วลงใหม่ (id เปลี่ยนหมด) — full rebuild รองรับเองอัตโนมัติ |
 | **MDS_BACKFILL_DAYS** | ตัวแปรโปรเจกต์ (ปัจจุบัน `1`) จำกัดหน้าต่าง `updated_at` ของ dim แบบ MERGE (full rebuild ไม่ใช้) |
+| **BACKFILL_DAYS** | ตัวแปรโปรเจกต์ (ปัจจุบัน `1`) หน้าต่างย้อนหลังของ incremental window ใน validated/curated — ตั้งชั่วคราวเป็นเลขมากขึ้นเพื่อเก็บข้อมูลย้อนหลังหลายวัน แล้วตั้งกลับเป็น `1` |
 | **operations type** | ไฟล์ Dataform ที่รัน raw BigQuery script (`BEGIN...END`) — Dataform ไม่จัดการ schema/lineage ให้ ตารางต้องมีอยู่ก่อน |
 | **cleanString** | helper แปลง `''` → `NULL` + TRIM — มาตรฐานการจัดการ string ทั้งโปรเจกต์ |
 | **Bangkok timezone** | ทุกการคำนวณวันที่ใช้ `CURRENT_DATE('Asia/Bangkok')` เสมอ |

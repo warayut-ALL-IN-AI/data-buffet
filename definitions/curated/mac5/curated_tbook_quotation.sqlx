@@ -84,4 +84,4 @@ from ${ref(databuffet.VALIDATED_MAC5, "tbook_quotation")}
 -- where company_id = 'ag01'
 qualify row_number() over(partition by company_id, running order by rev desc, id desc) = 1
 
--- ${ when(incremental(), `WHERE mih.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+-- ${ when(incremental(), `WHERE mih.asatdate >= DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY)`) }

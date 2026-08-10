@@ -75,7 +75,7 @@ SELECT
   '100.00%' as percent_sale
 FROM ${ref(databuffet.VALIDATED_MAC5, "mil")}
 WHERE IFNULL(milvnos, '') != ''
-  ${ when(incremental(), `AND asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+  ${ when(incremental(), `AND asatdate >= DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY)`) }
 
 
 post_operations {

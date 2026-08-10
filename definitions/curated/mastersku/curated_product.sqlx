@@ -63,7 +63,7 @@ SELECT
   prd_barcode_format as prdBarcodeFormat,
   asatdate as asatdate
 FROM ${ref(databuffet.VALIDATED_MASTERSKU, "product")}
-${ when(incremental(), `WHERE asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+${ when(incremental(), `WHERE asatdate >= DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY)`) }
 QUALIFY row_number() over(partition by prdSku order by prdUpdatedDate desc) = 1
 
 
@@ -86,7 +86,7 @@ post_operations {
                 ON p.prdId = pd.pd_prd_id
             LEFT JOIN UNNEST (JSON_QUERY_ARRAY(prdDiminsionData, '$.dimFeild'))  as dimField
             LEFT JOIN UNNEST (JSON_QUERY_ARRAY(pd_spacific_fields, '$.SpeciFeild'))  as SpeciFeild
-            ${ when(incremental(), `WHERE p.asatdate >= CURRENT_DATE('Asia/Bangkok')-1`) }
+            ${ when(incremental(), `WHERE p.asatdate >= DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY)`) }
             -- WHERE p.prdSku in ('MSKU1000091280', 'MSKU0000024500', 'MSKU0000024833')
 
             ), arge_data as (
