@@ -64,14 +64,13 @@ js {
 
 - `MDS_BACKFILL_DAYS` (currently `"1"`) limits how far back mds-sourced dimension
   MERGEs scan `updated_at`. See [dimension MERGE pattern](../dimension/merge-sk-pattern.md).
-- `BACKFILL_DAYS` (currently `"1"`) is the incremental look-back window for every
-  validated and curated table. It is the **only** entry with a `|| "1"` fallback —
-  a checkout without the var would otherwise interpolate `undefined` into 74 SQL
-  statements. See [running and troubleshooting](../operations/running-and-troubleshooting.md)
+- `BACKFILL_DAYS` (default `"1"`) is the incremental look-back window for every
+  validated and curated table. It is the **only** entry with a `|| "1"` fallback,
+  because the var is **added by hand per workspace** and is not carried in this
+  repo's commits — without the fallback a workspace that lacks it would
+  interpolate `undefined` into 74 SQL statements. See
+  [running and troubleshooting](../operations/running-and-troubleshooting.md)
   for the backfill procedure.
-- `workflow_settings.yaml` appears in `.gitignore` **but is already tracked**, so
-  the ignore rule does nothing and changes to it are committed normally. Do not
-  assume it is local-only.
 - `workflow_settings.yaml` is environment-specific (project ID differs per env).
 - Adding a new tag or schema name → edit `includes/controller/variables.json`,
   never this file.

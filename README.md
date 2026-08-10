@@ -135,10 +135,9 @@ vars:
     BACKFILL_DAYS: "1"         # incremental look-back window for validated/curated
 ```
 
-> `workflow_settings.yaml` is listed in `.gitignore` **but is already tracked**, so
-> the ignore rule has no effect and edits to it are committed and shared like any
-> other file. `databuffet.js` still falls back to `"1"` if `BACKFILL_DAYS` is
-> missing, so an older checkout compiles rather than emitting `undefined`.
+> `BACKFILL_DAYS` is **added by hand per workspace** — this repo's commits do not
+> carry it. `databuffet.js` resolves it with a `|| "1"` fallback, so a workspace
+> without the var still compiles to a 1-day window instead of emitting `undefined`.
 
 ### `includes/databuffet.js`
 Imported by all SQLX files; merges project config, variables, CDC config and helpers:

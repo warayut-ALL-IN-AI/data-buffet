@@ -56,8 +56,9 @@ bq --project_id=databuffet-nonprd query --use_legacy_sql=false 'SELECT ...'
 
 Every validated and curated incremental window reads
 `DATE_SUB(CURRENT_DATE('Asia/Bangkok'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY)`
-(74 statements across 52 files). The var lives in `workflow_settings.yaml` and
-defaults to `"1"`, i.e. yesterday only.
+(74 statements across 52 files). The var lives in `workflow_settings.yaml`, is
+**added by hand per workspace** (this repo's commits do not carry it), and
+falls back to `"1"` — yesterday only — when absent.
 
 When a source has been failing for several days — say `mih` has been broken for
 three — widen the window instead of doing a full refresh:
