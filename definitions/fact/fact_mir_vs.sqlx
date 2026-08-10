@@ -1,98 +1,98 @@
--- config {
---     type: "table",
---     schema: databuffet.FACT_TABLE,
---     dependencies: ["dim_invoice", "dim_customer", "dim_collection_status", "dim_company"],
---     tags: [databuffet.TAG_FACT_DAILY],
---     uniqueKey: ["BillingSK"],
---     bigquery: {
---         clusterBy: ["BillingSK", "InvoiceSK", "CustomerSK"]
---     },
--- }
+config {
+    type: "table",
+    schema: databuffet.FACT_TABLE,
+    dependencies: ["dim_invoice", "dim_customer", "dim_collection_status", "dim_company"],
+    tags: [databuffet.TAG_FACT_DAILY],
+    uniqueKey: ["BillingSK"],
+    bigquery: {
+        clusterBy: ["BillingSK", "InvoiceSK", "CustomerSK"]
+    },
+}
 
--- js {
---     // Define table references
---     const DimInvoiceTable = {
---         database: databuffet.DATABASE,
---         schema: databuffet.DIMENSION_TABLE,
---         name: "dim_invoice",
---     };
---     const DimInvoiceTableRef = `${DimInvoiceTable.database}.${DimInvoiceTable.schema}.${DimInvoiceTable.name}`;
+js {
+    // Define table references
+    const DimInvoiceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_invoice",
+    };
+    const DimInvoiceTableRef = `${DimInvoiceTable.database}.${DimInvoiceTable.schema}.${DimInvoiceTable.name}`;
 
---     const DimCustomerTable = {
---         database: databuffet.DATABASE,
---         schema: databuffet.DIMENSION_TABLE,
---         name: "dim_customer",
---     };
---     const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
+    const DimCustomerTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_customer",
+    };
+    const DimCustomerTableRef = `${DimCustomerTable.database}.${DimCustomerTable.schema}.${DimCustomerTable.name}`;
 
---     const DimCollectionStatusTable = {
---         database: databuffet.DATABASE,
---         schema: databuffet.DIMENSION_TABLE,
---         name: "dim_collection_status",
---     };
---     const DimCollectionStatusTableRef = `${DimCollectionStatusTable.database}.${DimCollectionStatusTable.schema}.${DimCollectionStatusTable.name}`;
+    const DimCollectionStatusTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_collection_status",
+    };
+    const DimCollectionStatusTableRef = `${DimCollectionStatusTable.database}.${DimCollectionStatusTable.schema}.${DimCollectionStatusTable.name}`;
 
---     const DimCompanyTable = {
---         database: databuffet.DATABASE,
---         schema: databuffet.DIMENSION_TABLE,
---         name: "dim_company",
---     };
---     const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
--- }
+    const DimCompanyTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_company",
+    };
+    const DimCompanyTableRef = `${DimCompanyTable.database}.${DimCompanyTable.schema}.${DimCompanyTable.name}`;
+}
 
--- with dim_invoice as (
---   select InvoiceSK, companyID, mihVnos, mihType, mihCus, mix_date, mihCancel
---   from `${DimInvoiceTableRef}`
---   qualify row_number() over(partition by mihVnos, mihType, mihCus, mix_date, companyID, mihCancel order by InvoiceSK) = 1
+with dim_invoice as (
+  select InvoiceSK, companyID, mihVnos, mihType, mihCus, mix_date, mihCancel
+  from `${DimInvoiceTableRef}`
+  qualify row_number() over(partition by mihVnos, mihType, mihCus, mix_date, companyID, mihCancel order by InvoiceSK) = 1
 
--- ), mir as (
---   select
---     mir.*
---   from ${ref(databuffet.VALIDATED_MAC5, "mir")} as mir
---   left join ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
---     on mir.mirvnos = mih.mihvnos
---     and mir.mirtype = mih.mihtype
---   where mir.mirtype = 'VS'
---     and mih.mihcancel = 0
---   qualify row_number() over(partition by mir.mirbinvno order by mir.miryear desc, mir.mirmonth desc, mir.mirday desc) = 1
+), mir as (
+  select
+    mir.*
+  from ${ref(databuffet.VALIDATED_MAC5, "mir")} as mir
+  left join ${ref(databuffet.CURATED_MAC5, "curated_mih")} as mih
+    on mir.mirvnos = mih.mihvnos
+    and mir.mirtype = mih.mihtype
+  where mir.mirtype = 'VS'
+    and mih.mihcancel = 0
+  qualify row_number() over(partition by mir.mirbinvno order by mir.miryear desc, mir.mirmonth desc, mir.mirday desc) = 1
 
--- ), fact_mir as (
---   select
---     dim_col.CollectSK,
---     dim_col.Actions,
---     dim_col.Justification,
---     dim_col.Responsible,
---     dim_cus.CustomerSK,
---     inv.InvoiceSK,
---     dim_com.CompanySK,
---     PARSE_DATE('%d/%m/%Y', SUBSTR(mie.miectermdx, 1, 10)) AS duedate,
---     mir.*
---   from mir as mir
---   left join dim_invoice as inv
---     on inv.mihVnos = mir.mirbinvno
---     and inv.mihType = mir.mirbinvtype
---     and inv.mihCus = mir.mircus
---     and inv.mix_date = mir.mirbinvdate
---     and inv.companyID = mir.company_id
---   left join `${DimCustomerTableRef}` as dim_cus
---     on mir.mircus = dim_cus.debcode
---     and mir.company_id = dim_cus.companyID
---   left join `${DimCollectionStatusTableRef}` as dim_col
---     on mir.company_id = dim_col.companyID
---     and mir.miryear = dim_col.Year
---     and mir.mirmonth = dim_col.Month
---     and mir.mircus = CAST(dim_col.CustomerID as STRING)
---   left join ${ref(databuffet.VALIDATED_MAC5, "mie")} as mie
---     on mir.mirbinvno = mie.mievnos
---     and mir.mircus = mie.miecus
---     and mir.company_id = mie.company_id
---   left join `${DimCompanyTableRef}` as dim_com
---     on mir.company_id = dim_com.companyID
---   where mir.mirtype = 'VS'
---     and inv.mihCancel = 0
+), fact_mir as (
+  select
+    dim_col.CollectSK,
+    dim_col.Actions,
+    dim_col.Justification,
+    dim_col.Responsible,
+    dim_cus.CustomerSK,
+    inv.InvoiceSK,
+    dim_com.CompanySK,
+    PARSE_DATE('%d/%m/%Y', SUBSTR(mie.miectermdx, 1, 10)) AS duedate,
+    mir.*
+  from mir as mir
+  left join dim_invoice as inv
+    on inv.mihVnos = mir.mirbinvno
+    and inv.mihType = mir.mirbinvtype
+    and inv.mihCus = mir.mircus
+    and inv.mix_date = mir.mirbinvdate
+    and inv.companyID = mir.company_id
+  left join `${DimCustomerTableRef}` as dim_cus
+    on mir.mircus = dim_cus.debcode
+    and mir.company_id = dim_cus.companyID
+  left join `${DimCollectionStatusTableRef}` as dim_col
+    on mir.company_id = dim_col.companyID
+    and mir.miryear = dim_col.Year
+    and mir.mirmonth = dim_col.Month
+    and mir.mircus = CAST(dim_col.CustomerID as STRING)
+  left join ${ref(databuffet.VALIDATED_MAC5, "mie")} as mie
+    on mir.mirbinvno = mie.mievnos
+    and mir.mircus = mie.miecus
+    and mir.company_id = mie.company_id
+  left join `${DimCompanyTableRef}` as dim_com
+    on mir.company_id = dim_com.companyID
+  where mir.mirtype = 'VS'
+    and inv.mihCancel = 0
 
--- )
---   select
---     row_number() over(order by company_id, mirtype, mirvnos, mirlistno, mirbinvno) as BillingSK,
---     t1.*
---   from fact_mir as t1
+)
+  select
+    row_number() over(order by company_id, mirtype, mirvnos, mirlistno, mirbinvno) as BillingSK,
+    t1.*
+  from fact_mir as t1
