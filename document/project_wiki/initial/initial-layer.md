@@ -23,7 +23,7 @@ see the note below):
 | `fn_flag_sales_kpi` | `(mihcancel INT64, mihstatus INT64, rebate STRING)` | sales-KPI Yes/No |
 | `fn_flag_scg` | `(mihvnos STRING, mihcus STRING)` | Thai "ซื้อตรง"/"ซื้อผ่านร้าน" direct-vs-store classification for CRC vnos |
 | `fn_order_type` | `(mihref2 STRING)` | `QOAG` prefix → `Online-AllkonsM`, else `Offline` (used by `view_dim_order`) |
-| `EXTRACT_CHQ_DATA` | `(memo_raw STRING, datec DATETIME, total FLOAT64)` | regex-heavy parser of Thai cheque/transfer memo → `STRUCT<chqmemo, extract_text, extract_value ARRAY<STRUCT<extract_date DATE, extract_amount FLOAT64>>>`; handles Thai month abbreviations + Buddhist-era (พ.ศ.) year conversion |
+| `EXTRACT_CHQ_DATA` | `(memo_raw STRING, datec DATETIME, total FLOAT64)` | regex-heavy parser of Thai cheque/transfer memo → `STRUCT<chqmemo, extract_text, extract_value ARRAY<STRUCT<extract_date DATE, extract_amount FLOAT64>>>`; handles Thai month abbreviations + Buddhist-era (พ.ศ.) year conversion. Parsing only starts if a **trigger** matches — see below |
 | `clean_company_prefix` | `(text_input STRING)` | strips Thai company prefixes (`บริษัท`, `บจก.`, `บมจ.`, `หจก.`, `ร้าน`, `ห้างหุ้นส่วนจำกัด`, leading `+`) and suffixes (`จำกัด`, `(มหาชน)`) → bare company name for matching |
 
 > **Drift found and fixed 2026-07-24**: the file had only 4 UDFs (`fn_order_type`
@@ -38,6 +38,25 @@ see the note below):
 > These UDFs are **not separate Dataform actions** — they are all created by this one
 > `operations` action, so consumers cannot `ref()` them (interpolate
 > `${databuffet.FUNCTION_DATASET}` instead and do not list them in `dependencies[]`).
+
+### `EXTRACT_CHQ_DATA` — the trigger list
+
+`transfer_pos` is a `COALESCE` of trigger regexes over `memo_raw`. It returns the
+position of the **first** trigger that matches; `0` means "no trigger" and the whole
+parser returns NULL. Order matters — earlier entries win, so appending to the list
+can never change a memo that already matched.
+
+| # | Trigger | Note |
+|---|---|---|
+| 1 | `โอน…` / `รับโอนแทน` / `**<ธนาคาร>` / `เปลี่ยนเช็ค` | Thai bank names only fire here, i.e. when preceded by `โอน` or `**` |
+| 2 | `เช็ค` | |
+| 3 | `\b(?:kbank\|kbnak\|kasikorn\|kbiz\|bbl\|bualuang\|ktb\|krungthai\|krungsri\|scb\|scbt\|ttb\|tmb\|tbm\|thanachart\|gsb\|baac\|ghb\|uob\|tisco\|kkp\|cimb\|icbc\|hsbc\|citibank\|lhbank)\s*/\s*\d` | added 2026-08-10. The trailing `/<digits>` is **required** — real memos write `kbank/908`, `scb/264`. Without it `ค่า ON NET / KTB = 800611831` yields a bogus 800M amount |
+| 4 | `(?:รุด\|รูด\|รับ)\s*บัตร(?:เครดิต)?(?:คืน)?[^0-9\n]{0,10}(?:\d{1,2}/\d{1,2}\|(?:ยอด\|จำนวน\|เป็นเงิน\|=)\s*\d)` | added 2026-08-10. The trailing date-or-amount is **required** — 34 of the 43 memos containing `รูดบัตร` are `ค่าเช่าเครื่องรูดบัตร` (EDC machine rent, not a payment) and must not trigger |
+
+Measured on all 76,573 `validated_mac5.chq` rows when triggers 3–4 were added:
+**+60 rows gained an amount, 0 lost, 1 changed (`189` → `189,176`, a fix), 1 noise**
+(`to bbl/418` — trigger fires, no amount present). Re-run that comparison before
+touching this list again.
 
 ## External-table patterns
 

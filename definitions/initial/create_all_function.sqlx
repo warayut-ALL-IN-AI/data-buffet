@@ -186,7 +186,9 @@ AS (
           SELECT 
             COALESCE(
               NULLIF(REGEXP_INSTR(LOWER(memo_raw), r'(?:โอน(?:เงิน|เข้า|บางส่วน|ครั้งที่|เช็คเด้ง|\s*\d+\.?|\s*[/.\-]*\s*[a-z]+(?:\s*\+\s*[a-z]+)?|\s*(?:กสิกร|กรุง|ไทย|ทหาร|ออม|บัญชี|ธนาคาร|ยูโอบี|ทิสโก้|ธกส|ธอส|scb|bbl|ktb)(?:\s*\+\s*(?:กสิกร|กรุง|ไทย|ทหาร|ออม|บัญชี|ธนาคาร|ยูโอบี|ทิสโก้|ธกส|ธอส|scb|bbl|ktb|[a-z]+))?)|รับ(?:เงิน)?โอนแทน|\*\*\s*(?:[a-z]+(?:\s*\+\s*[a-z]+)?|(?:กสิกร|กรุง|ไทย|ทหาร|ออม|บัญชี|ธนาคาร|ยูโอบี|ทิสโก้|ธกส|ธอส|scb|bbl|ktb)(?:\s*\+\s*(?:กสิกร|กรุง|ไทย|ทหาร|ออม|บัญชี|ธนาคาร|ยูโอบี|ทิสโก้|ธกส|ธอส|scb|bbl|ktb|[a-z]+))?)|เปลี่ยนเช็ค)'), 0), 
-              NULLIF(REGEXP_INSTR(LOWER(memo_raw), r'เช็ค'), 0), 
+              NULLIF(REGEXP_INSTR(LOWER(memo_raw), r'เช็ค'), 0),
+              NULLIF(REGEXP_INSTR(LOWER(memo_raw), r'\b(?:kbank|kbnak|kasikorn|kbiz|bbl|bualuang|ktb|krungthai|krungsri|scb|scbt|ttb|tmb|tbm|thanachart|gsb|baac|ghb|uob|tisco|kkp|cimb|icbc|hsbc|citibank|lhbank)\s*/\s*\d'), 0),
+              NULLIF(REGEXP_INSTR(memo_raw, r'(?:รุด|รูด|รับ)\s*บัตร(?:เครดิต)?(?:คืน)?[^0-9\n]{0,10}(?:\d{1,2}/\d{1,2}|(?:ยอด|จำนวน|เป็นเงิน|=)\s*\d)'), 0),
               0
             ) AS transfer_pos
         )
