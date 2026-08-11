@@ -27,5 +27,9 @@ left join `${DimAgingTableRef}` as t2
   on t1.mirbinvno = t2.cfsvnosid
   and t1.company_id = t2.CompanyID
 
+-- join ด้วย cfsvnosid อย่างเดียว แต่ dim_aging มีได้หลายแถวต่อใบ (cfsTypeID ต่างกัน)
+-- ถ้าไม่กันไว้ view จะเกินมา 2 แถว แล้ว BillingSK ไม่ unique อีกต่อไป → SUM เบิ้ล
+qualify row_number() over(partition by t1.BillingSK order by t2.AgingSK desc) = 1
+
 
 -- 509185

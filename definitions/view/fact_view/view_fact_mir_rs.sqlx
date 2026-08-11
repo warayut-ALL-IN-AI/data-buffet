@@ -36,5 +36,9 @@ left join `${DimAgingTableRef}` as t2
 left join t3 on t3.mihvnos = t1.mirvnos
     and t3.mihtype = t1.mirtype
     and t3.company_id = t1.company_id
-left join ${ref(databuffet.VALIDATED_MAC5, "ar_s")} ars on t3.mihstatus = ars.ar_scode 
+left join ${ref(databuffet.VALIDATED_MAC5, "ar_s")} ars on t3.mihstatus = ars.ar_scode
     and t3.company_id = ars.company_id
+
+-- join ด้วย cfsvnosid อย่างเดียว แต่ dim_aging มีได้หลายแถวต่อใบ (cfsTypeID ต่างกัน)
+-- ถ้าไม่กันไว้ view จะเกินมา 4 แถว แล้ว ReceiveSK ไม่ unique อีกต่อไป → SUM เบิ้ล
+qualify row_number() over(partition by t1.ReceiveSK order by t2.AgingSK desc) = 1
