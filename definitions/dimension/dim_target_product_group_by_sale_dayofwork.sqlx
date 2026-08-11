@@ -2,9 +2,12 @@ config {
     type: "table",
     schema: databuffet.DIMENSION_TABLE,
     dependencies: [ 
-                    "dim_calendar", "dim_rate_target", 
-                    "dim_target_product_group_by_sale", 
-
+                    "dim_calendar", "dim_rate_target",
+                    "dim_target_product_group_by_sale",
+                    // dims เหล่านี้ปั้น SK ใหม่ทุกคืน ต้องรันเสร็จก่อนไฟล์นี้เสมอ
+                    "dim_sale_representative", "dim_department", "dim_director",
+                    "dim_region", "dim_region_manager",
+                    "dim_section", "dim_section_manager"
                 ],
     tags: [databuffet.TAG_DIM_DAILY],
     uniqueKey: ["TargetBySaleDayofworkSK"],
@@ -14,6 +17,9 @@ config {
 }
 
 js {
+    // ref ชี้กลับมาที่ตัวเอง (name()) — ยังไม่ได้ใช้ เพราะ config เป็น type: "table"
+    // Dataform จึงสร้าง/เขียนตารางให้เอง ไม่ต้องเขียน DDL อ้างชื่อตัวเองใน body
+    // เก็บไว้เผื่อวันไหนเปลี่ยนเป็น type: "operations"
     const DimSourceTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,

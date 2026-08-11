@@ -1,7 +1,7 @@
 config {
   type: "view",
   schema: databuffet.PROCESS_DATASET,
-  dependencies: [],
+  dependencies: ["rls_customer360"],
   tags: [databuffet.TAG_VIEW],
 }
 

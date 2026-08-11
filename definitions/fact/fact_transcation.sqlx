@@ -4,6 +4,8 @@ config {
                   "curated_mih", "curated_mil", "dim_product_master", "dim_payment",
                   "dim_customer", "dim_cost_stk", "dim_cost_group", "dim_channel",
                   "dim_change_district", "dim_channel_cost",
+                  // ตารางที่อยู่หลัง view_dim_channel / view_deb_address_data ที่ไฟล์นี้อ่าน
+                  "dim_channel_finance", "dim_channel_sales", "deb_address_data",
                   "dim_stk_mkt", "dim_product_mkt",
                   "dim_target_product_group_by_sale_dayofwork",
                   "dim_sale_representative", "dim_department", "dim_director",
@@ -155,6 +157,8 @@ js {
     };
     const DimChangeDistrictTableRef = `${DimChangeDistrictTable.database}.${DimChangeDistrictTable.schema}.${DimChangeDistrictTable.name}`;
     
+    // ยังไม่ได้ใช้ — CompanySK ติดมากับ onetime.Transaction_Data_Mart อยู่แล้ว
+    // ไฟล์นี้จึงไม่ต้อง join dim_company เอง เก็บ ref ไว้เผื่ออนาคต
     const DimCompanyTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,
@@ -221,7 +225,7 @@ BEGIN
     -- SPECIAL FLAG DIM CHANNEL
     LEFT JOIN (
       select distinct companyid, employeeID
-      from databuffet-nonprd.dimension_table.dim_sale_representative
+      from `${DimSaleRepGroupTableRef}`
       where companyid = 'ab01'
         and CURRENT_DATE('Asia/Bangkok') between StartDate and EndDate
 

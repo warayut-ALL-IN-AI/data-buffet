@@ -1,6 +1,7 @@
 config {
   type: "operations",
-  dependencies: ["dim_company"],
+  // deb_address_data คือตารางที่อยู่หลัง view_deb_address_data ที่ไฟล์นี้อ่าน
+  dependencies: ["dim_company", "deb_address_data"],
   tags: [databuffet.TAG_DIM_DAILY],
   hasOutput: true
 }

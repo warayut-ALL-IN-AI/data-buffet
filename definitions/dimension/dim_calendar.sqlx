@@ -1,6 +1,6 @@
 config {
   type: "operations",
-  dependencies: [],
+  dependencies: ["dim_holiday"],
   tags: [databuffet.TAG_DIM_YEARLY],
 }
 

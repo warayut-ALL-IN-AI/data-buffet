@@ -13,6 +13,8 @@ js {
     };
     const DimProductTableRef = `${DimProductTable.database}.${DimProductTable.schema}.${DimProductTable.name}`;
     
+    // ยังไม่ได้ใช้ที่ไหนในไฟล์นี้ (ไม่มีการอ้าง dim_holiday ใน body เลย)
+    // เก็บไว้เผื่ออนาคต — ถ้าจะใช้ อย่าลืมเติม "dim_holiday" ใน dependencies[] ด้วย
     const DimHolidayTable = {
         database: databuffet.DATABASE,
         schema: databuffet.DIMENSION_TABLE,

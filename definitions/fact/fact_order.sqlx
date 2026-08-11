@@ -1,7 +1,7 @@
 config {
     type: "table",
     schema: databuffet.FACT_TABLE,
-    dependencies: ["dim_order", "dim_customer", "fact_quotation", "dim_product_master"],
+    dependencies: ["dim_order", "dim_customer", "fact_quotation", "dim_product_master", "dim_company"],
     tags: [databuffet.TAG_FACT_DAILY],
     uniqueKey: ["FactOrderSk"],
     bigquery: {
@@ -12,6 +12,9 @@ config {
 
 js {
     // Define table references
+    // ref ชี้กลับมาที่ตัวเอง (name()) — ยังไม่ได้ใช้ เพราะ config เป็น type: "table"
+    // Dataform จึงสร้าง/เขียนตารางให้เอง ไม่ต้องเขียน DDL อ้างชื่อตัวเองใน body
+    // เก็บไว้เผื่อวันไหนเปลี่ยนเป็น type: "operations"
     const FactOrderTable = {
         database: databuffet.DATABASE,
         schema: databuffet.FACT_TABLE,

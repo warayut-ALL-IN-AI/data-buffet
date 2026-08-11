@@ -1,13 +1,50 @@
 config {
     type: "table",
     schema: databuffet.PROCESS_DATASET,
-    dependencies: ["fact_transcation"],
+    dependencies: ["fact_transcation", "dim_region", "dim_section", "dim_director", "dim_product_mkt"],
     tags: [databuffet.TAG_PROCESS],
     bigquery: {
         // partitionBy: "asatdate",
         // clusterBy: ["company_id", "debcode"],
         // updatePartitionFilter: "asatdate >= CURRENT_DATE('Asia/Bangkok')-7"
     }
+}
+
+js {
+    const FactTranscationTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: "fact_transcation",
+    };
+    const FactTranscationTableRef = `${FactTranscationTable.database}.${FactTranscationTable.schema}.${FactTranscationTable.name}`;
+
+    const DimRegionTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_region",
+    };
+    const DimRegionTableRef = `${DimRegionTable.database}.${DimRegionTable.schema}.${DimRegionTable.name}`;
+
+    const DimSectionTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_section",
+    };
+    const DimSectionTableRef = `${DimSectionTable.database}.${DimSectionTable.schema}.${DimSectionTable.name}`;
+
+    const DimDirectorTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_director",
+    };
+    const DimDirectorTableRef = `${DimDirectorTable.database}.${DimDirectorTable.schema}.${DimDirectorTable.name}`;
+
+    const DimProductMktTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_product_mkt",
+    };
+    const DimProductMktTableRef = `${DimProductMktTable.database}.${DimProductMktTable.schema}.${DimProductMktTable.name}`;
 }
 
 -- CREATE OR REPLACE TABLE databuffet-nonprd.process_dataset.rls_customer360
@@ -23,14 +60,14 @@ WITH fact_table as (
     prod_mkt.SubMarketingID,
     prod_mkt.SegmentID
 
-  FROM `databuffet-nonprd.fact_table.fact_transcation` AS fact
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_region` AS region
+  FROM `${FactTranscationTableRef}` AS fact
+  LEFT JOIN `${DimRegionTableRef}` AS region
     ON fact.RegionSK = region.RegionSK
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_section` AS section
+  LEFT JOIN `${DimSectionTableRef}` AS section
     ON fact.SectionSK = section.SectionSK
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_director` AS director
+  LEFT JOIN `${DimDirectorTableRef}` AS director
     ON fact.DirectorSK = director.DirectorSK
-  LEFT JOIN `databuffet-nonprd.dimension_table.dim_product_mkt` AS prod_mkt
+  LEFT JOIN `${DimProductMktTableRef}` AS prod_mkt
     ON fact.ProductMktSK = prod_mkt.ProductMktSK
   
 )
