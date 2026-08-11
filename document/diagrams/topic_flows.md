@@ -60,10 +60,15 @@ flowchart LR
     dim_section_manager_last["dim_section_manager_last"]
     update_sk_sale_rep_group["update_sk_sale_rep_group"]
   end
-  subgraph fact["fact (4)"]
+  subgraph fact["fact (9)"]
     fact_chq["fact_chq"]
+    fact_delivery["fact_delivery"]
+    fact_invoice["fact_invoice"]
     fact_mir_rs["fact_mir_rs"]
     fact_mir_vs["fact_mir_vs"]
+    fact_order["fact_order"]
+    fact_quotation["fact_quotation"]
+    fact_transaction_delivery["fact_transaction_delivery"]
     fact_transcation["fact_transcation"]
   end
   dim_change_district --> fact_transcation
@@ -83,8 +88,13 @@ flowchart LR
   dim_company --> dim_section_manager
   dim_company --> dim_section_manager_last
   dim_company --> fact_chq
+  dim_company --> fact_delivery
+  dim_company --> fact_invoice
   dim_company --> fact_mir_rs
   dim_company --> fact_mir_vs
+  dim_company --> fact_order
+  dim_company --> fact_quotation
+  dim_company --> fact_transaction_delivery
   dim_department --> dim_department_last
   dim_department --> fact_transcation
   dim_department_last --> update_sk_sale_rep_group
@@ -108,6 +118,9 @@ flowchart LR
   dim_section_manager_last --> update_sk_sale_rep_group
   fact_chq --> fact_mir_rs
   fact_mir_vs --> fact_mir_rs
+  fact_order --> fact_invoice
+  fact_quotation --> fact_order
+  fact_transaction_delivery --> fact_delivery
   per --> dim_sale_representative
   per --> dim_sale_representative_last
   classDef validated fill:#cfe8ff,stroke:#4a90d9,color:#111;
@@ -116,7 +129,7 @@ flowchart LR
   classDef paused fill:#f5f5f5,stroke:#bbb,color:#999,stroke-dasharray:4 3;
   class per validated;
   class dim_change_district,dim_company,dim_department,dim_department_last,dim_director,dim_director_last,dim_region,dim_region_last,dim_region_manager,dim_region_manager_last,dim_sale_representative,dim_sale_representative_last,dim_section,dim_section_last,dim_section_manager,dim_section_manager_last,update_sk_sale_rep_group dimension;
-  class fact_chq,fact_mir_rs,fact_mir_vs,fact_transcation fact;
+  class fact_chq,fact_delivery,fact_invoice,fact_mir_rs,fact_mir_vs,fact_order,fact_quotation,fact_transaction_delivery,fact_transcation fact;
 ```
 
 ---
@@ -125,18 +138,30 @@ flowchart LR
 
 **Objects in this topic (5):** `dim_rate_target`, `dim_report`, `dim_target_product_group`, `dim_target_product_group_by_sale`, `dim_target_product_group_by_sale_dayofwork`
 
-**Fed by (6):** `dim_calendar`, `dim_company`, `dim_department_last`, `dim_director_last`, `dim_product_mkt`, `update_sk_sale_rep_group`
+**Fed by (18):** `dim_calendar`, `dim_company`, `dim_department`, `dim_department_last`, `dim_director`, `dim_director_last`, `dim_product_mkt`, `dim_region`, `dim_region_last`, `dim_region_manager`, `dim_region_manager_last`, `dim_sale_representative`, `dim_sale_representative_last`, `dim_section`, `dim_section_last`, `dim_section_manager`, `dim_section_manager_last`, `update_sk_sale_rep_group`
 
 ```mermaid
 flowchart LR
-  subgraph dimension["dimension (11)"]
+  subgraph dimension["dimension (23)"]
     dim_calendar["dim_calendar"]
     dim_company["dim_company"]
+    dim_department["dim_department"]
     dim_department_last["dim_department_last"]
+    dim_director["dim_director"]
     dim_director_last["dim_director_last"]
     dim_product_mkt["dim_product_mkt"]
     dim_rate_target["dim_rate_target"]
+    dim_region["dim_region"]
+    dim_region_last["dim_region_last"]
+    dim_region_manager["dim_region_manager"]
+    dim_region_manager_last["dim_region_manager_last"]
     dim_report["dim_report"]
+    dim_sale_representative["dim_sale_representative"]
+    dim_sale_representative_last["dim_sale_representative_last"]
+    dim_section["dim_section"]
+    dim_section_last["dim_section_last"]
+    dim_section_manager["dim_section_manager"]
+    dim_section_manager_last["dim_section_manager_last"]
     dim_target_product_group["dim_target_product_group"]
     dim_target_product_group_by_sale["dim_target_product_group_by_sale"]
     dim_target_product_group_by_sale_dayofwork["dim_target_product_group_by_sale_dayofwork"]
@@ -146,21 +171,65 @@ flowchart LR
     fact_transcation["fact_transcation"]
   end
   dim_calendar --> dim_target_product_group_by_sale_dayofwork
+  dim_company --> dim_department
   dim_company --> dim_department_last
+  dim_company --> dim_director
   dim_company --> dim_director_last
   dim_company --> dim_product_mkt
   dim_company --> dim_rate_target
+  dim_company --> dim_region
+  dim_company --> dim_region_last
+  dim_company --> dim_region_manager
+  dim_company --> dim_region_manager_last
   dim_company --> dim_report
+  dim_company --> dim_sale_representative
+  dim_company --> dim_sale_representative_last
+  dim_company --> dim_section
+  dim_company --> dim_section_last
+  dim_company --> dim_section_manager
+  dim_company --> dim_section_manager_last
   dim_company --> dim_target_product_group
+  dim_department --> dim_department_last
+  dim_department --> dim_target_product_group_by_sale_dayofwork
+  dim_department --> fact_transcation
   dim_department_last --> dim_rate_target
+  dim_department_last --> dim_target_product_group_by_sale
   dim_department_last --> update_sk_sale_rep_group
+  dim_director --> dim_director_last
+  dim_director --> dim_target_product_group_by_sale_dayofwork
+  dim_director --> fact_transcation
   dim_director_last --> dim_rate_target
   dim_director_last --> update_sk_sale_rep_group
   dim_product_mkt --> dim_target_product_group_by_sale
   dim_product_mkt --> fact_transcation
   dim_rate_target --> dim_target_product_group_by_sale
   dim_rate_target --> dim_target_product_group_by_sale_dayofwork
+  dim_region --> dim_region_last
+  dim_region --> dim_target_product_group_by_sale_dayofwork
+  dim_region --> fact_transcation
+  dim_region_last --> dim_target_product_group_by_sale
+  dim_region_last --> update_sk_sale_rep_group
+  dim_region_manager --> dim_region_manager_last
+  dim_region_manager --> dim_target_product_group_by_sale_dayofwork
+  dim_region_manager --> fact_transcation
+  dim_region_manager_last --> dim_target_product_group_by_sale
+  dim_region_manager_last --> update_sk_sale_rep_group
   dim_report --> dim_target_product_group_by_sale
+  dim_sale_representative --> dim_sale_representative_last
+  dim_sale_representative --> dim_target_product_group_by_sale_dayofwork
+  dim_sale_representative --> fact_transcation
+  dim_sale_representative_last --> dim_target_product_group_by_sale
+  dim_sale_representative_last --> update_sk_sale_rep_group
+  dim_section --> dim_section_last
+  dim_section --> dim_target_product_group_by_sale_dayofwork
+  dim_section --> fact_transcation
+  dim_section_last --> dim_target_product_group_by_sale
+  dim_section_last --> update_sk_sale_rep_group
+  dim_section_manager --> dim_section_manager_last
+  dim_section_manager --> dim_target_product_group_by_sale_dayofwork
+  dim_section_manager --> fact_transcation
+  dim_section_manager_last --> dim_target_product_group_by_sale
+  dim_section_manager_last --> update_sk_sale_rep_group
   dim_target_product_group --> dim_target_product_group_by_sale
   dim_target_product_group_by_sale --> dim_target_product_group_by_sale_dayofwork
   dim_target_product_group_by_sale_dayofwork --> fact_transcation
@@ -169,7 +238,7 @@ flowchart LR
   classDef dimension fill:#ffe0b3,stroke:#d98f2f,color:#111;
   classDef fact fill:#c6f5c6,stroke:#3fa63f,color:#111;
   classDef paused fill:#f5f5f5,stroke:#bbb,color:#999,stroke-dasharray:4 3;
-  class dim_calendar,dim_company,dim_department_last,dim_director_last,dim_product_mkt,dim_rate_target,dim_report,dim_target_product_group,dim_target_product_group_by_sale,dim_target_product_group_by_sale_dayofwork,update_sk_sale_rep_group dimension;
+  class dim_calendar,dim_company,dim_department,dim_department_last,dim_director,dim_director_last,dim_product_mkt,dim_rate_target,dim_region,dim_region_last,dim_region_manager,dim_region_manager_last,dim_report,dim_sale_representative,dim_sale_representative_last,dim_section,dim_section_last,dim_section_manager,dim_section_manager_last,dim_target_product_group,dim_target_product_group_by_sale,dim_target_product_group_by_sale_dayofwork,update_sk_sale_rep_group dimension;
   class fact_transcation fact;
 ```
 
@@ -179,7 +248,7 @@ flowchart LR
 
 **Objects in this topic (10):** `dim_avg_collection_score`, `dim_bounce_cheque_score`, `dim_contact_score`, `dim_customer`, `dim_customer_grade`, `dim_grade`, `dim_group_customer`, `dim_group_customer_grade`, `dim_payment_receive_score`, `dim_weight_score`
 
-**Fed by (16):** `chq`, `cql`, `curated_mih`, `customer_profile`, `customer_profile_nature_business`, `customer_status`, `customer_type`, `deb`, `dim_aging`, `dim_company`, `dim_status_not_receive`, `match_customer`, `mie`, `mih`, `mir`, `nature_business`
+**Fed by (18):** `chq`, `cql`, `curated_mih`, `customer_profile`, `customer_profile_nature_business`, `customer_status`, `customer_type`, `deb`, `deb_address_data`, `dim_aging`, `dim_calendar`, `dim_company`, `dim_status_not_receive`, `match_customer`, `mie`, `mih`, `mir`, `nature_business`
 
 ```mermaid
 flowchart LR
@@ -200,10 +269,11 @@ flowchart LR
   subgraph curated["curated (1)"]
     curated_mih["curated_mih"]
   end
-  subgraph dimension["dimension (13)"]
+  subgraph dimension["dimension (14)"]
     dim_aging["dim_aging"]
     dim_avg_collection_score["dim_avg_collection_score"]
     dim_bounce_cheque_score["dim_bounce_cheque_score"]
+    dim_calendar["dim_calendar"]
     dim_company["dim_company"]
     dim_contact_score["dim_contact_score"]
     dim_customer["dim_customer"]
@@ -224,6 +294,9 @@ flowchart LR
     fact_quotation["fact_quotation"]
     fact_transcation["fact_transcation"]
   end
+  subgraph process["process (1)"]
+    deb_address_data["deb_address_data"]
+  end
   chq --> dim_aging
   chq --> dim_customer_grade
   chq --> dim_group_customer_grade
@@ -242,16 +315,21 @@ flowchart LR
   customer_profile_nature_business --> dim_customer
   customer_status --> dim_customer
   customer_type --> dim_customer
+  deb --> deb_address_data
   deb --> dim_customer
   deb --> dim_customer_grade
   deb --> dim_group_customer_grade
   deb --> fact_transcation
+  deb_address_data --> dim_customer
+  deb_address_data --> fact_transcation
   dim_aging --> dim_customer_grade
   dim_aging --> dim_group_customer_grade
   dim_avg_collection_score --> dim_customer_grade
   dim_avg_collection_score --> dim_group_customer_grade
   dim_bounce_cheque_score --> dim_customer_grade
   dim_bounce_cheque_score --> dim_group_customer_grade
+  dim_calendar --> dim_customer_grade
+  dim_calendar --> dim_group_customer_grade
   dim_company --> dim_aging
   dim_company --> dim_avg_collection_score
   dim_company --> dim_bounce_cheque_score
@@ -262,8 +340,11 @@ flowchart LR
   dim_company --> dim_status_not_receive
   dim_company --> dim_weight_score
   dim_company --> fact_chq
+  dim_company --> fact_invoice
   dim_company --> fact_mir_rs
   dim_company --> fact_mir_vs
+  dim_company --> fact_order
+  dim_company --> fact_quotation
   dim_contact_score --> dim_customer_grade
   dim_contact_score --> dim_group_customer_grade
   dim_customer --> dim_aging
@@ -309,11 +390,13 @@ flowchart LR
   classDef curated fill:#a8d5ff,stroke:#2f6fb0,color:#111;
   classDef dimension fill:#ffe0b3,stroke:#d98f2f,color:#111;
   classDef fact fill:#c6f5c6,stroke:#3fa63f,color:#111;
+  classDef process fill:#f5c6c6,stroke:#c04040,color:#111;
   classDef paused fill:#f5f5f5,stroke:#bbb,color:#999,stroke-dasharray:4 3;
   class chq,cql,customer_profile,customer_profile_nature_business,customer_status,customer_type,deb,match_customer,mie,mih,mir,nature_business validated;
   class curated_mih curated;
-  class dim_aging,dim_avg_collection_score,dim_bounce_cheque_score,dim_company,dim_contact_score,dim_customer,dim_customer_grade,dim_grade,dim_group_customer,dim_group_customer_grade,dim_payment_receive_score,dim_status_not_receive,dim_weight_score dimension;
+  class dim_aging,dim_avg_collection_score,dim_bounce_cheque_score,dim_calendar,dim_company,dim_contact_score,dim_customer,dim_customer_grade,dim_grade,dim_group_customer,dim_group_customer_grade,dim_payment_receive_score,dim_status_not_receive,dim_weight_score dimension;
   class fact_chq,fact_invoice,fact_mir_rs,fact_mir_vs,fact_order,fact_quotation,fact_transcation fact;
+  class deb_address_data process;
 ```
 
 ---
@@ -455,6 +538,9 @@ flowchart LR
   dim_company --> dim_product_mkt_director
   dim_company --> dim_rebate
   dim_company --> dim_stk_mkt
+  dim_company --> fact_order
+  dim_company --> fact_quotation
+  dim_company --> fact_transaction_delivery
   dim_product_master --> fact_order
   dim_product_master --> fact_quotation
   dim_product_master --> fact_transaction_delivery
@@ -492,7 +578,7 @@ flowchart LR
 
 **Objects in this topic (8):** `curated_mih`, `curated_mil`, `dim_invoice`, `dim_order`, `dim_payment`, `fact_invoice`, `fact_order`, `fact_transcation`
 
-**Fed by (25):** `ap_s`, `ar_s`, `deb`, `dim_change_district`, `dim_channel`, `dim_channel_cost`, `dim_company`, `dim_cost_group`, `dim_cost_stk`, `dim_customer`, `dim_department`, `dim_director`, `dim_product_master`, `dim_product_mkt`, `dim_region`, `dim_region_manager`, `dim_sale_representative`, `dim_section`, `dim_section_manager`, `dim_stk_mkt`, `dim_target_product_group_by_sale_dayofwork`, `fact_quotation`, `mih`, `mih2`, `mil`
+**Fed by (28):** `ap_s`, `ar_s`, `deb`, `deb_address_data`, `dim_change_district`, `dim_channel`, `dim_channel_cost`, `dim_channel_finance`, `dim_channel_sales`, `dim_company`, `dim_cost_group`, `dim_cost_stk`, `dim_customer`, `dim_department`, `dim_director`, `dim_product_master`, `dim_product_mkt`, `dim_region`, `dim_region_manager`, `dim_sale_representative`, `dim_section`, `dim_section_manager`, `dim_stk_mkt`, `dim_target_product_group_by_sale_dayofwork`, `fact_quotation`, `mih`, `mih2`, `mil`
 
 ```mermaid
 flowchart LR
@@ -508,10 +594,12 @@ flowchart LR
     curated_mih["curated_mih"]
     curated_mil["curated_mil"]
   end
-  subgraph dimension["dimension (21)"]
+  subgraph dimension["dimension (23)"]
     dim_change_district["dim_change_district"]
     dim_channel["dim_channel"]
     dim_channel_cost["dim_channel_cost"]
+    dim_channel_finance["dim_channel_finance"]
+    dim_channel_sales["dim_channel_sales"]
     dim_company["dim_company"]
     dim_cost_group["dim_cost_group"]
     dim_cost_stk["dim_cost_stk"]
@@ -541,6 +629,9 @@ flowchart LR
     fact_transaction_delivery["fact_transaction_delivery"]
     fact_transcation["fact_transcation"]
   end
+  subgraph process["process (1)"]
+    deb_address_data["deb_address_data"]
+  end
   ap_s --> curated_mih
   ap_s --> dim_invoice
   ar_s --> curated_mih
@@ -559,15 +650,22 @@ flowchart LR
   curated_mil --> fact_order
   curated_mil --> fact_transaction_delivery
   curated_mil --> fact_transcation
+  deb --> deb_address_data
   deb --> dim_customer
   deb --> fact_delivery
   deb --> fact_transcation
+  deb_address_data --> dim_customer
+  deb_address_data --> fact_transcation
   dim_change_district --> fact_transcation
   dim_channel --> fact_transcation
   dim_channel_cost --> fact_transcation
+  dim_channel_finance --> fact_transcation
+  dim_channel_sales --> fact_transcation
   dim_company --> dim_change_district
   dim_company --> dim_channel
   dim_company --> dim_channel_cost
+  dim_company --> dim_channel_finance
+  dim_company --> dim_channel_sales
   dim_company --> dim_cost_group
   dim_company --> dim_cost_stk
   dim_company --> dim_customer
@@ -584,8 +682,13 @@ flowchart LR
   dim_company --> dim_section
   dim_company --> dim_section_manager
   dim_company --> dim_stk_mkt
+  dim_company --> fact_delivery
+  dim_company --> fact_invoice
   dim_company --> fact_mir_rs
   dim_company --> fact_mir_vs
+  dim_company --> fact_order
+  dim_company --> fact_quotation
+  dim_company --> fact_transaction_delivery
   dim_cost_group --> fact_transcation
   dim_cost_stk --> fact_transcation
   dim_customer --> fact_invoice
@@ -594,7 +697,9 @@ flowchart LR
   dim_customer --> fact_order
   dim_customer --> fact_quotation
   dim_customer --> fact_transcation
+  dim_department --> dim_target_product_group_by_sale_dayofwork
   dim_department --> fact_transcation
+  dim_director --> dim_target_product_group_by_sale_dayofwork
   dim_director --> fact_transcation
   dim_invoice --> fact_invoice
   dim_invoice --> fact_mir_rs
@@ -609,10 +714,15 @@ flowchart LR
   dim_product_master --> fact_transcation
   dim_product_mkt --> dim_product_master
   dim_product_mkt --> fact_transcation
+  dim_region --> dim_target_product_group_by_sale_dayofwork
   dim_region --> fact_transcation
+  dim_region_manager --> dim_target_product_group_by_sale_dayofwork
   dim_region_manager --> fact_transcation
+  dim_sale_representative --> dim_target_product_group_by_sale_dayofwork
   dim_sale_representative --> fact_transcation
+  dim_section --> dim_target_product_group_by_sale_dayofwork
   dim_section --> fact_transcation
+  dim_section_manager --> dim_target_product_group_by_sale_dayofwork
   dim_section_manager --> fact_transcation
   dim_stk_mkt --> dim_product_master
   dim_stk_mkt --> fact_transcation
@@ -631,11 +741,13 @@ flowchart LR
   classDef curated fill:#a8d5ff,stroke:#2f6fb0,color:#111;
   classDef dimension fill:#ffe0b3,stroke:#d98f2f,color:#111;
   classDef fact fill:#c6f5c6,stroke:#3fa63f,color:#111;
+  classDef process fill:#f5c6c6,stroke:#c04040,color:#111;
   classDef paused fill:#f5f5f5,stroke:#bbb,color:#999,stroke-dasharray:4 3;
   class ap_s,ar_s,deb,mih,mih2,mil validated;
   class curated_mih,curated_mil curated;
-  class dim_change_district,dim_channel,dim_channel_cost,dim_company,dim_cost_group,dim_cost_stk,dim_customer,dim_department,dim_director,dim_invoice,dim_order,dim_payment,dim_product_master,dim_product_mkt,dim_region,dim_region_manager,dim_sale_representative,dim_section,dim_section_manager,dim_stk_mkt,dim_target_product_group_by_sale_dayofwork dimension;
+  class dim_change_district,dim_channel,dim_channel_cost,dim_channel_finance,dim_channel_sales,dim_company,dim_cost_group,dim_cost_stk,dim_customer,dim_department,dim_director,dim_invoice,dim_order,dim_payment,dim_product_master,dim_product_mkt,dim_region,dim_region_manager,dim_sale_representative,dim_section,dim_section_manager,dim_stk_mkt,dim_target_product_group_by_sale_dayofwork dimension;
   class fact_delivery,fact_invoice,fact_mir_rs,fact_mir_vs,fact_order,fact_quotation,fact_transaction_delivery,fact_transcation fact;
+  class deb_address_data process;
 ```
 
 ---
@@ -680,6 +792,8 @@ flowchart LR
   dim_company --> dim_delivery
   dim_company --> dim_invoice
   dim_company --> dim_product_master
+  dim_company --> fact_delivery
+  dim_company --> fact_transaction_delivery
   dim_delivery --> fact_delivery
   dim_invoice --> fact_transaction_delivery
   dim_product_master --> fact_transaction_delivery
@@ -740,6 +854,8 @@ flowchart LR
   dim_company --> dim_product_master
   dim_company --> dim_project
   dim_company --> dim_quotation
+  dim_company --> fact_order
+  dim_company --> fact_quotation
   dim_customer --> fact_order
   dim_customer --> fact_quotation
   dim_product_master --> fact_order
@@ -784,6 +900,8 @@ flowchart LR
   end
   dim_channel --> fact_transcation
   dim_channel_cost --> fact_transcation
+  dim_channel_finance --> fact_transcation
+  dim_channel_sales --> fact_transcation
   dim_company --> dim_channel
   dim_company --> dim_channel_cost
   dim_company --> dim_channel_finance
@@ -836,6 +954,7 @@ flowchart LR
     dim_calendar["dim_calendar"]
     dim_holiday["dim_holiday"]
   end
+  dim_holiday --> dim_calendar
   classDef dimension fill:#ffe0b3,stroke:#d98f2f,color:#111;
   classDef paused fill:#f5f5f5,stroke:#bbb,color:#999,stroke-dasharray:4 3;
   class dim_calendar,dim_holiday dimension;

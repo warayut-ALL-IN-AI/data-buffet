@@ -1,7 +1,7 @@
 config {
   type: "view",
   schema: databuffet.DIMENSION_VIEW,
-  dependencies: ["view_dim_channel"],
+  dependencies: ["view_dim_channel", "dim_aging", "fact_mir_vs"],
   tags: [databuffet.TAG_VIEW],
 }
 
@@ -19,20 +19,56 @@ js {
         name: "view_dim_channel",
     };
     const ViewDimChannelTableRef = `${ViewDimChannelTable.database}.${ViewDimChannelTable.schema}.${ViewDimChannelTable.name}`;
+
+    const DimAgingTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.DIMENSION_TABLE,
+        name: "dim_aging",
+    };
+    const DimAgingTableRef = `${DimAgingTable.database}.${DimAgingTable.schema}.${DimAgingTable.name}`;
+
+    const FactMirVsTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.FACT_TABLE,
+        name: "fact_mir_vs",
+    };
+    const FactMirVsTableRef = `${FactMirVsTable.database}.${FactMirVsTable.schema}.${FactMirVsTable.name}`;
 }
 
-select 
+-- AgingSK / BillingSK ที่เก็บไว้ใน dim_aging_history ใช้ข้ามวันไม่ได้ เพราะ dim_aging
+-- และ fact_mir_vs ปั้น SK ด้วย ROW_NUMBER() ใหม่ทุกคืน เลขเดิมจึงไปชี้คนละใบ
+-- (วัดเมื่อ 2026-08-11: AgingSK ผิด 993,491/1,023,308 · BillingSK ผิด 824,705/844,556)
+-- จึงทิ้งค่าที่เก็บไว้ แล้ว derive ใหม่จาก natural key ทุกครั้งที่ query
+select
   dim_channel.ChannelSK,
   dim_channel.ChannelFinanceSK,
   dim_channel.ChannelSaleSK,
   dim_channel.ChannelCostSK,
-  dim_aging.* 
+  cur_aging.AgingSK,
+  cur_vs.BillingSK,
+  dim_aging.* except(AgingSK, BillingSK)
 from `${DimAgingHistoryTableRef}` as dim_aging
 
 left join `${ViewDimChannelTableRef}` as dim_channel
   on dim_aging.CompanySK = dim_channel.CompanySK
   and dim_aging.cfsDep = dim_channel.DepCode
 
+-- ใบที่ปิดไปแล้วจะหลุดจาก dim_aging → AgingSK เป็น NULL (767 แถว) ซึ่งตรงกว่าเลขมั่ว
+left join `${DimAgingTableRef}` as cur_aging
+  on dim_aging.companyID = cur_aging.companyID
+  and dim_aging.cfsVnosID = cur_aging.cfsVnosID
+  and dim_aging.cfsTypeID = cur_aging.cfsTypeID
+
+-- dim_aging ก็ join fact_mir_vs ด้วยคู่นี้เหมือนกัน (ดู dim_aging.sqlx:525)
+left join `${FactMirVsTableRef}` as cur_vs
+  on dim_aging.companyID = cur_vs.company_id
+  and dim_aging.cfsVnosID = cur_vs.mirbinvno
+
 where dim_aging.cfsvnosid != 'BFCN020/47'
 
-qualify row_number() over(partition by asatdate, AgingSK order by ChannelSK) = 1
+-- partition ด้วย natural key แทน AgingSK: ภายใน snapshot เดียวกันไม่ซ้ำเลย (ตรวจแล้ว 0)
+-- และยังกันแถวบานจาก 2 join ใหม่ (ต้นทางมีคีย์ซ้ำอย่างละ 1 คู่)
+qualify row_number() over(
+  partition by asatdate, dim_aging.companyID, dim_aging.cfsVnosID, dim_aging.cfsTypeID
+  order by ChannelSK, cur_vs.BillingSK
+) = 1
