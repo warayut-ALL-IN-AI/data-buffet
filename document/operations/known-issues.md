@@ -27,16 +27,6 @@
 - **Hard delete tombstone ใน mds MERGE dims** (ตัดสินใจ 2026-07-10 — ปัจจุบันเหลือ
   ใช้กับ dim_company + dim_aging_rang เท่านั้น): row ที่ mds `is_active = FALSE`
   ถูกลบจริงจาก dim โดยไม่เช็ก FK ปลายทาง; DELETE ไม่มี date filter (ตั้งใจ)
-- **`view_dim_aging` join `dim_aging_rang` โดยไม่เทียบบริษัท** (ยืนยัน 2026-08-11):
-  mds นิยาม aging range ไว้เฉพาะ `ag01` (8 ช่วง active; `companyID = 999` อีก 3 แถว
-  inactive) ช่วงวันเป็นค่ากลางใช้ร่วมกันทุกบริษัท ถ้าเติม `raw.CompanySK =
-  dim_aging_rang.CompanySK` เข้าไป จะทำให้ aa05/ab01/ac02/ak02 รวม **10,289 แถว**
-  ได้ `AgingRangSK = NULL` ทันที
-  - เดิมเขียนเป็น `on raw.CompanySK = raw.CompanySK` (เทียบกับตัวเอง = TRUE เสมอ)
-    ซึ่งอ่านแล้วเหมือน bug — 2026-08-11 ตัดเงื่อนไขที่ไม่มีผลนั้นออกและเขียนเจตนา
-    เป็น comment แทน **ผลลัพธ์เท่าเดิมเป๊ะ** (ตรวจแล้ว 1,575,748 แถว, diff 0 บน
-    `(AgingSK, AgingRangSK)`)
-  - ถ้าวันหนึ่ง mds เพิ่ม range ให้บริษัทอื่น ต้องกลับมาใส่เงื่อนไข company
 - **`dim_doctype` / `dim_holiday` ไม่มี SK** — โค้ด SK ถูก comment ไว้ MERGE ด้วย
   natural key แทน
 - **`dim_stk_mkt` มี row 'Waiting Master'** (`MdsID = NULL`, MarketingGroupID='999') —
@@ -182,6 +172,32 @@
   รายละเอียดเต็มอยู่ในหัวข้อ **พฤติกรรมที่ตั้งใจ** ด้านบน (bullet backslash)
 
 ## การตัดสินใจเชิงออกแบบ
+
+- **2026-08-11 — `view_dim_aging` join `dim_aging_rang` ด้วย CompanySK จริง**
+
+  **ปัญหา**: เงื่อนไข join เขียนเป็น `on raw.CompanySK = raw.CompanySK` (เทียบกับ
+  ตัวเอง = TRUE เสมอ) → ทุกบริษัทไปหยิบช่วง aging ของ `ag01` มาใช้ พบตอนสแกน SK
+  2026-08-11 และตรงกับ view บน BigQuery (ไม่ใช่ console drift)
+
+  **ตัดสินใจ (ผู้ใช้สั่ง)**: แก้เป็น `raw.CompanySK = dim_aging_rang.CompanySK`
+  แม้จะทำให้ข้อมูลบางส่วนกลายเป็น NULL — ถือว่า aging range เป็นของแต่ละบริษัท
+
+  **ผลกระทบที่วัดแล้ว** (จำนวนแถวรวมเท่าเดิม 1,575,748 ไม่มีแถวหาย):
+
+  | companyID | เสีย `AgingRangSK` | ในจำนวนนั้นโผล่ที่ `view_aging_ri` |
+  |---|---:|---:|
+  | `ak02` | 5,887 | 2,309 |
+  | `aa05` | 2,434 | 124 |
+  | `ac02` | 1,870 | 525 |
+  | `ab01` | 98 | 33 |
+  | **รวม** | **10,289** | **2,991** |
+
+  `ag01` 1,564,616 แถวไม่กระทบ · snapshot เก่าใน `dim_aging_history` ไม่กระทบ
+  (เก็บค่าที่คำนวณไว้แล้ว) แต่ snapshot รอบถัดไปจะเริ่มมี NULL
+
+  **เงื่อนไขปิดเคส**: ให้ฝั่ง mds เพิ่ม aging range ให้ aa05/ab01/ac02/ak02 ใน
+  `mds_data_aging_rang_master` (ตอนนี้มีแต่ `ag01` 8 ช่วง active + `companyID 999`
+  อีก 3 แถว inactive) แล้ว 10,289 แถวจะกลับมาเอง ไม่ต้องแก้โค้ดอีก
 
 - **2026-08-10 — `BACKFILL_DAYS` สำหรับ incremental window ของ validated/curated**
 
