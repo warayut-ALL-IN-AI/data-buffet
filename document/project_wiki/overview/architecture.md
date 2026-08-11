@@ -11,7 +11,7 @@
 GCS AVRO files  gs://file-raw-data  (Hive-partitioned by ASATDATE=YYYYMMDD)
       │
       ▼
-INITIAL      definitions/initial/     External tables + CREATE SCHEMA + UDFs (13 files)
+INITIAL      definitions/initial/     External tables + CREATE SCHEMA + UDFs (15 files)
       │
       ▼
 VALIDATED    definitions/validated/   Clean, cast, dedup — 1 file per source table (135 files)
@@ -61,10 +61,15 @@ Side pipelines:
   `dependencies` and it is the DAG root.
 - **`onetime` also holds externally-loaded base tables** consumed by views but not
   built here: `onetime.mapping_invoice`, `onetime.Transaction_Data_Mart` is now a
-  Dataform view but reads such bases. Likewise `process_dataset.mih_address_data` and
-  `process_dataset.RLS_Customer360`, and geo dims `dim_districts` / `dim_provinces` /
-  `dim_geographies` / `dim_sub_districts`, `dim_aging_history`, `dim_product_rebate`
+  Dataform view but reads such bases. Likewise `process_dataset.mih_address_data`,
+  and geo dims `dim_districts` / `dim_provinces` / `dim_geographies` /
+  `dim_sub_districts`, `dim_aging_history`
   — referenced by views but **not** built by any `.sqlx`.
+  > Corrected 2026-08-11: this list used to include `dim_product_rebate` (no such
+  > table — it is `dim_rebate`, which **is** built here) and
+  > `process_dataset.RLS_Customer360` (now built here as
+  > `definitions/process/rls_customer360.sqlx`, lowercase). Both are declared in the
+  > consuming files' `dependencies[]`.
 - **View layer now defined** (2026-07-24): the 42 views under `definitions/view/`
   (e.g. `view_dim_aging`, `view_deb_address_data`) are Dataform-managed as of the view
   migration. See [view/view-layer.md](../view/view-layer.md).

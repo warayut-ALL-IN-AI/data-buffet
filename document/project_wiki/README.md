@@ -43,9 +43,10 @@
 `.claude/` was rebuilt 2026-07-10 to point into this wiki: `CLAUDE.md` (session
 context), skills (`add-initial-table`, `add-validated-table`, `add-curated-table`,
 `add-dimension`, `add-fact-table`, `dataform-run`, `enable-cdc`,
-`backfill-dimension`, `fk-integrity-scan`, `data-quality-check`, `update-docs`)
+`backfill-dimension`, `fk-integrity-scan`, `data-quality-check`, `update-docs`,
+plus `bq-drift-scan`, `ship`, `check-runs` added later — 14 total)
 and agents (`dataform-expert`, `data-architect`, `bigquery-optimizer`,
-`data-quality-auditor`). The old `.claude/knowledge/` and root scaffold guides were
+`data-quality-auditor`, `bq-drift-auditor` — 5 total). The old `.claude/knowledge/` and root scaffold guides were
 deleted as stale — the historical error list is preserved in
 `document/operations/known-issues.md`. Root `README.md` was rewritten the same day
 and is accurate.

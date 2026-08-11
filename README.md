@@ -23,7 +23,7 @@ with built-in Change Data Capture (CDC) and an AI address-processing pipeline.
 GCS AVRO files (gs://file-raw-data)
         │
         ▼
-┌─────────────────┐   definitions/initial/      (13 files)
+┌─────────────────┐   definitions/initial/      (15 files)
 │ INITIAL         │   External tables over GCS + schema/UDF bootstrap
 └─────────────────┘
         │
@@ -61,7 +61,7 @@ Supporting pipelines:
 
 | Layer | Path | Count | Purpose |
 |-------|------|------:|---------|
-| **Initial** | `definitions/initial/` | 13 | Create raw external tables over GCS AVRO; bootstrap schemas & UDFs |
+| **Initial** | `definitions/initial/` | 15 | Create raw external tables over GCS AVRO; bootstrap schemas & UDFs |
 | **Validated** | `definitions/validated/` | 131 | Clean, cast, dedup; one table per source object |
 | **Curated** | `definitions/curated/` | 5 | Business-ready joins, enrichment, JSON parsing |
 | **Dimension** | `definitions/dimension/` | 59 | Conformed dimensions with surrogate keys (MERGE + SCD intervals) |

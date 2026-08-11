@@ -50,7 +50,13 @@ CDC gate" — reuse this pattern for any future LLM/UDF-heavy enrichment.
 
 ## `rls_customer360.sqlx` — row-level-security access map
 
-`type: "table"` in `process_dataset`, `dependencies: ["fact_transcation"]`, tag `process`.
+`type: "table"` in `process_dataset`, tag `process`,
+`dependencies: ["fact_transcation", "dim_region", "dim_section", "dim_director", "dim_product_mkt"]`.
+
+> 2026-08-11: ไฟล์นี้เคยเขียน path เป็น `databuffet-nonprd.…` ตรงๆ 5 จุด และไม่มี `js`
+> block เลย — เปลี่ยนมาใช้ `js` ref ตามมาตรฐาน (`databuffet.DATABASE` +
+> `databuffet.FACT_TABLE`/`DIMENSION_TABLE`) และประกาศ dim ทั้ง 4 ตัวใน
+> `dependencies[]` ตามไปด้วย SQL ที่ compile ออกมาเหมือนเดิมทุกตัวอักษร
 Builds **one row per customer** (`milCus`) listing every sales entity associated with
 that customer, so downstream row-level security can decide who may see a customer.
 

@@ -50,8 +50,12 @@
   - เพิ่ม constant: `TAG_VIEW`=`view`, `BRIDGE`=`bridge_dataset` (ไม่มี `PEEM_USING`)
   - `dependencies[]` ใส่เฉพาะ action จริง (basename ที่ unique) — external/UDF/ตารางที่
     ไม่มี .sqlx (`dim_districts/provinces/geographies/sub_districts`, `dim_aging_history`,
-    `dim_product_rebate`, `mih_address_data`, `RLS_Customer360`, `mds_*`) อ้างด้วย
-    interpolation แต่ไม่ list เป็น dep (ตารางมีอยู่แล้ว)
+    `mih_address_data`, `mds_*`) อ้างด้วย interpolation แต่ไม่ list เป็น dep
+    (ตารางมีอยู่แล้ว)
+    > แก้ 2026-08-11: ลิสต์นี้เคยมี `dim_product_rebate` (ชื่อผิด — ของจริงคือ
+    > `dim_rebate` ซึ่ง**มี** .sqlx) และ `RLS_Customer360` (ตอนนี้ repo สร้างเองแล้วที่
+    > `definitions/process/rls_customer360.sqlx` และเป็นตัวพิมพ์เล็ก) ทั้งคู่อยู่ใน
+    > `dependencies[]` ของผู้ใช้เรียบร้อยแล้ว
   - ⚠️ ยังไม่ได้ compile-verify (เครื่องนี้ไม่มี dataform CLI) — ต้องเช็คตอนขึ้น service:
     (1) view ที่อ้าง view อื่น (chain เช่น `view_dim_aging`→`view_dim_channel`,
     `Model_Invoice_Transaction`→`view_fact_transcation`) resolve เรียงลำดับถูก
@@ -172,6 +176,43 @@
   รายละเอียดเต็มอยู่ในหัวข้อ **พฤติกรรมที่ตั้งใจ** ด้านบน (bullet backslash)
 
 ## การตัดสินใจเชิงออกแบบ
+
+- **2026-08-11 — `view_dim_aging_history` derive `AgingSK`/`BillingSK` สดแทนที่จะเชื่อค่าที่เก็บไว้**
+
+  **ปัญหา**: `dim_aging_history` เป็น snapshot สะสม (สิ้นเดือน + เมื่อวาน รวม 33
+  snapshot / 1,023,308 แถว) แต่ `dim_aging.AgingSK` และ `fact_mir_vs.BillingSK`
+  ปั้นด้วย `ROW_NUMBER()` ใหม่ทุกคืน → เลขที่ freeze ไว้ไปชี้คนละใบ
+  **orphan = 0 ทุกตัว จึงไม่มี error ไม่มี NULL ไม่มีสัญญาณอะไรเลย**
+
+  | SK | ต้นทาง | ชี้ผิดใบ |
+  |---|---|---:|
+  | `AgingSK` | `dim_aging` (`ROW_NUMBER`) | 993,491 / 1,023,308 = 97.1% |
+  | `BillingSK` | `fact_mir_vs` (`ROW_NUMBER`) | 824,705 / 844,556 = 97.6% |
+
+  อีก 4 SK ในตารางเดียวกันปลอดภัย (`CompanySK`/`CustomerSK`/`InvoiceSK`/`AgingRangSK`
+  มาจาก dim ที่ใช้ MERGE + `max_sk` — ชี้ผิด 0)
+
+  **ทางเลือกที่พิจารณา**: (A) เปลี่ยนชื่อเป็น `*_asat` (B) ตัดทิ้ง
+  (C) ทำ SK ให้นิ่ง — ทั้ง MERGE และ `FARM_FINGERPRINT` (D) **derive ที่ view** ← เลือก
+
+  **เหตุผลที่เลือก D**: `dim_aging_history` เก็บ natural key ไว้ครบอยู่แล้ว
+  (`companyID` + `cfsVnosID` + `cfsTypeID`) จึง join กลับหาต้นทางได้เลย
+  — ไม่ต้องแตะ `dim_aging` / `fact_mir_vs`, `ReceiveSK` ไม่ต้อง renumber,
+  ไม่ต้อง `UPDATE` ย้อนหลัง 995,548 แถว, และค่าที่ได้**สดเสมอ**แทนที่จะนิ่งแต่เก่า
+
+  **ผลที่วัดแล้ว** (เทียบกับ view ตัวจริง): แถวเท่าเดิม 1,023,308 · คอลัมน์ 48 ตัว
+  ชื่อครบ · payload (`OutStanding`/`DayRange`/`flagComplete`/natural key) diff = 0 ·
+  `AgingSK` ชี้ผิด 993,491 → **0** (NULL 767 = ใบที่ปิดไปแล้วหลุดจาก `dim_aging`) ·
+  `BillingSK` ชี้ผิด 824,705 → **0** และ NULL ลดจาก 178,752 → 127,919
+  (50,833 แถวที่ตอน snapshot ยังหา billing ไม่เจอ วันนี้เจอแล้ว)
+
+  **ข้อแลก**: SK สะท้อนสภาพ *วันนี้* ไม่ใช่ ณ วันที่ snapshot (แต่ของเดิมก็ตอบไม่ได้
+  อยู่แล้ว เพราะผิด 97%) · ลำดับคอลัมน์ขยับ — `AgingSK`/`BillingSK` ย้ายจากตำแหน่ง
+  6/8 มา 5/6 ชื่อครบเหมือนเดิม BI ที่อ้างด้วยชื่อไม่กระทบ
+
+  **จุดที่ต้องระวังถ้าจะแก้ไฟล์นี้อีก**: `QUALIFY` เปลี่ยนจาก `partition by asatdate,
+  AgingSK` เป็น natural key (ตรวจแล้วไม่ซ้ำเลยสัก snapshot) — ต้องคงไว้ เพราะทั้ง
+  `dim_aging` และ `fact_mir_vs` มีคีย์ซ้ำอย่างละ 1 คู่ ถ้าเอา `QUALIFY` ออกแถวจะบาน
 
 - **2026-08-11 — `view_dim_aging` join `dim_aging_rang` ด้วย CompanySK จริง**
 

@@ -1,6 +1,6 @@
 # Initial Layer — `definitions/initial/`
 
-> **LLM context**: 13 files that bootstrap everything: datasets, external tables over
+> **LLM context**: 15 files that bootstrap everything: datasets, external tables over
 > GCS AVRO, and UDFs. All `type: "operations"`. Tags: `initial` (create) and
 > `re-initial` (drop for rebuild).
 

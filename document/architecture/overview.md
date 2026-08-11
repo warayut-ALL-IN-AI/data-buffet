@@ -6,7 +6,7 @@
 GCS AVRO files  gs://file-raw-data  (Hive partition: ASATDATE=YYYYMMDD)
       │
       ▼
-┌────────────┐  definitions/initial/ (13 ไฟล์)
+┌────────────┐  definitions/initial/ (15 ไฟล์)
 │  INITIAL   │  external table + CREATE SCHEMA + UDF (function_dataset)
 └────────────┘
       ▼
