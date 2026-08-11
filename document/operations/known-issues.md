@@ -27,6 +27,16 @@
 - **Hard delete tombstone ใน mds MERGE dims** (ตัดสินใจ 2026-07-10 — ปัจจุบันเหลือ
   ใช้กับ dim_company + dim_aging_rang เท่านั้น): row ที่ mds `is_active = FALSE`
   ถูกลบจริงจาก dim โดยไม่เช็ก FK ปลายทาง; DELETE ไม่มี date filter (ตั้งใจ)
+- **`view_dim_aging` join `dim_aging_rang` โดยไม่เทียบบริษัท** (ยืนยัน 2026-08-11):
+  mds นิยาม aging range ไว้เฉพาะ `ag01` (8 ช่วง active; `companyID = 999` อีก 3 แถว
+  inactive) ช่วงวันเป็นค่ากลางใช้ร่วมกันทุกบริษัท ถ้าเติม `raw.CompanySK =
+  dim_aging_rang.CompanySK` เข้าไป จะทำให้ aa05/ab01/ac02/ak02 รวม **10,289 แถว**
+  ได้ `AgingRangSK = NULL` ทันที
+  - เดิมเขียนเป็น `on raw.CompanySK = raw.CompanySK` (เทียบกับตัวเอง = TRUE เสมอ)
+    ซึ่งอ่านแล้วเหมือน bug — 2026-08-11 ตัดเงื่อนไขที่ไม่มีผลนั้นออกและเขียนเจตนา
+    เป็น comment แทน **ผลลัพธ์เท่าเดิมเป๊ะ** (ตรวจแล้ว 1,575,748 แถว, diff 0 บน
+    `(AgingSK, AgingRangSK)`)
+  - ถ้าวันหนึ่ง mds เพิ่ม range ให้บริษัทอื่น ต้องกลับมาใส่เงื่อนไข company
 - **`dim_doctype` / `dim_holiday` ไม่มี SK** — โค้ด SK ถูก comment ไว้ MERGE ด้วย
   natural key แทน
 - **`dim_stk_mkt` มี row 'Waiting Master'** (`MdsID = NULL`, MarketingGroupID='999') —

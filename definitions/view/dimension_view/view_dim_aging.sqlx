@@ -103,7 +103,11 @@ select distinct
   
   ReceiptAgeDays
 from dim_agin_raw as raw
+-- ไม่ join ด้วย CompanySK โดยตั้งใจ: mds นิยาม aging range ไว้เฉพาะ ag01 (8 ช่วง)
+-- ช่วงวันเป็นค่ากลางใช้ร่วมกันทุกบริษัท ถ้าใส่เงื่อนไข company จะทำให้ aa05/ab01/
+-- ac02/ak02 รวม 10,289 แถวได้ AgingRangSK = NULL ทันที
+-- (ของเดิมเขียน `on raw.CompanySK = raw.CompanySK` ซึ่งเทียบกับตัวเอง = TRUE เสมอ
+--  ผลลัพธ์เท่ากันแต่ดูเหมือน bug จึงตัดออกและเขียนเจตนาไว้แทน)
 left join `${DimAgingRangTableRef}` as dim_aging_rang
-  on raw.CompanySK = raw.CompanySK
-  and DayRange between dim_aging_rang.AgingDayMin and dim_aging_rang.AgingDayMax
+  on DayRange between dim_aging_rang.AgingDayMin and dim_aging_rang.AgingDayMax
 qualify row_number() over(partition by raw.AgingSK order by ReceiptAgeDays desc) = 1
