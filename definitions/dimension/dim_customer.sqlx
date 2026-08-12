@@ -119,7 +119,7 @@ BEGIN
         LEFT JOIN `${DimCompanyTableRef}` as dim_com
             ON deb.company_id = dim_com.companyID
         -- WHERE deb.company_id = 'ag01'
-        QUALIFY row_number() over(partition by dim_com.companyID, deb.debcode) = 1
+        QUALIFY row_number() over(partition by dim_com.companyID, deb.debcode order by cp.id desc) = 1
     )
 
     -- จัดการรัน CustomerSK ต่อจากของเดิม
