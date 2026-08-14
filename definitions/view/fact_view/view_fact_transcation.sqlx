@@ -282,7 +282,8 @@ with dim_calendar as (
     (CASE 
       WHEN trans.companyID not in ('ag01', 'ab01') THEN null
       WHEN trans.companyID in ('ag01', 'ab01') and map_inv.FlagMustUser = True THEN 'Yes'
-      WHEN trans.companyID in ('ag01', 'ab01') and cast(format_date('%Y%m', trans.mix_date) as int64) > 202601 THEN null
+      WHEN trans.companyID in ('ag01', 'ab01') and (cast(format_date('%Y%m', trans.mix_date) as int64) < 202401 or cast(format_date('%Y%m', trans.mix_date) as int64) > 202601) THEN null
+      WHEN trans.companyID in ('ag01', 'ab01') and cast(format_date('%Y%m', trans.mix_date) as int64) between 202401 and 202601 THEN 'Yes'
       WHEN trans.companyID in ('ag01', 'ab01') and map_inv.SectionID is not null THEN 'Yes'
       ELSE 'No'
     END) as FlagMappingInvoice, 
