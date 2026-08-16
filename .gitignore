@@ -1,7 +1,20 @@
-workflow_settings.yaml
 node_modules/
 FORAI/
-.claude/
 requirement.md
-CLAUDE.md
 cloud-run-monitor/
+
+# --- Claude Code -------------------------------------------------------------
+# .claude/ is NOT tracked — the working set (CLAUDE.md, skills, agents, hooks,
+# settings.json) is handed to new developers by copy, not by clone.
+# See document/getting-started/onboarding.md §4 for what to copy and what must
+# never leave the machine (CV/, presentation/, settings.local.json).
+# NOTE: .gitignore has no inline comments — never append "# ..." after a pattern.
+.claude/
+CLAUDE.md
+.mcp.json
+
+**/__pycache__/
+*.pyc
+
+# workflow_settings.yaml is intentionally NOT listed here: it is already tracked,
+# so the old ignore entry never took effect. Edits to it are committed and shared.

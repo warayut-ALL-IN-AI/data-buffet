@@ -14,6 +14,7 @@ with built-in Change Data Capture (CDC) and an AI address-processing pipeline.
 | **Raw Data** | `gs://file-raw-data` (AVRO, Hive-partitioned by `ASATDATE`) |
 | **Sources** | MAC5 (×5 companies), MASTERSKU, CIS360, SALEOUT_MDT + external `mds_dataset` |
 | **Docs** | [`document/`](document/README.md) — developer guides (TH) + [LLM wiki (EN)](document/project_wiki/README.md) |
+| **New here?** | [`document/getting-started/onboarding.md`](document/getting-started/onboarding.md) — access to request, tooling, then `bash .claude/skills/verify-setup/scripts/verify.sh` |
 
 ---
 
@@ -59,11 +60,16 @@ Supporting pipelines:
 
 ### Layers
 
+Counts below are **transformations**; the `*_schema_*.sqlx` bootstrap files are
+excluded (4 in validated, 3 in curated). `CLAUDE.md` and the Thai onboarding guide
+count **files**, so they read 135 / 8 for the same two layers — same code, different
+unit.
+
 | Layer | Path | Count | Purpose |
 |-------|------|------:|---------|
 | **Initial** | `definitions/initial/` | 15 | Create raw external tables over GCS AVRO; bootstrap schemas & UDFs |
-| **Validated** | `definitions/validated/` | 131 | Clean, cast, dedup; one table per source object |
-| **Curated** | `definitions/curated/` | 5 | Business-ready joins, enrichment, JSON parsing |
+| **Validated** | `definitions/validated/` | 131 | Clean, cast, dedup; one table per source object (135 files) |
+| **Curated** | `definitions/curated/` | 5 | Business-ready joins, enrichment, JSON parsing (8 files) |
 | **Dimension** | `definitions/dimension/` | 59 | Conformed dimensions with surrogate keys (MERGE + SCD intervals) |
 | **Fact** | `definitions/fact/` | 9 | Star-schema fact tables joined to dimensions (4-year retention) |
 | **View** | `definitions/view/` | 42 | BI/reporting views (`type: "view"`) over dim/fact/curated: `dimension_view`, `fact_view`, `bridge_dataset`, `onetime`, `process_dataset` |
@@ -114,14 +120,32 @@ includes/
 document/
 ├── getting-started/  architecture/  coding-standards/  how-to/  operations/   (Thai)
 └── project_wiki/     # LLM-oriented wiki (English) — per-layer patterns & inventories
+
+.claude/                          # Claude Code working set — NOT in git, ask the team for it
+├── CLAUDE.md                     # project context loaded every session
+├── skills/  (15)                 # /add-validated-table, /ship, /verify-setup, ...
+├── agents/  (5)                  # dataform-expert, data-architect, ...
+├── hooks/                        # guard-dangerous, doc-sync-check, pre-commit
+└── settings.json                 # shared read-only allowlist (personal → settings.local.json)
 ```
+
+`.claude/` is deliberately git-ignored and handed over by copy. After you place it
+in the repo root, wire the git hooks once:
+
+```bash
+git config core.hooksPath .claude/hooks
+```
+
+Packaging and permission steps:
+[document/getting-started/onboarding.md §4](document/getting-started/onboarding.md).
 
 ---
 
 ## Configuration
 
 ### `workflow_settings.yaml`
-Project-level Dataform settings (git-ignored — set per environment):
+Project-level Dataform settings — **tracked in git** (edits are committed and shared;
+the old `.gitignore` entry never took effect and was removed 2026-08-16):
 
 ```yaml
 defaultProject: databuffet-nonprd
@@ -135,9 +159,10 @@ vars:
     BACKFILL_DAYS: "1"         # incremental look-back window for validated/curated
 ```
 
-> `BACKFILL_DAYS` is **added by hand per workspace** — this repo's commits do not
-> carry it. `databuffet.js` resolves it with a `|| "1"` fallback, so a workspace
-> without the var still compiles to a 1-day window instead of emitting `undefined`.
+> `BACKFILL_DAYS` now ships in the committed file at `"1"`. `databuffet.js` still
+> resolves it with a `|| "1"` fallback, so an older workspace without the var
+> compiles to a 1-day window instead of emitting `undefined`. Bump it temporarily
+> (and revert) when you need a wider backfill.
 
 ### `includes/databuffet.js`
 Imported by all SQLX files; merges project config, variables, CDC config and helpers:

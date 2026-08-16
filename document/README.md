@@ -11,9 +11,10 @@
 
 | ลำดับ | เอกสาร | สำหรับ |
 |---|---|---|
-| 1 | [getting-started/onboarding.md](getting-started/onboarding.md) | developer ใหม่ — โปรเจกต์คืออะไร รันยังไง |
-| 2 | [getting-started/glossary.md](getting-started/glossary.md) | คำศัพท์: SK, MdsID, medallion, QUALIFY, ... |
-| 3 | [architecture/overview.md](architecture/overview.md) | ภาพรวมชั้นข้อมูล + จุดออกแบบสำคัญ |
+| 1 | [getting-started/onboarding.md](getting-started/onboarding.md) | developer ใหม่ — สิทธิ์ที่ต้องขอ, ตั้งเครื่อง, Claude Code, รันยังไง |
+| 2 | ตรวจเครื่อง: `bash .claude/skills/verify-setup/scripts/verify.sh` | เช็ก CLI / auth / สิทธิ์ BigQuery+GCS / hooks ให้ครบก่อนเริ่มงาน |
+| 3 | [getting-started/glossary.md](getting-started/glossary.md) | คำศัพท์: SK, MdsID, medallion, QUALIFY, ... |
+| 4 | [architecture/overview.md](architecture/overview.md) | ภาพรวมชั้นข้อมูล + จุดออกแบบสำคัญ |
 
 ## มาตรฐานการเขียนโค้ด
 
@@ -37,6 +38,7 @@
 | เอกสาร | เนื้อหา |
 |---|---|
 | [operations/known-issues.md](operations/known-issues.md) | คำผิดที่ห้ามแก้, พฤติกรรมตั้งใจ, หนี้เทคนิค |
+| [operations/deploy-to-prod.md](operations/deploy-to-prod.md) | runbook clone nonprd → prd (big-bang cutover) — คำสั่งครบทุกขั้นในเอกสาร |
 
 ## LLM Wiki — `project_wiki/`
 
