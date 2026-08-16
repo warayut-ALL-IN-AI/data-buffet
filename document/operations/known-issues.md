@@ -286,6 +286,10 @@
   `DueAvgCollectSK`/`InvAvgCollectSK` (น่าจะ role-play ของ dim_avg_collection_score),
   `DueGradeSK`/`InvoiceGradeSK` (น่าจะ role-play ของ dim_grade)
 - ไม่มี Dataform assertions เลย — ถ้าจะเพิ่ม data-quality checks ต้องเริ่มจากศูนย์
-- Slack run-monitor (cloud-run-monitor/ + BQ `monitor_dataset`) — ยังไม่ deploy ขึ้น GCP
+- ~~Slack run-monitor ยังไม่ deploy~~ **deploy แล้ว (ยืนยัน 2026-08-17)**:
+  Cloud Run service `alert-dataform` (และ `alert-ms-team`) รันอยู่บน
+  `databuffet-nonprd` เขียนผลลง `monitor_dataset.dataform_run_action`
+  วันละครั้งเวลา 07:00 น. ไทย · partition `run_date` เก็บ 90 วัน ·
+  ค่า `status` มีแค่ `SUCCESS`/`FAILED` — ใช้ skill `check-runs` ดูสรุป
 - Tag ที่ประกาศแต่ไม่ใช้: `dimension_monthly`, `fact_monthly`, `fact_yearly`,
   `curated_full`, `curated_incremental`, `onetime`
