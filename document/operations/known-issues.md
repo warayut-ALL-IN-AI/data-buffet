@@ -174,6 +174,16 @@
   (`Cannot parse regular expression: missing )`) จากการ deploy ด้วยการ paste
   ข้อความดิบเข้า console + กฎ backslash ในเอกสารที่สรุปผิดมาตั้งแต่ 07-27
   รายละเอียดเต็มอยู่ในหัวข้อ **พฤติกรรมที่ตั้งใจ** ด้านบน (bullet backslash)
+- **แก้ 2026-08-17 — `CURRENT_DATE()` ไม่มี timezone 4 จุด** (`dim_customer`,
+  `dim_project`, `view/onetime/Dimension_Customer`, `view/onetime/Dimension_Project`)
+  job รันเสร็จ ~06:07 น. ไทย = 23:07 UTC ของเมื่อวาน → `CURRENT_DATE()` คืนวันที่
+  ย้อนหลัง 1 วัน**ทุกคืน** ทำให้ `projectDay` ต่ำไป 1 วันทุกแถวที่ `pjend` เป็น NULL
+  และ `Total_contact_time_Year` ต่ำไป 1 ปีเฉพาะแถวที่ครบรอบวันนั้นพอดี
+  แก้เป็น `CURRENT_DATE('Asia/Bangkok')` ทั้งหมดแล้ว ค่าถูกเองรอบรันถัดไป
+  (dim rebuild ทุกคืน ไม่ต้อง backfill) ส่วน view มีผลทันทีที่ deploy
+  **ตรวจซ้ำได้ด้วย**: `grep -rniE "current_date\(\)|current_datetime\(\)" definitions includes`
+  ต้องได้ 0 บรรทัด (`CURRENT_TIMESTAMP()` 6 จุดใน `cdc_change_log`/`chq` ไม่ต้องแก้ —
+  TIMESTAMP เป็นเวลาสัมบูรณ์)
 
 ## การตัดสินใจเชิงออกแบบ
 

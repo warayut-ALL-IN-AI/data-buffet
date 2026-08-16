@@ -51,7 +51,7 @@ BEGIN
         pjend as projectEnd,
         (CASE
           WHEN SAFE_CAST(pjstart AS DATE) IS NULL THEN 0
-          WHEN SAFE_CAST(pjend AS DATE) IS NULL THEN DATE_DIFF(CURRENT_DATE(), SAFE_CAST(pjstart AS DATE), DAY)
+          WHEN SAFE_CAST(pjend AS DATE) IS NULL THEN DATE_DIFF(CURRENT_DATE('Asia/Bangkok'), SAFE_CAST(pjstart AS DATE), DAY)
           ELSE DATE_DIFF(SAFE_CAST(pjend AS DATE), SAFE_CAST(pjstart AS DATE), DAY)
         END) as projectDay
       FROM ${ref(databuffet.VALIDATED_MAC5, 'tbook_profilecomp')} as pj

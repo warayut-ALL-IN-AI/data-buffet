@@ -94,7 +94,7 @@ select
     deb.deblimit , 
     deb.debgroup ,
     deb.DEBcreditTerm ,
-    DATE_DIFF(CURRENT_DATE(), deb.debdate, YEAR) as Total_contact_time_Year
+    DATE_DIFF(CURRENT_DATE('Asia/Bangkok'), deb.debdate, YEAR) as Total_contact_time_Year
 
 FROM ${ref(databuffet.VALIDATED_MAC5, "deb")} deb
 left join `${ViewDebAddressDataTableRef}` as deb_address

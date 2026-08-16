@@ -106,7 +106,7 @@ BEGIN
             deb.DEBcreditTerm,
             deb.debmemo,
             CAST(NULL as STRING) as Customer_CM_Grade,
-            DATE_DIFF(CURRENT_DATE(), deb.debdate, YEAR) as Total_contact_time_Year
+            DATE_DIFF(CURRENT_DATE('Asia/Bangkok'), deb.debdate, YEAR) as Total_contact_time_Year
         FROM ${ref(databuffet.VALIDATED_MAC5, 'deb')} as deb
         LEFT JOIN `${DebAddressTableRef}` as deb_address
             ON deb.debcode = deb_address.debcode

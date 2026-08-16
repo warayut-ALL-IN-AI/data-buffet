@@ -23,9 +23,9 @@ SELECT
   CASE 
     -- 1. ถ้า pjstart เป็น NULL (แต่ pjend มีค่าหรือไม่มีก็ได้) ให้เป็น 0
     WHEN SAFE_CAST(pjstart AS DATE) IS NULL THEN 0
-    -- 2. ถ้า pjstart มีค่า แต่ pjend เป็น NULL ให้ใช้ CURRENT_DATE()
-    WHEN SAFE_CAST(pjend AS DATE) IS NULL THEN 
-      DATE_DIFF(CURRENT_DATE(), SAFE_CAST(pjstart AS DATE), DAY)
+    -- 2. ถ้า pjstart มีค่า แต่ pjend เป็น NULL ให้ใช้วันที่ปัจจุบัน (Asia/Bangkok)
+    WHEN SAFE_CAST(pjend AS DATE) IS NULL THEN
+      DATE_DIFF(CURRENT_DATE('Asia/Bangkok'), SAFE_CAST(pjstart AS DATE), DAY)
     -- 3. ถ้ามีค่าทั้งคู่ ให้คำนวณตามปกติ
     ELSE 
       DATE_DIFF(SAFE_CAST(pjend AS DATE), SAFE_CAST(pjstart AS DATE), DAY)
