@@ -122,12 +122,15 @@ hooks ของ Claude Code) แล้วบอก `PASS` `FAIL` `SKIP` พร�
 
 ### 4.1 การส่งมอบ `.claude/` (สำหรับคนที่ส่งให้)
 
-แพ็กเฉพาะของที่ใช้ทำงาน — **ห้ามติด** `CV/` (PII ผู้สมัคร), `presentation/` และ
-`settings.local.json` (permission ส่วนตัวของเครื่องคนส่ง) ไปด้วย:
+แพ็กเฉพาะของที่ใช้ทำงาน — **ห้ามติด** `settings.local.json` (permission ส่วนตัวของ
+เครื่องคนส่ง) ไปด้วย:
 
 ```bash
-tar --exclude='.claude/CV' --exclude='.claude/presentation' --exclude='.claude/settings.local.json' --exclude='__pycache__' -czf claude-setup.tar.gz .claude .mcp.json
+tar --exclude='.claude/settings.local.json' --exclude='__pycache__' -czf claude-setup.tar.gz .claude .mcp.json
 ```
+
+> เอกสารสมัครงาน/CV และสไลด์ ย้ายออกไปอยู่ `FromAI/` (git ignore) ตั้งแต่ 2026-08-17
+> แล้ว — ไม่อยู่ใต้ `.claude/` อีก จึงไม่ติดไปกับชุด copy โดยบังเอิญ
 
 `.mcp.json` (ประกาศ MCP server ที่ใช้ร่วมกัน) ก็ไม่ได้อยู่ใน git เหมือนกัน — ไปพร้อมชุดนี้
 

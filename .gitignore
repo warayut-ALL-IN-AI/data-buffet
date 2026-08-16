@@ -3,11 +3,15 @@ FORAI/
 requirement.md
 cloud-run-monitor/
 
+# Non-pipeline material kept beside the repo: hiring documents (candidate CVs and
+# evaluations — PII) and ad-hoc HTML decks. Never commit, never share.
+FromAI/
+
 # --- Claude Code -------------------------------------------------------------
 # .claude/ is NOT tracked — the working set (CLAUDE.md, skills, agents, hooks,
 # settings.json) is handed to new developers by copy, not by clone.
 # See document/getting-started/onboarding.md §4 for what to copy and what must
-# never leave the machine (CV/, presentation/, settings.local.json).
+# never leave the machine (FromAI/, settings.local.json).
 # NOTE: .gitignore has no inline comments — never append "# ..." after a pattern.
 .claude/
 CLAUDE.md
