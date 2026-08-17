@@ -1,0 +1,48 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(timeout:*)",
+      "Bash(python:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose:*)",
+      "Bash(cat:*)",
+      "Bash(pkill:*)",
+      "Bash(netstat:*)",
+      "Bash(ping:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(cd:*)",
+      "Bash(pwd:*)",
+      "Bash(rm:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(touch:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(pip:*)",
+      "Bash(node:*)",
+      "Bash(chmod:*)",
+      "Bash(sqlite3:*)",
+      "Bash(dataform:*)",
+      "Bash(npx dataform:*)",
+      "Bash(gcloud:*)",
+      "Bash(gsutil:*)",
+      "Bash(bq:*)",
+      "mcp__context7__*",
+      "WebSearch",
+      "Bash(echo \"===== PROJECT .claude =====\" && find \"D:/github/data-buffet/.claude\" -maxdepth 3 -type f | sort && echo \"\" && echo \"===== GLOBAL .claude \\(top-level config only\\) =====\" && find \"C:/Users/WarayutLertnawanin/.claude\" -maxdepth 1 | sort)",
+      "Bash(bash --version)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "context7"
+  ]
+}

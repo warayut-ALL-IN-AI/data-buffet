@@ -1,0 +1,52 @@
+{
+  "$comment": "Shared, committed Claude Code settings for Data-Buffet. Personal overrides belong in .claude/settings.local.json (git-ignored). Keep this allowlist read-only: writes to BigQuery/GCS must stay behind an explicit prompt.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-dangerous.sh\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/doc-sync-check.sh\""
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(bq query --use_legacy_sql=false*)",
+      "Bash(bq --project_id=databuffet-nonprd query*)",
+      "Bash(bq ls:*)",
+      "Bash(bq show:*)",
+      "Bash(bq head:*)",
+      "Bash(gsutil ls:*)",
+      "Bash(gcloud * list*)",
+      "Bash(gcloud * describe*)",
+      "Bash(gcloud auth list*)",
+      "Bash(dataform compile*)",
+      "Bash(dataform format*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git show:*)",
+      "Bash(python document/diagrams/generate_lineage.py)",
+      "Bash(bash .claude/skills/verify-setup/scripts/verify.sh)"
+    ],
+    "deny": [
+      "Read(./FromAI/**)",
+      "Read(./backup/**)"
+    ]
+  }
+}
