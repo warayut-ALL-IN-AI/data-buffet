@@ -1,0 +1,14 @@
+config {
+  type: "operations",
+  dependencies: [],
+  tags: [databuffet.TAG_INITIAL],
+}
+
+
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_ALLKONS_COMMISSION}.mac5_sales_areas`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_ALLKONS_COMMISSION}.mac5_sales_channels`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_ALLKONS_COMMISSION}.mac5_transactions`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_ALLKONS_COMMISSION}.marketing_condition_version_details`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_ALLKONS_COMMISSION}.sales_channels`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_ALLKONS_COMMISSION}.sales_positions`;
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_ALLKONS_COMMISSION}.target_commission_monthly_carries`;

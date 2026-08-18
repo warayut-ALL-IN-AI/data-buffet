@@ -1,0 +1,120 @@
+config {
+    type: "incremental",
+    schema: databuffet.VALIDATED_ALLKONS_COMMISSION,
+    dependencies: ["validated_schema_allkons_commission", "create_all_table_raw_allkons_commission"],
+    tags: [databuffet.TAG_VALIDATED, databuffet.TAG_VALIDATED_INCREMENTAL],
+    uniqueKey: ["id"],
+    bigquery: {
+        partitionBy: "asatdate",
+        clusterBy: ["id"]
+    },
+}
+
+js {
+    // Define table references
+    const sourceTable = {
+        database: databuffet.DATABASE,
+        schema: databuffet.RAW_ALLKONS_COMMISSION,
+        name: name(),
+    };
+
+    // Build source table reference
+    const sourceTableRef = `${sourceTable.database}.${sourceTable.schema}.${sourceTable.name}`;
+
+    // Keep existing logic
+    const pk_key = ["id"]
+
+    let partition_statement, post_operations_statement;
+
+    if (pk_key && pk_key.length > 0) {
+        partition_statement = `QUALIFY ROW_NUMBER() OVER(PARTITION BY ${pk_key} ORDER BY asatdate DESC) = 1`;
+        post_operations_statement = `
+BEGIN
+    DECLARE retry_count INT64 DEFAULT 0;
+    DECLARE max_retries INT64 DEFAULT 10;
+    DECLARE success BOOL DEFAULT FALSE;
+
+    WHILE retry_count < max_retries AND NOT success DO
+        BEGIN
+            ALTER TABLE ${self()} DROP PRIMARY KEY IF EXISTS;
+            ALTER TABLE ${self()} ADD PRIMARY KEY (${pk_key}) NOT ENFORCED;
+            SET success = TRUE;
+        EXCEPTION WHEN ERROR THEN
+            SET retry_count = retry_count + 1;
+        END;
+    END WHILE;
+END;`;
+
+    } else {
+        partition_statement = "";
+        post_operations_statement = "";
+    }
+}
+
+SELECT
+    ${databuffet.functionData.cleanString('id')} AS id,
+    ${databuffet.functionData.parseFlexibleDatetime('order_date')} AS order_date,
+    ${databuffet.functionData.cleanString('order_no')} AS order_no,
+    ${databuffet.functionData.parseFlexibleDatetime('inv_date')} AS inv_date,
+    ${databuffet.functionData.cleanString('inv_no')} AS inv_no,
+    ${databuffet.functionData.cleanString('receipt_no')} AS receipt_no,
+    ${databuffet.functionData.cleanString('payment_method')} AS payment_method,
+    ${databuffet.functionData.cleanString('chq_no')} AS chq_no,
+    ${databuffet.functionData.cleanString('chq_status')} AS chq_status,
+    ${databuffet.functionData.parseFlexibleDatetime('payment_date')} AS payment_date,
+    ${databuffet.functionData.castFloat64('payment_amt')} AS payment_amt,
+    ${databuffet.functionData.cleanString('bank_account')} AS bank_account,
+    ${databuffet.functionData.parseFlexibleDatetime('credit_start_date')} AS credit_start_date,
+    ${databuffet.functionData.castInt64('credit_term')} AS credit_term,
+    ${databuffet.functionData.cleanString('company')} AS company,
+    ${databuffet.functionData.cleanString('sales_id')} AS sales_id,
+    ${databuffet.functionData.cleanString('product_barcode')} AS product_barcode,
+    ${databuffet.functionData.cleanString('product_name')} AS product_name,
+    ${databuffet.functionData.castInt64('unit')} AS unit,
+    ${databuffet.functionData.castFloat64('unit_price')} AS unit_price,
+    ${databuffet.functionData.castFloat64('total_price_amt')} AS total_price_amt,
+    ${databuffet.functionData.cleanString('discount_type')} AS discount_type,
+    ${databuffet.functionData.castFloat64('discount_amt')} AS discount_amt,
+    ${databuffet.functionData.castFloat64('total_amt')} AS total_amt,
+    ${databuffet.functionData.cleanString('discount1_type')} AS discount1_type,
+    ${databuffet.functionData.castFloat64('discount1_amt')} AS discount1_amt,
+    ${databuffet.functionData.castFloat64('total_amt1')} AS total_amt1,
+    ${databuffet.functionData.cleanString('discount2_type')} AS discount2_type,
+    ${databuffet.functionData.castFloat64('discount2_amt')} AS discount2_amt,
+    ${databuffet.functionData.castFloat64('total_amt2')} AS total_amt2,
+    ${databuffet.functionData.castFloat64('total_dis_amt')} AS total_dis_amt,
+    ${databuffet.functionData.castFloat64('price_exvat')} AS price_exvat,
+    ${databuffet.functionData.castFloat64('credit_note')} AS credit_note,
+    ${databuffet.functionData.castFloat64('per_dis_cn')} AS per_dis_cn,
+    ${databuffet.functionData.cleanString('cn_no')} AS cn_no,
+    ${databuffet.functionData.castFloat64('total_dis_cn')} AS total_dis_cn,
+    ${databuffet.functionData.cleanString('sales_channel')} AS sales_channel,
+    ${databuffet.functionData.parseFlexibleDatetime('created_at')} AS created_at,
+    ${databuffet.functionData.parseFlexibleDatetime('deleted_at')} AS deleted_at,
+    ${databuffet.functionData.parseFlexibleDatetime('updated_at')} AS updated_at,
+    ${databuffet.functionData.cleanString('sales_agent_data')} AS sales_agent_data,
+    ${databuffet.functionData.cleanString('root_id')} AS root_id,
+    ${databuffet.functionData.cleanString('status')} AS status,
+    ${databuffet.functionData.cleanString('parent_id')} AS parent_id,
+    ${databuffet.functionData.cleanString('sales_area')} AS sales_area,
+    ${databuffet.functionData.cleanString('credit_note_item_id')} AS credit_note_item_id,
+    ${databuffet.functionData.cleanString('invoice_item_id')} AS invoice_item_id,
+    ${databuffet.functionData.cleanString('sort_id')} AS sort_id,
+    ${databuffet.functionData.parseFlexibleDatetime('delivery_date')} AS delivery_date,
+    ${databuffet.functionData.cleanString('order_channel')} AS order_channel,
+    ${databuffet.functionData.parseFlexibleDatetime('cn_dn_date')} AS cn_dn_date,
+    ${databuffet.functionData.parseFlexibleDatetime('calculated_at')} AS calculated_at,
+    ${databuffet.functionData.parseFlexibleDatetime('target_calculated_at')} AS target_calculated_at,
+    ${databuffet.functionData.parseAsatDate()} AS asatdate,
+
+FROM
+  `${sourceTableRef}`
+${ when(incremental(), `WHERE ASATDATE >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(\'Asia/Bangkok\'), INTERVAL ${databuffet.BACKFILL_DAYS} DAY))`) }
+${partition_statement}
+
+pre_operations {
+}
+
+post_operations {
+    ${ when(!incremental(), post_operations_statement) }
+}

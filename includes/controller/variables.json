@@ -41,6 +41,9 @@
     "VALIDATED_SALEOUT_MDT" : "validated_saleout_mdt",
     "RAW_SALEOUT_MDT" : "raw_saleout_mdt",
 
+    "VALIDATED_ALLKONS_COMMISSION" : "validated_allkons_commission",
+    "RAW_ALLKONS_COMMISSION" : "raw_allkons_commission",
+
     "DIMENSION_TABLE" : "dimension_table",
     "DIMENSION_VIEW" : "dimension_view",
     "FACT_TABLE" : "fact_table",
@@ -62,6 +65,7 @@
     "GCS_MAC5_GPS": "mac5_gps",
     "GCS_MASTERSKU": "mastersku",
     "GCS_CIS360": "cis360",
-    "GCS_SALEOUT_MDT": "saleout_mdt"
+    "GCS_SALEOUT_MDT": "saleout_mdt",
+    "GCS_ALLKONS_COMMISSION": "allkons_commission"
 
 }
