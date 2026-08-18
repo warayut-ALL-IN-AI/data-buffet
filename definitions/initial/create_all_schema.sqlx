@@ -29,6 +29,10 @@ CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.CURATED_MASTERS
 CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_SALEOUT_MDT}` OPTIONS(location="${databuffet.REGION}");
 CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_SALEOUT_MDT}` OPTIONS(location="${databuffet.REGION}");
 
+-- ALLKONS_COMMISSION
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}` OPTIONS(location="${databuffet.REGION}");
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.VALIDATED_ALLKONS_COMMISSION}` OPTIONS(location="${databuffet.REGION}");
+
 -- DIMENSION
 CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.DIMENSION_TABLE}` OPTIONS(location="${databuffet.REGION}");
 CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.DIMENSION_VIEW}` OPTIONS(location="${databuffet.REGION}");

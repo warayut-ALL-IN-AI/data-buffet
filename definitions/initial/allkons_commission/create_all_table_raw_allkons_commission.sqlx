@@ -1,0 +1,96 @@
+config {
+  type: "operations",
+  dependencies: ["drop_all_tables_validated_allkons_commission"],
+  tags: [databuffet.TAG_INITIAL],
+}
+
+------------------------------------- SCHEMA --------------------------------------
+CREATE SCHEMA IF NOT EXISTS `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}` OPTIONS(location="${databuffet.REGION}");
+------------------------------------- SCHEMA --------------------------------------
+
+
+----------------------------------- INCREMENTAL ------------------------------------
+-- Table : mac5_sales_areas
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.mac5_sales_areas`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.mac5_sales_areas`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/mac5_sales_areas/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/mac5_sales_areas/'
+);
+
+-- Table : mac5_sales_channels
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.mac5_sales_channels`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.mac5_sales_channels`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/mac5_sales_channels/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/mac5_sales_channels/'
+);
+
+-- Table : mac5_transactions
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.mac5_transactions`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.mac5_transactions`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/mac5_transactions/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/mac5_transactions/'
+);
+
+-- Table : marketing_condition_version_details
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.marketing_condition_version_details`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.marketing_condition_version_details`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/marketing_condition_version_details/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/marketing_condition_version_details/'
+);
+
+-- Table : sales_channels
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.sales_channels`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.sales_channels`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/sales_channels/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/sales_channels/'
+);
+
+-- Table : sales_positions
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.sales_positions`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.sales_positions`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/sales_positions/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/sales_positions/'
+);
+
+-- Table : target_commission_monthly_carries
+DROP TABLE IF EXISTS `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.target_commission_monthly_carries`;
+CREATE OR REPLACE EXTERNAL TABLE `${databuffet.DATABASE}.${databuffet.RAW_ALLKONS_COMMISSION}.target_commission_monthly_carries`
+WITH PARTITION COLUMNS (
+    ASATDATE STRING
+)
+OPTIONS (
+  format = 'AVRO',
+  uris = ['${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/target_commission_monthly_carries/*'],
+  hive_partition_uri_prefix = '${databuffet.RAW_BUCKET}/${databuffet.GCS_ALLKONS_COMMISSION}/target_commission_monthly_carries/'
+);
+----------------------------------- INCREMENTAL ------------------------------------
